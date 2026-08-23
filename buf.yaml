@@ -1,0 +1,28 @@
+version: v2
+
+deps:
+  # AIP annotations: field_behavior, resource, http. Required by the linter,
+  # which is the authority on this API surface.
+  - buf.build/googleapis/googleapis
+
+modules:
+  - path: protobuf
+    # Vendored dependencies live here for editor import resolution only. buf
+    # resolves them from the registry, so compiling the copies as well would
+    # define every google.api extension twice.
+    excludes:
+      - protobuf/.deps
+
+# No `lint` block, deliberately.
+#
+# The Google AIP linter owns the API surface. Configuring buf lint as well would
+# mean two tools with opinions about the same files, and the way that gets
+# resolved in practice is a suppression — which is never allowed here. `buf
+# format` and `buf breaking` stay, because neither overlaps with AIP.
+
+breaking:
+  use:
+    - FILE
+  # The wire format is a contract. Once a field number ships it is permanent,
+  # because a segment written under an older schema still names its fields by
+  # number — renumbering would silently reinterpret stored data.

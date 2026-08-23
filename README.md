@@ -50,6 +50,11 @@ No C toolchain, no CMake, no CUDA SDK. That is a rule, not a coincidence —
 `cargo build` must work on a clean machine.
 
 ```bash
+cargo serve                      # start the server on 127.0.0.1:7700
+cargo serve --addr 0.0.0.0:7700  # flags pass straight through
+cargo dev                        # same, unoptimized, verbose logging
+cargo recall -- --rows 20000     # measure recall against exhaustive search
+
 cargo build --workspace
 cargo test  --workspace          # 336 tests
 cargo clippy --workspace --all-targets -- -D warnings

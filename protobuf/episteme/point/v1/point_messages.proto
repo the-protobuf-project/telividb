@@ -1,0 +1,153 @@
+// Request and response messages for the Points service.
+syntax = "proto3";
+
+package episteme.point.v1;
+
+import "episteme/point/v1/point.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/field_mask.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PointMessagesProto";
+option java_package = "dev.episteme.point.v1";
+
+// Request message for creating a point.
+message CreatePointRequest {
+  // Collection the point belongs to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "episteme.dev/Point"}
+  ];
+
+  // Identifier to use for the point, forming the final path segment.
+  string point_id = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // The point to create.
+  Point point = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for retrieving a point.
+message GetPointRequest {
+  // Resource name of the point to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Point"}
+  ];
+
+  // Fields to return.
+  //
+  // Raw vectors are omitted unless explicitly requested, because a vector can
+  // be inverted toward its source text — so permission to read a point is not
+  // permission to export it.
+  google.protobuf.FieldMask read_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for listing points.
+message ListPointsRequest {
+  // Collection to list points from.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "episteme.dev/Point"}
+  ];
+
+  // Maximum number of points to return.
+  //
+  // The service may return fewer. Zero selects a server-chosen default.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call, to retrieve the following page.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Fields to return for each point.
+  google.protobuf.FieldMask read_mask = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing points.
+message ListPointsResponse {
+  // The points on this page.
+  repeated Point points = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last page.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a point.
+message DeletePointRequest {
+  // Resource name of the point to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Point"}
+  ];
+}
+
+// Request message for creating several points at once.
+message BatchCreatePointsRequest {
+  // Collection the points belong to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "episteme.dev/Point"}
+  ];
+
+  // The individual create requests.
+  //
+  // Each carries a full request rather than a bare point, so a caller can set
+  // `point_id` per item and so a single-point client and a batch client build
+  // the same message.
+  repeated CreatePointRequest requests = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response message for creating several points at once.
+message BatchCreatePointsResponse {
+  // The points that were created.
+  repeated Point points = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for retrieving several points at once.
+message BatchGetPointsRequest {
+  // Collection the points belong to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "episteme.dev/Point"}
+  ];
+
+  // Resource names of the points to retrieve.
+  repeated string names = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Point"}
+  ];
+
+  // Fields to return for each point.
+  google.protobuf.FieldMask read_mask = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for retrieving several points at once.
+message BatchGetPointsResponse {
+  // The points that were found, in the order requested.
+  repeated Point points = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting several points at once.
+message BatchDeletePointsRequest {
+  // Collection the points belong to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "episteme.dev/Point"}
+  ];
+
+  // Resource names of the points to delete.
+  repeated string names = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Point"}
+  ];
+}
+
+// Response message for deleting several points at once.
+message BatchDeletePointsResponse {
+  // The points that were tombstoned.
+  //
+  // Deletion writes a tombstone; the stored bytes survive until a segment is
+  // rewritten by compaction. A caller needing erasure rather than concealment
+  // must force compaction and confirm it completed.
+  repeated Point points = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

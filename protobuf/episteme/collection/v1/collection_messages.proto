@@ -1,0 +1,59 @@
+// Request and response messages for the Collections service.
+syntax = "proto3";
+
+package episteme.collection.v1;
+
+import "episteme/collection/v1/collection.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "CollectionMessagesProto";
+option java_package = "dev.episteme.collection.v1";
+
+// Request message for creating a collection.
+message CreateCollectionRequest {
+  // Identifier to use for the collection, forming the final path segment.
+  string collection_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The collection to create.
+  Collection collection = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for retrieving a collection.
+message GetCollectionRequest {
+  // Resource name of the collection to retrieve.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Collection"}
+  ];
+}
+
+// Request message for listing collections.
+message ListCollectionsRequest {
+  // Maximum number of collections to return.
+  //
+  // The service may return fewer. Zero selects a server-chosen default.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call, to retrieve the following page.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing collections.
+message ListCollectionsResponse {
+  // The collections on this page.
+  repeated Collection collections = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last page.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a collection.
+message DeleteCollectionRequest {
+  // Resource name of the collection to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Collection"}
+  ];
+}

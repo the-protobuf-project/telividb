@@ -40,4 +40,4 @@ pub mod redact;
 pub mod init;
 
 #[cfg(feature = "subscriber")]
-pub use init::{Telemetry, TelemetryConfig};
+pub use init::{Telemetry, TelemetryConfig, TelemetryError};
