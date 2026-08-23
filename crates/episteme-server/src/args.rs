@@ -16,9 +16,10 @@ USAGE:
 
 OPTIONS:
     --addr <ADDR>          Address to serve gRPC on   [default: 127.0.0.1:7700]
-    --metrics <ADDR>       Serve Prometheus metrics   [default: disabled]
-    --log <FILTER>         Log filter                 [default: info]
-    --log-format <FORMAT>  `text` or `json`           [default: text]
+    --otlp <ADDR>          Export to an OTLP collector [default: console only]
+    --mcap <PATH>          Record an MCAP file         [default: disabled]
+    --environment <ENV>    development | staging | production | jetson
+                           [default: development]
     -h, --help             Print this message
 ";
 
@@ -50,18 +51,24 @@ pub fn parse(args: impl Iterator<Item = String>) -> Result<Option<ServerConfig>,
                     .parse::<SocketAddr>()
                     .map_err(|e| format!("--addr {value:?}: {e}"))?;
             }
-            "--metrics" => {
-                config.metrics_addr = Some(
+            "--otlp" => {
+                config.otlp_addr = Some(
                     value
                         .parse::<SocketAddr>()
-                        .map_err(|e| format!("--metrics {value:?}: {e}"))?,
+                        .map_err(|e| format!("--otlp {value:?}: {e}"))?,
                 );
             }
-            "--log" => config.log_filter = value,
-            "--log-format" => match value.as_str() {
-                "json" => config.log_json = true,
-                "text" => config.log_json = false,
-                other => return Err(format!("--log-format {other:?}: expected `text` or `json`")),
+            "--mcap" => config.mcap_path = Some(value.into()),
+            "--environment" => match value.as_str() {
+                "development" | "staging" | "production" | "jetson" => {
+                    config.environment = value;
+                }
+                other => {
+                    return Err(format!(
+                        "--environment {other:?}: expected development, staging, \
+                         production or jetson"
+                    ));
+                }
             },
             other => return Err(format!("unknown flag {other}")),
         }

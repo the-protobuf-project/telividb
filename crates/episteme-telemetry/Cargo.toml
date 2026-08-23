@@ -5,18 +5,24 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+# Facades only. These compile to near-nothing when no subscriber or recorder is
+# installed, so a library crate pays nothing for being instrumented.
 tracing = { version = "0.1", default-features = false, features = ["std", "attributes"] }
 metrics = "0.24"
 thiserror.workspace = true
 
-# Exporters live behind features so library crates never pull in a runtime.
-tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter", "fmt", "json"] }
-metrics-exporter-prometheus = { version = "0.18", optional = true, default-features = false, features = ["http-listener"] }
+# The ecosystem's telemetry stack: structured logging, OpenTelemetry traces and
+# metrics, and MCAP recording behind one builder.
+#
+# Pinned to a tag rather than a branch, so a push upstream cannot change this
+# build. Behind the `subscriber` feature because it brings an async runtime and
+# OTLP exporters — neither of which belongs in a library.
+telemetry = { git = "https://github.com/the-protobuf-project/telemetry", tag = "v1.1.0", optional = true }
 
 [features]
 default = []
-# Console logging + a Prometheus scrape endpoint. Composition roots only.
-subscriber = ["dep:tracing-subscriber", "dep:metrics-exporter-prometheus"]
+# Installs the real pipeline. Composition roots only.
+subscriber = ["dep:telemetry"]
 
 [dev-dependencies]
 episteme-core.workspace = true

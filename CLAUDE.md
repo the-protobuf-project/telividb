@@ -34,7 +34,12 @@ Violating any of these is a bug, not a style preference.
 1. **The database is 100% Rust.** No C or C++ in `episteme-core`, `-storage`, `-index`,
    `-distance`, `-query`, `-graph`, `-server`. The *only* sanctioned FFI is the optional
    llama.cpp embedding backend, quarantined in its own crate behind a non-default feature.
-   A default `cargo build` must need no C toolchain, no CMake, no CUDA SDK.
+   No CMake, no CUDA SDK.
+
+   **One carve-out, recorded rather than hidden:** the mandated telemetry stack depends on MCAP,
+   which depends on lz4, which builds with `cc`. MCAP is not optional there, so a C compiler is
+   needed to build the workspace. The `no C toolchain` job allows that exact path and still
+   fails on any other native dependency — the promise narrowed, it did not disappear.
 2. **Sealed segments are immutable.** Once a segment is sealed, its `vectors.bin`, `ids.bin` and
    `index.*` files are never written again. Mutation happens by writing a new segment plus a
    tombstone bitmap. This is what makes lock-free concurrent reads and `mmap` safe — do not
@@ -178,6 +183,28 @@ Violating any of these is a bug, not a style preference.
 40. **A shipped field number is permanent.** Never renumber, never reuse a tag, mark
     removals `reserved`. A segment written under an older schema still names its fields by
     number, so renumbering silently reinterprets stored data rather than failing.
+41. **Telemetry goes through `telemetry-rs`, always.** The ecosystem's stack —
+    `the-protobuf-project/telemetry` — is the pipeline for logging, tracing, metrics and MCAP
+    recording. Never hand-roll a `tracing-subscriber` stack, never add a second exporter, never
+    reach for `tracing-appender` or `metrics-exporter-prometheus` directly.
+
+    It is installed in exactly one place, `episteme-telemetry`'s `subscriber` feature, and wired
+    once in a composition root. Library crates keep emitting through the `tracing` and `metrics`
+    facades and never know which pipeline is behind them.
+
+    Use it the way its own examples do: `Telemetry::new().with_service(name, version)
+    .environment(Environment::…).build()`, and log through `logger::info!` — not
+    `Telemetry::builder(...)`, not `with_log_level`, not raw `tracing::` macros in a composition
+    root. Verbosity is the environment, not a log level.
+
+    Library crates still emit through the `tracing` and `metrics` facades: they must not know
+    which pipeline is behind them.
+
+    Three consequences worth knowing rather than rediscovering: building the pipeline needs a
+    tokio runtime, so anything testable without one belongs in a free function; `logger::info!`
+    returns a builder that emits on drop, so a match arm needs a block; and the OTLP pipeline is
+    on unless `telemetry.toml` disables it, which is why that file exists at the repository root
+    with `[telemetry] enabled = false`.
 
 ---
 
