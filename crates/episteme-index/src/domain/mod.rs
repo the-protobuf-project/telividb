@@ -2,6 +2,8 @@
 
 mod candidate;
 mod merge;
+mod rerank;
 
 pub use candidate::Candidate;
 pub use merge::{Hit, MergeStats, Merged, Source, merge_top_k};
+pub use rerank::{OverFetch, RerankStats, rerank, rerank_measured};

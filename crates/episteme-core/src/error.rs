@@ -19,6 +19,14 @@ pub enum Error {
     #[error("dimension must be non-zero")]
     ZeroDim,
 
+    /// A serialized index was malformed.
+    ///
+    /// Index files are untrusted input the moment an archive arrives from
+    /// elsewhere, so a lying length field must surface here rather than as a
+    /// panic or an out-of-bounds read.
+    #[error("malformed index: {reason}")]
+    MalformedIndex { reason: &'static str },
+
     /// A resource name or template was not well-formed.
     #[error("invalid resource name {name:?}: {reason}")]
     InvalidResourceName { name: String, reason: &'static str },

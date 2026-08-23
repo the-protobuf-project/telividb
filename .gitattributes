@@ -1,0 +1,2 @@
+# Language detection on GitHub.
+*.proto linguist-detectable=true

@@ -132,3 +132,17 @@ jobs:
       - run: cargo test -p episteme-storage --test buffer_visibility
       - run: cargo test -p episteme-storage --test segment_roundtrip
       - run: cargo test -p episteme-index  --test telemetry_leaks
+
+  # Recall is the only number that makes an ANN change meaningful. Release mode
+  # because a debug-built graph is too slow to measure at a useful size.
+  recall:
+    name: hnsw recall
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p episteme-index --test hnsw_recall --release -- --nocapture
+      - run: cargo test -p episteme-index --test hnsw_distribution --release -- --nocapture
+      - run: cargo test -p episteme-index --test hnsw_persist --release
+      - name: Recall gate at 128 dimensions
+        run: cargo run --release -p episteme-index --bin recall -- --rows 20000 --dim 128 --ef 64
