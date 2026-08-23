@@ -186,7 +186,7 @@ Violating any of these is a bug, not a style preference.
 ```
 episteme/
 ├─ Cargo.toml                 # workspace root
-├─ proto/                     # .proto files — the API source of truth
+├─ protobuf/                  # .proto files — the API source of truth
 ├─ xtask/                     # dev tooling; owns the file-length + layering checks
 ├─ crates/
 │  ├─ episteme-core/          # ontology: ids, domain types, errors, config schema
@@ -200,7 +200,7 @@ episteme/
 │  ├─ episteme-embed/         # Embedder port, GGUF loader, candle adapter
 │  ├─ episteme-embed-llama/   # OPTIONAL FFI adapter (feature = "llama")
 │  ├─ episteme-graph/         # Plan A1.1 — property graph + traversal
-│  ├─ episteme-proto/         # tonic-build output
+│  ├─ episteme-proto/         # buf-generated, committed; no build script
 │  ├─ episteme-ui/            # embedded web assets (rust-embed) + HTTP handlers
 │  ├─ episteme-server/        # binary: composition root, gRPC services, observability
 │  └─ episteme-client/        # Rust SDK
@@ -290,11 +290,11 @@ cargo bench -p episteme-index           # latency
 cargo run -p episteme-index --bin recall -- --dataset sift-1m   # recall@k vs flat
 
 cargo build -p episteme-embed-llama --features llama            # opt-in FFI path
-buf lint proto/ && buf breaking proto/ --against '.git#branch=main'
+buf format --diff --exit-code            # buf lint is never used — see rule 37
 
 cargo xtask check-len                   # fails on any .rs over 200 lines
 cargo xtask check-docs                  # fails on an undocumented or empty doc comment
-cargo xtask gen-proto                   # regenerate Rust from proto/ (needs buf)
+cargo xtask gen-proto                   # regenerate Rust from protobuf/ (needs buf)
 cargo xtask check-proto                 # fails if the committed generated code has drifted
 cargo xtask check-layers                # fails on an outward crate/module dependency
 ```

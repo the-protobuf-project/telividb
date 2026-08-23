@@ -30,7 +30,7 @@ fn usage() {
         "tasks:\n  \
          check-len    fail on any .rs file over the line limit\n  \
          check-docs    fail on any public item without a doc comment\n  \
-         gen-proto     regenerate Rust from proto/ with buf\n  \
+         gen-proto     regenerate Rust from protobuf/ with buf\n  \
          check-proto   fail if the committed generated code has drifted"
     );
 }

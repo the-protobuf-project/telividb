@@ -2,7 +2,7 @@
 //!
 //! # Generated, not built
 //!
-//! Everything under `generated/` is produced by `buf` from `proto/` and
+//! Everything under `generated/` is produced by `buf` from `protobuf/` and
 //! **committed to the repository**. There is no build script, so `cargo build`
 //! needs no protobuf toolchain at all — the same rule that keeps C compilers
 //! out of the default build.
