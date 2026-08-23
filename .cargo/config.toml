@@ -1,2 +1,17 @@
+# Short names for the things worth running.
+#
+# `default-members` would make a bare `cargo run` work, but it also narrows
+# what a bare `cargo test` covers — from 400 tests to 5, silently, while still
+# printing "ok". A convenience is not worth a check that looks green while
+# testing almost nothing, so the binaries get explicit names instead.
 [alias]
 xtask = "run --package xtask --"
+
+# Start the server. Arguments pass through: `cargo serve -- --addr 0.0.0.0:7700`
+serve = "run --release --package episteme-server --bin episteme --"
+
+# The same, unoptimized and verbose, for working on it.
+dev = "run --package episteme-server --bin episteme -- --log debug,h2=info,tower=info"
+
+# Measure recall against exhaustive search.
+recall = "run --release --package episteme-index --bin recall --"
