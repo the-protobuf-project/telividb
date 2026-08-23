@@ -1,5 +1,10 @@
 version: v2
 
+deps:
+  # AIP annotations: field_behavior, resource, http. Required by the linter,
+  # which is the authority on this API surface.
+  - buf.build/googleapis/googleapis
+
 modules:
   - path: protobuf
 

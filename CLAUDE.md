@@ -296,6 +296,8 @@ cargo xtask check-len                   # fails on any .rs over 200 lines
 cargo xtask check-docs                  # fails on an undocumented or empty doc comment
 cargo xtask gen-proto                   # regenerate Rust from protobuf/ (needs buf)
 cargo xtask check-proto                 # fails if the committed generated code has drifted
+cargo xtask protodoc                    # regenerate protobuf/**/README.md
+cargo xtask check-protodoc              # fails if the committed protobuf docs are stale
 cargo xtask check-layers                # fails on an outward crate/module dependency
 ```
 

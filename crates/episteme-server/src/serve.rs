@@ -4,7 +4,7 @@ use crate::config::ServerConfig;
 use crate::error::{Error, Result};
 use crate::services::CollectionSvc;
 use episteme_proto::FILE_DESCRIPTOR_SET;
-use episteme_proto::v1::collection_service_server::CollectionServiceServer;
+use episteme_proto::collection::v1::collections_server::CollectionsServer;
 use episteme_telemetry::{Telemetry, TelemetryConfig};
 
 /// Install telemetry, build the router, and serve until shutdown.
@@ -34,12 +34,12 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
     // to distinguish "starting" from "broken", and it costs one service.
     let (health_reporter, health_service) = tonic_health::server::health_reporter();
     health_reporter
-        .set_serving::<CollectionServiceServer<CollectionSvc>>()
+        .set_serving::<CollectionsServer<CollectionSvc>>()
         .await;
 
     let mut router = tonic::service::Routes::default()
         .add_service(health_service)
-        .add_service(CollectionServiceServer::new(CollectionSvc::default()));
+        .add_service(CollectionsServer::new(CollectionSvc::default()));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()

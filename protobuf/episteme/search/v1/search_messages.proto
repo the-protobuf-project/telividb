@@ -1,0 +1,92 @@
+// Request and response messages for the Search service.
+syntax = "proto3";
+
+package episteme.search.v1;
+
+import "episteme/search/v1/search.proto";
+import "episteme/shared/v1/types.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "SearchMessagesProto";
+option java_package = "dev.episteme.search.v1";
+
+// Request message for searching a collection.
+message SearchCollectionRequest {
+  // Collection to search.
+  string collection = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Collection"}
+  ];
+
+  // Named vector field to search.
+  //
+  // Each field has its own model and metric, so a query is meaningful only
+  // against the field it was encoded for.
+  string field = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The query vector.
+  episteme.shared.v1.Vector query = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Maximum number of results to return.
+  int32 result_count = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Candidate breadth during the search.
+  //
+  // Larger values improve recall and cost latency on every request. Zero
+  // selects a server-chosen default.
+  int32 candidate_breadth = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include raw vectors in the results.
+  //
+  // Separate from searching because a vector can be inverted toward its source
+  // text, so permission to search is not permission to export.
+  bool include_vectors = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for searching a collection.
+message SearchCollectionResponse {
+  // Matching points, nearest first.
+  repeated SearchResult results = 1;
+
+  // Whether every source answered.
+  //
+  // False when a shard missed its deadline or a vault was locked. Present from
+  // the first release because a caller must be able to distinguish "no
+  // results" from "no results you are currently able to see", and adding it
+  // later would break the most-used message in the API.
+  bool complete = 2;
+
+  // Sources that answered within the deadline.
+  int32 answered_source_count = 3;
+
+  // Sources that were consulted.
+  int32 total_source_count = 4;
+
+  // Vaults skipped because they are locked.
+  //
+  // Names only, never contents.
+  repeated string locked_vaults = 5;
+
+  // What the planner did, for explain and for tuning.
+  SearchStats stats = 6;
+}
+
+// Request message for running several searches against one collection.
+message BatchSearchCollectionRequest {
+  // Collection to search.
+  string collection = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Collection"}
+  ];
+
+  // The individual searches to run.
+  repeated SearchCollectionRequest requests = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response message for running several searches against one collection.
+message BatchSearchCollectionResponse {
+  // One response per request, in the order the requests were given.
+  repeated SearchCollectionResponse responses = 1;
+}

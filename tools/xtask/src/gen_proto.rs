@@ -43,8 +43,6 @@ pub fn run(check_only: bool) -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    flatten(&root.join(GENERATED));
-
     if let Some(before) = before {
         let after = snapshot(&root.join(GENERATED));
         if before != after {
@@ -73,50 +71,10 @@ fn run_buf(root: &PathBuf, args: &[&str]) -> bool {
     }
 }
 
-/// buf's managed mode nests output by package path; the crate expects one flat
-/// directory, so collapse it.
-fn flatten(dir: &PathBuf) {
-    let mut moved = Vec::new();
-    collect_rs(dir, &mut moved);
-    for path in moved {
-        if let Some(name) = path.file_name() {
-            let target = dir.join(name);
-            if path != target {
-                let _ = std::fs::rename(&path, &target);
-            }
-        }
-    }
-    remove_empty_dirs(dir);
-}
-
-fn collect_rs(dir: &PathBuf, out: &mut Vec<PathBuf>) {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_rs(&path, out);
-        } else if path.extension().is_some_and(|e| e == "rs") {
-            out.push(path);
-        }
-    }
-}
-
-fn remove_empty_dirs(dir: &PathBuf) {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            remove_empty_dirs(&path);
-            let _ = std::fs::remove_dir(&path);
-        }
-    }
-}
-
 /// Contents of every generated file, for drift comparison.
+///
+/// Walks the tree, because generation now writes one directory per package
+/// rather than a single flat output.
 fn snapshot(dir: &PathBuf) -> Vec<(String, Vec<u8>)> {
     let mut out = Vec::new();
     let Ok(entries) = std::fs::read_dir(dir) else {

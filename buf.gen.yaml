@@ -23,7 +23,9 @@ plugins:
   - local: protoc-gen-prost
     out: crates/episteme-proto/src/generated
     opt:
-      - compile_well_known_types
+      # Well-known types are left to `prost-types`, which prost maps by
+      # default. Compiling them locally emits paths relative to the output
+      # root, and those break once the file is included inside a module.
       - bytes=.
       # `bytes=.` maps every `bytes` field onto `Bytes` rather than `Vec<u8>`,
       # so a vector arriving over the wire can be sliced without a copy.
@@ -31,5 +33,4 @@ plugins:
   - local: protoc-gen-tonic
     out: crates/episteme-proto/src/generated
     opt:
-      - compile_well_known_types
       - no_include

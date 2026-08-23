@@ -1,0 +1,59 @@
+// Enumerations shared across every episteme resource.
+syntax = "proto3";
+
+package episteme.shared.v1;
+
+option java_multiple_files = true;
+option java_outer_classname = "EnumsProto";
+option java_package = "dev.episteme.shared.v1";
+
+// How similarity is measured within a named vector field.
+enum Metric {
+  // Default value. Never valid in a request.
+  METRIC_UNSPECIFIED = 0;
+
+  // Inner product. A higher score is nearer.
+  METRIC_DOT = 1;
+
+  // Squared Euclidean distance. A lower score is nearer.
+  METRIC_L2 = 2;
+
+  // Angular similarity. Normalized at ingest and scored as dot thereafter.
+  METRIC_COSINE = 3;
+}
+
+// Compression applied to a field's coarse scan tier.
+enum Codec {
+  // Default value. Never valid in a request.
+  CODEC_UNSPECIFIED = 0;
+
+  // No scan tier. Searches read full precision directly.
+  CODEC_NONE = 1;
+
+  // Half precision. Two bytes per component, effectively lossless for ranking.
+  CODEC_F16 = 2;
+
+  // Scalar quantization with a per-row scale and offset.
+  CODEC_INT8 = 3;
+
+  // Product quantization. One byte per subspace.
+  CODEC_PQ = 4;
+
+  // One bit per component. Coarse enough to require a rerank.
+  CODEC_BINARY = 5;
+}
+
+// Which search algorithm indexes a field.
+enum IndexKind {
+  // Default value. Never valid in a request.
+  INDEX_KIND_UNSPECIFIED = 0;
+
+  // Exhaustive search. Ground truth, and correct for small fields.
+  INDEX_KIND_FLAT = 1;
+
+  // Hierarchical navigable small world graph.
+  INDEX_KIND_HNSW = 2;
+
+  // Inverted file with product quantization, for memory-constrained fields.
+  INDEX_KIND_IVF_PQ = 3;
+}

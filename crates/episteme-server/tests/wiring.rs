@@ -4,8 +4,8 @@
 //! serving, reflection lists the services, and gRPC-web is layered in. These
 //! assert that rather than trusting it.
 
-use episteme_proto::v1::collection_service_client::CollectionServiceClient;
-use episteme_proto::v1::{CreateCollectionRequest, ListCollectionsRequest};
+use episteme_proto::collection::v1::collections_client::CollectionsClient;
+use episteme_proto::collection::v1::{CreateCollectionRequest, ListCollectionsRequest};
 use episteme_server::{ServerConfig, serve};
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -41,29 +41,32 @@ async fn start() -> SocketAddr {
 #[tokio::test]
 async fn the_server_accepts_grpc() {
     let addr = start().await;
-    let mut client = CollectionServiceClient::connect(format!("http://{addr}"))
+    let mut client = CollectionsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
 
     let response = client
-        .list_collections(ListCollectionsRequest {})
+        .list_collections(ListCollectionsRequest {
+            page_size: 0,
+            page_token: String::new(),
+        })
         .await
         .expect("list should answer even with no collections");
-    assert!(response.into_inner().names.is_empty());
+    assert!(response.into_inner().collections.is_empty());
 }
 
 #[tokio::test]
 async fn arguments_are_validated_before_anything_else() {
     let addr = start().await;
-    let mut client = CollectionServiceClient::connect(format!("http://{addr}"))
+    let mut client = CollectionsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
 
     let err = client
         .create_collection(CreateCollectionRequest {
-            name: String::new(),
+            collection_id: String::new(),
+            collection: None,
             descriptor_set: bytes::Bytes::from_static(&[1, 2, 3]),
-            vector_fields: Vec::new(),
         })
         .await
         .expect_err("an empty name must be refused");
@@ -75,15 +78,15 @@ async fn a_missing_descriptor_set_is_refused_with_a_useful_message() {
     // The engine never parses `.proto`; it consumes a compiled descriptor set.
     // A caller who does not know that should learn it from the error.
     let addr = start().await;
-    let mut client = CollectionServiceClient::connect(format!("http://{addr}"))
+    let mut client = CollectionsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
 
     let err = client
         .create_collection(CreateCollectionRequest {
-            name: "media".to_owned(),
+            collection_id: "media".to_owned(),
+            collection: None,
             descriptor_set: bytes::Bytes::new(),
-            vector_fields: Vec::new(),
         })
         .await
         .expect_err("a missing descriptor set must be refused");

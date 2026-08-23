@@ -1,15 +1,14 @@
-//! Collection lifecycle.
+//! The Collections service.
 
-use episteme_proto::v1::collection_service_server::CollectionService;
-use episteme_proto::v1::{
-    CreateCollectionRequest, CreateCollectionResponse, DescribeCollectionRequest,
-    DescribeCollectionResponse, DropCollectionRequest, DropCollectionResponse,
+use episteme_proto::collection::v1::collections_server::Collections;
+use episteme_proto::collection::v1::{
+    Collection, CreateCollectionRequest, DeleteCollectionRequest, GetCollectionRequest,
     ListCollectionsRequest, ListCollectionsResponse,
 };
 use episteme_telemetry::{fields, redact};
 use tonic::{Request, Response, Status};
 
-/// Collection lifecycle service.
+/// Collection lifecycle.
 ///
 /// Currently a wiring shell: it validates arguments and computes fingerprints,
 /// but has no catalogue behind it. That arrives with the schema adapter, which
@@ -18,25 +17,25 @@ use tonic::{Request, Response, Status};
 pub struct CollectionSvc {}
 
 #[tonic::async_trait]
-impl CollectionService for CollectionSvc {
+impl Collections for CollectionSvc {
     async fn create_collection(
         &self,
         request: Request<CreateCollectionRequest>,
-    ) -> Result<Response<CreateCollectionResponse>, Status> {
+    ) -> Result<Response<Collection>, Status> {
         let req = request.into_inner();
 
         // Collection names reach telemetry, so a vault name would leak simply
         // by being created.
         let span = tracing::info_span!(
             "episteme.collection.create",
-            { fields::COLLECTION } = redact::collection_label(&req.name),
-            fields = req.vector_fields.len(),
+            { fields::COLLECTION } = redact::collection_label(&req.collection_id),
         );
         let _guard = span.enter();
 
-        if req.name.is_empty() {
+        if req.collection_id.is_empty() {
             return Err(Status::invalid_argument(
-                "collection name must not be empty",
+                "collection_id must not be empty: it forms the final path segment \
+                 of the collection's resource name",
             ));
         }
         if req.descriptor_set.is_empty() {
@@ -56,10 +55,10 @@ impl CollectionService for CollectionSvc {
         ))
     }
 
-    async fn describe_collection(
+    async fn get_collection(
         &self,
-        _request: Request<DescribeCollectionRequest>,
-    ) -> Result<Response<DescribeCollectionResponse>, Status> {
+        _request: Request<GetCollectionRequest>,
+    ) -> Result<Response<Collection>, Status> {
         Err(Status::unimplemented(
             "collection catalogue is not yet implemented",
         ))
@@ -71,13 +70,16 @@ impl CollectionService for CollectionSvc {
     ) -> Result<Response<ListCollectionsResponse>, Status> {
         // Answers rather than failing, so a client can confirm the server is
         // wired end to end before any collection exists.
-        Ok(Response::new(ListCollectionsResponse { names: Vec::new() }))
+        Ok(Response::new(ListCollectionsResponse {
+            collections: Vec::new(),
+            next_page_token: String::new(),
+        }))
     }
 
-    async fn drop_collection(
+    async fn delete_collection(
         &self,
-        _request: Request<DropCollectionRequest>,
-    ) -> Result<Response<DropCollectionResponse>, Status> {
+        _request: Request<DeleteCollectionRequest>,
+    ) -> Result<Response<()>, Status> {
         Err(Status::unimplemented(
             "collection catalogue is not yet implemented",
         ))

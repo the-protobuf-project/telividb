@@ -1,0 +1,97 @@
+// Request and response messages for the Points service.
+syntax = "proto3";
+
+package episteme.point.v1;
+
+import "episteme/point/v1/point.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PointMessagesProto";
+option java_package = "dev.episteme.point.v1";
+
+// Request message for writing points.
+message BatchCreatePointsRequest {
+  // Collection the points belong to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Collection"}
+  ];
+
+  // Points to create or replace.
+  repeated Point points = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Response message for writing points.
+message BatchCreatePointsResponse {
+  // Points that were written.
+  repeated Point points = 1;
+
+  // Points that were refused.
+  //
+  // One malformed record does not fail an entire batch: it is reported here
+  // with enough context to be corrected and resubmitted.
+  repeated PointRejection rejections = 2;
+}
+
+// Request message for retrieving points.
+message BatchGetPointsRequest {
+  // Collection the points belong to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Collection"}
+  ];
+
+  // Resource names of the points to retrieve.
+  repeated string names = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Point"}
+  ];
+
+  // Whether to include raw vectors in the response.
+  //
+  // Separate from retrieval because a vector can be inverted toward its source
+  // text, so permission to read a point is not permission to export it.
+  bool include_vectors = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for retrieving points.
+message BatchGetPointsResponse {
+  // The points that were found.
+  repeated Point points = 1;
+
+  // Names that matched nothing.
+  //
+  // Names refused by policy are simply absent rather than listed here, because
+  // reporting them would confirm that they exist.
+  repeated string missing_names = 2;
+}
+
+// Request message for deleting points.
+message BatchDeletePointsRequest {
+  // Collection the points belong to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Collection"}
+  ];
+
+  // Resource names of the points to delete.
+  repeated string names = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "episteme.dev/Point"}
+  ];
+}
+
+// Response message for deleting points.
+message BatchDeletePointsResponse {
+  // Points that were tombstoned.
+  int64 deleted_count = 1;
+
+  // Whether compaction is still required before the bytes are unrecoverable.
+  //
+  // Deletion writes a tombstone; the stored bytes survive until a segment is
+  // rewritten. A caller needing erasure rather than concealment must force
+  // compaction and confirm it completed.
+  bool compaction_required_for_erasure = 2;
+}

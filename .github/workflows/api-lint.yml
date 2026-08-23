@@ -74,3 +74,6 @@ jobs:
       # Committed generation only helps if the committed output is actually
       # current. This is what makes that true rather than hoped for.
       - run: cargo xtask check-proto
+      # Documentation is generated from the protos and committed, so it can
+      # drift the same way generated code can.
+      - run: cargo xtask check-protodoc

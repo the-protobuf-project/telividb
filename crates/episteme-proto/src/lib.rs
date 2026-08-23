@@ -15,69 +15,51 @@
 //!
 //! **Never edit `generated/` by hand.** Change the `.proto` and regenerate.
 //!
-//! # Why one generated file, and how the structure is recovered
+//! # One package per resource
 //!
-//! prost maps a protobuf **package** onto a Rust module, not a file onto a
-//! file. Every `.proto` in `episteme.v1` therefore generates into one
-//! `episteme.v1.rs`, and no plugin option changes that — it is protobuf
-//! semantics rather than a missing flag. Verified in both directions: two files
-//! in one package produce one output, and splitting the package produces two.
+//! Each resource owns a versioned package — `episteme.collection.v1`,
+//! `episteme.point.v1`, `episteme.search.v1` — with shared value types in
+//! `episteme.shared.v1`. Within a package, files are split by role: the
+//! resource, its request and response messages, and its service.
 //!
-//! Splitting the package is the wrong trade. buf requires a package to live in
-//! a directory matching its name *and* to carry its own version suffix, so
-//! `search.proto` would become package `episteme.v1.search.v1` and every type
-//! reference would grow to match. Google's own APIs keep many files in one
-//! versioned package for exactly this reason.
-//!
-//! So the proto layout stays flat and the *logical* structure is recovered
-//! here: [`collection`], [`point`], [`search`] and [`types`] re-export the
-//! subset each `.proto` defines. Callers get
-//! `episteme_proto::search::SearchRequest` without the package name being
-//! contorted to produce it.
-//!
-//! Licensed Apache-2.0 rather than AGPL, so a proprietary application can talk
-//! to an episteme server without a commercial licence.
+//! This is what buf requires (a package must live in a matching directory) and
+//! what prost rewards (a package becomes a module, so each generates its own
+//! file). The module layout below mirrors it exactly.
 #![allow(missing_docs, clippy::all, rustdoc::all)]
 
-/// The `episteme.v1` API surface, exactly as generated.
-pub mod v1 {
-    include!("generated/episteme.v1.rs");
-    include!("generated/episteme.v1.tonic.rs");
+/// Value types shared across every resource.
+pub mod shared {
+    /// Version 1.
+    pub mod v1 {
+        include!("generated/episteme/shared/v1/episteme.shared.v1.rs");
+    }
 }
 
-/// Shared value types, from `common.proto`.
-pub mod types {
-    pub use super::v1::{Codec, ContentRef, IndexKind, Metric, Span, Vector};
-}
-
-/// Collection lifecycle, from `collection.proto`.
+/// The Collection resource and its service.
 pub mod collection {
-    pub use super::v1::collection_service_client::CollectionServiceClient;
-    pub use super::v1::collection_service_server::{CollectionService, CollectionServiceServer};
-    pub use super::v1::{
-        CreateCollectionRequest, CreateCollectionResponse, DescribeCollectionRequest,
-        DescribeCollectionResponse, DropCollectionRequest, DropCollectionResponse,
-        ListCollectionsRequest, ListCollectionsResponse, VectorFieldSpec,
-    };
+    /// Version 1.
+    pub mod v1 {
+        include!("generated/episteme/collection/v1/episteme.collection.v1.rs");
+        include!("generated/episteme/collection/v1/episteme.collection.v1.tonic.rs");
+    }
 }
 
-/// Point lifecycle, from `point.proto`.
+/// The Point resource and its service.
 pub mod point {
-    pub use super::v1::point_service_client::PointServiceClient;
-    pub use super::v1::point_service_server::{PointService, PointServiceServer};
-    pub use super::v1::{
-        DeleteRequest, DeleteResponse, GetRequest, GetResponse, NamedVector, Point, Rejection,
-        UpsertRequest, UpsertResponse,
-    };
+    /// Version 1.
+    pub mod v1 {
+        include!("generated/episteme/point/v1/episteme.point.v1.rs");
+        include!("generated/episteme/point/v1/episteme.point.v1.tonic.rs");
+    }
 }
 
-/// Vector retrieval, from `search.proto`.
+/// Vector retrieval.
 pub mod search {
-    pub use super::v1::search_service_client::SearchServiceClient;
-    pub use super::v1::search_service_server::{SearchService, SearchServiceServer};
-    pub use super::v1::{
-        BatchSearchRequest, BatchSearchResponse, Hit, SearchRequest, SearchResponse, SearchStats,
-    };
+    /// Version 1.
+    pub mod v1 {
+        include!("generated/episteme/search/v1/episteme.search.v1.rs");
+        include!("generated/episteme/search/v1/episteme.search.v1.tonic.rs");
+    }
 }
 
 /// Serialized `FileDescriptorSet` for every service in this crate.
@@ -85,5 +67,3 @@ pub mod search {
 /// Served over gRPC reflection so `grpcurl`, generic clients and MCP bridges can
 /// introspect the API without being shipped the protos first.
 pub const FILE_DESCRIPTOR_SET: &[u8] = include_bytes!("generated/descriptor.bin");
-
-pub use v1::*;
