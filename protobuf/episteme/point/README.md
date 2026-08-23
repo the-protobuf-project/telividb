@@ -8,15 +8,50 @@
 
 ### `Points`
 
-Manages points within a collection.
+Manages points within a collection.  Every standard method is exposed individually as well as in batch form. A caller writing one point should not have to construct a batch, and a caller writing a million should not have to send a million requests — the single and batch forms share their request message so an SDK can collapse them.
 
 | Method | Request | Response | Description |
 | --- | --- | --- | --- |
-| `BatchCreatePoints` | `BatchCreatePointsRequest` | `BatchCreatePointsResponse` | Creates or replaces a batch of points. |
-| `BatchGetPoints` | `BatchGetPointsRequest` | `BatchGetPointsResponse` | Retrieves a batch of points by resource name. |
-| `BatchDeletePoints` | `BatchDeletePointsRequest` | `BatchDeletePointsResponse` | Deletes a batch of points. |
+| `CreatePoint` | `CreatePointRequest` | `Point` | Creates a point. |
+| `GetPoint` | `GetPointRequest` | `Point` | Retrieves a single point. |
+| `ListPoints` | `ListPointsRequest` | `ListPointsResponse` | Lists the points of a collection. |
+| `DeletePoint` | `DeletePointRequest` | `google.protobuf.Empty` | Deletes a point. |
+| `BatchCreatePoints` | `BatchCreatePointsRequest` | `BatchCreatePointsResponse` | Creates several points in one request. |
+| `BatchGetPoints` | `BatchGetPointsRequest` | `BatchGetPointsResponse` | Retrieves several points in one request. |
+| `BatchDeletePoints` | `BatchDeletePointsRequest` | `BatchDeletePointsResponse` | Deletes several points in one request. |
+| `SearchPoints` | `SearchPointsRequest` | `SearchPointsResponse` | Searches a collection for the points nearest a query vector. A method on the points collection rather than a service of its own: searching is an operation over points, and modelling it as one keeps the resource hierarchy intact. |
 
 ## Messages
+
+### `Vector`
+
+A vector, carried as raw bytes rather than a repeated scalar.  Protobuf encodes a repeated scalar element by element, so a 768-dimension vector would cost 768 varint operations per message, in both directions, on the hot path. A single length-delimited field costs one.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `data` | `bytes` | 1 | `REQUIRED` | Raw little-endian IEEE-754 single-precision components. Length must equal `dimensions * 4`. |
+| `dimensions` | `int32` | 2 | `REQUIRED` | Number of components, so a reader can validate before casting. |
+
+### `Span`
+
+A half-open interval measured from the start of a source.  Present on time-indexed media, because retrieval returns a moment in a recording rather than the recording itself.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `start_offset` | `google.protobuf.Duration` | 1 | `REQUIRED` | Inclusive start of the interval, relative to the beginning of the source media referenced by the point's content reference. A duration rather than a timestamp: this is a position within the media, not a point in wall-clock time, and the distinction matters when the same recording is ingested twice. |
+| `end_offset` | `google.protobuf.Duration` | 2 | `REQUIRED` | Exclusive end of the interval, relative to the beginning of the source media referenced by the point's content reference. |
+
+### `ContentRef`
+
+A pointer to the bytes a point was derived from.  The database stores this rather than the media itself: video is gigabyte-scale and blob storage is a solved problem. The digest is what detects that a source changed and its embeddings are stale.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `uri` | `string` | 1 | `REQUIRED` | Location of the source, such as `file://`, `s3://` or `https://`. |
+| `range_start` | `int64` | 2 | `OPTIONAL` | First byte of the range this point covers, when it covers only part. |
+| `range_end` | `int64` | 3 | `OPTIONAL` | Byte after the range this point covers. |
+| `sha256` | `bytes` | 4 | `OPTIONAL` | SHA-256 digest of the referenced bytes. |
+| `inline_text` | `string` | 5 | `OPTIONAL` | Source text, inlined when small enough to keep the point re-embeddable. Without a reachable source, a collection is locked to the model that created it. |
 
 ### `NamedVector`
 
@@ -24,8 +59,8 @@ One vector, keyed by the field it belongs to.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
-| `field` | `string` | 1 | `REQUIRED` | Name of the vector field this belongs to. |
-| `vector` | `episteme.shared.v1.Vector` | 2 | `REQUIRED` | The vector itself. |
+| `field_id` | `string` | 1 | `REQUIRED` | Identifier of the vector field this belongs to. |
+| `vector` | `Vector` | 2 | `REQUIRED` | The vector itself. |
 
 ### `Point`
 
@@ -35,59 +70,94 @@ A single indexed item within a collection.
 | --- | --- | --- | --- | --- |
 | `name` | `string` | 1 | `IDENTIFIER` | Resource name of the point. |
 | `vectors` | `repeated NamedVector` | 2 | `OPTIONAL` | Vectors this point carries, at most one per field. Not every point has every field: a text-only point has no image vector, and that is normal rather than exceptional. |
-| `span` | `episteme.shared.v1.Span` | 3 | `OPTIONAL` | Interval of the source media this point covers, for time-indexed content. |
-| `content_ref` | `episteme.shared.v1.ContentRef` | 4 | `OPTIONAL` | Reference to the bytes this point was derived from. |
+| `span` | `Span` | 3 | `OPTIONAL` | Interval of the source media this point covers, for time-indexed content. |
+| `content_ref` | `ContentRef` | 4 | `OPTIONAL` | Reference to the bytes this point was derived from. |
 
-### `PointRejection`
+### `CreatePointRequest`
 
-A point that could not be accepted, with enough context to fix and resubmit.
+Request message for creating a point.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
-| `name` | `string` | 1 |  | Resource name of the point that was refused. |
-| `code` | `string` | 2 |  | Machine-readable reason, such as `DIMENSION_MISMATCH`. |
-| `message` | `string` | 3 |  | Human-readable explanation. |
+| `parent` | `string` | 1 |  | Collection the point belongs to. |
+| `point_id` | `string` | 2 | `OPTIONAL` | Identifier to use for the point, forming the final path segment. |
+| `point` | `Point` | 3 | `REQUIRED` | The point to create. |
+
+### `GetPointRequest`
+
+Request message for retrieving a point.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `name` | `string` | 1 |  | Resource name of the point to retrieve. |
+| `read_mask` | `google.protobuf.FieldMask` | 2 | `OPTIONAL` | Fields to return. Raw vectors are omitted unless explicitly requested, because a vector can be inverted toward its source text — so permission to read a point is not permission to export it. |
+
+### `ListPointsRequest`
+
+Request message for listing points.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `parent` | `string` | 1 |  | Collection to list points from. |
+| `page_size` | `int32` | 2 | `OPTIONAL` | Maximum number of points to return. The service may return fewer. Zero selects a server-chosen default. |
+| `page_token` | `string` | 3 | `OPTIONAL` | Page token from a previous call, to retrieve the following page. |
+| `read_mask` | `google.protobuf.FieldMask` | 4 | `OPTIONAL` | Fields to return for each point. |
+
+### `ListPointsResponse`
+
+Response message for listing points.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `points` | `repeated Point` | 1 | `OUTPUT_ONLY` | The points on this page. |
+| `next_page_token` | `string` | 2 | `OUTPUT_ONLY` | Token to retrieve the next page, or empty if this is the last page. |
+
+### `DeletePointRequest`
+
+Request message for deleting a point.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `name` | `string` | 1 |  | Resource name of the point to delete. |
 
 ### `BatchCreatePointsRequest`
 
-Request message for writing points.
+Request message for creating several points at once.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
 | `parent` | `string` | 1 |  | Collection the points belong to. |
-| `points` | `repeated Point` | 2 | `REQUIRED` | Points to create or replace. |
+| `requests` | `repeated CreatePointRequest` | 2 | `REQUIRED` | The individual create requests. Each carries a full request rather than a bare point, so a caller can set `point_id` per item and so a single-point client and a batch client build the same message. |
 
 ### `BatchCreatePointsResponse`
 
-Response message for writing points.
+Response message for creating several points at once.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
-| `points` | `repeated Point` | 1 |  | Points that were written. |
-| `rejections` | `repeated PointRejection` | 2 |  | Points that were refused. One malformed record does not fail an entire batch: it is reported here with enough context to be corrected and resubmitted. |
+| `points` | `repeated Point` | 1 | `OUTPUT_ONLY` | The points that were created. |
 
 ### `BatchGetPointsRequest`
 
-Request message for retrieving points.
+Request message for retrieving several points at once.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
 | `parent` | `string` | 1 |  | Collection the points belong to. |
 | `names` | `repeated string` | 2 |  | Resource names of the points to retrieve. |
-| `include_vectors` | `bool` | 3 | `OPTIONAL` | Whether to include raw vectors in the response. Separate from retrieval because a vector can be inverted toward its source text, so permission to read a point is not permission to export it. |
+| `read_mask` | `google.protobuf.FieldMask` | 3 | `OPTIONAL` | Fields to return for each point. |
 
 ### `BatchGetPointsResponse`
 
-Response message for retrieving points.
+Response message for retrieving several points at once.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
-| `points` | `repeated Point` | 1 |  | The points that were found. |
-| `missing_names` | `repeated string` | 2 |  | Names that matched nothing. Names refused by policy are simply absent rather than listed here, because reporting them would confirm that they exist. |
+| `points` | `repeated Point` | 1 | `OUTPUT_ONLY` | The points that were found, in the order requested. |
 
 ### `BatchDeletePointsRequest`
 
-Request message for deleting points.
+Request message for deleting several points at once.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
@@ -96,10 +166,58 @@ Request message for deleting points.
 
 ### `BatchDeletePointsResponse`
 
-Response message for deleting points.
+Response message for deleting several points at once.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
-| `deleted_count` | `int64` | 1 |  | Points that were tombstoned. |
-| `compaction_required_for_erasure` | `bool` | 2 |  | Whether compaction is still required before the bytes are unrecoverable. Deletion writes a tombstone; the stored bytes survive until a segment is rewritten. A caller needing erasure rather than concealment must force compaction and confirm it completed. |
+| `points` | `repeated Point` | 1 | `OUTPUT_ONLY` | The points that were tombstoned. Deletion writes a tombstone; the stored bytes survive until a segment is rewritten by compaction. A caller needing erasure rather than concealment must force compaction and confirm it completed. |
+
+### `SearchStats`
+
+Why a query cost what it did.  Returned so a slow or surprising result can be explained without reproducing it under a profiler.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `candidates_visited` | `int64` | 1 | `OUTPUT_ONLY` | Vectors actually scored. Latency tracks this far more closely than it tracks the requested page size. |
+| `reranked_count` | `int64` | 2 | `OUTPUT_ONLY` | Candidates that were rescored at full precision after a coarse scan. |
+| `buffer_hit_count` | `int32` | 3 | `OUTPUT_ONLY` | Results drawn from the unsealed write buffer. The buffer is scanned exhaustively, so these are exact. They are reported separately because counting them alongside index results would inflate any recall measurement. |
+| `index_hit_count` | `int32` | 4 | `OUTPUT_ONLY` | Results drawn from a sealed segment through its index. |
+| `filter_strategy` | `string` | 5 | `OUTPUT_ONLY` | Filter strategy the planner chose, such as `prefilter` or `traversal`. |
+
+### `SearchResult`
+
+One point matched by a search, with its score.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `point` | `Point` | 1 | `OUTPUT_ONLY` | The matching point. Carries the resource itself rather than only its name, so a caller can render a result without a second round trip. Vector fields are omitted unless the read mask asks for them. |
+| `score` | `float` | 2 | `OUTPUT_ONLY` | Similarity or distance, on the scale of the field's own metric. Whether a higher value is nearer depends on that metric. |
+
+### `SearchPointsRequest`
+
+Request message for searching the points of a collection.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `parent` | `string` | 1 |  | Collection to search. |
+| `field_id` | `string` | 2 | `REQUIRED` | Identifier of the vector field to search. Each field has its own model and metric, so a query is meaningful only against the field it was encoded for. |
+| `query` | `Vector` | 3 | `REQUIRED` | The query vector. |
+| `page_size` | `int32` | 4 | `OPTIONAL` | Maximum number of results to return. This is the `k` of a nearest-neighbour search, not merely a display limit: it determines how much work the index does. The service may return fewer. Zero selects a server-chosen default. |
+| `page_token` | `string` | 5 | `OPTIONAL` | Page token from a previous call, to retrieve the following page. Paging beyond the first page re-runs the search with a larger `k`, so a deep page costs more than a shallow one. |
+| `candidate_breadth` | `int32` | 6 | `OPTIONAL` | Candidate breadth during the search. Larger values improve recall and cost latency on every request. Zero selects a server-chosen default. |
+| `read_mask` | `google.protobuf.FieldMask` | 7 | `OPTIONAL` | Fields to return for each matched point. Raw vectors are omitted unless explicitly requested, because a vector can be inverted toward its source text — so permission to search is not permission to export. |
+
+### `SearchPointsResponse`
+
+Response message for searching the points of a collection.
+
+| Field | Type | # | Behavior | Description |
+| --- | --- | --- | --- | --- |
+| `results` | `repeated SearchResult` | 1 | `OUTPUT_ONLY` | Matching points, nearest first. |
+| `next_page_token` | `string` | 2 | `OUTPUT_ONLY` | Token to retrieve the next page, or empty if this is the last page. |
+| `complete` | `bool` | 3 | `OUTPUT_ONLY` | Whether every source answered. False when a shard missed its deadline or a vault was locked. Present from the first release because a caller must be able to distinguish "no results" from "no results you are currently able to see", and adding it later would break the most-used message in the API. |
+| `answered_source_count` | `int32` | 4 | `OUTPUT_ONLY` | Sources that answered within the deadline. |
+| `total_source_count` | `int32` | 5 | `OUTPUT_ONLY` | Sources that were consulted. |
+| `locked_vaults` | `repeated string` | 6 | `OUTPUT_ONLY` | Vaults skipped because they are locked. Names only, never contents. |
+| `stats` | `SearchStats` | 7 | `OUTPUT_ONLY` | What the planner did, for explain and for tuning. |
 

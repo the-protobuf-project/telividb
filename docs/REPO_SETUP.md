@@ -1,5 +1,34 @@
 # Repository settings
 
+## Editor: the AIP linter needs import paths
+
+If the editor reports dozens of `imported file does not exist` and
+`cannot find google.api.field_behavior in this scope` errors, none of them are
+real. They are **one** missing setting, cascading: when `google/api/*` will not
+resolve, every annotation in every file that imports it becomes unresolvable
+too, so a single missing import path reads as a hundred and sixty errors.
+
+Fix it once:
+
+```bash
+cargo xtask vendor-proto   # writes protobuf/.deps (gitignored)
+```
+
+`.vscode/settings.json` already points `gapi.protoPath` at it, so this is the
+only step. Re-run it if the dependency set in `buf.yaml` changes.
+
+Two related settings are also committed there:
+
+- **`gapi.ignoreCommentDisables: true`** — matching CI, so a suppression cannot
+  appear to satisfy a rule locally and then fail on push.
+- **`files.exclude: protobuf/.deps`** — the vendored files are Google's, and
+  linting them reports their style as though it were this repository's.
+
+**`cargo xtask lint-proto` is the authority.** It resolves the closure through
+`buf export`, runs the linter with suppressions ignored, and checks the exit
+status. The editor is a convenience that agrees with it once configured.
+
+
 ## Local: make sure rustup is actually in charge
 
 If Rust was ever installed via Homebrew, `/opt/homebrew/bin/rustc` shadows

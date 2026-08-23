@@ -1,4 +1,8 @@
 /target
+
+# Vendored proto dependencies — regenerate with `cargo xtask vendor-proto`.
+# Committed copies of Google files would be linted as if they were ours.
+/protobuf/.deps
 **/*.rs.bk
 *.pdb
 

@@ -44,6 +44,11 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()
             .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
+            // Health has to be registered too, or it is routed but not
+            // discoverable: a client that finds services by reflection — which
+            // is every generic client, `grpcurl` included — reports that the
+            // server does not expose it at all.
+            .register_encoded_file_descriptor_set(tonic_health::pb::FILE_DESCRIPTOR_SET)
             .build_v1()
             .map_err(|e| Error::Reflection(e.to_string()))?;
         router = router.add_service(reflection);

@@ -5,7 +5,7 @@
 //! assert that rather than trusting it.
 
 use episteme_proto::collection::v1::collections_client::CollectionsClient;
-use episteme_proto::collection::v1::{CreateCollectionRequest, ListCollectionsRequest};
+use episteme_proto::collection::v1::{Collection, CreateCollectionRequest, ListCollectionsRequest};
 use episteme_server::{ServerConfig, serve};
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -65,8 +65,10 @@ async fn arguments_are_validated_before_anything_else() {
     let err = client
         .create_collection(CreateCollectionRequest {
             collection_id: String::new(),
-            collection: None,
-            descriptor_set: bytes::Bytes::from_static(&[1, 2, 3]),
+            collection: Some(Collection {
+                descriptor_set: bytes::Bytes::from_static(&[1, 2, 3]),
+                ..Default::default()
+            }),
         })
         .await
         .expect_err("an empty name must be refused");
@@ -85,8 +87,7 @@ async fn a_missing_descriptor_set_is_refused_with_a_useful_message() {
     let err = client
         .create_collection(CreateCollectionRequest {
             collection_id: "media".to_owned(),
-            collection: None,
-            descriptor_set: bytes::Bytes::new(),
+            collection: Some(Collection::default()),
         })
         .await
         .expect_err("a missing descriptor set must be refused");

@@ -25,11 +25,11 @@ One named vector field within a collection.  A collection may declare several, e
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
-| `name` | `string` | 1 | `REQUIRED` | Field name, such as `image_clip`. Unique within its collection. |
+| `field_id` | `string` | 1 | `REQUIRED` | Identifier of the field, such as `image_clip`. Unique within its collection. Named `field_id` rather than `name` because a vector field is a component of a collection, not a resource of its own — it has no resource name and cannot be addressed directly. |
 | `dimensions` | `int32` | 2 | `REQUIRED` | Number of components in every vector of this field. |
-| `metric` | `episteme.shared.v1.Metric` | 3 | `REQUIRED` | How similarity is measured. |
-| `index_kind` | `episteme.shared.v1.IndexKind` | 4 | `OPTIONAL` | Which search algorithm indexes this field. |
-| `codec` | `episteme.shared.v1.Codec` | 5 | `OPTIONAL` | Compression applied to the coarse scan tier. |
+| `metric` | `Metric` | 3 | `REQUIRED` | How similarity is measured. |
+| `index_kind` | `IndexKind` | 4 | `OPTIONAL` | Which search algorithm indexes this field. |
+| `codec` | `Codec` | 5 | `OPTIONAL` | Compression applied to the coarse scan tier. |
 | `model` | `string` | 6 | `OPTIONAL` | Identifier of the model that produces vectors for this field. |
 | `query_encoder` | `string` | 7 | `OPTIONAL` | Encoder that handles queries against this field. For a jointly trained model this is the other tower: searching an image field with text must encode that text with the model's text encoder. Declared rather than left to convention, because getting it wrong yields plausible but incorrect results rather than an error. |
 | `permission` | `string` | 8 | `OPTIONAL` | Permission controlling access to raw vectors of this field. Per field rather than per collection, because a voiceprint is biometric data where a transcript is not. |
@@ -41,11 +41,12 @@ A set of points sharing one schema, one identity space and one set of vector fie
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
 | `name` | `string` | 1 | `IDENTIFIER` | Resource name of the collection, such as `collections/media`. |
-| `schema_fingerprint` | `bytes` | 2 | `OUTPUT_ONLY` | Digest of the canonicalized descriptor set this collection was created with, mirrored into every segment written under it. |
-| `vector_fields` | `repeated VectorField` | 3 | `OPTIONAL` | Named vector fields this collection holds. |
-| `live_point_count` | `int64` | 4 | `OUTPUT_ONLY` | Points currently visible to readers. |
-| `tombstoned_point_count` | `int64` | 5 | `OUTPUT_ONLY` | Points deleted but not yet reclaimed by compaction. |
-| `segment_count` | `int32` | 6 | `OUTPUT_ONLY` | Sealed segments making up this collection. |
+| `descriptor_set` | `bytes` | 2 | `REQUIRED` | Serialized `FileDescriptorSet` describing this collection's schema. The engine never parses `.proto`. A generator produces this and it is stored verbatim as the schema of record. |
+| `schema_fingerprint` | `bytes` | 3 | `OUTPUT_ONLY` | Digest of the canonicalized descriptor set, mirrored into every segment written under it. |
+| `vector_fields` | `repeated VectorField` | 4 | `OPTIONAL` | Named vector fields this collection holds. |
+| `live_point_count` | `int64` | 5 | `OUTPUT_ONLY` | Points currently visible to readers. |
+| `tombstoned_point_count` | `int64` | 6 | `OUTPUT_ONLY` | Points deleted but not yet reclaimed by compaction. |
+| `segment_count` | `int32` | 7 | `OUTPUT_ONLY` | Sealed segments making up this collection. |
 
 ### `CreateCollectionRequest`
 
@@ -55,7 +56,6 @@ Request message for creating a collection.
 | --- | --- | --- | --- | --- |
 | `collection_id` | `string` | 1 | `REQUIRED` | Identifier to use for the collection, forming the final path segment. |
 | `collection` | `Collection` | 2 | `REQUIRED` | The collection to create. |
-| `descriptor_set` | `bytes` | 3 | `REQUIRED` | Serialized `FileDescriptorSet` describing the collection's schema. The engine never parses `.proto`. A generator produces this and it is stored verbatim as the schema of record. |
 
 ### `GetCollectionRequest`
 
@@ -80,8 +80,8 @@ Response message for listing collections.
 
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
-| `collections` | `repeated Collection` | 1 |  | The collections on this page. |
-| `next_page_token` | `string` | 2 |  | Token to retrieve the next page, or empty if this is the last page. |
+| `collections` | `repeated Collection` | 1 | `OUTPUT_ONLY` | The collections on this page. |
+| `next_page_token` | `string` | 2 | `OUTPUT_ONLY` | Token to retrieve the next page, or empty if this is the last page. |
 
 ### `DeleteCollectionRequest`
 
@@ -90,4 +90,41 @@ Request message for deleting a collection.
 | Field | Type | # | Behavior | Description |
 | --- | --- | --- | --- | --- |
 | `name` | `string` | 1 |  | Resource name of the collection to delete. |
+
+## Enums
+
+### `Metric`
+
+How similarity is measured within a named vector field.
+
+| Value | # | Description |
+| --- | --- | --- |
+| `METRIC_UNSPECIFIED` | 0 | Default value. Never valid in a request. |
+| `METRIC_DOT` | 1 | Inner product. A higher score is nearer. |
+| `METRIC_L2` | 2 | Squared Euclidean distance. A lower score is nearer. |
+| `METRIC_COSINE` | 3 | Angular similarity. Normalized at ingest and scored as dot thereafter. |
+
+### `Codec`
+
+Compression applied to a field's coarse scan tier.
+
+| Value | # | Description |
+| --- | --- | --- |
+| `CODEC_UNSPECIFIED` | 0 | Default value. Never valid in a request. |
+| `CODEC_NONE` | 1 | No scan tier. Searches read full precision directly. |
+| `CODEC_F16` | 2 | Half precision. Two bytes per component, effectively lossless for ranking. |
+| `CODEC_INT8` | 3 | Scalar quantization with a per-row scale and offset. |
+| `CODEC_PQ` | 4 | Product quantization. One byte per subspace. |
+| `CODEC_BINARY` | 5 | One bit per component. Coarse enough to require a rerank. |
+
+### `IndexKind`
+
+Which search algorithm indexes a field.
+
+| Value | # | Description |
+| --- | --- | --- |
+| `INDEX_KIND_UNSPECIFIED` | 0 | Default value. Never valid in a request. |
+| `INDEX_KIND_FLAT` | 1 | Exhaustive search. Ground truth, and correct for small fields. |
+| `INDEX_KIND_HNSW` | 2 | Hierarchical navigable small world graph. |
+| `INDEX_KIND_IVF_PQ` | 3 | Inverted file with product quantization, for memory-constrained fields. |
 

@@ -5,6 +5,7 @@
 mod check_docs;
 mod check_len;
 mod gen_proto;
+mod lint_proto;
 mod protodoc;
 
 fn main() -> std::process::ExitCode {
@@ -14,6 +15,8 @@ fn main() -> std::process::ExitCode {
         Some("check-docs") => check_docs::run(),
         Some("gen-proto") => gen_proto::run(false),
         Some("check-proto") => gen_proto::run(true),
+        Some("lint-proto") => lint_proto::run(),
+        Some("vendor-proto") => lint_proto::vendor(),
         Some("protodoc") => protodoc::run(false),
         Some("check-protodoc") => protodoc::run(true),
         Some(other) => {
@@ -35,6 +38,8 @@ fn usage() {
          check-docs    fail on any public item without a doc comment\n  \
          gen-proto     regenerate Rust from protobuf/ with buf\n  \
          check-proto   fail if the committed generated code has drifted\n  \
+         lint-proto    run the AIP linter over the full import closure\n  \
+         vendor-proto  vendor proto dependencies into protobuf/.deps for editors\n  \
          protodoc      write README.md for every protobuf module\n  \
          check-protodoc  fail if the committed protobuf docs are stale"
     );

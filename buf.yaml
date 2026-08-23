@@ -7,6 +7,11 @@ deps:
 
 modules:
   - path: protobuf
+    # Vendored dependencies live here for editor import resolution only. buf
+    # resolves them from the registry, so compiling the copies as well would
+    # define every google.api extension twice.
+    excludes:
+      - protobuf/.deps
 
 # No `lint` block, deliberately.
 #

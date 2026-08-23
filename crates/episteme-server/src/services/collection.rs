@@ -38,7 +38,13 @@ impl Collections for CollectionSvc {
                  of the collection's resource name",
             ));
         }
-        if req.descriptor_set.is_empty() {
+        let descriptor_set = req
+            .collection
+            .as_ref()
+            .map(|c| c.descriptor_set.clone())
+            .unwrap_or_default();
+
+        if descriptor_set.is_empty() {
             return Err(Status::invalid_argument(
                 "descriptor_set is required: the engine never parses .proto, \
                  it consumes a compiled FileDescriptorSet",
@@ -46,7 +52,7 @@ impl Collections for CollectionSvc {
         }
 
         // The fingerprint every segment written under this schema will carry.
-        let fingerprint = episteme_core::Fingerprint::of(&req.descriptor_set);
+        let fingerprint = episteme_core::Fingerprint::of(&descriptor_set);
         tracing::info!(schema = %fingerprint, "collection schema fingerprinted");
 
         Err(Status::unimplemented(

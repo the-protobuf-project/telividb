@@ -3,7 +3,6 @@ syntax = "proto3";
 
 package episteme.collection.v1;
 
-import "episteme/shared/v1/enums.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 
@@ -16,20 +15,25 @@ option java_package = "dev.episteme.collection.v1";
 // A collection may declare several, each with its own model, dimension and
 // metric — which is what makes a single collection multimodal.
 message VectorField {
-  // Field name, such as `image_clip`. Unique within its collection.
-  string name = 1 [(google.api.field_behavior) = REQUIRED];
+  // Identifier of the field, such as `image_clip`. Unique within its
+  // collection.
+  //
+  // Named `field_id` rather than `name` because a vector field is a component
+  // of a collection, not a resource of its own — it has no resource name and
+  // cannot be addressed directly.
+  string field_id = 1 [(google.api.field_behavior) = REQUIRED];
 
   // Number of components in every vector of this field.
   int32 dimensions = 2 [(google.api.field_behavior) = REQUIRED];
 
   // How similarity is measured.
-  episteme.shared.v1.Metric metric = 3 [(google.api.field_behavior) = REQUIRED];
+  Metric metric = 3 [(google.api.field_behavior) = REQUIRED];
 
   // Which search algorithm indexes this field.
-  episteme.shared.v1.IndexKind index_kind = 4 [(google.api.field_behavior) = OPTIONAL];
+  IndexKind index_kind = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Compression applied to the coarse scan tier.
-  episteme.shared.v1.Codec codec = 5 [(google.api.field_behavior) = OPTIONAL];
+  Codec codec = 5 [(google.api.field_behavior) = OPTIONAL];
 
   // Identifier of the model that produces vectors for this field.
   string model = 6 [(google.api.field_behavior) = OPTIONAL];
@@ -55,24 +59,83 @@ message Collection {
   option (google.api.resource) = {
     type: "episteme.dev/Collection"
     pattern: "collections/{collection}"
+    singular: "collection"
+    plural: "collections"
   };
 
   // Resource name of the collection, such as `collections/media`.
   string name = 1 [(google.api.field_behavior) = IDENTIFIER];
 
-  // Digest of the canonicalized descriptor set this collection was created
-  // with, mirrored into every segment written under it.
-  bytes schema_fingerprint = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+  // Serialized `FileDescriptorSet` describing this collection's schema.
+  //
+  // The engine never parses `.proto`. A generator produces this and it is
+  // stored verbatim as the schema of record.
+  bytes descriptor_set = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Digest of the canonicalized descriptor set, mirrored into every segment
+  // written under it.
+  bytes schema_fingerprint = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Named vector fields this collection holds.
-  repeated VectorField vector_fields = 3 [(google.api.field_behavior) = OPTIONAL];
+  repeated VectorField vector_fields = 4 [(google.api.field_behavior) = OPTIONAL];
 
   // Points currently visible to readers.
-  int64 live_point_count = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int64 live_point_count = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Points deleted but not yet reclaimed by compaction.
-  int64 tombstoned_point_count = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int64 tombstoned_point_count = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
 
   // Sealed segments making up this collection.
-  int32 segment_count = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+  int32 segment_count = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// How similarity is measured within a named vector field.
+enum Metric {
+  // Default value. Never valid in a request.
+  METRIC_UNSPECIFIED = 0;
+
+  // Inner product. A higher score is nearer.
+  METRIC_DOT = 1;
+
+  // Squared Euclidean distance. A lower score is nearer.
+  METRIC_L2 = 2;
+
+  // Angular similarity. Normalized at ingest and scored as dot thereafter.
+  METRIC_COSINE = 3;
+}
+
+// Compression applied to a field's coarse scan tier.
+enum Codec {
+  // Default value. Never valid in a request.
+  CODEC_UNSPECIFIED = 0;
+
+  // No scan tier. Searches read full precision directly.
+  CODEC_NONE = 1;
+
+  // Half precision. Two bytes per component, effectively lossless for ranking.
+  CODEC_F16 = 2;
+
+  // Scalar quantization with a per-row scale and offset.
+  CODEC_INT8 = 3;
+
+  // Product quantization. One byte per subspace.
+  CODEC_PQ = 4;
+
+  // One bit per component. Coarse enough to require a rerank.
+  CODEC_BINARY = 5;
+}
+
+// Which search algorithm indexes a field.
+enum IndexKind {
+  // Default value. Never valid in a request.
+  INDEX_KIND_UNSPECIFIED = 0;
+
+  // Exhaustive search. Ground truth, and correct for small fields.
+  INDEX_KIND_FLAT = 1;
+
+  // Hierarchical navigable small world graph.
+  INDEX_KIND_HNSW = 2;
+
+  // Inverted file with product quantization, for memory-constrained fields.
+  INDEX_KIND_IVF_PQ = 3;
 }

@@ -15,27 +15,29 @@
 //!
 //! **Never edit `generated/` by hand.** Change the `.proto` and regenerate.
 //!
-//! # One package per resource
+//! # One package per resource, each self-contained
 //!
 //! Each resource owns a versioned package — `episteme.collection.v1`,
-//! `episteme.point.v1`, `episteme.search.v1` — with shared value types in
-//! `episteme.shared.v1`. Within a package, files are split by role: the
-//! resource, its request and response messages, and its service.
+//! `episteme.point.v1` — and declares every type it uses. Within a package,
+//! files are split by role: the resource, its messages, its search types, and
+//! its service.
 //!
-//! This is what buf requires (a package must live in a matching directory) and
-//! what prost rewards (a package becomes a module, so each generates its own
-//! file). The module layout below mirrors it exactly.
+//! There is deliberately **no shared package**. A package reaching into one
+//! would couple its versioning to that package's, which is what AIP-215
+//! forbids and what the linter flags. The cost is that `Vector` and `Span` are
+//! declared where they are used; the benefit is that a consumer of
+//! `episteme.point.v1` needs nothing else.
+//!
+//! This is also what buf requires (a package must live in a matching
+//! directory) and what prost rewards (a package becomes a module, so each
+//! generates its own file).
 #![allow(missing_docs, clippy::all, rustdoc::all)]
 
-/// Value types shared across every resource.
-pub mod shared {
-    /// Version 1 of the shared value types.
-    pub mod v1 {
-        include!("generated/episteme/shared/v1/episteme.shared.v1.rs");
-    }
-}
-
 /// The Collection resource and its service.
+///
+/// Self-contained: it declares every type it uses. A package that reached into
+/// a shared one would couple its versioning to that package's, which is what
+/// AIP-215 exists to prevent.
 pub mod collection {
     /// Version 1 of the Collection resource and service.
     pub mod v1 {
@@ -44,21 +46,16 @@ pub mod collection {
     }
 }
 
-/// The Point resource and its service.
+/// The Point resource, its service, and search.
+///
+/// Search lives here rather than in a service of its own, because searching is
+/// an operation over points — `points:search` under a collection, not a
+/// parallel hierarchy.
 pub mod point {
-    /// Version 1 of the Point resource and service.
+    /// Version 1 of the Point resource, service and search.
     pub mod v1 {
         include!("generated/episteme/point/v1/episteme.point.v1.rs");
         include!("generated/episteme/point/v1/episteme.point.v1.tonic.rs");
-    }
-}
-
-/// Vector retrieval: search requests, results and the Search service.
-pub mod search {
-    /// Version 1 of the search request and result types.
-    pub mod v1 {
-        include!("generated/episteme/search/v1/episteme.search.v1.rs");
-        include!("generated/episteme/search/v1/episteme.search.v1.tonic.rs");
     }
 }
 

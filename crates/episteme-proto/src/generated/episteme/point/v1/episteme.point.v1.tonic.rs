@@ -90,6 +90,101 @@ pub mod points_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
+        pub async fn create_point(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreatePointRequest>,
+        ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/episteme.point.v1.Points/CreatePoint",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("episteme.point.v1.Points", "CreatePoint"));
+            self.inner.unary(req, path, codec).await
+        }
+        /** Retrieves a single point.
+*/
+        pub async fn get_point(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetPointRequest>,
+        ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/episteme.point.v1.Points/GetPoint",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("episteme.point.v1.Points", "GetPoint"));
+            self.inner.unary(req, path, codec).await
+        }
+        /** Lists the points of a collection.
+*/
+        pub async fn list_points(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ListPointsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListPointsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/episteme.point.v1.Points/ListPoints",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("episteme.point.v1.Points", "ListPoints"));
+            self.inner.unary(req, path, codec).await
+        }
+        /** Deletes a point.
+*/
+        pub async fn delete_point(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeletePointRequest>,
+        ) -> std::result::Result<tonic::Response<()>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/episteme.point.v1.Points/DeletePoint",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("episteme.point.v1.Points", "DeletePoint"));
+            self.inner.unary(req, path, codec).await
+        }
+        /** Creates several points in one request.
+*/
         pub async fn batch_create_points(
             &mut self,
             request: impl tonic::IntoRequest<super::BatchCreatePointsRequest>,
@@ -116,7 +211,7 @@ pub mod points_client {
                 );
             self.inner.unary(req, path, codec).await
         }
-        /** Retrieves a batch of points by resource name.
+        /** Retrieves several points in one request.
 */
         pub async fn batch_get_points(
             &mut self,
@@ -142,7 +237,7 @@ pub mod points_client {
                 .insert(GrpcMethod::new("episteme.point.v1.Points", "BatchGetPoints"));
             self.inner.unary(req, path, codec).await
         }
-        /** Deletes a batch of points.
+        /** Deletes several points in one request.
 */
         pub async fn batch_delete_points(
             &mut self,
@@ -170,6 +265,36 @@ pub mod points_client {
                 );
             self.inner.unary(req, path, codec).await
         }
+        /** Searches a collection for the points nearest a query vector.
+
+ A method on the points collection rather than a service of its own:
+ searching is an operation over points, and modelling it as one keeps the
+ resource hierarchy intact.
+*/
+        pub async fn search_points(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SearchPointsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::SearchPointsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/episteme.point.v1.Points/SearchPoints",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("episteme.point.v1.Points", "SearchPoints"));
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -185,6 +310,33 @@ pub mod points_server {
     /// Generated trait containing gRPC methods that should be implemented for use with PointsServer.
     #[async_trait]
     pub trait Points: std::marker::Send + std::marker::Sync + 'static {
+        async fn create_point(
+            &self,
+            request: tonic::Request<super::CreatePointRequest>,
+        ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status>;
+        /** Retrieves a single point.
+*/
+        async fn get_point(
+            &self,
+            request: tonic::Request<super::GetPointRequest>,
+        ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status>;
+        /** Lists the points of a collection.
+*/
+        async fn list_points(
+            &self,
+            request: tonic::Request<super::ListPointsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ListPointsResponse>,
+            tonic::Status,
+        >;
+        /** Deletes a point.
+*/
+        async fn delete_point(
+            &self,
+            request: tonic::Request<super::DeletePointRequest>,
+        ) -> std::result::Result<tonic::Response<()>, tonic::Status>;
+        /** Creates several points in one request.
+*/
         async fn batch_create_points(
             &self,
             request: tonic::Request<super::BatchCreatePointsRequest>,
@@ -192,7 +344,7 @@ pub mod points_server {
             tonic::Response<super::BatchCreatePointsResponse>,
             tonic::Status,
         >;
-        /** Retrieves a batch of points by resource name.
+        /** Retrieves several points in one request.
 */
         async fn batch_get_points(
             &self,
@@ -201,13 +353,26 @@ pub mod points_server {
             tonic::Response<super::BatchGetPointsResponse>,
             tonic::Status,
         >;
-        /** Deletes a batch of points.
+        /** Deletes several points in one request.
 */
         async fn batch_delete_points(
             &self,
             request: tonic::Request<super::BatchDeletePointsRequest>,
         ) -> std::result::Result<
             tonic::Response<super::BatchDeletePointsResponse>,
+            tonic::Status,
+        >;
+        /** Searches a collection for the points nearest a query vector.
+
+ A method on the points collection rather than a service of its own:
+ searching is an operation over points, and modelling it as one keeps the
+ resource hierarchy intact.
+*/
+        async fn search_points(
+            &self,
+            request: tonic::Request<super::SearchPointsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::SearchPointsResponse>,
             tonic::Status,
         >;
     }
@@ -287,6 +452,182 @@ pub mod points_server {
         }
         fn call(&mut self, req: http::Request<B>) -> Self::Future {
             match req.uri().path() {
+                "/episteme.point.v1.Points/CreatePoint" => {
+                    #[allow(non_camel_case_types)]
+                    struct CreatePointSvc<T: Points>(pub Arc<T>);
+                    impl<
+                        T: Points,
+                    > tonic::server::UnaryService<super::CreatePointRequest>
+                    for CreatePointSvc<T> {
+                        type Response = super::Point;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreatePointRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Points>::create_point(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = CreatePointSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/episteme.point.v1.Points/GetPoint" => {
+                    #[allow(non_camel_case_types)]
+                    struct GetPointSvc<T: Points>(pub Arc<T>);
+                    impl<T: Points> tonic::server::UnaryService<super::GetPointRequest>
+                    for GetPointSvc<T> {
+                        type Response = super::Point;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetPointRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Points>::get_point(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = GetPointSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/episteme.point.v1.Points/ListPoints" => {
+                    #[allow(non_camel_case_types)]
+                    struct ListPointsSvc<T: Points>(pub Arc<T>);
+                    impl<T: Points> tonic::server::UnaryService<super::ListPointsRequest>
+                    for ListPointsSvc<T> {
+                        type Response = super::ListPointsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ListPointsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Points>::list_points(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = ListPointsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/episteme.point.v1.Points/DeletePoint" => {
+                    #[allow(non_camel_case_types)]
+                    struct DeletePointSvc<T: Points>(pub Arc<T>);
+                    impl<
+                        T: Points,
+                    > tonic::server::UnaryService<super::DeletePointRequest>
+                    for DeletePointSvc<T> {
+                        type Response = ();
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DeletePointRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Points>::delete_point(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = DeletePointSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 "/episteme.point.v1.Points/BatchCreatePoints" => {
                     #[allow(non_camel_case_types)]
                     struct BatchCreatePointsSvc<T: Points>(pub Arc<T>);
@@ -407,6 +748,51 @@ pub mod points_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = BatchDeletePointsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/episteme.point.v1.Points/SearchPoints" => {
+                    #[allow(non_camel_case_types)]
+                    struct SearchPointsSvc<T: Points>(pub Arc<T>);
+                    impl<
+                        T: Points,
+                    > tonic::server::UnaryService<super::SearchPointsRequest>
+                    for SearchPointsSvc<T> {
+                        type Response = super::SearchPointsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SearchPointsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as Points>::search_points(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = SearchPointsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

@@ -6,20 +6,25 @@
 /// metric — which is what makes a single collection multimodal.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct VectorField {
-    /// Field name, such as `image_clip`. Unique within its collection.
+    /// Identifier of the field, such as `image_clip`. Unique within its
+    /// collection.
+    ///
+    /// Named `field_id` rather than `name` because a vector field is a component
+    /// of a collection, not a resource of its own — it has no resource name and
+    /// cannot be addressed directly.
     #[prost(string, tag="1")]
-    pub name: ::prost::alloc::string::String,
+    pub field_id: ::prost::alloc::string::String,
     /// Number of components in every vector of this field.
     #[prost(int32, tag="2")]
     pub dimensions: i32,
     /// How similarity is measured.
-    #[prost(enumeration="super::super::shared::v1::Metric", tag="3")]
+    #[prost(enumeration="Metric", tag="3")]
     pub metric: i32,
     /// Which search algorithm indexes this field.
-    #[prost(enumeration="super::super::shared::v1::IndexKind", tag="4")]
+    #[prost(enumeration="IndexKind", tag="4")]
     pub index_kind: i32,
     /// Compression applied to the coarse scan tier.
-    #[prost(enumeration="super::super::shared::v1::Codec", tag="5")]
+    #[prost(enumeration="Codec", tag="5")]
     pub codec: i32,
     /// Identifier of the model that produces vectors for this field.
     #[prost(string, tag="6")]
@@ -46,22 +51,147 @@ pub struct Collection {
     /// Resource name of the collection, such as `collections/media`.
     #[prost(string, tag="1")]
     pub name: ::prost::alloc::string::String,
-    /// Digest of the canonicalized descriptor set this collection was created
-    /// with, mirrored into every segment written under it.
+    /// Serialized `FileDescriptorSet` describing this collection's schema.
+    ///
+    /// The engine never parses `.proto`. A generator produces this and it is
+    /// stored verbatim as the schema of record.
     #[prost(bytes="bytes", tag="2")]
+    pub descriptor_set: ::prost::bytes::Bytes,
+    /// Digest of the canonicalized descriptor set, mirrored into every segment
+    /// written under it.
+    #[prost(bytes="bytes", tag="3")]
     pub schema_fingerprint: ::prost::bytes::Bytes,
     /// Named vector fields this collection holds.
-    #[prost(message, repeated, tag="3")]
+    #[prost(message, repeated, tag="4")]
     pub vector_fields: ::prost::alloc::vec::Vec<VectorField>,
     /// Points currently visible to readers.
-    #[prost(int64, tag="4")]
+    #[prost(int64, tag="5")]
     pub live_point_count: i64,
     /// Points deleted but not yet reclaimed by compaction.
-    #[prost(int64, tag="5")]
+    #[prost(int64, tag="6")]
     pub tombstoned_point_count: i64,
     /// Sealed segments making up this collection.
-    #[prost(int32, tag="6")]
+    #[prost(int32, tag="7")]
     pub segment_count: i32,
+}
+/// How similarity is measured within a named vector field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Metric {
+    /// Default value. Never valid in a request.
+    Unspecified = 0,
+    /// Inner product. A higher score is nearer.
+    Dot = 1,
+    /// Squared Euclidean distance. A lower score is nearer.
+    L2 = 2,
+    /// Angular similarity. Normalized at ingest and scored as dot thereafter.
+    Cosine = 3,
+}
+impl Metric {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "METRIC_UNSPECIFIED",
+            Self::Dot => "METRIC_DOT",
+            Self::L2 => "METRIC_L2",
+            Self::Cosine => "METRIC_COSINE",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "METRIC_UNSPECIFIED" => Some(Self::Unspecified),
+            "METRIC_DOT" => Some(Self::Dot),
+            "METRIC_L2" => Some(Self::L2),
+            "METRIC_COSINE" => Some(Self::Cosine),
+            _ => None,
+        }
+    }
+}
+/// Compression applied to a field's coarse scan tier.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum Codec {
+    /// Default value. Never valid in a request.
+    Unspecified = 0,
+    /// No scan tier. Searches read full precision directly.
+    None = 1,
+    /// Half precision. Two bytes per component, effectively lossless for ranking.
+    F16 = 2,
+    /// Scalar quantization with a per-row scale and offset.
+    Int8 = 3,
+    /// Product quantization. One byte per subspace.
+    Pq = 4,
+    /// One bit per component. Coarse enough to require a rerank.
+    Binary = 5,
+}
+impl Codec {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "CODEC_UNSPECIFIED",
+            Self::None => "CODEC_NONE",
+            Self::F16 => "CODEC_F16",
+            Self::Int8 => "CODEC_INT8",
+            Self::Pq => "CODEC_PQ",
+            Self::Binary => "CODEC_BINARY",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "CODEC_UNSPECIFIED" => Some(Self::Unspecified),
+            "CODEC_NONE" => Some(Self::None),
+            "CODEC_F16" => Some(Self::F16),
+            "CODEC_INT8" => Some(Self::Int8),
+            "CODEC_PQ" => Some(Self::Pq),
+            "CODEC_BINARY" => Some(Self::Binary),
+            _ => None,
+        }
+    }
+}
+/// Which search algorithm indexes a field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum IndexKind {
+    /// Default value. Never valid in a request.
+    Unspecified = 0,
+    /// Exhaustive search. Ground truth, and correct for small fields.
+    Flat = 1,
+    /// Hierarchical navigable small world graph.
+    Hnsw = 2,
+    /// Inverted file with product quantization, for memory-constrained fields.
+    IvfPq = 3,
+}
+impl IndexKind {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Unspecified => "INDEX_KIND_UNSPECIFIED",
+            Self::Flat => "INDEX_KIND_FLAT",
+            Self::Hnsw => "INDEX_KIND_HNSW",
+            Self::IvfPq => "INDEX_KIND_IVF_PQ",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "INDEX_KIND_UNSPECIFIED" => Some(Self::Unspecified),
+            "INDEX_KIND_FLAT" => Some(Self::Flat),
+            "INDEX_KIND_HNSW" => Some(Self::Hnsw),
+            "INDEX_KIND_IVF_PQ" => Some(Self::IvfPq),
+            _ => None,
+        }
+    }
 }
 /// Request message for creating a collection.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -72,12 +202,6 @@ pub struct CreateCollectionRequest {
     /// The collection to create.
     #[prost(message, optional, tag="2")]
     pub collection: ::core::option::Option<Collection>,
-    /// Serialized `FileDescriptorSet` describing the collection's schema.
-    ///
-    /// The engine never parses `.proto`. A generator produces this and it is
-    /// stored verbatim as the schema of record.
-    #[prost(bytes="bytes", tag="3")]
-    pub descriptor_set: ::prost::bytes::Bytes,
 }
 /// Request message for retrieving a collection.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]

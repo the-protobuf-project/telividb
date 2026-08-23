@@ -77,3 +77,8 @@ jobs:
       # Documentation is generated from the protos and committed, so it can
       # drift the same way generated code can.
       - run: cargo xtask check-protodoc
+      # The same lint the action above runs, but resolved through `buf export`
+      # so imports actually load, and checked by exit status rather than by
+      # counting output lines. A count cannot tell a clean run from one that
+      # never linted anything.
+      - run: cargo xtask lint-proto

@@ -6,21 +6,6 @@ One package per resource, each in its own versioned directory. Files within a pa
 
 | Module | Package | Services | Messages | Enums |
 | --- | --- | ---: | ---: | ---: |
-| [Collection](episteme/collection/README.md) | `episteme.collection.v1` | 1 | 7 | 0 |
-| [Point](episteme/point/README.md) | `episteme.point.v1` | 1 | 9 | 0 |
-| [Search](episteme/search/README.md) | `episteme.search.v1` | 1 | 6 | 0 |
-| [Shared](episteme/shared/README.md) | `episteme.shared.v1` | 0 | 3 | 3 |
-
-## Module dependencies
-
-```mermaid
-graph LR
-    collection["Collection"]
-    point["Point"]
-    search["Search"]
-    shared["Shared"]
-    collection --> shared
-    point --> shared
-    search --> shared
-```
+| [Collection](episteme/collection/README.md) | `episteme.collection.v1` | 1 | 7 | 3 |
+| [Point](episteme/point/README.md) | `episteme.point.v1` | 1 | 20 | 0 |
 
