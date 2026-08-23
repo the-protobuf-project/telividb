@@ -9,6 +9,19 @@ env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
 
+# Cancel a run when a newer commit lands on the same branch.
+#
+# A full matrix build is minutes of runner time, and the result of an
+# already-superseded commit is never looked at. `group` is keyed on the
+# workflow and the ref, so pushes to different branches never cancel each
+# other.
+#
+# `main` is deliberately excluded from cancellation: its runs are the baseline
+# `buf breaking` compares against, and a cancelled one leaves no record.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   # The default build must need no C toolchain, no CMake, no CUDA SDK.
   #
@@ -42,6 +55,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.target }}
+          # Save the cache even when the job fails. Without this a failing
+          # build discards everything it compiled, so the next attempt starts
+          # cold — which is exactly when a fast rebuild matters most.
+          cache-on-failure: true
 
       - name: Confirm the architecture under test
         run: |
@@ -62,6 +79,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
@@ -73,6 +93,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
       - run: cargo xtask check-len
       - run: cargo xtask check-docs
 
@@ -86,6 +109,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
       - name: Fail if a native build dependency crept in
         run: |
           tree=$(cargo tree --workspace --edges normal,build --prefix none)
@@ -130,6 +156,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
       - run: cargo test -p episteme-storage --test crash_consistency
       - run: cargo test -p episteme-storage --test buffer_visibility
       - run: cargo test -p episteme-storage --test segment_roundtrip
@@ -144,6 +173,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
+        with:
+          # Release artifacts live in a different directory from debug ones, so
+          # sharing a key with the debug jobs would store both and hit neither.
+          shared-key: release
+          cache-on-failure: true
       - run: cargo test -p episteme-index --test hnsw_recall --release -- --nocapture
       - run: cargo test -p episteme-index --test hnsw_distribution --release -- --nocapture
       - run: cargo test -p episteme-index --test hnsw_persist --release

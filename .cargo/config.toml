@@ -7,7 +7,7 @@
 [alias]
 xtask = "run --package xtask --"
 
-# Start the server. Arguments pass through: `cargo serve -- --addr 0.0.0.0:7700`
+# Start the server. Flags pass straight through: `cargo serve --addr 0.0.0.0:7700`
 serve = "run --release --package episteme-server --bin episteme --"
 
 # The same, unoptimized and verbose, for working on it.

@@ -17,6 +17,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod args;
 pub mod config;
 pub mod error;
 pub mod serve;
