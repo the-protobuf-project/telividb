@@ -42,6 +42,28 @@ fn over_fetch_never_returns_fewer_than_k() {
 }
 
 #[test]
+fn over_fetch_widens_with_the_compression_ratio() {
+    // The pairing, asserted rather than left as folklore: a coarser codec must
+    // admit more candidates, because reranking can only reorder what the scan
+    // let through.
+    let f16 = OverFetch::for_ratio(2.0);
+    let int8 = OverFetch::for_ratio(4.0);
+    let pq = OverFetch::for_ratio(32.0);
+
+    assert!(f16.multiplier < int8.multiplier);
+    assert!(int8.multiplier < pq.multiplier);
+    assert!(pq.candidates_for(10) > int8.candidates_for(10));
+}
+
+#[test]
+fn over_fetch_is_capped_so_it_cannot_exceed_an_exact_scan() {
+    // Past a point, reranking most of the corpus costs more than scanning it
+    // exactly in the first place.
+    assert_eq!(OverFetch::for_ratio(1000.0).multiplier, 20.0);
+    assert_eq!(OverFetch::for_ratio(0.1).multiplier, 2.0);
+}
+
+#[test]
 fn reranking_corrects_a_coarse_ordering() {
     // The whole point: the coarse tier ranked row 2 first, full precision says
     // row 0. That correction is what two-tier buys.

@@ -35,8 +35,8 @@ while it was spoken.
 |---|---|
 | `episteme-core` | Domain types, AIP-122 resource names, spans, content refs, **collection schema + additive-compatibility rules**, `SchemaReader` / `VectorStore` ports |
 | `episteme-distance` | Scalar dot / L2 / normalize. **No SIMD yet** |
-| `episteme-index` | `VectorIndex` port, exhaustive + **HNSW** (persistable), two-tier rerank, buffer/segment merge with provenance, recall harness |
-| `episteme-storage` | Segment + field headers with schema/model fingerprints, segment writer + reader, **int8 + binary quantization**, WAL with torn-tail recovery, atomic manifest, searchable mutable buffer |
+| `episteme-index` | `VectorIndex` port, exhaustive + **HNSW** (persistable), **two-tier scan + rerank**, buffer/segment merge with provenance, recall harness |
+| `episteme-storage` | Segment + field headers with schema/model fingerprints, segment writer + reader, **int8, f16, binary and PQ quantization**, WAL with torn-tail recovery, atomic manifest, searchable mutable buffer |
 | `episteme-telemetry` | Span/metric vocabulary, redaction, Prometheus + structured logs |
 | `episteme-server` | Not started |
 | `episteme-embed` | Not started |
@@ -51,7 +51,7 @@ No C toolchain, no CMake, no CUDA SDK. That is a rule, not a coincidence —
 
 ```bash
 cargo build --workspace
-cargo test  --workspace          # 271 tests
+cargo test  --workspace          # 336 tests
 cargo clippy --workspace --all-targets -- -D warnings
 cargo xtask check-len            # no file over 200 lines
 

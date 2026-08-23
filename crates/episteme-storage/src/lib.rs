@@ -19,6 +19,7 @@ pub mod format;
 pub mod manifest;
 pub mod ports;
 pub mod segment;
+pub mod tier;
 pub mod wal;
 
 pub use buffer::MutableBuffer;
@@ -26,4 +27,5 @@ pub use error::{Error, Result};
 pub use format::{Codec, DType, FieldHeader, SegmentHeader};
 pub use manifest::Manifest;
 pub use segment::{SegmentReader, SegmentWriter};
+pub use tier::{BinaryTier, Int8Tier, PqTier};
 pub use wal::{WalReader, WalWriter};

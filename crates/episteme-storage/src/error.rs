@@ -50,6 +50,18 @@ pub enum Error {
     #[error("model drift: field holds vectors from {segment}, configured model is {current}")]
     ModelDrift { segment: String, current: String },
 
+    /// A PQ configuration that cannot describe a vector.
+    ///
+    /// Refused rather than padded: a silent pad makes the final subspace
+    /// partly meaningless, and the resulting recall loss is very hard to
+    /// attribute back to here.
+    #[error("invalid pq shape: {m} subspaces do not divide {dim} dimensions evenly")]
+    InvalidPqShape { dim: usize, m: usize },
+
+    /// A vector or code run did not match the codebook it was used with.
+    #[error("pq length mismatch: expected {expected}, got {actual}")]
+    PqDimMismatch { expected: usize, actual: usize },
+
     /// A byte did not correspond to any known enum variant.
     #[error("unknown {what} discriminant {value}")]
     UnknownDiscriminant { what: &'static str, value: u8 },

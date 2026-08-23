@@ -19,7 +19,11 @@
 //! rerank; int8 is accurate enough to rank on directly for most models.
 
 mod binary;
+mod f16;
 mod int8;
+mod pq;
 
 pub use binary::{BinaryCodes, hamming};
+pub use f16::F16Row;
 pub use int8::Int8Row;
+pub use pq::{CENTROIDS, PqCodebook, PqParams};

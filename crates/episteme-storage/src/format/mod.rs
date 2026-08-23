@@ -1,6 +1,6 @@
 //! On-disk structures.
 
-mod codec;
+pub mod codec;
 mod field_header;
 mod header;
 pub mod quantize;

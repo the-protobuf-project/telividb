@@ -10,5 +10,5 @@ pub use domain::{
     ContentRef, Dim, ExternalId, Fingerprint, Metric, Ordinal, ResourceName, Span, Template,
 };
 pub use error::{Error, Result};
-pub use ports::{SchemaReader, VectorStore};
+pub use ports::{PreparedQuery, PreparedState, ScanTier, SchemaReader, VectorStore};
 pub use schema::{CollectionSchema, Compatibility, IndexKind, PointType, VectorFieldSpec};

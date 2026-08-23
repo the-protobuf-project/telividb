@@ -144,5 +144,7 @@ jobs:
       - run: cargo test -p episteme-index --test hnsw_recall --release -- --nocapture
       - run: cargo test -p episteme-index --test hnsw_distribution --release -- --nocapture
       - run: cargo test -p episteme-index --test hnsw_persist --release
+      - run: cargo test -p episteme-storage --test codec_recall --release -- --nocapture
+      - run: cargo test -p episteme-storage --test two_tier_recall --release -- --nocapture
       - name: Recall gate at 128 dimensions
         run: cargo run --release -p episteme-index --bin recall -- --rows 20000 --dim 128 --ef 64

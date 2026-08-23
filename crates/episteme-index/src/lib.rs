@@ -12,8 +12,8 @@ pub mod recall;
 
 pub use adapters::{FlatIndex, HnswIndex, HnswParams};
 pub use domain::{
-    Candidate, Hit, MergeStats, Merged, OverFetch, RerankStats, Source, merge_top_k, rerank,
-    rerank_measured,
+    Candidate, Hit, MergeStats, Merged, OverFetch, RerankStats, Source, TwoTierStats, merge_top_k,
+    rerank, rerank_candidates, rerank_measured, two_tier_search,
 };
 pub use ports::{VectorIndex, VectorStore};
 pub use recall::{RecallReport, recall_at_k};

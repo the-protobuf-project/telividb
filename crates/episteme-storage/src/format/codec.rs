@@ -62,6 +62,24 @@ pub enum Codec {
 }
 
 impl Codec {
+    /// Whether this codec needs a trained codebook stored alongside the codes.
+    ///
+    /// PQ codes are meaningless without exactly the codebook that produced
+    /// them, so a segment using PQ must carry its codebook — which is why the
+    /// codebook lives beside the codes rather than in shared state.
+    pub fn needs_codebook(self) -> bool {
+        matches!(self, Codec::Pq { .. })
+    }
+
+    /// Approximate compression ratio against f32, for sizing decisions.
+    pub fn ratio(self, dim: usize) -> f32 {
+        let raw = (dim * 4) as f32;
+        match self.row_bytes(dim) {
+            0 => 1.0,
+            bytes => raw / bytes as f32,
+        }
+    }
+
     /// Bytes one row occupies in `codes.bin`.
     pub fn row_bytes(self, dim: usize) -> usize {
         match self {
@@ -100,3 +118,7 @@ impl Codec {
         })
     }
 }
+
+#[cfg(test)]
+#[path = "codec_test.rs"]
+mod tests;
