@@ -22,6 +22,16 @@ fn every_field_is_namespaced() {
         BYTES,
         RECORDS,
         DIM,
+        DURATION_SECONDS,
+        OFFSET,
+        SEGMENTS,
+        ROWS_WRITTEN,
+        ROWS_RECLAIMED,
+        FILTERED,
+        QUERY,
+        EDGES,
+        LEVELS,
+        EF,
     ];
     for f in all {
         assert!(f.starts_with("episteme."), "{f} is not namespaced");
@@ -49,6 +59,11 @@ fn measurements_are_not_label_safe() {
         BYTES,
         RECORDS,
         DIM,
+        DURATION_SECONDS,
+        OFFSET,
+        SEGMENTS,
+        ROWS_WRITTEN,
+        ROWS_RECLAIMED,
     ] {
         assert!(
             !LABEL_SAFE.contains(&f),

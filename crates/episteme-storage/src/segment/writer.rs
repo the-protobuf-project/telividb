@@ -4,7 +4,7 @@ use super::layout::{FieldLayout, field_dir};
 use crate::error::Result;
 use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
 use episteme_core::{Fingerprint, VectorStore};
-use episteme_telemetry::{fields, metrics_names};
+use episteme_telemetry::{Meter, fields, logger, metrics_names};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -20,6 +20,9 @@ pub struct SegmentWriter {
     final_path: PathBuf,
     schema_fingerprint: Fingerprint,
     rows: u64,
+    /// Where seal measurements go. Disabled until a composition root wires one
+    /// in, so writing a segment never needs a pipeline or a runtime.
+    meter: Meter,
 }
 
 impl SegmentWriter {
@@ -36,7 +39,17 @@ impl SegmentWriter {
             final_path,
             schema_fingerprint,
             rows: 0,
+            meter: Meter::disabled(),
         })
+    }
+
+    /// Record seal measurements through `meter`.
+    ///
+    /// Separate from [`SegmentWriter::create`] so that beginning a segment
+    /// stays a filesystem operation, with no pipeline and no runtime involved.
+    pub fn with_meter(mut self, meter: Meter) -> Self {
+        self.meter = meter;
+        self
     }
 
     /// Write one named vector field at full precision, with no scan tier.
@@ -66,13 +79,11 @@ impl SegmentWriter {
         model_fingerprint: Fingerprint,
         codec: Codec,
     ) -> Result<()> {
-        let span = tracing::info_span!(
-            "episteme.segment.write_field",
-            { fields::FIELD } = name,
-            { fields::ROWS } = store.len(),
-            { fields::DIM } = store.dim().get(),
-        );
-        let _guard = span.enter();
+        logger::debug!("writing field {name}").with_data(&serde_json::json!({
+            fields::FIELD: name,
+            fields::ROWS: store.len(),
+            fields::DIM: store.dim().get(),
+        }));
 
         let dir = field_dir(&self.tmp, name);
         fs::create_dir_all(&dir)?;
@@ -137,10 +148,17 @@ impl SegmentWriter {
             let _ = fs::File::open(parent).and_then(|d| d.sync_all());
         }
 
-        metrics::histogram!(metrics_names::SEGMENT_SEAL_DURATION)
-            .record(started.elapsed().as_secs_f64());
-        metrics::gauge!(metrics_names::ROWS_LIVE).set(self.rows as f64);
-        tracing::info!({ fields::ROWS } = self.rows, "segment sealed");
+        let elapsed = started.elapsed().as_secs_f64();
+        self.meter
+            .histogram(metrics_names::SEGMENT_SEAL_DURATION, elapsed);
+        // No `ROWS_LIVE` gauge here. This function knows the row count of the
+        // segment it just wrote, not the database's — setting a process-wide
+        // gauge from it would report the last segment sealed as the whole
+        // corpus. That gauge belongs to whatever owns the manifest.
+        logger::info!("segment sealed").with_data(&serde_json::json!({
+            fields::ROWS: self.rows,
+            fields::DURATION_SECONDS: elapsed,
+        }));
         Ok(self.final_path)
     }
 }

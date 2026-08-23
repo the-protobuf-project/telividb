@@ -5,33 +5,28 @@ use crate::error::{Error, Result};
 use crate::services::CollectionSvc;
 use episteme_proto::FILE_DESCRIPTOR_SET;
 use episteme_proto::collection::v1::collections_server::CollectionsServer;
-use episteme_telemetry::{Environment, Telemetry, TelemetryConfig, logger};
+use episteme_telemetry::{Telemetry, TelemetryConfig, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
 ///
 /// Telemetry is installed here rather than in any library, because a library
 /// that installs a subscriber decides for every binary that ever links it.
 pub async fn serve(config: ServerConfig) -> Result<()> {
-    // An already-installed pipeline is not fatal. An embedded caller may have
-    // configured its own subscriber before starting a server, and refusing to
-    // serve because logging is already set up would be the wrong call — the
-    // caller's choice wins, and the server says so rather than dying.
-    let _telemetry = match Telemetry::install(TelemetryConfig {
-        environment: environment_of(&config.environment),
+    // A failure here is fatal, and deliberately so. The previous behaviour
+    // treated every error as "already installed" and reported it through a
+    // facade that, in the failure case, has no pipeline behind it — so an
+    // unwritable `--mcap` path or an unreachable collector started a server
+    // with no telemetry and no diagnostic anywhere. `install` distinguishes a
+    // real build failure from a benign one; this propagates the real ones.
+    let telemetry = Telemetry::install(TelemetryConfig {
+        environment: config.environment.clone(),
+        log_level: config.log_level,
         otlp: config.otlp_addr,
-        mcap_path: config.mcap_path.as_ref().map(|p| p.display().to_string()),
+        mcap_path: config.mcap_path.clone(),
+        config_path: config.telemetry_config.clone(),
         ..TelemetryConfig::default()
-    }) {
-        Ok(t) => Some(t),
-        // An already-installed pipeline is not fatal. An embedded caller may
-        // have configured its own before starting a server, and refusing to
-        // serve because logging is already set up would be the wrong call —
-        // the caller's choice wins, and the server says so rather than dying.
-        Err(e) => {
-            tracing::debug!(%e, "telemetry already installed; using the existing pipeline");
-            None
-        }
-    };
+    })
+    .map_err(|e| Error::Telemetry(e.to_string()))?;
 
     // Health reports SERVING once the router is up. A load balancer needs this
     // to distinguish "starting" from "broken", and it costs one service.
@@ -57,11 +52,51 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
         router = router.add_service(reflection);
     }
 
-    // Say where every stream of telemetry goes, at startup, every time.
-    //
-    // The alternative is what this replaced: a server that logs one line and
-    // then appears silent, with no indication that the instrumentation exists,
-    // that metrics are off, or where a log file would be if there were one.
+    announce(&config);
+
+    let listener = tokio::net::TcpListener::bind(config.addr)
+        .await
+        .map_err(|source| Error::Bind {
+            addr: config.addr,
+            source,
+        })?;
+    let incoming = tokio_stream::wrappers::TcpListenerStream::new(listener);
+
+    let mut server = tonic::transport::Server::builder();
+
+    // gRPC-web is a `tower` layer, not a second API — but it has to be in place
+    // from the start, because it constrains streaming: server-streaming works
+    // over gRPC-web, bidirectional does not.
+    let served = if config.grpc_web {
+        server
+            .accept_http1(true)
+            .layer(tonic_web::GrpcWebLayer::new())
+            .add_routes(router)
+            .serve_with_incoming_shutdown(incoming, shutdown())
+            .await
+    } else {
+        server
+            .add_routes(router)
+            .serve_with_incoming_shutdown(incoming, shutdown())
+            .await
+    };
+
+    // Flush before returning: an exporter batches, so the last few seconds of a
+    // run are otherwise lost exactly when something has gone wrong enough to
+    // stop the process. Best-effort, because with no collector configured the
+    // stack's meter has nothing to flush and says so — which is not a reason to
+    // fail a clean shutdown.
+    let _ = telemetry.flush();
+
+    served.map_err(|e| Error::Transport(e.to_string()))
+}
+
+/// Say where every stream of telemetry goes, at startup, every time.
+///
+/// The alternative is what this replaced: a server that logs one line and then
+/// appears silent, with no indication that the instrumentation exists, that
+/// metrics are off, or where a log file would be if there were one.
+fn announce(config: &ServerConfig) {
     logger::info!(
         "episteme listening on {} (grpc-web {}, reflection {})",
         config.addr,
@@ -86,41 +121,6 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
         );
     }
     logger::info!("telemetry: environment {}", config.environment);
-
-    let mut server = tonic::transport::Server::builder();
-
-    // gRPC-web is a `tower` layer, not a second API — but it has to be in place
-    // from the start, because it constrains streaming: server-streaming works
-    // over gRPC-web, bidirectional does not.
-    if config.grpc_web {
-        server
-            .accept_http1(true)
-            .layer(tonic_web::GrpcWebLayer::new())
-            .add_routes(router)
-            .serve_with_shutdown(config.addr, shutdown())
-            .await
-            .map_err(|e| Error::Transport(e.to_string()))
-    } else {
-        server
-            .add_routes(router)
-            .serve_with_shutdown(config.addr, shutdown())
-            .await
-            .map_err(|e| Error::Transport(e.to_string()))
-    }
-}
-
-/// Map the configured name onto the stack's environment.
-///
-/// Validated at parse time, so an unknown value cannot reach here — but the
-/// fallback is `Development` rather than a panic, because a server refusing to
-/// start over a logging label would be the wrong trade.
-fn environment_of(name: &str) -> Environment {
-    match name {
-        "production" => Environment::Production,
-        "staging" => Environment::Staging,
-        "jetson" => Environment::Jetson,
-        _ => Environment::Development,
-    }
 }
 
 /// Resolve when the process is asked to stop.
@@ -129,7 +129,18 @@ fn environment_of(name: &str) -> Environment {
 /// half-written is a temp directory, but an interrupted manifest swap would be
 /// the one moment a collection is mid-publish.
 async fn shutdown() {
-    if tokio::signal::ctrl_c().await.is_ok() {
-        tracing::info!("shutdown requested");
+    // A failure to *install* the handler must not resolve: `ctrl_c` returning
+    // `Err` would otherwise trigger an immediate graceful shutdown, so a server
+    // that could not register a signal handler would exit the instant it
+    // started serving. Never shutting down is the safe direction — the process
+    // can still be killed.
+    match tokio::signal::ctrl_c().await {
+        Ok(()) => {
+            logger::info!("shutdown requested");
+        }
+        Err(error) => {
+            logger::error!("cannot install the ctrl-c handler: {error}");
+            std::future::pending::<()>().await;
+        }
     }
 }

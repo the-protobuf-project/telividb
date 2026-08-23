@@ -8,17 +8,31 @@
 use crate::domain::Candidate;
 use crate::ports::{VectorIndex, VectorStore};
 use episteme_core::{Ordinal, Result};
-use episteme_telemetry::{fields, metrics_names, redact};
+use episteme_telemetry::{Meter, fields, logger, metrics_names, redact};
 use std::time::Instant;
 
 /// Brute-force scan over every row in the store.
-#[derive(Debug, Default, Clone, Copy)]
-pub struct FlatIndex;
+#[derive(Debug, Default, Clone)]
+pub struct FlatIndex {
+    /// Where search measurements go.
+    ///
+    /// On the index rather than in the search signature because `search` takes
+    /// `&self` and runs concurrently on a shared index — there is nowhere in
+    /// that call to pass `&mut` state. Disabled by default, so constructing an
+    /// index needs no pipeline and no runtime.
+    meter: Meter,
+}
 
 impl FlatIndex {
-    /// A flat index. Stateless — it holds no structure of its own.
+    /// A flat index. Holds no structure of its own beyond where to report.
     pub fn new() -> Self {
-        Self
+        Self::default()
+    }
+
+    /// Record search measurements through `meter`.
+    pub fn with_meter(mut self, meter: Meter) -> Self {
+        self.meter = meter;
+        self
     }
 }
 
@@ -45,21 +59,9 @@ impl VectorIndex for FlatIndex {
             return Ok(Vec::new());
         }
 
-        // Span, not per-candidate instrumentation: the scan below runs once
-        // per stored vector, and a span there would cost more than the distance
-        // computation it measured. Aggregate counts are recorded on exit.
-        let span = tracing::debug_span!(
-            "episteme.index.search",
-            { fields::INDEX_KIND } = self.kind(),
-            { fields::K } = k,
-            { fields::DIM } = dim,
-            filtered = allowed.is_some(),
-            // Shape only. A query vector must never be emitted: it can be
-            // inverted toward its source text, and logs are read by people who
-            // were never granted `read_vector`.
-            query = %redact::vector_shape(query),
-        );
-        let _guard = span.enter();
+        // One record on exit, not per-candidate instrumentation: the scan below
+        // runs once per stored vector, and emitting there would cost more than
+        // the distance computation it measured.
         let started = Instant::now();
 
         let metric = store.metric();
@@ -92,17 +94,30 @@ impl VectorIndex for FlatIndex {
         sort_best_first(&mut scored, k, metric.higher_is_nearer());
         scored.truncate(k);
 
-        let labels = [(fields::INDEX_KIND, self.kind())];
-        metrics::histogram!(metrics_names::SEARCH_DURATION, &labels)
-            .record(started.elapsed().as_secs_f64());
-        metrics::histogram!(metrics_names::SEARCH_CANDIDATES, &labels).record(visited as f64);
-        metrics::histogram!(metrics_names::SEARCH_RESULTS, &labels).record(scored.len() as f64);
+        let elapsed = started.elapsed().as_secs_f64();
+        // The stack's metrics take no attributes, so the index kind travels on
+        // the log record rather than as a metric dimension. A dashboard that
+        // wants flat-versus-hnsw latency reads it from there.
+        self.meter
+            .histogram(metrics_names::SEARCH_DURATION, elapsed);
+        self.meter
+            .histogram(metrics_names::SEARCH_CANDIDATES, visited as f64);
+        self.meter
+            .histogram(metrics_names::SEARCH_RESULTS, scored.len() as f64);
 
-        tracing::debug!(
-            { fields::CANDIDATES_VISITED } = visited,
-            { fields::RESULTS_RETURNED } = scored.len(),
-            "search complete"
-        );
+        logger::debug!("search complete").with_data(&serde_json::json!({
+            fields::INDEX_KIND: self.kind(),
+            fields::K: k,
+            fields::DIM: dim,
+            fields::FILTERED: allowed.is_some(),
+            // Shape only. A query vector must never be emitted: it can be
+            // inverted toward its source text, and logs are read by people who
+            // were never granted `read_vector`.
+            fields::QUERY: redact::vector_shape(query),
+            fields::CANDIDATES_VISITED: visited,
+            fields::RESULTS_RETURNED: scored.len(),
+            fields::DURATION_SECONDS: elapsed,
+        }));
         Ok(scored)
     }
 }

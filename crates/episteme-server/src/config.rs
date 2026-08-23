@@ -1,5 +1,6 @@
 //! How the server is configured.
 
+use episteme_telemetry::{Environment, LogLevel};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
@@ -18,9 +19,24 @@ pub struct ServerConfig {
     /// On by default: without it a client must already hold the protos, which
     /// defeats generic tooling.
     pub reflection: bool,
-    /// Deployment environment, which is the telemetry stack's verbosity
-    /// control: `development` is chatty, `production` is not.
-    pub environment: String,
+    /// Deployment environment, reported to the collector as a resource
+    /// attribute so staging and production stay distinguishable when they
+    /// export to the same place.
+    ///
+    /// Typed rather than a `String`: as text, an embedded caller writing
+    /// `ServerConfig { environment: "prod".to_owned(), .. }` bypassed argument
+    /// parsing entirely and fell through to `Development`, so a production
+    /// deployment reported `prod` while behaving as development. The enum makes
+    /// that unrepresentable and moves the one string conversion into
+    /// [`crate::args::parse`].
+    pub environment: Environment,
+
+    /// Console and export verbosity.
+    ///
+    /// `None` defers to `[logging] level` in `telemetry.toml`, which is also
+    /// where per-module overrides live. A flag that always won would make that
+    /// file's logging section permanently dead.
+    pub log_level: Option<LogLevel>,
     /// OTLP collector to export traces, metrics and logs to.
     ///
     /// `None` keeps everything on the console. A daemon should set this:
@@ -31,6 +47,15 @@ pub struct ServerConfig {
 
     /// Record an MCAP file at this path, for inspection in Foxglove Studio.
     pub mcap_path: Option<PathBuf>,
+
+    /// Explicit path to `telemetry.toml`.
+    ///
+    /// `None` leaves the stack to discover it relative to the working
+    /// directory, which is right for `cargo run` from the repository root and
+    /// wrong for a deployed binary — it finds no file, falls back to defaults
+    /// where the OTLP pipeline is *enabled*, and reports a refused connection
+    /// on every batch. A daemon should set this.
+    pub telemetry_config: Option<PathBuf>,
 }
 
 impl Default for ServerConfig {
@@ -41,11 +66,13 @@ impl Default for ServerConfig {
                 .expect("literal is a valid address"),
             grpc_web: true,
             reflection: true,
-            environment: "development".to_owned(),
+            environment: Environment::Development,
+            log_level: None,
             // Off unless asked: a database should not open a port nobody
             // requested.
             otlp_addr: None,
             mcap_path: None,
+            telemetry_config: None,
         }
     }
 }

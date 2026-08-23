@@ -1,30 +1,5 @@
 use super::*;
-
-#[test]
-fn defaults_keep_everything_local() {
-    let c = TelemetryConfig::default();
-    assert!(c.otlp.is_none(), "must not export off the machine unasked");
-    assert!(c.mcap_path.is_none());
-    assert_eq!(
-        c.recall_sample_rate, 0.0,
-        "recall sampling costs a full scan"
-    );
-}
-
-#[test]
-fn the_service_identifies_itself() {
-    let c = TelemetryConfig::default();
-    assert_eq!(c.service, "episteme");
-    assert!(!c.version.is_empty(), "a collector groups by version");
-}
-
-#[test]
-fn development_is_the_default_environment() {
-    // Verbosity is the environment in this stack, not a log level. Defaulting
-    // to development keeps a local run chatty without anyone configuring it.
-    let c = TelemetryConfig::default();
-    assert_eq!(c.environment.to_string().to_lowercase(), "development");
-}
+use std::path::Path;
 
 #[test]
 fn recall_sampling_is_off_when_the_rate_is_zero() {
@@ -38,4 +13,26 @@ fn recall_sampling_respects_the_rate() {
     assert!(should_sample(0.01, 0.005), "below the rate should sample");
     assert!(!should_sample(0.01, 0.01), "at the rate should not");
     assert!(!should_sample(0.01, 0.9), "above the rate should not");
+}
+
+#[test]
+fn a_utf8_mcap_path_passes_through_unchanged() {
+    let rendered = utf8_arg(Path::new("/var/log/episteme.mcap"), "--mcap").expect("valid UTF-8");
+    assert_eq!(rendered, "/var/log/episteme.mcap");
+}
+
+#[cfg(unix)]
+#[test]
+fn a_non_utf8_mcap_path_is_refused_rather_than_mangled() {
+    // `to_string_lossy` would replace the invalid byte with U+FFFD, and the
+    // recorder would open a different file than the one asked for while
+    // reporting the name it was given. Refusing is the only honest answer.
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+    let path = Path::new(OsStr::from_bytes(b"/tmp/\xff.mcap"));
+    let error = utf8_arg(path, "--mcap").expect_err("must refuse a non-UTF-8 path");
+    assert!(
+        error.to_string().contains("not valid UTF-8"),
+        "unhelpful error: {error}"
+    );
 }

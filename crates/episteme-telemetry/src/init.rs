@@ -1,71 +1,32 @@
 //! Installing the telemetry pipeline.
 //!
-//! Composition roots only — `episteme-server` and `episteme-embedded`. Library
-//! crates must never reach for this; they emit through the `tracing` and
-//! `metrics` facades and let whoever owns `main` decide where the data goes.
+//! Composition roots only — `episteme-server` and `episteme-embedded`. This is
+//! the one place the stack is built, per CLAUDE.md rule 41.
 //!
-//! The pipeline itself is [`telemetry`], the ecosystem's stack: structured
-//! logging, OpenTelemetry traces and metrics, and MCAP recording, all behind
-//! one builder. This module is a thin adapter that maps episteme's
-//! configuration onto it and registers episteme's metric descriptions.
+//! The pipeline itself is [`telemetry`]: structured logging, OpenTelemetry
+//! traces and metrics, and MCAP recording, all behind one builder. This module
+//! is a thin adapter that maps episteme's configuration onto it — it does not
+//! wrap, re-implement or second-guess any part of the stack.
 
-use std::net::SocketAddr;
-use telemetry::{Telemetry as Inner, options::Environment};
-
-/// How telemetry should be wired up.
-#[derive(Debug, Clone)]
-pub struct TelemetryConfig {
-    /// Service name reported to the collector.
-    pub service: String,
-    /// Service version reported to the collector.
-    pub version: String,
-    /// Deployment environment, which is this stack's verbosity control.
-    ///
-    /// This is the stack's own verbosity control — `Development` is chatty,
-    /// `Production` is not — so it replaces a log-level string rather than
-    /// sitting beside one. `Jetson` exists because the stack targets it
-    /// directly, which matters here: Jetson is a real deployment target for
-    /// this database.
-    pub environment: Environment,
-    /// OTLP collector to export traces, metrics and logs to.
-    ///
-    /// `None` keeps everything local: console output only, nothing leaves the
-    /// process.
-    pub otlp: Option<SocketAddr>,
-    /// Record an MCAP file at this path, for inspection in Foxglove Studio.
-    pub mcap_path: Option<String>,
-    /// Fraction of searches re-run exhaustively to measure live recall.
-    ///
-    /// Zero disables it. This costs a full scan per sampled query, so it wants
-    /// to stay small — but without it, production recall is unknown.
-    pub recall_sample_rate: f64,
-}
-
-impl Default for TelemetryConfig {
-    fn default() -> Self {
-        Self {
-            service: "episteme".to_owned(),
-            version: env!("CARGO_PKG_VERSION").to_owned(),
-            environment: Environment::Development,
-            // Off unless asked: a database should not send telemetry off the
-            // machine because nobody said not to.
-            otlp: None,
-            mcap_path: None,
-            recall_sample_rate: 0.0,
-        }
-    }
-}
+use crate::config::{TelemetryConfig, otlp_host};
+use crate::meter::Meter;
+use telemetry::{Telemetry as Inner, options::ServiceOptions};
 
 /// Live telemetry. Holding it keeps the pipeline installed and flushing.
 ///
 /// Deliberately not `Clone`: installing twice is a bug, and the type should
-/// make that awkward rather than merely discouraged.
+/// make that awkward rather than merely discouraged. The stack flushes and
+/// shuts down its exporters when this drops.
 ///
-/// `Debug` is written by hand and prints configuration only — the pipeline
-/// itself does not implement it, and dumping its internals would put exporter
-/// state in a log.
+/// `Debug` is written by hand and prints configuration only — the stack does
+/// not implement it, and dumping its internals would put exporter state in a
+/// log.
 pub struct Telemetry {
+    /// The configuration this pipeline was installed with.
     config: TelemetryConfig,
+    /// Shared metrics recorder handed to the crates that emit.
+    meter: Meter,
+    /// The stack itself. Dropping it flushes and shuts down.
     inner: Inner,
 }
 
@@ -76,6 +37,7 @@ impl std::fmt::Debug for Telemetry {
             .field("version", &self.config.version)
             .field("environment", &self.config.environment.to_string())
             .field("otlp", &self.config.otlp)
+            .field("recording", &self.meter.is_enabled())
             .finish_non_exhaustive()
     }
 }
@@ -83,17 +45,34 @@ impl std::fmt::Debug for Telemetry {
 impl Telemetry {
     /// Install logging, tracing and metrics.
     ///
-    /// Returns an error if a pipeline is already installed — which usually
-    /// means an embedded caller set one up and the server tried to as well.
-    /// Worth surfacing rather than ignoring: two pipelines split the data
-    /// unpredictably between them.
+    /// Needs a tokio runtime: the stack starts exporters when it builds.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TelemetryError::Install`] if the stack could not be built — an
+    /// unwritable MCAP path or an OTLP endpoint that will not resolve. That is
+    /// a real failure and must not be mistaken for "already installed": a
+    /// server that starts with no telemetry and no diagnostic is the case this
+    /// error exists to prevent.
     pub fn install(config: TelemetryConfig) -> Result<Self, TelemetryError> {
-        // `Telemetry::new()` then `.with_service(...)` — the documented entry
-        // point. `Telemetry::builder(name, version)` exists but is not what the
-        // stack's own examples use.
         let mut builder = Inner::new()
             .with_service(&config.service, &config.version)
             .environment(config.environment.clone());
+
+        // Before anything else: the stack's own config file decides whether an
+        // OTLP exporter starts at all, and with no file found its default is
+        // *enabled*. Pointing at the file explicitly is what keeps a binary's
+        // behaviour independent of the directory it happens to run from.
+        if let Some(path) = &config.config_path {
+            builder = builder.with_config(utf8_arg(path, "--telemetry-config")?);
+        }
+
+        // Only override the config file when the caller actually chose a level.
+        // Setting one unconditionally is what would make `[logging] level` in
+        // `telemetry.toml` permanently dead, since code outranks the file.
+        if let Some(level) = config.log_level {
+            builder = builder.with_log_level(level);
+        }
 
         // Distributed tracing is enabled only alongside a collector.
         //
@@ -103,19 +82,36 @@ impl Telemetry {
         // console with export errors.
         if let Some(addr) = config.otlp {
             builder = builder
-                .with_otlp(addr.ip().to_string(), addr.port())
+                .with_otlp(otlp_host(&addr), addr.port())
                 .with_tracing();
         }
         if let Some(path) = &config.mcap_path {
-            builder = builder.with_mcap(path.clone());
+            // `to_string_lossy` is the stack's own signature. Rejecting a
+            // non-UTF-8 path here is better than silently recording to a
+            // different one — see `mcap_path_arg`.
+            builder = builder.with_mcap(utf8_arg(path, "--mcap")?);
         }
 
         let inner = builder
             .build()
             .map_err(|e| TelemetryError::Install(e.to_string()))?;
 
-        describe_all();
-        Ok(Self { config, inner })
+        // A second recorder over the same providers, rather than the one on
+        // `inner`: `Metrics` records through `&mut self`, and `inner` has to
+        // stay owned here so the pipeline flushes on drop. Both write to the
+        // same meter and the same MCAP file.
+        let metrics = telemetry::Metrics::new(
+            ServiceOptions::new(&config.service, &config.version),
+            inner.mcap_writer(),
+            inner.meter_provider(),
+        )
+        .map_err(|e| TelemetryError::Install(e.to_string()))?;
+
+        Ok(Self {
+            config,
+            meter: Meter::new(metrics),
+            inner,
+        })
     }
 
     /// The configuration this pipeline was installed with.
@@ -123,11 +119,23 @@ impl Telemetry {
         &self.config
     }
 
+    /// A handle the emitting crates record through.
+    ///
+    /// Cheap to clone, and every clone reaches the same recorder.
+    pub fn meter(&self) -> Meter {
+        self.meter.clone()
+    }
+
     /// Flush buffered telemetry.
     ///
     /// Worth calling before a deliberate shutdown: an exporter batches, so the
     /// last few seconds of a run are otherwise lost exactly when something has
     /// gone wrong enough to stop the process.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TelemetryError::Install`] carrying whatever the stack reported
+    /// — usually a collector that has stopped accepting.
     pub fn flush(&self) -> Result<(), TelemetryError> {
         self.inner
             .flush()
@@ -138,6 +146,22 @@ impl Telemetry {
     pub fn should_sample_recall(&self, draw: f64) -> bool {
         should_sample(self.config.recall_sample_rate, draw)
     }
+}
+
+/// Render a path for the stack, refusing one that would not survive it.
+///
+/// The stack takes strings. A path that is not valid UTF-8 cannot be handed
+/// over without `to_string_lossy` replacing bytes with U+FFFD, at which point
+/// the stack opens a *different* file than the one requested and reports the
+/// wrong name. Refusing is the only honest option.
+pub fn utf8_arg(path: &std::path::Path, flag: &str) -> Result<String, TelemetryError> {
+    path.to_str().map(str::to_owned).ok_or_else(|| {
+        TelemetryError::Install(format!(
+            "{flag} {}: path is not valid UTF-8, and the telemetry stack takes \
+             a string — it would silently use a different path",
+            path.display()
+        ))
+    })
 }
 
 /// Whether a draw falls inside the sampling rate.
@@ -151,20 +175,10 @@ pub fn should_sample(rate: f64, draw: f64) -> bool {
     rate > 0.0 && draw < rate
 }
 
-/// Register every metric with its description.
-///
-/// Without this an exported metric arrives with no help text, and whoever finds
-/// it on a dashboard has to read the source to learn what it counts.
-pub fn describe_all() {
-    for (name, description) in crate::metrics_names::ALL {
-        metrics::describe_histogram!(*name, *description);
-    }
-}
-
 /// Why installing the telemetry pipeline failed.
 #[derive(Debug, thiserror::Error)]
 pub enum TelemetryError {
-    /// The pipeline could not be built or was already installed.
+    /// The pipeline could not be built.
     #[error("telemetry: {0}")]
     Install(
         /// What the telemetry stack reported.

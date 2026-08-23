@@ -16,8 +16,10 @@
 #[cfg(feature = "parallel")]
 mod batched;
 mod build;
+mod cursor;
 mod graph;
 mod params;
+mod query;
 mod rng;
 mod scored;
 mod search;
@@ -28,43 +30,61 @@ mod visited;
 pub use graph::Graph;
 pub use params::HnswParams;
 
-use crate::domain::Candidate;
 use crate::ports::{VectorIndex, VectorStore};
-use episteme_core::{Ordinal, Result};
-use episteme_telemetry::{fields, metrics_names, redact};
-use scored::{Scored, from_distance};
-use search::{distance_to, greedy_descend, search_layer};
+use episteme_core::Result;
+use episteme_telemetry::{Meter, fields, logger, metrics_names};
 use std::time::Instant;
-use visited::VisitedSet;
+use visited::ScratchPool;
 
 /// An HNSW index over one named vector field.
 #[derive(Debug)]
 pub struct HnswIndex {
     graph: Graph,
     params: HnswParams,
+    /// Where search measurements go.
+    ///
+    /// On the index rather than in the search signature because `search` takes
+    /// `&self` and runs concurrently on a shared index — there is nowhere in
+    /// that call to pass `&mut` state. Disabled by default, so building an
+    /// index needs no pipeline and no runtime.
+    meter: Meter,
+    /// Reusable visited sets, one per concurrent search.
+    scratch: ScratchPool,
 }
 
 impl HnswIndex {
     /// Build over every present row in `store`.
     pub fn build(store: &dyn VectorStore, params: HnswParams) -> Self {
-        let span = tracing::info_span!(
-            "episteme.index.build",
-            { fields::INDEX_KIND } = "hnsw",
-            { fields::ROWS } = store.len(),
-        );
-        let _guard = span.enter();
+        Self::build_with_meter(store, params, Meter::disabled())
+    }
+
+    /// Build over every present row in `store`, reporting through `meter`.
+    pub fn build_with_meter(store: &dyn VectorStore, params: HnswParams, meter: Meter) -> Self {
         let started = Instant::now();
 
         let graph = build::build(store, &params);
 
-        metrics::histogram!(metrics_names::INDEX_BUILD_DURATION)
-            .record(started.elapsed().as_secs_f64());
-        tracing::info!(
-            edges = graph.edge_count(),
-            levels = graph.max_level() + 1,
-            "hnsw built"
-        );
-        Self { graph, params }
+        let elapsed = started.elapsed().as_secs_f64();
+        meter.histogram(metrics_names::INDEX_BUILD_DURATION, elapsed);
+        logger::info!("hnsw built").with_data(&serde_json::json!({
+            fields::INDEX_KIND: "hnsw",
+            fields::ROWS: store.len(),
+            fields::EDGES: graph.edge_count(),
+            fields::LEVELS: graph.max_level() + 1,
+            fields::DURATION_SECONDS: elapsed,
+        }));
+        Self {
+            graph,
+            params,
+            meter,
+            scratch: ScratchPool::default(),
+        }
+    }
+
+    /// Record search measurements through `meter`.
+    pub fn with_meter(mut self, meter: Meter) -> Self {
+        self.meter = meter;
+        self
     }
 
     /// The parameters this index was built and searches with.
@@ -91,77 +111,8 @@ impl HnswIndex {
         Ok(Self {
             graph: serialize::decode(bytes)?,
             params,
+            meter: Meter::disabled(),
+            scratch: ScratchPool::default(),
         })
-    }
-}
-
-impl VectorIndex for HnswIndex {
-    fn kind(&self) -> &'static str {
-        "hnsw"
-    }
-
-    fn search(
-        &self,
-        store: &dyn VectorStore,
-        query: &[f32],
-        k: usize,
-        allowed: Option<&dyn Fn(Ordinal) -> bool>,
-    ) -> Result<Vec<Candidate>> {
-        let dim = store.dim().get();
-        if query.len() != dim {
-            return Err(episteme_core::Error::DimMismatch {
-                expected: dim,
-                actual: query.len(),
-            });
-        }
-
-        let ef = self.params.effective_ef(k);
-        let span = tracing::debug_span!(
-            "episteme.index.search",
-            { fields::INDEX_KIND } = "hnsw",
-            { fields::K } = k,
-            ef,
-            filtered = allowed.is_some(),
-            query = %redact::vector_shape(query),
-        );
-        let _guard = span.enter();
-        let started = Instant::now();
-
-        let metric = store.metric();
-        let Some(entry) = self.graph.entry() else {
-            return Ok(Vec::new());
-        };
-        let Some(entry_distance) = distance_to(store, metric, query, entry) else {
-            return Ok(Vec::new());
-        };
-
-        let mut cursor = Scored::new(entry_distance, entry);
-        for layer in (1..=self.graph.max_level()).rev() {
-            cursor = greedy_descend(&self.graph, store, metric, query, cursor, layer);
-        }
-
-        let mut visited = VisitedSet::with_capacity(store.len());
-        let found = search_layer(
-            &self.graph,
-            store,
-            metric,
-            query,
-            cursor,
-            ef,
-            0,
-            allowed,
-            &mut visited,
-        );
-        let hits: Vec<Candidate> = found
-            .into_iter()
-            .take(k)
-            .map(|s| Candidate::new(s.ordinal, from_distance(metric, s.distance)))
-            .collect();
-
-        let labels = [(fields::INDEX_KIND, "hnsw")];
-        metrics::histogram!(metrics_names::SEARCH_DURATION, &labels)
-            .record(started.elapsed().as_secs_f64());
-        metrics::histogram!(metrics_names::SEARCH_RESULTS, &labels).record(hits.len() as f64);
-        Ok(hits)
     }
 }

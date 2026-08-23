@@ -1,7 +1,7 @@
 use super::*;
 
 #[test]
-fn every_metric_is_described() {
+fn every_metric_is_catalogued() {
     let all = [
         SEARCH_DURATION,
         SEARCH_CANDIDATES,
@@ -28,22 +28,22 @@ fn every_metric_is_described() {
     ];
     for name in all {
         assert!(
-            ALL.iter().any(|(n, _)| *n == name),
-            "{name} is missing from ALL, so /metrics will not document it"
+            ALL.iter().any(|(n, _, _)| *n == name),
+            "{name} is missing from ALL, so nothing documents it"
         );
     }
 }
 
 #[test]
 fn names_are_prefixed() {
-    for (name, _) in ALL {
+    for (name, _, _) in ALL {
         assert!(name.starts_with("episteme_"), "{name} is not prefixed");
     }
 }
 
 #[test]
 fn descriptions_are_present_and_useful() {
-    for (name, desc) in ALL {
+    for (name, _, desc) in ALL {
         assert!(!desc.is_empty(), "{name} has no description");
         assert!(desc.len() > 12, "{name}: description too thin to help");
     }
@@ -51,7 +51,7 @@ fn descriptions_are_present_and_useful() {
 
 #[test]
 fn units_are_declared_in_the_name() {
-    for (name, _) in ALL {
+    for (name, _, _) in ALL {
         let ok = name.ends_with("_seconds")
             || name.ends_with("_bytes")
             || name.ends_with("_total")
@@ -68,7 +68,7 @@ fn units_are_declared_in_the_name() {
 
 #[test]
 fn no_duplicate_names() {
-    let mut names: Vec<_> = ALL.iter().map(|(n, _)| *n).collect();
+    let mut names: Vec<_> = ALL.iter().map(|(n, _, _)| *n).collect();
     names.sort_unstable();
     let before = names.len();
     names.dedup();

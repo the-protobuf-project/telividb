@@ -44,29 +44,48 @@ pub fn build(store: &dyn VectorStore, params: &HnswParams) -> Graph {
         return super::batched::build_batched(store, params, &levels, metric);
     }
 
-    for (row, &level) in levels.iter().enumerate() {
-        let ordinal = Ordinal::from_row(row as u32);
-        let Some(vector) = store.get(ordinal) else {
-            // Absent for this field. It still occupies an ordinal so stride
-            // holds, but it is not a node in the graph.
-            graph.push_node(0);
-            continue;
-        };
-        insert(
-            &mut graph,
-            store,
-            metric,
-            params,
-            vector,
-            level,
-            &mut visited,
-        );
-    }
+    insert_range(
+        &mut graph,
+        store,
+        params,
+        metric,
+        &levels,
+        0..store.len(),
+        &mut visited,
+    );
     graph
 }
 
+/// Insert `rows` sequentially into `graph`.
+///
+/// Shared with the batched builder, which uses it for the first batch: until
+/// the graph has an entry point there is nothing for a concurrent search to
+/// find, so a batch inserted against an empty snapshot links nothing at all.
+pub(super) fn insert_range(
+    graph: &mut Graph,
+    store: &dyn VectorStore,
+    params: &HnswParams,
+    metric: Metric,
+    levels: &[usize],
+    rows: std::ops::Range<usize>,
+    visited: &mut VisitedSet,
+) {
+    for row in rows {
+        let level = levels[row];
+        let ordinal = Ordinal::from_row(row as u32);
+        let Some(vector) = store.get(ordinal) else {
+            // Absent for this field. It still occupies an ordinal so stride
+            // holds, but it is not a node in the graph — and must never become
+            // the entry point, or every insert after it is stranded.
+            graph.push_absent();
+            continue;
+        };
+        insert(graph, store, metric, params, vector, level, visited);
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
-fn insert(
+pub(super) fn insert(
     graph: &mut Graph,
     store: &dyn VectorStore,
     metric: Metric,

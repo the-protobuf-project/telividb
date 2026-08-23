@@ -24,6 +24,18 @@ impl VisitedSet {
         }
     }
 
+    /// Grow to cover `rows` if it does not already.
+    ///
+    /// Never shrinks: a pooled set is reused across fields and segments of
+    /// different sizes, and returning capacity only to reallocate it on the
+    /// next query is the cost this pool exists to avoid. New slots are zero,
+    /// which reads as "not visited this epoch" for any epoch.
+    pub fn resize(&mut self, rows: usize) {
+        if self.stamps.len() < rows {
+            self.stamps.resize(rows, 0);
+        }
+    }
+
     /// Begin a new search. Every node becomes unvisited.
     pub fn clear(&mut self) {
         // On wraparound the stale stamps could alias the new epoch, so zero
@@ -45,6 +57,55 @@ impl VisitedSet {
                 true
             }
             _ => false,
+        }
+    }
+}
+
+/// Visited sets kept for reuse across searches.
+///
+/// `search` takes `&self` and runs concurrently, so this cannot be a plain
+/// field. It is a small mutex-guarded free list: a query takes a set, uses it,
+/// and gives it back. Under contention a query simply allocates its own rather
+/// than waiting, which keeps the lock off the critical path.
+///
+/// The alternative — `VisitedSet::with_capacity(store.len())` per query —
+/// allocates and zeroes four bytes per row on every search. `visited.rs`
+/// documents that exact pattern as the trap that made builds quadratic; it is
+/// no cheaper on the read path, it is merely charged per query instead of per
+/// insert.
+#[derive(Debug, Default)]
+pub struct ScratchPool {
+    /// Sets not currently in use.
+    free: std::sync::Mutex<Vec<VisitedSet>>,
+}
+
+/// How many sets to keep. Beyond this, a returned set is dropped.
+///
+/// Bounded because the pool would otherwise grow to the high-water mark of
+/// concurrent queries and hold that memory forever — on a wide field that is
+/// megabytes per retained set.
+const POOL_CAPACITY: usize = 16;
+
+impl ScratchPool {
+    /// A set sized for `rows`, cleared and ready.
+    pub fn take(&self, rows: usize) -> VisitedSet {
+        let reused = self.free.lock().ok().and_then(|mut free| free.pop());
+        match reused {
+            Some(mut set) => {
+                set.resize(rows);
+                set.clear();
+                set
+            }
+            None => VisitedSet::with_capacity(rows),
+        }
+    }
+
+    /// Return a set for the next query to use.
+    pub fn give_back(&self, set: VisitedSet) {
+        if let Ok(mut free) = self.free.lock()
+            && free.len() < POOL_CAPACITY
+        {
+            free.push(set);
         }
     }
 }

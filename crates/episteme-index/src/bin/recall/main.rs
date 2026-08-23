@@ -102,7 +102,7 @@ fn main() {
 
     for q in &queries {
         let t = Instant::now();
-        let truth = FlatIndex
+        let truth = FlatIndex::new()
             .search(&store, q, args.k, None)
             .expect("flat search");
         exact_time += t.elapsed();

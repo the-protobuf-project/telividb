@@ -1,7 +1,7 @@
 //! Which segments make up a collection, right now.
 
 use crate::error::{Error, Result};
-use episteme_telemetry::{fields, metrics_names};
+use episteme_telemetry::{Meter, fields, logger, metrics_names};
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -135,13 +135,9 @@ impl Manifest {
     /// On POSIX the rename is atomic, so a reader sees the whole previous
     /// manifest or the whole new one. A crash at any point leaves one of the
     /// two intact — never a half-written pointer to segments that may not exist.
-    pub fn write_atomic(&self, path: impl AsRef<Path>) -> Result<()> {
-        let span = tracing::info_span!(
-            "episteme.manifest.swap",
-            { fields::GENERATION } = self.generation,
-            segments = self.segments.len(),
-        );
-        let _guard = span.enter();
+    /// `meter` records the swap duration; pass [`Meter::disabled`] when there
+    /// is no pipeline, which is what every test and embedded caller does.
+    pub fn write_atomic(&self, path: impl AsRef<Path>, meter: &Meter) -> Result<()> {
         let started = Instant::now();
 
         let path = path.as_ref();
@@ -160,10 +156,13 @@ impl Manifest {
             let _ = fs::File::open(dir).and_then(|d| d.sync_all());
         }
 
-        metrics::histogram!(metrics_names::MANIFEST_SWAP_DURATION)
-            .record(started.elapsed().as_secs_f64());
-        metrics::gauge!(metrics_names::SEGMENTS_LIVE).set(self.segments.len() as f64);
-        tracing::debug!("manifest published");
+        let elapsed = started.elapsed().as_secs_f64();
+        meter.histogram(metrics_names::MANIFEST_SWAP_DURATION, elapsed);
+        logger::debug!("manifest published").with_data(&serde_json::json!({
+            fields::GENERATION: self.generation,
+            fields::SEGMENTS: self.segments.len(),
+            fields::DURATION_SECONDS: elapsed,
+        }));
         Ok(())
     }
 

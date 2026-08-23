@@ -1,4 +1,5 @@
 use super::*;
+use episteme_telemetry::Meter;
 
 #[test]
 fn empty_manifest_round_trips() {
@@ -72,7 +73,7 @@ fn write_atomic_round_trips_through_the_filesystem() {
     let path = dir.path().join("MANIFEST");
     let m = Manifest::new().with_segment(11).with_segment(12);
 
-    m.write_atomic(&path).unwrap();
+    m.write_atomic(&path, &Meter::disabled()).unwrap();
     assert_eq!(Manifest::read(&path).unwrap(), m);
 }
 
@@ -80,7 +81,10 @@ fn write_atomic_round_trips_through_the_filesystem() {
 fn publishing_leaves_no_temp_file_behind() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("MANIFEST");
-    Manifest::new().with_segment(1).write_atomic(&path).unwrap();
+    Manifest::new()
+        .with_segment(1)
+        .write_atomic(&path, &Meter::disabled())
+        .unwrap();
 
     let stray: Vec<_> = std::fs::read_dir(dir.path())
         .unwrap()
@@ -96,9 +100,9 @@ fn a_second_publish_replaces_the_first_wholesale() {
     let path = dir.path().join("MANIFEST");
 
     let first = Manifest::new().with_segment(1);
-    first.write_atomic(&path).unwrap();
+    first.write_atomic(&path, &Meter::disabled()).unwrap();
     let second = first.clone().with_segment(2);
-    second.write_atomic(&path).unwrap();
+    second.write_atomic(&path, &Meter::disabled()).unwrap();
 
     let back = Manifest::read(&path).unwrap();
     assert_eq!(back, second);

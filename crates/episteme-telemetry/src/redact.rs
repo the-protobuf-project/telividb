@@ -41,7 +41,11 @@ pub fn vector_shape(vector: &[f32]) -> VectorShape {
 }
 
 /// Emittable facts about a vector.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+///
+/// `Serialize` so it can go straight onto a log record's structured data as
+/// `{"dim": 768}` rather than being flattened to a string — a collector can
+/// then filter on the dimension.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct VectorShape {
     /// Number of components. Discloses nothing about their values.
     pub dim: usize,

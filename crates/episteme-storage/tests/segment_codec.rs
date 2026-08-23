@@ -68,7 +68,7 @@ fn int8_two_tier_over_a_reopened_segment_matches_exhaustive_search() {
 
     let mut recalls = Vec::new();
     for q in queries.iter().take(10) {
-        let truth = FlatIndex.search(&exact, q, 10, None).unwrap();
+        let truth = FlatIndex::new().search(&exact, q, 10, None).unwrap();
         let (hits, _) =
             two_tier_search(tier.as_ref(), &exact, q, 10, OverFetch::default(), None).unwrap();
         recalls.push(recall_at_k(&hits, &truth, 10));

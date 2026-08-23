@@ -31,8 +31,8 @@ fn search_both(
     query: &[f32],
     k: usize,
 ) -> episteme_index::Merged {
-    let from_buffer = FlatIndex.search(buffer, query, k, None).unwrap();
-    let from_sealed = FlatIndex.search(segment, query, k, None).unwrap();
+    let from_buffer = FlatIndex::new().search(buffer, query, k, None).unwrap();
+    let from_sealed = FlatIndex::new().search(segment, query, k, None).unwrap();
     merge_top_k(
         &[
             (Source::Buffer, from_buffer),
@@ -139,7 +139,7 @@ fn clearing_after_seal_removes_the_rows_from_the_buffer() {
     // otherwise the rows disappear from both places at once.
     buffer.clear();
 
-    let hits = FlatIndex
+    let hits = FlatIndex::new()
         .search(&buffer, &[1.0, 0.0, 0.0, 0.0], 5, None)
         .unwrap();
     assert!(hits.is_empty());

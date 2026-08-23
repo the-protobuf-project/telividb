@@ -25,34 +25,54 @@ pub struct HnswParams {
     /// Candidate breadth while querying. Larger improves recall and costs
     /// latency on every request — the lever to tune.
     pub ef_search: usize,
-    /// Nodes inserted per parallel batch. **Defaults to one — no batching.**
+    /// Nodes inserted per parallel batch. **Defaults to 128.**
     ///
     /// Within a batch, nodes search concurrently against one graph snapshot and
     /// therefore cannot link to each other. Larger batches parallelise better
-    /// and diverge further from a sequential build.
+    /// and diverge slightly from a sequential build.
     ///
-    /// Deterministic at any value: batches are fixed by row order, so the result
-    /// never depends on thread count or scheduling.
+    /// Deterministic at any value: batches are fixed by row order, so the
+    /// result never depends on thread count or scheduling. The first batch is
+    /// inserted sequentially, because a batch searching an empty graph finds
+    /// nothing and links nothing.
     ///
-    /// # Why the default is one
+    /// # What batching actually costs
     ///
-    /// Measured on 20k clustered vectors at 128 dimensions:
+    /// Measured on clustered vectors at 32 dimensions, `Metric::Cosine`,
+    /// recall@10 over 40 queries, release build:
     ///
-    /// | `batch_size` | build | recall@10 |
-    /// |---|---|---|
-    /// | 1 | 7.98s | **1.0000** |
-    /// | 32 | 7.56s | 0.9970 |
-    /// | 128 | 6.85s | 0.9860 |
-    /// | 512 | 6.32s | 0.9430 |
+    /// | `batch_size` | 3k rows | 20k rows | 20k build |
+    /// |---|---|---|---|
+    /// | 1 | 1.0000 | 1.0000 | 2.80s |
+    /// | 32 | 1.0000 | 1.0000 | 2.52s |
+    /// | 64 | 0.9850 | 0.9975 | 2.30s |
+    /// | 128 | 0.9850 | 0.9975 | 2.36s |
+    /// | 256 | 0.9825 | 0.9975 | 2.22s |
+    /// | 512 | 1.0000 | 1.0000 | 2.08s |
+    /// | 1024 | 0.9975 | 1.0000 | 2.13s |
     ///
-    /// A 1.26x speedup for 5.7 points of recall is a bad trade, and the shape of
-    /// the curve says why: only the *search* half of an insert parallelises.
-    /// Neighbour selection and pruning mutate the graph, so they stay
-    /// sequential and cap the whole thing — Amdahl, not a tuning problem.
+    /// Recall is flat within noise — the spread is a handful of judgements out
+    /// of four hundred, and it does not increase with batch size. An earlier
+    /// version of this table showed recall falling to 0.94 and attributed it to
+    /// nodes within a batch being unable to link to each other. That was not
+    /// the cause: every node in the *first* batch searched an empty graph, was
+    /// pushed with no edges, and was never reachable again. The curve was one
+    /// bug, measured. See `hnsw_parallel::no_batch_size_orphans_a_present_row`.
     ///
-    /// **The lever that actually pays here is SIMD distance kernels**, which
-    /// speed up both halves and cost no recall at all. Raise this only when
-    /// build latency matters more than the last point of recall.
+    /// # Why the default is not larger
+    ///
+    /// The speedup is real but modest — about 1.25x at 20k rows — because only
+    /// the *search* half of an insert parallelises. Neighbour selection and
+    /// pruning mutate the graph, so they stay sequential and cap the whole
+    /// thing. That part of the original rationale was right: this is Amdahl,
+    /// not a tuning problem, and **SIMD distance kernels are the lever that
+    /// pays**, since they speed up both halves.
+    ///
+    /// 128 takes most of the available speedup while keeping each batch small
+    /// enough that the intra-batch linking gap stays a rounding error. Raising
+    /// it further buys little; `hnsw_parallel` holds every size to a 0.97 floor
+    /// so a regression at any of them fails rather than passing on a relative
+    /// comparison.
     pub batch_size: usize,
 
     /// Seed for level assignment.
@@ -70,7 +90,7 @@ impl Default for HnswParams {
             m0: 32,
             ef_construction: 200,
             ef_search: 64,
-            batch_size: 1,
+            batch_size: 128,
             seed: 0x5eed_1234_abcd_ef01,
         }
     }

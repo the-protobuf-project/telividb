@@ -2,29 +2,32 @@
 //!
 //! # Layering
 //!
-//! Library crates depend on this for **facades only** — `tracing` spans and
-//! `metrics` counters that compile to near-nothing when no subscriber or
-//! recorder is installed. No async runtime, no exporter, no configuration
-//! reaches `episteme-storage` or `episteme-index`, which keeps them
-//! synchronous, benchable and embeddable.
+//! [`telemetry`] — the ecosystem's stack — is the pipeline for logging,
+//! tracing, metrics and MCAP recording, per CLAUDE.md rule 41. There is no
+//! facade in front of it and no second pipeline behind it. Crates that emit
+//! depend on the stack directly and log through [`logger`]; this crate carries
+//! the shared vocabulary, the redaction rules, and the one place the pipeline
+//! is built.
 //!
-//! Composition roots (`episteme-server`, `episteme-embedded`) enable the
-//! `subscriber` feature and install the actual pipeline exactly once.
+//! Emission is safe everywhere: `logger::` is a no-op until a composition root
+//! calls [`Telemetry::install`], and a [`Meter`] defaults to disabled. A
+//! library crate, a benchmark and a unit test therefore pay nothing for being
+//! instrumented, and none of them needs a runtime.
 //!
 //! # Why a shared vocabulary
 //!
 //! Field and metric names are **constants, not string literals at call sites**.
-//! A span that says `collection` in one crate and `collection_name` in another
-//! cannot be correlated, and the mistake is invisible until someone tries to
-//! query the data. Everything emitted anywhere in episteme draws its keys from
-//! [`fields`] and its metric names from [`metrics_names`].
+//! A record that says `collection` in one crate and `collection_name` in
+//! another cannot be correlated, and the mistake is invisible until someone
+//! tries to query the data. Everything emitted anywhere in episteme draws its
+//! keys from [`fields`] and its metric names from [`metrics_names`].
 //!
 //! # Two rules that are not stylistic
 //!
-//! **Cardinality**: metric labels must be bounded. A segment id or a resource
-//! name as a label is a time-series explosion that takes the monitoring system
-//! down with it. High-cardinality facts belong on spans, which are sampled.
-//! See [`fields::LABEL_SAFE`].
+//! **Cardinality**: metric names must be bounded. A segment id or a resource
+//! name folded into a metric name is a time-series explosion that takes the
+//! monitoring system down with it. High-cardinality facts belong on a log
+//! record's structured data, which is sampled. See [`fields::LABEL_SAFE`].
 //!
 //! **Confidentiality**: telemetry is an exfiltration path that bypasses every
 //! control in the security model. Query vectors, payload contents and vault
@@ -32,28 +35,36 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+pub mod catalogue;
+pub mod config;
 pub mod fields;
+pub mod init;
+pub mod meter;
 pub mod metrics_names;
 pub mod redact;
 
-#[cfg(feature = "subscriber")]
-pub mod init;
+pub use config::TelemetryConfig;
+pub use init::{Telemetry, TelemetryError, should_sample};
+pub use meter::Meter;
 
-#[cfg(feature = "subscriber")]
-pub use init::{Telemetry, TelemetryConfig, TelemetryError, should_sample};
-
-/// The telemetry stack's own logging macros, re-exported.
+/// The telemetry stack's logging macros, re-exported.
 ///
-/// A composition root logs through these — `logger::info!("...")` — rather than
-/// the `tracing` facade, because they carry file and line, attach structured
-/// data via `.with_data(&value)`, and reach the OTLP log pipeline directly.
+/// Everything that logs uses these — `logger::info!("...")` — because they
+/// carry file and line, attach structured data via `.with_data(&value)`, and
+/// reach the console and the OTLP log pipeline through the one stack.
 ///
-/// Library crates keep using `tracing` spans and `metrics` counters: they must
-/// not know which pipeline is behind them, and a facade is what makes that
-/// true.
-#[cfg(feature = "subscriber")]
+/// They emit nothing until a composition root installs the pipeline, which is
+/// what makes them safe to call from a library crate.
 pub use telemetry::logger;
 
 /// Deployment environments the stack recognises.
-#[cfg(feature = "subscriber")]
 pub use telemetry::options::Environment;
+
+/// Verbosity levels the stack recognises.
+///
+/// Re-exported so a composition root can set one without depending on the
+/// stack's module layout, and so `--log-level` has a type to parse into.
+pub use telemetry::LogLevel;
+
+/// The instrument kind a metric is recorded through.
+pub use telemetry::metrics::MetricType;

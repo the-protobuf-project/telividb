@@ -8,7 +8,7 @@
 //! their connections are then applied in row order on one thread. That ordering
 //! is what makes a batched build reproducible.
 
-use super::build::prune;
+use super::build::{insert_range, prune};
 use super::graph::Graph;
 use super::params::HnswParams;
 use super::scored::Scored;
@@ -16,6 +16,14 @@ use super::search::{distance_to, greedy_descend, search_layer};
 use super::select::select_neighbours;
 use super::visited::VisitedSet;
 use episteme_core::{Metric, Ordinal, VectorStore};
+
+/// Candidate neighbours for one node, tagged with the layer each list belongs to.
+///
+/// The layer is carried rather than re-derived: `apply` reads a graph that
+/// earlier nodes in the same batch have already mutated, so anything inferred
+/// from its current top layer disagrees with what the snapshot search actually
+/// walked.
+type LayerCandidates = Vec<(usize, Vec<Scored>)>;
 
 /// Insert in batches: search concurrently, apply in row order.
 ///
@@ -35,13 +43,30 @@ pub(super) fn build_batched(
     let mut visited = VisitedSet::with_capacity(store.len());
     let rows = store.len();
 
-    for start in (0..rows).step_by(params.batch_size) {
+    // The first batch is inserted sequentially, because there is nothing yet
+    // for a concurrent search to find. Every node in batch zero would otherwise
+    // see an empty snapshot, return no candidates, and be pushed with no edges
+    // — and nothing links them afterwards, because nothing can reach them.
+    // That orphaned exactly `batch_size - 1` nodes and cost recall in
+    // proportion: 0.57 at batch_size 512 against 1.00 sequential.
+    let seeded = params.batch_size.min(rows);
+    insert_range(
+        &mut graph,
+        store,
+        params,
+        metric,
+        levels,
+        0..seeded,
+        &mut visited,
+    );
+
+    for start in (seeded..rows).step_by(params.batch_size) {
         let end = (start + params.batch_size).min(rows);
 
         // `map_init` builds the visited set once per worker thread rather than
         // once per node — the same allocation trap that made the sequential
         // build quadratic before.
-        let found: Vec<Option<Vec<Vec<Scored>>>> = (start..end)
+        let found: Vec<Option<LayerCandidates>> = (start..end)
             .into_par_iter()
             .map_init(
                 || VisitedSet::with_capacity(rows),
@@ -75,9 +100,10 @@ pub(super) fn build_batched(
                     );
                 }
                 // Absent for this field: it still occupies an ordinal so stride
-                // holds, but it is not a node in the graph.
+                // holds, but it is not a node in the graph — and must never
+                // become the entry point.
                 _ => {
-                    graph.push_node(0);
+                    graph.push_absent();
                 }
             }
         }
@@ -98,7 +124,7 @@ fn find_candidates(
     vector: &[f32],
     level: usize,
     visited: &mut VisitedSet,
-) -> Vec<Vec<Scored>> {
+) -> LayerCandidates {
     let Some(entry) = graph.entry() else {
         return Vec::new();
     };
@@ -112,7 +138,12 @@ fn find_candidates(
         cursor = greedy_descend(graph, store, metric, vector, cursor, layer);
     }
 
-    // Highest layer first, matching the order `apply` consumes them in.
+    // Each list is tagged with the layer it was searched at. `apply` used to
+    // re-derive that from the list's position and its own `graph.max_level()`,
+    // which is read *after* earlier nodes in the same batch have been applied —
+    // so a batch-mate that raised the top layer shifted every index, and a
+    // node's layer-0 candidates were written to layer 1 instead. It was then
+    // unreachable at the layer every search ends on.
     let mut per_layer = Vec::new();
     for layer in (0..=level.min(previous_max)).rev() {
         let candidates = search_layer(
@@ -129,7 +160,7 @@ fn find_candidates(
         if let Some(best) = candidates.first() {
             cursor = *best;
         }
-        per_layer.push(candidates);
+        per_layer.push((layer, candidates));
     }
     per_layer
 }
@@ -142,19 +173,15 @@ fn apply(
     metric: Metric,
     params: &HnswParams,
     level: usize,
-    per_layer: Vec<Vec<Scored>>,
+    per_layer: LayerCandidates,
     _visited: &mut VisitedSet,
 ) {
-    let previous_max = graph.max_level();
     let node = graph.push_node(level);
 
-    for (offset, candidates) in per_layer.into_iter().enumerate() {
+    for (layer, candidates) in per_layer {
         if candidates.is_empty() {
             continue;
         }
-        // `find_candidates` walked layers downward from the node's level.
-        let layer = level.min(previous_max).saturating_sub(offset);
-
         let budget = params.max_neighbours(layer);
         let chosen = select_neighbours(store, metric, &candidates, budget);
         graph.set_neighbours(node, layer, chosen.clone());
