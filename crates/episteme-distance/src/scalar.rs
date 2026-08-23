@@ -1,6 +1,7 @@
 //! Reference implementations. Always correct; never the fast path.
 
-/// Inner product.
+/// Inner product. Higher means nearer, so callers negate it where a
+/// distance is wanted.
 pub fn dot(a: &[f32], b: &[f32]) -> f32 {
     a.iter().zip(b).map(|(x, y)| x * y).sum()
 }

@@ -22,7 +22,7 @@ pub struct TwoTierStats {
     pub scanned: usize,
     /// Candidates carried into the rerank.
     pub candidates: usize,
-    /// Results returned.
+    /// Results returned after truncation to `k`.
     pub returned: usize,
     /// Positions the rerank changed.
     pub reordered: usize,

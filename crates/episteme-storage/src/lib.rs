@@ -12,7 +12,7 @@
 //! Together these give lock-free reads, snapshot isolation for free, and — much
 //! later — sharding, because a shard is just a set of segments.
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 pub mod buffer;
 pub mod error;

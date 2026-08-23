@@ -124,16 +124,29 @@ Violating any of these is a bug, not a style preference.
 31. **Library crates get facades only.** `tracing` and `metrics` compile to near-nothing with no
     subscriber installed. Exporters, config and any async runtime live behind the `subscriber`
     feature and are wired exactly once, in a composition root.
-32. **A probabilistic classifier never gates a security boundary.** Regex, NER and schema-declared
+32. **Every public item carries a doc comment.** Struct, field, enum, variant,
+    function, constant, associated item — all of them. Enforced by
+    `#![deny(missing_docs)]` in every crate, so an undocumented item fails the
+    build rather than the review.
+
+    A comment must say what the item is *for*, or what breaks without it — never
+    restate its own name. `/// The name.` above `fn name()` passes the compiler
+    and helps nobody; `cargo xtask check-docs` catches those.
+
+    On a field, say what the value means and what range or state is valid. On a
+    function, say what it does and — where it matters more — what it refuses. On
+    anything load-bearing, say why it is that way, because that is the part
+    nobody can reconstruct from the code.
+33. **A probabilistic classifier never gates a security boundary.** Regex, NER and schema-declared
     sensitivity are the enforcement layer. An LLM may *propose* labels for approval, never
     authorize on its own — a 98%-accurate detector leaks 2% silently and forever.
-33. **One visibility predicate, every access path.** A row reached by graph traversal is checked by
+34. **One visibility predicate, every access path.** A row reached by graph traversal is checked by
     the same predicate as a row reached by top-k. Never write a second authorization path for the
     graph; two systems that must agree are how leaks happen.
-34. **`PolicyEngine` returns a predicate, not a boolean.** `Decision { effect, row_predicate,
+35. **`PolicyEngine` returns a predicate, not a boolean.** `Decision { effect, row_predicate,
     field_mask }`. A boolean-returning port cannot express row-level visibility and cannot be
     retrofitted cheaply. This holds no matter which engine backs it — built-in, OPA/Rego, Cedar.
-35. **Policy is resolved once per query, never per row.** The engine produces a `VisibilityContext`
+36. **Policy is resolved once per query, never per row.** The engine produces a `VisibilityContext`
     that compiles to a bitmap, cached on `(principal, collection, policy_version)`. Calling a
     policy engine inside a traversal or scan loop is a correctness-of-design failure, not a
     performance nit — an HNSW query visits thousands of nodes.
@@ -252,6 +265,7 @@ cargo build -p episteme-embed-llama --features llama            # opt-in FFI pat
 buf lint proto/ && buf breaking proto/ --against '.git#branch=main'
 
 cargo xtask check-len                   # fails on any .rs over 200 lines
+cargo xtask check-docs                  # fails on an undocumented or empty doc comment
 cargo xtask check-layers                # fails on an outward crate/module dependency
 ```
 

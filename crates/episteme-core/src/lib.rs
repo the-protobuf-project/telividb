@@ -1,6 +1,6 @@
 //! Domain vocabulary for episteme. No I/O lives here — see ARCHITECTURE.md §2.
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 pub mod domain;
 pub mod error;

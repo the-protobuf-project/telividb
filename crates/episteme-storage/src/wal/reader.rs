@@ -14,7 +14,10 @@ pub enum WalTail {
     Clean,
     /// The final record was incomplete — the process died mid-write. Records
     /// before it are still good; this one never happened.
-    Torn { at_offset: u64 },
+    Torn {
+        /// Byte offset of the last intact record boundary.
+        at_offset: u64,
+    },
 }
 
 /// Sequential reader over one WAL file.
@@ -24,6 +27,7 @@ pub struct WalReader {
 }
 
 impl WalReader {
+    /// Open a log for sequential replay.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         Ok(Self {
             inner: BufReader::new(File::open(path)?),

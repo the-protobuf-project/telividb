@@ -68,12 +68,13 @@ jobs:
   # Structural rules from CLAUDE.md, enforced because rules that depend on
   # discipline decay.
   structure:
-    name: file length
+    name: file length · doc coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - run: cargo xtask check-len
+      - run: cargo xtask check-docs
 
   # The default build must stay free of C dependencies. `cargo tree` is the
   # check: a `cc` or `cmake` build-dependency appearing here means the

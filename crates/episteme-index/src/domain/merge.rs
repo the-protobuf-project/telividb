@@ -40,7 +40,8 @@ impl Source {
 pub struct Hit {
     /// Which store produced this hit, and therefore whether it is exact.
     pub source: Source,
-    /// Segment-local row.
+    /// Row within its source. Meaningless outside the segment or buffer
+    /// named by `source`.
     pub ordinal: Ordinal,
     /// Score on the field's metric scale.
     pub score: f32,

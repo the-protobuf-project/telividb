@@ -30,7 +30,7 @@
 //! control in the security model. Query vectors, payload contents and vault
 //! names must never be emitted. See [`redact`].
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 pub mod fields;
 pub mod metrics_names;

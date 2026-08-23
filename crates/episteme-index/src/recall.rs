@@ -34,7 +34,7 @@ pub fn recall_at_k(approximate: &[Candidate], truth: &[Candidate], k: usize) -> 
 /// Recall averaged over a set of queries.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RecallReport {
-    /// Queries measured.
+    /// Number of queries this report averages over.
     pub queries: usize,
     /// The `k` recall was measured at.
     pub k: usize,

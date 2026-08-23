@@ -4,7 +4,7 @@
 //! and search algorithm evolve independently. That separation is what "bring
 //! your own search algorithm" actually means. See CLAUDE.md invariant 6.
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 pub mod adapters;
 pub mod domain;

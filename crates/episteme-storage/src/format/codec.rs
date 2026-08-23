@@ -54,11 +54,13 @@ impl DType {
 pub enum Codec {
     /// No second tier; rerank reads full precision directly.
     None,
+    /// IEEE 754 binary16: half the bytes, effectively lossless for ranking.
     F16,
     /// Per-row scale and offset, one byte per dimension.
     Int8,
     /// Product quantization, `m` sub-quantizers of one byte each.
     Pq {
+        /// Subspaces, and therefore bytes per encoded row.
         m: u16,
     },
     /// One bit per dimension.

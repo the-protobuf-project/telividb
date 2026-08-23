@@ -3,6 +3,7 @@
 /// Failures reading or writing durable state.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// A filesystem operation failed.
     #[error("io: {0}")]
     Io(
         /// The underlying filesystem failure.
@@ -10,6 +11,7 @@ pub enum Error {
         std::io::Error,
     ),
 
+    /// A domain invariant was violated beneath a storage operation.
     #[error(transparent)]
     Domain(
         /// The underlying domain-invariant failure.

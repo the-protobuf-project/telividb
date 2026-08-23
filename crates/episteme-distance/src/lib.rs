@@ -5,7 +5,7 @@
 //! the scalar path stays as the always-correct reference the SIMD versions are
 //! tested against. See CLAUDE.md invariant 7.
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
 
 mod scalar;
 
