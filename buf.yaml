@@ -1,0 +1,20 @@
+version: v2
+
+modules:
+  - path: proto
+
+lint:
+  use:
+    - STANDARD
+  # Google's AIP linter runs separately in CI and is the authority on resource
+  # naming. buf lint covers structure: consistent packages, directory layout
+  # matching package paths, no leaked imports.
+  except:
+    - PACKAGE_VERSION_SUFFIX
+
+breaking:
+  use:
+    - FILE
+  # The wire format is a contract. Once a field number ships it is permanent,
+  # because a segment written under an older schema still names its fields by
+  # number — renumbering would silently reinterpret stored data.

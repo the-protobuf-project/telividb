@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package episteme.v1;
+
+import "episteme/v1/common.proto";
+
+message SearchRequest {
+  string collection = 1;
+  // Named vector field to search. Each field has its own model and metric.
+  string field = 2;
+  Vector query = 3;
+  uint32 k = 4;
+  // Candidate breadth. Larger improves recall and costs latency.
+  optional uint32 ef = 5;
+  // Return the raw vector of each hit. Separate from searching because a
+  // vector can be inverted toward its source text, so permission to search is
+  // not permission to exfiltrate.
+  bool include_vectors = 6;
+}
+
+message Hit {
+  // AIP resource name — the only portable identity. Internal ordinals are
+  // segment-local and never cross this boundary.
+  string name = 1;
+  float score = 2;
+  optional Span span = 3;
+  optional ContentRef content = 4;
+  // Populated only when `include_vectors` was requested and permitted.
+  optional Vector vector = 5;
+}
+
+message SearchResponse {
+  repeated Hit hits = 1;
+
+  // Whether every source answered.
+  //
+  // False when a shard missed its deadline or a vault was locked. Present from
+  // the first release because adding it later would break the most-used message
+  // in the API — and because a caller must be able to tell "no results" from
+  // "no results you can currently see".
+  bool complete = 2;
+  uint32 sources_answered = 3;
+  uint32 sources_total = 4;
+  // Vaults skipped because they are locked. Names only, never contents.
+  repeated string locked_vaults = 5;
+
+  // What the planner did, for explain and for tuning.
+  optional SearchStats stats = 6;
+}
+
+// Why a query cost what it did.
+message SearchStats {
+  // Vectors actually scored. Latency tracks this far more closely than k.
+  uint64 candidates_visited = 1;
+  // Candidates that reached full precision, when a scan tier was used.
+  uint64 reranked = 2;
+  // Results drawn from the unsealed buffer, which is scanned exhaustively.
+  // Separated from index hits so a recall measurement is not diluted by exact
+  // results.
+  uint32 buffer_hits = 3;
+  uint32 index_hits = 4;
+  // Filter strategy chosen: `prefilter`, `traversal`, `postfilter`.
+  string strategy = 5;
+}
+
+message BatchSearchRequest {
+  repeated SearchRequest searches = 1;
+}
+
+message BatchSearchResponse {
+  repeated SearchResponse responses = 1;
+}
+
+// Vector retrieval.
+service SearchService {
+  rpc Search(SearchRequest) returns (SearchResponse);
+  rpc BatchSearch(BatchSearchRequest) returns (BatchSearchResponse);
+}

@@ -76,6 +76,7 @@ jobs:
       - run: cargo xtask check-len
       - run: cargo xtask check-docs
 
+
   # The default build must stay free of C dependencies. `cargo tree` is the
   # check: a `cc` or `cmake` build-dependency appearing here means the
   # toolchain-free promise has quietly been broken.
@@ -133,6 +134,7 @@ jobs:
       - run: cargo test -p episteme-storage --test buffer_visibility
       - run: cargo test -p episteme-storage --test segment_roundtrip
       - run: cargo test -p episteme-index  --test telemetry_leaks
+      - run: cargo test -p episteme-server --test wiring
 
   # Recall is the only number that makes an ANN change meaningful. Release mode
   # because a debug-built graph is too slow to measure at a useful size.

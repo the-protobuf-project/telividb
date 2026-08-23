@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package episteme.v1;
+
+// Vectors cross the wire as raw little-endian f32 in a `bytes` field, never as
+// `repeated float`. Protobuf encodes a repeated scalar element by element, so a
+// 768-dimension vector would cost 768 varint operations per message, in both
+// directions, on the hot path.
+message Vector {
+  // Raw little-endian f32 components. Length must be `dim * 4`.
+  bytes data = 1;
+  // Component count, so a reader can validate before casting.
+  uint32 dim = 2;
+}
+
+// How similarity is measured within a named vector field.
+enum Metric {
+  METRIC_UNSPECIFIED = 0;
+  // Inner product. Higher is nearer.
+  METRIC_DOT = 1;
+  // Squared Euclidean distance. Lower is nearer.
+  METRIC_L2 = 2;
+  // Angular. Normalised at ingest and scored as dot thereafter.
+  METRIC_COSINE = 3;
+}
+
+// Compression applied to a field's scan tier.
+enum Codec {
+  CODEC_UNSPECIFIED = 0;
+  // No scan tier; searches read full precision directly.
+  CODEC_NONE = 1;
+  CODEC_F16 = 2;
+  CODEC_INT8 = 3;
+  CODEC_PQ = 4;
+  CODEC_BINARY = 5;
+}
+
+// Which search algorithm indexes a field.
+enum IndexKind {
+  INDEX_KIND_UNSPECIFIED = 0;
+  // Exhaustive. Ground truth, and correct for small fields.
+  INDEX_KIND_FLAT = 1;
+  INDEX_KIND_HNSW = 2;
+  INDEX_KIND_IVF_PQ = 3;
+}
+
+// A half-open interval in milliseconds from the start of the source.
+//
+// Present on time-indexed media, because retrieval returns a moment in a
+// recording rather than the recording itself.
+message Span {
+  uint64 start_ms = 1;
+  uint64 end_ms = 2;
+}
+
+// A pointer to the bytes a point was derived from.
+//
+// The database stores this rather than the media: video is GB-scale and blob
+// storage is a solved problem. The hash is what detects that a source changed
+// and its embeddings are stale.
+message ContentRef {
+  // Where the source lives: `file://`, `s3://`, `https://`.
+  string uri = 1;
+  // Byte range within the source, when the point covers only part of it.
+  optional uint64 range_start = 2;
+  optional uint64 range_end = 3;
+  // SHA-256 of the referenced bytes.
+  bytes sha256 = 4;
+  // Source text, inlined when small enough to keep the point re-embeddable.
+  optional string inline = 5;
+}

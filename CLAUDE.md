@@ -150,6 +150,24 @@ Violating any of these is a bug, not a style preference.
     that compiles to a bitmap, cached on `(principal, collection, policy_version)`. Calling a
     policy engine inside a traversal or scan loop is a correctness-of-design failure, not a
     performance nit — an HNSW query visits thousands of nodes.
+37. **Never suppress the API linter.** No `// (-- api-linter: ... --)` disables, no
+    exclusions added to the lint config, no rule silenced to make a build green. If a lint
+    fires, the API is wrong — change the API.
+
+    The linter is the only thing enforcing that a resource name means the same thing in every
+    projection of the schema. A suppression is not a local exception; it is a permanent
+    divergence between what the proto says and what the ecosystem assumes, and it surfaces much
+    later as two systems disagreeing about identity.
+
+    If a rule is genuinely inapplicable to this project, that is a conversation to have once, in
+    the lint configuration, with the reason written down — never an inline suppression on one
+    field.
+38. **Generated protobuf code is committed, never built.** `cargo build` must need no
+    protobuf toolchain. Regenerate with `cargo xtask gen-proto`; `cargo xtask check-proto` fails
+    CI if the committed output drifts from the protos. Never hand-edit `src/generated/`.
+39. **A shipped field number is permanent.** Never renumber, never reuse a tag, mark
+    removals `reserved`. A segment written under an older schema still names its fields by
+    number, so renumbering silently reinterprets stored data rather than failing.
 
 ---
 
@@ -266,6 +284,8 @@ buf lint proto/ && buf breaking proto/ --against '.git#branch=main'
 
 cargo xtask check-len                   # fails on any .rs over 200 lines
 cargo xtask check-docs                  # fails on an undocumented or empty doc comment
+cargo xtask gen-proto                   # regenerate Rust from proto/ (needs buf)
+cargo xtask check-proto                 # fails if the committed generated code has drifted
 cargo xtask check-layers                # fails on an outward crate/module dependency
 ```
 

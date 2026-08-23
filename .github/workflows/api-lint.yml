@@ -1,0 +1,59 @@
+name: API lint
+
+# The `.proto` files are the API's source of truth, so they are linted like
+# code. AIP conformance matters more here than style: resource names are the
+# system's external identity, and a name that drifts from AIP-122 breaks the
+# guarantee that a resource means the same thing to every projection of the
+# schema.
+
+on:
+  pull_request:
+    paths:
+      - "proto/**/*.proto"
+      - ".github/workflows/api-lint.yml"
+  push:
+    branches: [main]
+    paths:
+      - "proto/**/*.proto"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: google-api-linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: the-protobuf-project/setup-google-api-linter@v1
+        with:
+          paths: proto/**/*.proto
+
+  buf:
+    name: buf lint · format · breaking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: bufbuild/buf-action@v1
+        with:
+          # A shipped field number is permanent: a segment written under an
+          # older schema still names its fields by number, so renumbering
+          # reinterprets stored data rather than failing.
+          breaking_against: "https://github.com/${{ github.repository }}.git#branch=main"
+
+  generated:
+    name: generated code is current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo install protoc-gen-prost protoc-gen-tonic --locked
+      # Committed generation only helps if the committed output is actually
+      # current. This is what makes that true rather than hoped for.
+      - run: cargo xtask check-proto
