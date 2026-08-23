@@ -49,16 +49,25 @@ pub(super) fn build_batched(
     // — and nothing links them afterwards, because nothing can reach them.
     // That orphaned exactly `batch_size - 1` nodes and cost recall in
     // proportion: 0.57 at batch_size 512 against 1.00 sequential.
-    let seeded = params.batch_size.min(rows);
-    insert_range(
-        &mut graph,
-        store,
-        params,
-        metric,
-        levels,
-        0..seeded,
-        &mut visited,
-    );
+    //
+    // Continue past absent rows until a valid entry is established or all rows
+    // are consumed. An absent prefix longer than batch_size used to stop after
+    // the first batch_size rows, leaving the graph with no entry point even
+    // when present rows followed.
+    let mut seeded = 0;
+    while seeded < rows && graph.entry().is_none() {
+        let end = (seeded + params.batch_size).min(rows);
+        insert_range(
+            &mut graph,
+            store,
+            params,
+            metric,
+            levels,
+            seeded..end,
+            &mut visited,
+        );
+        seeded = end;
+    }
 
     for start in (seeded..rows).step_by(params.batch_size) {
         let end = (start + params.batch_size).min(rows);

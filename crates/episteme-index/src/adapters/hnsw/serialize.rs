@@ -14,16 +14,7 @@ use super::cursor::Cursor;
 use super::graph::Graph;
 use episteme_core::{Error, Result};
 
-/// Leading bytes of every graph file.
-///
-/// Invariant 4: a file that does not begin with these is refused rather than
-/// interpreted, so a mismatched or truncated file fails loudly instead of
-/// decoding into a plausible graph.
 pub const GRAPH_MAGIC: [u8; 4] = *b"EPHN";
-/// Format version written into every graph file.
-///
-/// A file declaring a higher version is refused: this build cannot know what
-/// a later one added, and guessing would silently misread the graph.
 pub const GRAPH_VERSION: u16 = 1;
 
 /// `magic(4) version(2) reserved(2) nodes(8) entry(4) max_level(4) edges(8)`
@@ -134,9 +125,9 @@ pub fn decode(bytes: &[u8]) -> Result<Graph> {
             });
         }
     };
-    if entry.is_none() && nodes != 0 {
+    if entry.is_none() && declared_edges != 0 {
         return Err(Error::MalformedIndex {
-            reason: "hnsw graph has nodes but declares no entry point",
+            reason: "hnsw graph has edges but declares no entry point",
         });
     }
     if let Some(row) = entry

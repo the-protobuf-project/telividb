@@ -43,6 +43,9 @@ pub fn greedy_descend(
     while improved {
         improved = false;
         for &neighbour in graph.neighbours(current.ordinal.row(), layer) {
+            if neighbour as usize >= graph.len() {
+                continue;
+            }
             let candidate = Ordinal::from_row(neighbour);
             let Some(distance) = distance_to(store, metric, query, candidate) else {
                 continue;
@@ -94,6 +97,12 @@ pub fn search_layer(
         }
 
         for &neighbour in graph.neighbours(current.ordinal.row(), layer) {
+            // A corrupted or malicious graph file can name an out-of-range
+            // target. Reject it before using it to index the visited set or the
+            // store — both assumptions are caller-validated, not rechecked here.
+            if neighbour as usize >= graph.len() {
+                continue;
+            }
             if !visited.visit(neighbour as usize) {
                 continue;
             }

@@ -158,6 +158,7 @@ impl Manifest {
 
         let elapsed = started.elapsed().as_secs_f64();
         meter.histogram(metrics_names::MANIFEST_SWAP_DURATION, elapsed);
+        meter.gauge(metrics_names::SEGMENTS_LIVE, self.segments.len() as f64);
         logger::debug!("manifest published").with_data(&serde_json::json!({
             fields::GENERATION: self.generation,
             fields::SEGMENTS: self.segments.len(),

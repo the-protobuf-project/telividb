@@ -84,6 +84,10 @@ pub(super) fn insert_range(
     }
 }
 
+/// Insert one node into an existing graph, linking it at each layer it occupies.
+///
+/// The graph and visited set are mutated; everything else is read-only context.
+/// For the sequential builder and for the batched builder's apply step.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn insert(
     graph: &mut Graph,
