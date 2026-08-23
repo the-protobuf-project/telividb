@@ -20,7 +20,7 @@ async fn start() -> SocketAddr {
         let outcome = serve(ServerConfig {
             // Telemetry installs globally and only once per process, so tests
             // sharing a binary must not each try to install it.
-            log_filter: "error".to_owned(),
+            environment: "production".to_owned(),
             ..ServerConfig::at(addr)
         })
         .await;
@@ -113,7 +113,10 @@ fn the_descriptor_set_is_embedded_for_reflection() {
 #[test]
 fn defaults_do_not_open_a_port_nobody_asked_for() {
     let config = ServerConfig::default();
-    assert!(config.metrics_addr.is_none(), "metrics must be opt-in");
+    assert!(
+        config.otlp_addr.is_none(),
+        "telemetry export must be opt-in"
+    );
     assert!(config.reflection, "reflection is what makes the API usable");
     assert!(config.grpc_web, "the embedded UI cannot speak native gRPC");
 }

@@ -1,6 +1,7 @@
 //! How the server is configured.
 
 use std::net::SocketAddr;
+use std::path::PathBuf;
 
 /// Listen addresses and feature toggles.
 #[derive(Debug, Clone)]
@@ -17,12 +18,19 @@ pub struct ServerConfig {
     /// On by default: without it a client must already hold the protos, which
     /// defeats generic tooling.
     pub reflection: bool,
-    /// Filter directives for logs, e.g. `info,episteme_storage=debug`.
-    pub log_filter: String,
-    /// Emit logs as JSON rather than human-readable text.
-    pub log_json: bool,
-    /// Address for a Prometheus scrape endpoint. `None` disables it.
-    pub metrics_addr: Option<SocketAddr>,
+    /// Deployment environment, which is the telemetry stack's verbosity
+    /// control: `development` is chatty, `production` is not.
+    pub environment: String,
+    /// OTLP collector to export traces, metrics and logs to.
+    ///
+    /// `None` keeps everything on the console. A daemon should set this:
+    /// under launchd or systemd stdout goes nowhere unless the supervisor is
+    /// capturing it, so a server that only writes to the console appears to
+    /// emit nothing at all.
+    pub otlp_addr: Option<SocketAddr>,
+
+    /// Record an MCAP file at this path, for inspection in Foxglove Studio.
+    pub mcap_path: Option<PathBuf>,
 }
 
 impl Default for ServerConfig {
@@ -33,11 +41,11 @@ impl Default for ServerConfig {
                 .expect("literal is a valid address"),
             grpc_web: true,
             reflection: true,
-            log_filter: "info".to_owned(),
-            log_json: false,
+            environment: "development".to_owned(),
             // Off unless asked: a database should not open a port nobody
             // requested.
-            metrics_addr: None,
+            otlp_addr: None,
+            mcap_path: None,
         }
     }
 }

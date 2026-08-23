@@ -5,7 +5,7 @@ use crate::error::{Error, Result};
 use crate::services::CollectionSvc;
 use episteme_proto::FILE_DESCRIPTOR_SET;
 use episteme_proto::collection::v1::collections_server::CollectionsServer;
-use episteme_telemetry::{Telemetry, TelemetryConfig};
+use episteme_telemetry::{Environment, Telemetry, TelemetryConfig, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
 ///
@@ -17,17 +17,20 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
     // serve because logging is already set up would be the wrong call — the
     // caller's choice wins, and the server says so rather than dying.
     let _telemetry = match Telemetry::install(TelemetryConfig {
-        filter: config.log_filter.clone(),
-        json: config.log_json,
-        prometheus: config.metrics_addr,
-        recall_sample_rate: 0.0,
+        environment: environment_of(&config.environment),
+        otlp: config.otlp_addr,
+        mcap_path: config.mcap_path.as_ref().map(|p| p.display().to_string()),
+        ..TelemetryConfig::default()
     }) {
         Ok(t) => Some(t),
-        Err(episteme_telemetry::init::TelemetryError::AlreadyInstalled(_)) => {
-            tracing::debug!("telemetry already installed; using the existing pipeline");
+        // An already-installed pipeline is not fatal. An embedded caller may
+        // have configured its own before starting a server, and refusing to
+        // serve because logging is already set up would be the wrong call —
+        // the caller's choice wins, and the server says so rather than dying.
+        Err(e) => {
+            tracing::debug!(%e, "telemetry already installed; using the existing pipeline");
             None
         }
-        Err(e) => return Err(Error::Telemetry(e.to_string())),
     };
 
     // Health reports SERVING once the router is up. A load balancer needs this
@@ -54,12 +57,35 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
         router = router.add_service(reflection);
     }
 
-    tracing::info!(
-        addr = %config.addr,
-        grpc_web = config.grpc_web,
-        reflection = config.reflection,
-        "episteme listening"
+    // Say where every stream of telemetry goes, at startup, every time.
+    //
+    // The alternative is what this replaced: a server that logs one line and
+    // then appears silent, with no indication that the instrumentation exists,
+    // that metrics are off, or where a log file would be if there were one.
+    logger::info!(
+        "episteme listening on {} (grpc-web {}, reflection {})",
+        config.addr,
+        config.grpc_web,
+        config.reflection
     );
+    // Each macro returns a `LogBuilder` that emits when it drops — hence the
+    // blocks: a bare match arm would make the arms' types the builder rather
+    // than `()`.
+    match config.otlp_addr {
+        Some(addr) => {
+            logger::info!("telemetry: exporting logs, traces and metrics to {addr}");
+        }
+        None => {
+            logger::info!("telemetry: console only — pass --otlp <addr> to export");
+        }
+    }
+    if let Some(path) = &config.mcap_path {
+        logger::info!(
+            "telemetry: recording MCAP for Foxglove at {}",
+            path.display()
+        );
+    }
+    logger::info!("telemetry: environment {}", config.environment);
 
     let mut server = tonic::transport::Server::builder();
 
@@ -80,6 +106,20 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
             .serve_with_shutdown(config.addr, shutdown())
             .await
             .map_err(|e| Error::Transport(e.to_string()))
+    }
+}
+
+/// Map the configured name onto the stack's environment.
+///
+/// Validated at parse time, so an unknown value cannot reach here — but the
+/// fallback is `Development` rather than a panic, because a server refusing to
+/// start over a logging label would be the wrong trade.
+fn environment_of(name: &str) -> Environment {
+    match name {
+        "production" => Environment::Production,
+        "staging" => Environment::Staging,
+        "jetson" => Environment::Jetson,
+        _ => Environment::Development,
     }
 }
 

@@ -40,4 +40,20 @@ pub mod redact;
 pub mod init;
 
 #[cfg(feature = "subscriber")]
-pub use init::{Telemetry, TelemetryConfig, TelemetryError};
+pub use init::{Telemetry, TelemetryConfig, TelemetryError, should_sample};
+
+/// The telemetry stack's own logging macros, re-exported.
+///
+/// A composition root logs through these — `logger::info!("...")` — rather than
+/// the `tracing` facade, because they carry file and line, attach structured
+/// data via `.with_data(&value)`, and reach the OTLP log pipeline directly.
+///
+/// Library crates keep using `tracing` spans and `metrics` counters: they must
+/// not know which pipeline is behind them, and a facade is what makes that
+/// true.
+#[cfg(feature = "subscriber")]
+pub use telemetry::logger;
+
+/// Deployment environments the stack recognises.
+#[cfg(feature = "subscriber")]
+pub use telemetry::options::Environment;

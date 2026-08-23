@@ -1,0 +1,23 @@
+# Telemetry configuration, auto-discovered by `Telemetry::new()`.
+#
+# Exporting is off by default so a developer running `cargo serve` with no
+# collector does not get a connection-refused error on every batch. Turn it on
+# here, or pass `--otlp <addr>` which overrides this file.
+
+[service]
+name = "episteme"
+version = "0.1.0"
+environment = "development"
+description = "Multimodal vector and graph database"
+
+[telemetry]
+# Master switch for the OTLP pipeline. Off by default so a developer with no
+# collector running does not get a connection-refused error on every batch.
+# Console logging is unaffected. `--otlp <addr>` turns it on.
+enabled = false
+
+[telemetry.otlp]
+# Off by default: nothing should leave the machine because nobody said not to,
+# and a missing collector should not produce noise.
+enabled = false
+endpoint = "localhost:4317"

@@ -37,7 +37,7 @@ while it was spoken.
 | `episteme-distance` | Scalar dot / L2 / normalize. **No SIMD yet** |
 | `episteme-index` | `VectorIndex` port, exhaustive + **HNSW** (persistable), **two-tier scan + rerank**, buffer/segment merge with provenance, recall harness |
 | `episteme-storage` | Segment + field headers with schema/model fingerprints, segment writer + reader, **int8, f16, binary and PQ quantization**, WAL with torn-tail recovery, atomic manifest, searchable mutable buffer |
-| `episteme-telemetry` | Span/metric vocabulary, redaction, Prometheus + structured logs |
+| `episteme-telemetry` | Span/metric vocabulary, redaction; pipeline via `telemetry-rs` (OTLP + MCAP) |
 | `episteme-server` | Not started |
 | `episteme-embed` | Not started |
 
@@ -52,6 +52,9 @@ No C toolchain, no CMake, no CUDA SDK. That is a rule, not a coincidence —
 ```bash
 cargo serve                      # start the server on 127.0.0.1:7700
 cargo serve --addr 0.0.0.0:7700  # flags pass straight through
+cargo serve --otlp 127.0.0.1:4317 # export logs, traces and metrics
+cargo serve --environment production
+cargo serve --mcap /tmp/run.mcap  # record for Foxglove Studio
 cargo dev                        # same, unoptimized, verbose logging
 cargo recall -- --rows 20000     # measure recall against exhaustive search
 

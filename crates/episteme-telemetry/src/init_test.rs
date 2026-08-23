@@ -1,11 +1,10 @@
 use super::*;
 
 #[test]
-fn default_config_is_quiet_and_local() {
+fn defaults_keep_everything_local() {
     let c = TelemetryConfig::default();
-    assert_eq!(c.filter, "info");
-    assert!(!c.json);
-    assert!(c.prometheus.is_none(), "must not open a port unasked");
+    assert!(c.otlp.is_none(), "must not export off the machine unasked");
+    assert!(c.mcap_path.is_none());
     assert_eq!(
         c.recall_sample_rate, 0.0,
         "recall sampling costs a full scan"
@@ -13,33 +12,30 @@ fn default_config_is_quiet_and_local() {
 }
 
 #[test]
-fn recall_sampling_is_off_when_rate_is_zero() {
-    let t = Telemetry {
-        config: TelemetryConfig::default(),
-    };
+fn the_service_identifies_itself() {
+    let c = TelemetryConfig::default();
+    assert_eq!(c.service, "episteme");
+    assert!(!c.version.is_empty(), "a collector groups by version");
+}
+
+#[test]
+fn development_is_the_default_environment() {
+    // Verbosity is the environment in this stack, not a log level. Defaulting
+    // to development keeps a local run chatty without anyone configuring it.
+    let c = TelemetryConfig::default();
+    assert_eq!(c.environment.to_string().to_lowercase(), "development");
+}
+
+#[test]
+fn recall_sampling_is_off_when_the_rate_is_zero() {
     for draw in [0.0, 0.5, 0.999] {
-        assert!(!t.should_sample_recall(draw));
+        assert!(!should_sample(0.0, draw));
     }
 }
 
 #[test]
 fn recall_sampling_respects_the_rate() {
-    let t = Telemetry {
-        config: TelemetryConfig {
-            recall_sample_rate: 0.01,
-            ..Default::default()
-        },
-    };
-    assert!(t.should_sample_recall(0.005), "below rate should sample");
-    assert!(!t.should_sample_recall(0.01), "at rate should not");
-    assert!(!t.should_sample_recall(0.9), "above rate should not");
-}
-
-#[test]
-fn a_bad_filter_directive_is_rejected() {
-    let err = Telemetry::install(TelemetryConfig {
-        filter: "this is not=a=valid=filter".to_owned(),
-        ..Default::default()
-    });
-    assert!(matches!(err, Err(TelemetryError::Filter(_))));
+    assert!(should_sample(0.01, 0.005), "below the rate should sample");
+    assert!(!should_sample(0.01, 0.01), "at the rate should not");
+    assert!(!should_sample(0.01, 0.9), "above the rate should not");
 }

@@ -8,7 +8,7 @@ fn parse_args(args: &[&str]) -> Result<Option<ServerConfig>, String> {
 fn no_arguments_uses_defaults() {
     let config = parse_args(&[]).unwrap().unwrap();
     assert_eq!(config.addr.port(), 7700);
-    assert!(config.metrics_addr.is_none());
+    assert!(config.otlp_addr.is_none());
 }
 
 #[test]
@@ -57,9 +57,22 @@ fn a_malformed_address_is_rejected() {
 }
 
 #[test]
-fn an_invalid_log_format_is_rejected() {
-    let err = parse_args(&["--log-format", "yaml"]).unwrap_err();
-    assert!(err.contains("text"), "{err}");
+fn the_environment_is_validated() {
+    let config = parse_args(&["--environment", "production"])
+        .unwrap()
+        .unwrap();
+    assert_eq!(config.environment, "production");
+
+    let err = parse_args(&["--environment", "prod"]).unwrap_err();
+    assert!(err.contains("development"), "{err}");
+}
+
+#[test]
+fn jetson_is_a_recognised_environment() {
+    // The telemetry stack targets it directly, and it is a real deployment
+    // target for this database — CUDA on aarch64.
+    let config = parse_args(&["--environment", "jetson"]).unwrap().unwrap();
+    assert_eq!(config.environment, "jetson");
 }
 
 #[test]
@@ -69,9 +82,17 @@ fn help_returns_no_config() {
 }
 
 #[test]
-fn metrics_stay_opt_in() {
-    let config = parse_args(&["--metrics", "127.0.0.1:9100"])
-        .unwrap()
-        .unwrap();
-    assert_eq!(config.metrics_addr.unwrap().port(), 9100);
+fn otlp_export_stays_opt_in() {
+    // A database should not send telemetry off the machine because nobody
+    // said not to.
+    assert!(parse_args(&[]).unwrap().unwrap().otlp_addr.is_none());
+    let config = parse_args(&["--otlp", "127.0.0.1:4317"]).unwrap().unwrap();
+    assert_eq!(config.otlp_addr.unwrap().port(), 4317);
+}
+
+#[test]
+fn mcap_recording_stays_opt_in() {
+    assert!(parse_args(&[]).unwrap().unwrap().mcap_path.is_none());
+    let config = parse_args(&["--mcap", "/tmp/run.mcap"]).unwrap().unwrap();
+    assert_eq!(config.mcap_path.unwrap().to_str().unwrap(), "/tmp/run.mcap");
 }

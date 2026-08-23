@@ -25,6 +25,23 @@ episteme-telemetry = { path = "crates/episteme-telemetry" }
 episteme-proto    = { path = "crates/episteme-proto" }
 thiserror = "2"
 
+# Tests are compiled optimized.
+#
+# Much of this workspace is numeric — k-means over 256 centroids, HNSW graph
+# construction, distance kernels over millions of pairs — and unoptimized that
+# is roughly ninety times slower. The PQ codebook suite alone runs in 12s debug
+# against 0.13s release.
+#
+# The extra compile time is paid once per change; the runtime saving is paid on
+# every test run, on every platform in the matrix.
+[profile.test]
+opt-level = 2
+
+# Dependencies are optimized even in a debug build, for the same reason: the
+# protobuf and hashing crates sit on hot paths in the tests.
+[profile.dev.package."*"]
+opt-level = 2
+
 [profile.release]
 lto = "thin"
 codegen-units = 1
