@@ -28,6 +28,14 @@ use std::process::{Command, ExitCode};
 /// Import prefix identifying files this repository owns.
 const OWNED: &str = "episteme/";
 
+/// The api-linter version CI runs, kept in step with `.github/workflows/api-lint.yml`.
+///
+/// Checked rather than assumed. A newer linter adds rules, so a local install
+/// behind CI reports clean on protos that CI rejects — which is how AIP-191's
+/// `proto-package` rule reached `main` unnoticed while a three-version-old
+/// binary said everything passed.
+const PINNED_VERSION: &str = "2.3.1";
+
 /// Lint every proto this repository owns, against its full import closure.
 pub fn run() -> ExitCode {
     let root = std::env::current_dir().expect("cwd is readable");
@@ -40,6 +48,15 @@ pub fn run() -> ExitCode {
             eprintln!("  go install github.com/googleapis/api-linter/cmd/api-linter@latest");
             return ExitCode::FAILURE;
         }
+    }
+
+    if let Some(installed) = linter_version()
+        && installed != PINNED_VERSION
+    {
+        eprintln!("lint-proto: api-linter {installed} is installed, CI runs {PINNED_VERSION}.");
+        eprintln!("A version behind CI reports clean on protos CI rejects. Install the pin:");
+        eprintln!("  https://github.com/googleapis/api-linter/releases/tag/v{PINNED_VERSION}");
+        return ExitCode::FAILURE;
     }
 
     let export = std::env::temp_dir().join("episteme-proto-lint");
@@ -111,6 +128,13 @@ pub fn run() -> ExitCode {
     let _ = std::fs::remove_dir_all(&export);
     println!("lint-proto: {} file(s), no violations", owned.len());
     ExitCode::SUCCESS
+}
+
+/// The installed api-linter's version, or `None` if it cannot be determined.
+fn linter_version() -> Option<String> {
+    let output = Command::new("api-linter").arg("--version").output().ok()?;
+    let text = String::from_utf8_lossy(&output.stdout);
+    text.split_whitespace().nth(1).map(str::to_owned)
 }
 
 fn collect_owned(dir: &Path, base: &Path, out: &mut Vec<String>) {

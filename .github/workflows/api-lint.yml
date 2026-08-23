@@ -29,16 +29,33 @@ jobs:
       - uses: actions/checkout@v4
       - uses: the-protobuf-project/setup-google-api-linter@v1.0.0
         with:
-          paths: protobuf/**/*.proto
-          # Imports are written relative to the module root, e.g.
-          # `episteme/point/v1/point.proto`, so the linter needs `protobuf/` on
-          # its search path or it cannot resolve them.
-          proto-paths: protobuf
+          # Run from the module root, not the repository root.
+          #
+          # AIP-191 checks that a file's path matches its package, and the path
+          # it sees is the one given on the command line. From the repository
+          # root that path is `protobuf/episteme/point/v1/...` against package
+          # `episteme.point.v1` — a mismatch on the `protobuf/` prefix alone.
+          #
+          # Normally an import path strips that prefix, but `buf: true`
+          # replaces the import paths with the export directory, so nothing
+          # strips it and every file fails. Running from here makes the path
+          # `episteme/point/v1/...`, which matches both the package and the
+          # export layout.
+          working-directory: protobuf
+          paths: episteme/**/*.proto
+          proto-paths: .
           # Resolve `google/api/*` through `buf export`. Without it every
           # annotation import fails, and each failure cascades into a "cannot
           # find" for every annotation in the file — one missing path reads as
           # a hundred errors.
           buf: true
+          buf-input: ..
+          buf-config: ../buf.yaml
+          # Pinned, not `latest`. A newer linter adds rules, so an unpinned
+          # version means CI can start failing on a commit that changed
+          # nothing — and a local install three versions behind will not
+          # reproduce it. `cargo xtask lint-proto` checks for the same version.
+          version: "2.3.1"
           # Strict mode: in-proto `(-- api-linter: ... --)` comments are
           # ignored.
           #

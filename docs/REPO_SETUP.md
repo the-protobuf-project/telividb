@@ -1,5 +1,21 @@
 # Repository settings
 
+## The api-linter version must match CI
+
+CI pins **api-linter 2.3.1**, and `cargo xtask lint-proto` refuses to run
+against a different version.
+
+That is not fussiness. A newer linter adds rules, so a local install behind CI
+reports clean on protos CI rejects — which is exactly how AIP-191's
+`proto-package` rule reached a pull request while a three-version-old binary
+insisted everything passed. A check that disagrees with CI is worse than no
+check, because it is believed.
+
+Install the pinned build from the
+[releases page](https://github.com/googleapis/api-linter/releases/tag/v2.3.1),
+not `go install ...@latest`. When CI's pin changes, `PINNED_VERSION` in
+`tools/xtask/src/lint_proto.rs` changes with it.
+
 ## Editor: the AIP linter needs import paths
 
 If the editor reports dozens of `imported file does not exist` and
@@ -24,7 +40,13 @@ Two related settings are also committed there:
 - **`files.exclude: protobuf/.deps`** — the vendored files are Google's, and
   linting them reports their style as though it were this repository's.
 
-**`cargo xtask lint-proto` is the authority.** It resolves the closure through
+**`cargo xtask lint-proto` is the local authority**, and CI uses the
+`setup-google-api-linter` action for the same job — the action installs the
+linter, so running the xtask there as well would need a second install for no
+gain. Both resolve imports through `buf export` and both ignore suppressions,
+so they agree.
+
+`cargo xtask lint-proto`  It resolves the closure through
 `buf export`, runs the linter with suppressions ignored, and checks the exit
 status. The editor is a convenience that agrees with it once configured.
 
