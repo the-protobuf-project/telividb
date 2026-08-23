@@ -8,9 +8,14 @@ use crate::error::{Error, Result};
 /// Segments are otherwise unrestricted, so ids containing `.`, `-` or `_` are
 /// fine — but never `/`, which is the separator.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ResourceName(String);
+pub struct ResourceName(
+    /// The validated name. Never empty, never with a leading, trailing or
+    /// doubled separator.
+    String,
+);
 
 impl ResourceName {
+    /// Validate a name, rejecting empty or malformed segments.
     pub fn parse(raw: impl Into<String>) -> Result<Self> {
         let raw = raw.into();
         if raw.is_empty() {
@@ -34,6 +39,7 @@ impl ResourceName {
         Ok(Self(raw))
     }
 
+    /// The name as written.
     pub fn as_str(&self) -> &str {
         &self.0
     }

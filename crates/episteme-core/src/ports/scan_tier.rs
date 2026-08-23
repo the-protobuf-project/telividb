@@ -30,6 +30,7 @@ pub trait ScanTier: Send + Sync {
     /// Rows covered, including absent ones.
     fn len(&self) -> usize;
 
+    /// Whether this tier covers no rows at all.
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -67,20 +68,30 @@ pub struct PreparedQuery {
 #[derive(Debug, Clone)]
 pub enum PreparedState {
     /// The query itself, for tiers that decode before scoring.
-    Vector(Vec<f32>),
+    Vector(
+        /// The query, unchanged.
+        Vec<f32>,
+    ),
     /// The query encoded into the tier's own code space.
-    Codes(Vec<u8>),
+    Codes(
+        /// The query in the tier's code space.
+        Vec<u8>,
+    ),
     /// Precomputed distances from the query to every centroid, per subspace.
     ///
     /// The asymmetric form: the query stays full precision and only stored
     /// vectors are quantized, which is more accurate than encoding both.
     Table {
+        /// Number of subspaces the vector was divided into.
         subspaces: usize,
+        /// Row-major `subspaces * 256` partial scores, indexed by
+        /// `subspace * 256 + code`.
         distances: Vec<f32>,
     },
 }
 
 impl PreparedQuery {
+    /// Carry the query unchanged, for tiers that decode before scoring.
     pub fn vector(metric: Metric, query: Vec<f32>) -> Self {
         Self {
             metric,
@@ -88,6 +99,7 @@ impl PreparedQuery {
         }
     }
 
+    /// Carry the query encoded into the tier's own code space.
     pub fn codes(metric: Metric, codes: Vec<u8>) -> Self {
         Self {
             metric,
@@ -95,6 +107,7 @@ impl PreparedQuery {
         }
     }
 
+    /// Carry a precomputed query-to-centroid distance table.
     pub fn table(metric: Metric, subspaces: usize, distances: Vec<f32>) -> Self {
         Self {
             metric,

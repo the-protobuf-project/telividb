@@ -21,6 +21,7 @@ pub trait VectorStore {
     /// Number of rows, including any that are tombstoned or absent.
     fn len(&self) -> usize;
 
+    /// Whether this store holds no rows.
     fn is_empty(&self) -> bool {
         self.len() == 0
     }

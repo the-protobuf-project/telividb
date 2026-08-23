@@ -7,7 +7,10 @@
 
 /// A caller-supplied identity, stable across export, import and re-sharding.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ExternalId(pub u64);
+pub struct ExternalId(
+    /// The caller-supplied identifier.
+    pub u64,
+);
 
 /// A row position *within one segment*. Meaningless anywhere else.
 ///
@@ -22,6 +25,7 @@ impl Ordinal {
         Self(row)
     }
 
+    /// The zero-based row position within its segment.
     pub fn row(self) -> u32 {
         self.0
     }
@@ -32,6 +36,7 @@ impl Ordinal {
 pub struct Dim(u32);
 
 impl Dim {
+    /// Build a width, rejecting zero.
     pub fn new(dim: u32) -> crate::Result<Self> {
         if dim == 0 {
             return Err(crate::Error::ZeroDim);
@@ -39,6 +44,7 @@ impl Dim {
         Ok(Self(dim))
     }
 
+    /// The width, as a `usize` for indexing.
     pub fn get(self) -> usize {
         self.0 as usize
     }

@@ -24,6 +24,7 @@
 pub struct Fingerprint([u8; 32]);
 
 impl Fingerprint {
+    /// Digest width in bytes.
     pub const BYTES: usize = 32;
 
     /// Fingerprint arbitrary bytes — a serialized descriptor set, or a GGUF file.
@@ -34,10 +35,12 @@ impl Fingerprint {
         Self(hasher.finalize().into())
     }
 
+    /// Wrap a digest already computed elsewhere, such as one read from a header.
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self(bytes)
     }
 
+    /// The raw digest, for writing into a header.
     pub fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }
@@ -51,6 +54,7 @@ impl Fingerprint {
         Self([0u8; 32])
     }
 
+    /// Whether this is the all-zero "not recorded" fingerprint.
     pub fn is_unset(&self) -> bool {
         self.0 == [0u8; 32]
     }

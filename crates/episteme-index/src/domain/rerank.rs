@@ -20,7 +20,9 @@ use episteme_core::{Metric, Ordinal, VectorStore};
 /// and the rerank costs as much as scanning at full precision.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct OverFetch {
+    /// Candidates to request per unit of `k`.
     pub multiplier: f32,
+    /// Floor, so a small `k` still admits a workable candidate set.
     pub minimum: usize,
 }
 
@@ -97,7 +99,9 @@ pub fn rerank(
 /// lossy to be pruning on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct RerankStats {
+    /// Candidates the rerank rescored.
     pub considered: usize,
+    /// Results returned after truncation to `k`.
     pub returned: usize,
     /// Positions whose occupant changed after rescoring.
     pub reordered: usize,

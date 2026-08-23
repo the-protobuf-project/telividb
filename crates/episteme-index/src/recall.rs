@@ -34,8 +34,11 @@ pub fn recall_at_k(approximate: &[Candidate], truth: &[Candidate], k: usize) -> 
 /// Recall averaged over a set of queries.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct RecallReport {
+    /// Queries measured.
     pub queries: usize,
+    /// The `k` recall was measured at.
     pub k: usize,
+    /// Mean recall across every query.
     pub mean: f64,
     /// Worst single query. Mean recall hides a query class that fails
     /// completely, and that class is usually the one users notice.
@@ -43,6 +46,7 @@ pub struct RecallReport {
 }
 
 impl RecallReport {
+    /// Summarise per-query recall values.
     pub fn of(per_query: &[f64], k: usize) -> Self {
         if per_query.is_empty() {
             return Self {

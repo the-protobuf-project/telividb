@@ -7,11 +7,14 @@
 /// the source content.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Span {
+    /// Inclusive start, in milliseconds from the beginning of the source.
     start_ms: u64,
+    /// Exclusive end. Equal to `start_ms` for a zero-length span.
     end_ms: u64,
 }
 
 impl Span {
+    /// Build a span, rejecting one whose end precedes its start.
     pub fn new(start_ms: u64, end_ms: u64) -> crate::Result<Self> {
         if end_ms < start_ms {
             return Err(crate::Error::InvalidSpan { start_ms, end_ms });
@@ -19,14 +22,17 @@ impl Span {
         Ok(Self { start_ms, end_ms })
     }
 
+    /// Inclusive start offset.
     pub fn start_ms(self) -> u64 {
         self.start_ms
     }
 
+    /// Exclusive end offset.
     pub fn end_ms(self) -> u64 {
         self.end_ms
     }
 
+    /// Length in milliseconds; zero for an empty span.
     pub fn duration_ms(self) -> u64 {
         self.end_ms - self.start_ms
     }

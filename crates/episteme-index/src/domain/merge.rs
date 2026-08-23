@@ -20,7 +20,10 @@ pub enum Source {
     Buffer,
     /// A sealed segment, reached through its index. Approximate for HNSW and
     /// IVF; exact only for a flat index.
-    Sealed(u64),
+    Sealed(
+        /// Identifier of the segment the hit came from.
+        u64,
+    ),
 }
 
 impl Source {
@@ -35,8 +38,11 @@ impl Source {
 /// One result, still carrying the source that produced it.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Hit {
+    /// Which store produced this hit, and therefore whether it is exact.
     pub source: Source,
+    /// Segment-local row.
     pub ordinal: Ordinal,
+    /// Score on the field's metric scale.
     pub score: f32,
 }
 
@@ -65,7 +71,9 @@ impl MergeStats {
 /// A merged answer.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Merged {
+    /// Results, best first.
     pub hits: Vec<Hit>,
+    /// Where those results came from.
     pub stats: MergeStats,
 }
 
