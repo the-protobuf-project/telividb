@@ -11,7 +11,7 @@ thiserror.workspace = true
 
 # Exporters live behind features so library crates never pull in a runtime.
 tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter", "fmt", "json"] }
-metrics-exporter-prometheus = { version = "0.16", optional = true, default-features = false, features = ["http-listener"] }
+metrics-exporter-prometheus = { version = "0.18", optional = true, default-features = false, features = ["http-listener"] }
 
 [features]
 default = []
