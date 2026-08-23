@@ -8,7 +8,7 @@ use episteme_proto::collection::v1::{
 use episteme_telemetry::{fields, redact};
 use tonic::{Request, Response, Status};
 
-/// Collection lifecycle.
+/// Handles collection create, read, list and delete.
 ///
 /// Currently a wiring shell: it validates arguments and computes fingerprints,
 /// but has no catalogue behind it. That arrives with the schema adapter, which

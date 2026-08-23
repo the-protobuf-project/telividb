@@ -13,6 +13,7 @@
 //! every run. `--check` verifies the committed docs are current without writing,
 //! which is what CI uses.
 
+mod blocks;
 mod model;
 mod parse;
 mod render;

@@ -29,7 +29,7 @@
 
 /// Value types shared across every resource.
 pub mod shared {
-    /// Version 1.
+    /// Version 1 of the shared value types.
     pub mod v1 {
         include!("generated/episteme/shared/v1/episteme.shared.v1.rs");
     }
@@ -37,7 +37,7 @@ pub mod shared {
 
 /// The Collection resource and its service.
 pub mod collection {
-    /// Version 1.
+    /// Version 1 of the Collection resource and service.
     pub mod v1 {
         include!("generated/episteme/collection/v1/episteme.collection.v1.rs");
         include!("generated/episteme/collection/v1/episteme.collection.v1.tonic.rs");
@@ -46,16 +46,16 @@ pub mod collection {
 
 /// The Point resource and its service.
 pub mod point {
-    /// Version 1.
+    /// Version 1 of the Point resource and service.
     pub mod v1 {
         include!("generated/episteme/point/v1/episteme.point.v1.rs");
         include!("generated/episteme/point/v1/episteme.point.v1.tonic.rs");
     }
 }
 
-/// Vector retrieval.
+/// Vector retrieval: search requests, results and the Search service.
 pub mod search {
-    /// Version 1.
+    /// Version 1 of the search request and result types.
     pub mod v1 {
         include!("generated/episteme/search/v1/episteme.search.v1.rs");
         include!("generated/episteme/search/v1/episteme.search.v1.tonic.rs");
