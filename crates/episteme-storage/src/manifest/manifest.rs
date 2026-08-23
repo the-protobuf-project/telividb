@@ -110,9 +110,13 @@ impl Manifest {
             });
         }
 
+        // `as_chunks` yields `[u8; 8]` directly, so the fallible conversion and
+        // its `expect` disappear — the length is proven by the type.
         let segments = bytes[PREFIX..body]
-            .chunks_exact(8)
-            .map(|c| u64::from_le_bytes(c.try_into().expect("8 bytes")))
+            .as_chunks::<8>()
+            .0
+            .iter()
+            .map(|c| u64::from_le_bytes(*c))
             .collect();
 
         Ok(Self {

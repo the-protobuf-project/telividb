@@ -59,8 +59,8 @@ impl SegmentReader {
         for row in 0..header.rows {
             reader.read_exact_at(layout.row_offset(row), &mut buf)?;
             let start = row as usize * header.dim.get();
-            for (i, chunk) in buf.chunks_exact(4).enumerate() {
-                rows[start + i] = f32::from_le_bytes(chunk.try_into().expect("4 bytes"));
+            for (i, chunk) in buf.as_chunks::<4>().0.iter().enumerate() {
+                rows[start + i] = f32::from_le_bytes(*chunk);
             }
         }
 
