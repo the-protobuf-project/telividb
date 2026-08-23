@@ -25,12 +25,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: the-protobuf-project/setup-google-api-linter@v1
+      - uses: the-protobuf-project/setup-google-api-linter@v1.0.0
         with:
           paths: proto/**/*.proto
 
   buf:
-    name: buf lint · format · breaking
+    name: buf format · breaking
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,9 +38,15 @@ jobs:
           fetch-depth: 0
       - uses: bufbuild/buf-action@v1
         with:
+          # No lint. The AIP linter above owns the API surface; running a second
+          # linter means two opinions and, eventually, a suppression added to
+          # reconcile them — which is the one thing never allowed here.
+          lint: false
+          format: true
           # A shipped field number is permanent: a segment written under an
           # older schema still names its fields by number, so renumbering
           # reinterprets stored data rather than failing.
+          breaking: true
           breaking_against: "https://github.com/${{ github.repository }}.git#branch=main"
 
   generated:

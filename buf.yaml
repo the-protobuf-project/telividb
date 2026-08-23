@@ -3,14 +3,12 @@ version: v2
 modules:
   - path: proto
 
-lint:
-  use:
-    - STANDARD
-  # Google's AIP linter runs separately in CI and is the authority on resource
-  # naming. buf lint covers structure: consistent packages, directory layout
-  # matching package paths, no leaked imports.
-  except:
-    - PACKAGE_VERSION_SUFFIX
+# No `lint` block, deliberately.
+#
+# The Google AIP linter owns the API surface. Configuring buf lint as well would
+# mean two tools with opinions about the same files, and the way that gets
+# resolved in practice is a suppression — which is never allowed here. `buf
+# format` and `buf breaking` stay, because neither overlaps with AIP.
 
 breaking:
   use:

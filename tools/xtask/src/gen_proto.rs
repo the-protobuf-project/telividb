@@ -25,11 +25,9 @@ pub fn run(check_only: bool) -> ExitCode {
 
     let before = check_only.then(|| snapshot(&root.join(GENERATED)));
 
-    for step in [
-        vec!["lint"],
-        vec!["format", "--diff", "--exit-code"],
-        vec!["generate"],
-    ] {
+    // No `buf lint`. The AIP linter is the authority on the API surface, and a
+    // second linter would eventually be reconciled with a suppression.
+    for step in [vec!["format", "--diff", "--exit-code"], vec!["generate"]] {
         if !run_buf(&root, &step) {
             return ExitCode::FAILURE;
         }

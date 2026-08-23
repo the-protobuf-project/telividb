@@ -150,7 +150,14 @@ Violating any of these is a bug, not a style preference.
     that compiles to a bitmap, cached on `(principal, collection, policy_version)`. Calling a
     policy engine inside a traversal or scan loop is a correctness-of-design failure, not a
     performance nit — an HNSW query visits thousands of nodes.
-37. **Never suppress the API linter.** No `// (-- api-linter: ... --)` disables, no
+37. **The Google AIP linter is the only linter for `.proto` files.** Never add `buf lint`, and
+    never configure a second opinion about the API surface. Two linters disagreeing get
+    reconciled by suppressing one of them, which is exactly what rule 38 forbids — so the
+    conflict is removed at the source instead.
+
+    `buf format` and `buf breaking` are fine and expected: formatting is not an opinion about the
+    API, and breaking-change detection is about wire compatibility rather than design.
+38. **Never suppress the API linter.** No `// (-- api-linter: ... --)` disables, no
     exclusions added to the lint config, no rule silenced to make a build green. If a lint
     fires, the API is wrong — change the API.
 
@@ -162,10 +169,10 @@ Violating any of these is a bug, not a style preference.
     If a rule is genuinely inapplicable to this project, that is a conversation to have once, in
     the lint configuration, with the reason written down — never an inline suppression on one
     field.
-38. **Generated protobuf code is committed, never built.** `cargo build` must need no
+39. **Generated protobuf code is committed, never built.** `cargo build` must need no
     protobuf toolchain. Regenerate with `cargo xtask gen-proto`; `cargo xtask check-proto` fails
     CI if the committed output drifts from the protos. Never hand-edit `src/generated/`.
-39. **A shipped field number is permanent.** Never renumber, never reuse a tag, mark
+40. **A shipped field number is permanent.** Never renumber, never reuse a tag, mark
     removals `reserved`. A segment written under an older schema still names its fields by
     number, so renumbering silently reinterprets stored data rather than failing.
 
