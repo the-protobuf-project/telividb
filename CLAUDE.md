@@ -157,9 +157,12 @@ Violating any of these is a bug, not a style preference.
 
     `buf format` and `buf breaking` are fine and expected: formatting is not an opinion about the
     API, and breaking-change detection is about wire compatibility rather than design.
-38. **Never suppress the API linter.** No `// (-- api-linter: ... --)` disables, no
-    exclusions added to the lint config, no rule silenced to make a build green. If a lint
-    fires, the API is wrong — change the API.
+38. **Never suppress the API linter.** No `(-- api-linter: ... --)` disables, no exclusions
+    added to the lint config, no rule silenced to make a build green. If a lint fires, the API is
+    wrong — change the API.
+
+    CI runs the linter with `ignore-comment-disables: true`, so an in-proto suppression is not
+    merely against policy: it has no effect. The rule is enforced rather than trusted.
 
     The linter is the only thing enforcing that a resource name means the same thing in every
     projection of the schema. A suppression is not a local exception; it is a permanent

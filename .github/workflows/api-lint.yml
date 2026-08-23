@@ -28,6 +28,17 @@ jobs:
       - uses: the-protobuf-project/setup-google-api-linter@v1.0.0
         with:
           paths: proto/**/*.proto
+          # Imports are written relative to the module root, e.g.
+          # `episteme/v1/common.proto`, so the linter needs `proto/` on its
+          # search path or it cannot resolve them.
+          proto-paths: proto
+          # Strict mode: in-proto `(-- api-linter: ... --)` comments are ignored.
+          #
+          # This makes CLAUDE.md rule 38 mechanical rather than a promise. A
+          # suppression cannot be added to make a build green, because the
+          # linter will not honour one — so a firing rule has to be answered by
+          # changing the API, which is the only correct response.
+          ignore-comment-disables: true
 
   buf:
     name: buf format · breaking
