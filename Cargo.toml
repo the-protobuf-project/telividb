@@ -1,0 +1,29 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "tools/*"]
+
+# The engine is AGPL-3.0-or-later; commercial licences are available for
+# proprietary use — see LICENSE-COMMERCIAL.md.
+#
+# Client SDKs and generated proto code override this with Apache-2.0, so that
+# writing a proprietary application that *talks to* episteme needs no licence.
+# Those crates set `license = "Apache-2.0"` in their own manifest.
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# Pinned exactly; see rust-toolchain.toml.
+rust-version = "1.98.0"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/oh-tarnished/episteme"
+
+[workspace.dependencies]
+episteme-core     = { path = "crates/episteme-core" }
+episteme-distance = { path = "crates/episteme-distance" }
+episteme-index    = { path = "crates/episteme-index" }
+episteme-storage  = { path = "crates/episteme-storage" }
+episteme-telemetry = { path = "crates/episteme-telemetry" }
+thiserror = "2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

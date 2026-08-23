@@ -1,0 +1,13 @@
+# The single source of truth for the toolchain.
+#
+# Pinned to an exact version rather than `stable`, so a compiler upgrade is a
+# reviewed commit rather than something that happens to whoever built most
+# recently. rustup honours this file automatically, which means a contributor
+# gets the right toolchain by cloning — no README step to miss.
+#
+# CI does not restate the version. Anywhere it appeared twice it would
+# eventually disagree.
+[toolchain]
+channel = "1.98.0"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

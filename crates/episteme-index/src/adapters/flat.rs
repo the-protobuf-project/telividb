@@ -1,0 +1,134 @@
+//! Exhaustive search — the ground truth every approximate index is measured
+//! against.
+//!
+//! Flat is not a placeholder. Recall for HNSW and IVF-PQ is defined as
+//! agreement with this implementation, so it must stay obviously correct in
+//! preference to being fast. See CLAUDE.md invariant 8.
+
+use crate::domain::Candidate;
+use crate::ports::{VectorIndex, VectorStore};
+use episteme_core::{Ordinal, Result};
+use episteme_telemetry::{fields, metrics_names, redact};
+use std::time::Instant;
+
+/// Brute-force scan over every row in the store.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct FlatIndex;
+
+impl FlatIndex {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl VectorIndex for FlatIndex {
+    fn kind(&self) -> &'static str {
+        "flat"
+    }
+
+    fn search(
+        &self,
+        store: &dyn VectorStore,
+        query: &[f32],
+        k: usize,
+        allowed: Option<&dyn Fn(Ordinal) -> bool>,
+    ) -> Result<Vec<Candidate>> {
+        let dim = store.dim().get();
+        if query.len() != dim {
+            return Err(episteme_core::Error::DimMismatch {
+                expected: dim,
+                actual: query.len(),
+            });
+        }
+        if k == 0 {
+            return Ok(Vec::new());
+        }
+
+        // Span, not per-candidate instrumentation: the scan below runs once
+        // per stored vector, and a span there would cost more than the distance
+        // computation it measured. Aggregate counts are recorded on exit.
+        let span = tracing::debug_span!(
+            "episteme.index.search",
+            { fields::INDEX_KIND } = self.kind(),
+            { fields::K } = k,
+            { fields::DIM } = dim,
+            filtered = allowed.is_some(),
+            // Shape only. A query vector must never be emitted: it can be
+            // inverted toward its source text, and logs are read by people who
+            // were never granted `read_vector`.
+            query = %redact::vector_shape(query),
+        );
+        let _guard = span.enter();
+        let started = Instant::now();
+
+        let metric = store.metric();
+        let mut scored: Vec<Candidate> = Vec::new();
+        let mut visited = 0u64;
+
+        for row in 0..store.len() {
+            let ordinal = Ordinal::from_row(row as u32);
+
+            // The visibility bitmap is consulted *during* the scan, never after.
+            // Filtering results afterwards would leak how many rows were hidden
+            // and where they ranked — ARCHITECTURE.md §6.
+            if let Some(is_allowed) = allowed
+                && !is_allowed(ordinal)
+            {
+                continue;
+            }
+
+            // Absent is normal in a multimodal collection: a text-only point
+            // has no image vector. ARCHITECTURE.md §4.1.
+            let Some(candidate) = store.get(ordinal) else {
+                continue;
+            };
+
+            let score = episteme_distance::score(metric, query, candidate);
+            scored.push(Candidate::new(ordinal, score));
+            visited += 1;
+        }
+
+        sort_best_first(&mut scored, k, metric.higher_is_nearer());
+        scored.truncate(k);
+
+        let labels = [(fields::INDEX_KIND, self.kind())];
+        metrics::histogram!(metrics_names::SEARCH_DURATION, &labels)
+            .record(started.elapsed().as_secs_f64());
+        metrics::histogram!(metrics_names::SEARCH_CANDIDATES, &labels).record(visited as f64);
+        metrics::histogram!(metrics_names::SEARCH_RESULTS, &labels).record(scored.len() as f64);
+
+        tracing::debug!(
+            { fields::CANDIDATES_VISITED } = visited,
+            { fields::RESULTS_RETURNED } = scored.len(),
+            "search complete"
+        );
+        Ok(scored)
+    }
+}
+
+/// Partition so the best `k` are in front, then order just those.
+///
+/// `select_nth_unstable_by` keeps this O(n) rather than O(n log n); only the
+/// retained prefix is sorted.
+fn sort_best_first(scored: &mut [Candidate], k: usize, higher_is_nearer: bool) {
+    let better = |a: &Candidate, b: &Candidate| {
+        // NaN scores would make this ordering inconsistent; they are rejected at
+        // ingest, so `total_cmp` here is a defensive tie-break, not a policy.
+        if higher_is_nearer {
+            b.score.total_cmp(&a.score)
+        } else {
+            a.score.total_cmp(&b.score)
+        }
+    };
+
+    if k < scored.len() {
+        scored.select_nth_unstable_by(k, better);
+        scored[..k].sort_unstable_by(better);
+    } else {
+        scored.sort_unstable_by(better);
+    }
+}
+
+#[cfg(test)]
+#[path = "flat_test.rs"]
+mod tests;

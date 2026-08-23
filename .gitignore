@@ -1,0 +1,14 @@
+/target
+**/*.rs.bk
+*.pdb
+
+# Local data + models — never committed
+/data
+/models
+*.gguf
+*.bin.zst
+
+.DS_Store
+.idea/
+.vscode/
+AGENT_*.md

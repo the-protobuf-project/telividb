@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+jobs:
+  # The default build must need no C toolchain, no CMake, no CUDA SDK.
+  #
+  # macOS is a first-class target rather than an afterthought: on Apple silicon
+  # the binary runs natively, because containers get no GPU there. Linux ARM64
+  # is here because Jetson is CUDA-on-aarch64 and Graviton is ordinary
+  # deployment — an aarch64 regression must not be discovered on the device.
+  #
+  # Windows is deliberately out of scope.
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux · x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - name: linux · arm64
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - name: macos · arm64
+            os: macos-latest
+            target: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+      # No toolchain version here — rust-toolchain.toml is authoritative and
+      # rustup honours it. Stated twice, the two would eventually disagree.
+      - run: rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Confirm the architecture under test
+        run: |
+          echo "runner arch : $(uname -m)"
+          echo "rust target : ${{ matrix.target }}"
+          rustc --print cfg | grep -E 'target_arch|target_endian|target_pointer_width'
+
+      - run: cargo build --workspace --all-targets --target ${{ matrix.target }}
+      - run: cargo test --workspace --target ${{ matrix.target }}
+
+      # Every optional feature must also compile, or a feature-gated path rots
+      # unnoticed until someone enables it.
+      - run: cargo test --workspace --all-features --target ${{ matrix.target }}
+
+  lint:
+    name: fmt · clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+  # Structural rules from CLAUDE.md, enforced because rules that depend on
+  # discipline decay.
+  structure:
+    name: file length
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo xtask check-len
+
+  # The default build must stay free of C dependencies. `cargo tree` is the
+  # check: a `cc` or `cmake` build-dependency appearing here means the
+  # toolchain-free promise has quietly been broken.
+  no-native-deps:
+    name: no C toolchain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Fail if a native build dependency crept in
+        run: |
+          tree=$(cargo tree --workspace --edges normal,build --prefix none)
+          if echo "$tree" | grep -qE '^(cc|cmake|bindgen) '; then
+            echo "::error::A native build dependency entered the default build:"
+            echo "$tree" | grep -E '^(cc|cmake|bindgen) '
+            exit 1
+          fi
+          echo "default build is toolchain-free"
+
+  toolchain:
+    name: toolchain is pinned
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the running compiler matches the pin
+        run: |
+          pinned=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' rust-toolchain.toml | tr -d '"')
+          actual=$(rustc --version | cut -d' ' -f2)
+          echo "pinned: $pinned"
+          echo "actual: $actual"
+          if [ "$pinned" != "$actual" ]; then
+            echo "::error::rustup did not honour rust-toolchain.toml"
+            exit 1
+          fi
+      - name: Verify Cargo.toml agrees with the pin
+        run: |
+          pinned=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' rust-toolchain.toml | tr -d '"')
+          declared=$(grep -oE 'rust-version = "[^"]+"' Cargo.toml | cut -d'"' -f2)
+          echo "toolchain: $pinned  cargo: $declared"
+          [ "$pinned" = "$declared" ] || {
+            echo "::error::rust-version in Cargo.toml disagrees with rust-toolchain.toml"
+            exit 1
+          }
+
+  # Crash-consistency and telemetry-leak suites are slow enough to be worth
+  # naming separately, so a failure is legible in the checks list rather than
+  # buried in a full run.
+  invariants:
+    name: crash consistency · telemetry leaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p episteme-storage --test crash_consistency
+      - run: cargo test -p episteme-storage --test buffer_visibility
+      - run: cargo test -p episteme-storage --test segment_roundtrip
+      - run: cargo test -p episteme-index  --test telemetry_leaks

@@ -1,0 +1,22 @@
+[package]
+name = "episteme-telemetry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+tracing = { version = "0.1", default-features = false, features = ["std", "attributes"] }
+metrics = "0.24"
+thiserror.workspace = true
+
+# Exporters live behind features so library crates never pull in a runtime.
+tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter", "fmt", "json"] }
+metrics-exporter-prometheus = { version = "0.16", optional = true, default-features = false, features = ["http-listener"] }
+
+[features]
+default = []
+# Console logging + a Prometheus scrape endpoint. Composition roots only.
+subscriber = ["dep:tracing-subscriber", "dep:metrics-exporter-prometheus"]
+
+[dev-dependencies]
+episteme-core.workspace = true

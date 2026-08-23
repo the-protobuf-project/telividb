@@ -1,0 +1,15 @@
+[package]
+name = "episteme-index"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+episteme-core.workspace = true
+episteme-telemetry.workspace = true
+tracing = "0.1"
+metrics = "0.24"
+episteme-distance.workspace = true
+
+[dev-dependencies]
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

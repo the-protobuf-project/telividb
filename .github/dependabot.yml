@@ -1,0 +1,47 @@
+version: 2
+
+updates:
+  # ---------------------------------------------------------------------------
+  # Rust dependencies
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps(dev)"
+      include: scope
+    labels: ["dependencies", "rust"]
+
+    # Grouped so a quiet week is one PR rather than nine. Patch and minor
+    # updates travel together because they are reviewed the same way; majors
+    # arrive alone, since each needs its own read.
+    groups:
+      rust-patch-and-minor:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+
+    ignore:
+      # The toolchain is pinned deliberately (rust-toolchain.toml). A compiler
+      # upgrade is a reviewed commit, never a dependency bump.
+      - dependency-name: "rust"
+
+  # ---------------------------------------------------------------------------
+  # GitHub Actions used by CI
+  # ---------------------------------------------------------------------------
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    commit-message:
+      prefix: "ci"
+    labels: ["dependencies", "github-actions"]
+    groups:
+      actions:
+        patterns: ["*"]

@@ -1,0 +1,18 @@
+[package]
+name = "episteme-storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+episteme-core.workspace = true
+episteme-distance.workspace = true
+episteme-telemetry.workspace = true
+tracing = "0.1"
+metrics = "0.24"
+crc32fast = "1.4"
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+episteme-index.workspace = true
