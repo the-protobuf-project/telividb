@@ -27,7 +27,6 @@ impl MemoryStore {
     }
 
     /// Append a vector, normalising first when the metric requires it.
-    /// Append a vector, normalising first when the metric requires it.
     pub fn push(&mut self, vector: &[f32]) -> episteme_core::Result<Ordinal> {
         if vector.len() != self.dim.get() {
             return Err(episteme_core::Error::DimMismatch {

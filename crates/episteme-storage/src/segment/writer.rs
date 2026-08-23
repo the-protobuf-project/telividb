@@ -1,5 +1,6 @@
 //! Sealing a buffer into an immutable segment.
 
+use super::durable::{building_path, sync_dir, write_synced};
 use super::layout::{FieldLayout, field_dir};
 use crate::error::Result;
 use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
@@ -29,7 +30,10 @@ impl SegmentWriter {
     /// Begin a segment at `path`, which must not already exist.
     pub fn create(path: impl AsRef<Path>, schema_fingerprint: Fingerprint) -> Result<Self> {
         let final_path = path.as_ref().to_path_buf();
-        let tmp = final_path.with_extension("building");
+        // Appended, not `with_extension`, which *replaces* an existing
+        // extension — so `seg.1` and `seg.2` both produced `seg.building` and
+        // two concurrent seals scribbled over each other's temp directory.
+        let tmp = building_path(&final_path);
         if tmp.exists() {
             fs::remove_dir_all(&tmp)?;
         }
@@ -122,10 +126,14 @@ impl SegmentWriter {
         }
         file.sync_all()?;
 
-        fs::write(dir.join("present.roar"), &present)?;
+        write_synced(dir.join("present.roar"), &present)?;
         if codec != Codec::None {
             super::codes::write_codes(&dir, store, codec)?;
         }
+        // The field's files exist and are durable; this makes their *names*
+        // durable too. Without it a crash can publish a segment whose
+        // directory entries were never recorded.
+        sync_dir(&dir)?;
         self.rows = self.rows.max(store.len() as u64);
         Ok(())
     }
@@ -138,14 +146,18 @@ impl SegmentWriter {
         let started = Instant::now();
 
         let header = SegmentHeader::new(self.schema_fingerprint, self.rows);
-        let mut file = fs::File::create(self.tmp.join("header.bin"))?;
-        file.write_all(&header.encode())?;
-        file.sync_all()?;
-        debug_assert_eq!(header.encode().len(), HEADER_BYTES);
+        let encoded = header.encode();
+        debug_assert_eq!(encoded.len(), HEADER_BYTES);
+        write_synced(self.tmp.join("header.bin"), &encoded)?;
 
+        // Every file is durable and every field directory is synced; this syncs
+        // the entries naming them, so the whole tree is on disk before the
+        // rename makes it visible.
+        sync_dir(&self.tmp)?;
         fs::rename(&self.tmp, &self.final_path)?;
+        // And the parent, so the rename itself survives a power loss.
         if let Some(parent) = self.final_path.parent() {
-            let _ = fs::File::open(parent).and_then(|d| d.sync_all());
+            sync_dir(parent)?;
         }
 
         let elapsed = started.elapsed().as_secs_f64();

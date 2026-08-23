@@ -20,6 +20,7 @@ pub enum Distribution {
     Clustered,
 }
 
+/// Options controlling one recall measurement.
 pub struct Args {
     pub rows: usize,
     pub dim: usize,
@@ -49,6 +50,7 @@ impl Default for Args {
     }
 }
 
+/// Parse arguments, exiting with usage on anything unrecognised.
 pub fn parse() -> Args {
     let mut args = Args::default();
     let raw: Vec<String> = std::env::args().skip(1).collect();

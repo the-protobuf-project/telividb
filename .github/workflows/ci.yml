@@ -68,9 +68,12 @@ jobs:
 
       - run: cargo build --workspace --all-targets --target ${{ matrix.target }}
 
-      # `--all-features` only. It is a superset of the default run, so testing
-      # both was doing the same work twice on every platform in the matrix —
-      # and a feature-gated path still cannot rot unnoticed.
+      # Both feature sets, because `--all-features` is *not* a superset of the
+      # default run: it changes which `#[cfg(feature = ...)]` code compiles.
+      # `episteme-index` without `parallel` takes the sequential builder, which
+      # is the configuration every embedded caller gets, and running only
+      # `--all-features` left it compile-checked but never executed.
+      - run: cargo test --workspace --target ${{ matrix.target }}
       - run: cargo test --workspace --all-features --target ${{ matrix.target }}
 
   lint:
@@ -88,7 +91,7 @@ jobs:
   # Structural rules from CLAUDE.md, enforced because rules that depend on
   # discipline decay.
   structure:
-    name: file length · doc coverage
+    name: file length · doc coverage · layering
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -98,6 +101,8 @@ jobs:
           cache-on-failure: true
       - run: cargo xtask check-len
       - run: cargo xtask check-docs
+      # Invariant 14. Nothing else enforces the dependency direction.
+      - run: cargo xtask check-layers
 
 
   # The default build must stay free of C dependencies. `cargo tree` is the
@@ -114,25 +119,74 @@ jobs:
           cache-on-failure: true
       - name: Fail if an unexpected native build dependency crept in
         run: |
-          # `cc` reaches the tree through exactly one known path:
-          #   telemetry -> mcap -> lz4 -> lz4-sys -> cc
+          set -euo pipefail
+
+          # `cc` reaches the tree through exactly one sanctioned path:
+          #   episteme-* -> telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
           #
           # MCAP recording is not optional in the telemetry stack, and that
-          # stack is mandated. The carve-out is recorded here rather than the
-          # check being deleted, so a *second* native dependency still fails.
-          offenders=$(cargo tree --workspace --edges normal,build --prefix none \
-            | grep -E '^(cc|cmake|bindgen) ' || true)
-          unexpected=$(cargo tree --workspace --edges normal,build --invert cc --prefix none \
-            | grep -E '^(lz4-sys|lz4|mcap|telemetry) ' || true)
+          # stack is mandated by CLAUDE.md rule 41. The carve-out is recorded
+          # here rather than the check being deleted, so a *second* native
+          # dependency still fails the build.
+          #
+          # The check works by inversion: everything that pulls in a native
+          # builder must already be named below. Anything else is a new path.
+          # An earlier version compared against evidence of the *expected*
+          # chain, which is permanently present — so its condition never fired
+          # and any new native dependency passed green.
+          allowed='cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|episteme-[a-z]+|xtask'
 
-          if [ -n "$offenders" ] && [ -z "$unexpected" ]; then
-            echo "::error::A native build dependency entered by an unknown path:"
-            echo "$offenders"
-            cargo tree --workspace --edges normal,build --invert cc --prefix none
+          status=0
+          for pkg in cc cmake bindgen; do
+            # Empty output means the package is not in the tree at all.
+            tree=$(cargo tree --workspace --edges normal,build --invert "$pkg" \
+              --prefix none 2>/dev/null || true)
+            [ -n "$tree" ] || continue
+
+            # First field of each line is the package name; `(*)` marks a
+            # repeat of a subtree already printed.
+            unexpected=$(printf '%s\n' "$tree" \
+              | awk 'NF { print $1 }' \
+              | sort -u \
+              | grep -Ev "^($allowed)$" || true)
+
+            if [ -n "$unexpected" ]; then
+              echo "::error::$pkg is reached through an unsanctioned path by:"
+              printf '%s\n' "$unexpected"
+              echo "--- full inverted tree for $pkg ---"
+              printf '%s\n' "$tree"
+              status=1
+            fi
+          done
+
+          if [ "$status" -ne 0 ]; then
+            echo "Invariant 1 allows exactly one C-compiled path: the MCAP"
+            echo "chain under the telemetry stack. Anything else needs a"
+            echo "decision recorded in CLAUDE.md, not an addition to this list."
             exit 1
           fi
           echo "no unexpected native build dependencies"
 
+      # The guard above only means something if it can fail. A dependency that
+      # drags in a C toolchain by a new path must break the build, so that is
+      # rehearsed here rather than assumed.
+      - name: Prove the guard fails on a new native dependency
+        run: |
+          set -euo pipefail
+          cp crates/episteme-core/Cargo.toml /tmp/core-manifest.bak
+          # `ring` builds with `cc` and has nothing to do with MCAP.
+          printf '\nring = "0.17"\n' >> crates/episteme-core/Cargo.toml
+
+          if cargo tree --workspace --edges normal,build --invert cc --prefix none \
+             2>/dev/null | awk 'NF { print $1 }' | sort -u \
+             | grep -Eqv '^(cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|episteme-[a-z]+|xtask)$'; then
+            echo "guard correctly detects a new native path"
+          else
+            echo "::error::the no-C-toolchain guard did not detect an added cc dependency"
+            cp /tmp/core-manifest.bak crates/episteme-core/Cargo.toml
+            exit 1
+          fi
+          cp /tmp/core-manifest.bak crates/episteme-core/Cargo.toml
 
   toolchain:
     name: toolchain is pinned
@@ -193,6 +247,10 @@ jobs:
       - run: cargo test -p episteme-index --test hnsw_recall --release -- --nocapture
       - run: cargo test -p episteme-index --test hnsw_distribution --release -- --nocapture
       - run: cargo test -p episteme-index --test hnsw_persist --release
+      # The batched builder has its own recall floor per batch size. It was
+      # absent from this gate while the first batch of every build was being
+      # orphaned wholesale, so nothing here noticed recall at 0.57.
+      - run: cargo test -p episteme-index --test hnsw_parallel --release -- --nocapture
       - run: cargo test -p episteme-storage --test codec_recall --release -- --nocapture
       - run: cargo test -p episteme-storage --test two_tier_recall --release -- --nocapture
       - name: Recall gate at 128 dimensions

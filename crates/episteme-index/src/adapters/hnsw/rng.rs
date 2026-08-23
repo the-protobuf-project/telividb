@@ -13,10 +13,16 @@
 pub struct SplitMix64(u64);
 
 impl SplitMix64 {
+    /// Start the sequence at `seed`.
+    ///
+    /// The seed is what makes a build reproducible: the same input must yield
+    /// the same level assignment, or a recall change cannot be attributed to a
+    /// code change rather than to luck.
     pub fn new(seed: u64) -> Self {
         Self(seed)
     }
 
+    /// The next value in the sequence.
     pub fn next_u64(&mut self) -> u64 {
         self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut z = self.0;

@@ -29,6 +29,6 @@ pub use compact::{CompactionPlan, CompactionPolicy, CompactionResult, compact_fi
 pub use error::{Error, Result};
 pub use format::{Codec, DType, FieldHeader, SegmentHeader};
 pub use manifest::Manifest;
-pub use segment::{SegmentReader, SegmentWriter};
+pub use segment::{SegmentReader, SegmentWriter, field_dir, open_tier};
 pub use tier::{BinaryTier, F16Tier, Int8Tier, PqTier};
 pub use wal::{WalReader, WalWriter};

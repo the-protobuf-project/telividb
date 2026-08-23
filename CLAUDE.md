@@ -345,7 +345,7 @@ cargo build -p episteme-embed-llama --features llama            # opt-in FFI pat
 buf format --diff --exit-code            # buf lint is never used — see rule 37
 
 cargo xtask check-len                   # fails on any .rs over 200 lines
-cargo xtask check-docs                  # fails on an undocumented or empty doc comment
+cargo xtask check-docs                  # fails on an undocumented `pub` item or an empty doc comment
 cargo xtask gen-proto                   # regenerate Rust from protobuf/ (needs buf)
 cargo xtask check-proto                 # fails if the committed generated code has drifted
 cargo xtask protodoc                    # regenerate protobuf/**/README.md

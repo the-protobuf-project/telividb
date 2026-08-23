@@ -8,8 +8,6 @@ use crate::error::Result;
 use crate::format::Codec;
 use crate::format::quantize::{BinaryCodes, F16Row, Int8Row, PqCodebook, PqParams};
 use episteme_core::VectorStore;
-use std::fs;
-use std::io::Write;
 use std::path::Path;
 
 /// Write the compressed scan tier.
@@ -19,6 +17,12 @@ use std::path::Path;
 /// ordinal alone. PQ additionally writes its codebook, because a code is
 /// meaningless without exactly the codebook that produced it.
 pub(super) fn write_codes(dir: &Path, store: &dyn VectorStore, codec: Codec) -> Result<()> {
+    // No codec means no scan tier and no file. The caller already guards this,
+    // but the function used to create an empty `codes.bin` before checking —
+    // leaving a stray zero-length file inside a sealed, immutable segment.
+    if codec == Codec::None {
+        return Ok(());
+    }
     let dim = store.dim().get();
     let row_bytes = codec.row_bytes(dim);
     let mut out = Vec::with_capacity(store.len() * row_bytes);
@@ -58,14 +62,15 @@ pub(super) fn write_codes(dir: &Path, store: &dyn VectorStore, codec: Codec) -> 
         }
     }
 
-    let mut file = fs::File::create(dir.join("codes.bin"))?;
-    file.write_all(&out)?;
-    file.sync_all()?;
+    super::durable::write_synced(dir.join("codes.bin"), &out)?;
 
     if let Some(book) = codebook {
         let mut bytes = Vec::with_capacity(book.encoded_len());
         book.write_to(&mut bytes);
-        fs::write(dir.join("codebook.pq"), &bytes)?;
+        // Synced like every other file in the segment: a code is meaningless
+        // without exactly the codebook that produced it, so publishing one
+        // without the other is worse than publishing neither.
+        super::durable::write_synced(dir.join("codebook.pq"), &bytes)?;
     }
     Ok(())
 }

@@ -42,8 +42,13 @@ impl F16Tier {
                 if !is_present(row) {
                     return Ok(None);
                 }
+                // `codes.get(..)` rather than `codes[..]`: this is a public
+                // function taking untrusted bytes, and the slice panicked
+                // before the `Truncated` error below could ever be built.
                 let start = row * row_bytes;
-                F16Row::read_from(&codes[start..], dim)
+                codes
+                    .get(start..)
+                    .and_then(|rest| F16Row::read_from(rest, dim))
                     .map(Some)
                     .ok_or(Error::Truncated {
                         what: "f16 codes",
@@ -93,3 +98,7 @@ impl ScanTier for F16Tier {
         Some(episteme_distance::score(prepared.metric, query, &decoded))
     }
 }
+
+#[cfg(test)]
+#[path = "f16_test.rs"]
+mod tests;

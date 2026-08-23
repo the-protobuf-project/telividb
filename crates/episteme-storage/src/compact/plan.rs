@@ -26,6 +26,17 @@ pub struct CompactionPolicy {
     pub small_segment_rows: u64,
     /// Merge only once this many small segments have accumulated.
     pub min_merge_count: usize,
+    /// Most segments one plan may name.
+    ///
+    /// Without a cap, every tombstone-heavy segment goes into a single plan —
+    /// so a corpus with hundreds of them schedules one unbounded rewrite that
+    /// reads the whole database, holds its output until the end, and cannot be
+    /// checkpointed partway. Capping turns that into a sequence of runs, each
+    /// of which publishes and can be interrupted.
+    ///
+    /// Segments are taken worst-first, so the rewrite that repays most happens
+    /// first and the next run sees the rest.
+    pub max_inputs: usize,
 }
 
 impl Default for CompactionPolicy {
@@ -34,6 +45,7 @@ impl Default for CompactionPolicy {
             tombstone_ratio: 0.2,
             small_segment_rows: 10_000,
             min_merge_count: 4,
+            max_inputs: 16,
         }
     }
 }
@@ -64,12 +76,23 @@ impl CompactionPlan {
 /// checked first: a segment mostly full of deleted rows costs every query,
 /// where many small segments cost only fan-out.
 pub fn plan(segments: &[(u64, SegmentHeader)], policy: CompactionPolicy) -> Option<CompactionPlan> {
-    let heavy: Vec<&(u64, SegmentHeader)> = segments
+    let mut heavy: Vec<&(u64, SegmentHeader)> = segments
         .iter()
         .filter(|(_, h)| h.rows > 0 && (h.deleted as f64 / h.rows as f64) >= policy.tombstone_ratio)
         .collect();
 
     if !heavy.is_empty() {
+        // Worst first, then capped: one run should reclaim as much as it can
+        // within a bounded rewrite, and leave the rest for the next.
+        // `sort_by` with a total order on the ratio, and the segment id as the
+        // tie-break so a plan is reproducible rather than dependent on the
+        // sort's stability across inputs.
+        heavy.sort_by(|(a_id, a), (b_id, b)| {
+            let a_ratio = a.deleted as f64 / a.rows as f64;
+            let b_ratio = b.deleted as f64 / b.rows as f64;
+            b_ratio.total_cmp(&a_ratio).then(a_id.cmp(b_id))
+        });
+        heavy.truncate(policy.max_inputs.max(1));
         return Some(CompactionPlan {
             inputs: heavy.iter().map(|(id, _)| *id).collect(),
             surviving_rows: heavy.iter().map(|(_, h)| h.live_rows()).sum(),
@@ -78,10 +101,14 @@ pub fn plan(segments: &[(u64, SegmentHeader)], policy: CompactionPolicy) -> Opti
         });
     }
 
-    let small: Vec<&(u64, SegmentHeader)> = segments
+    let mut small: Vec<&(u64, SegmentHeader)> = segments
         .iter()
         .filter(|(_, h)| h.rows < policy.small_segment_rows)
         .collect();
+    // Smallest first: merging the smallest segments removes the most fan-out
+    // per byte rewritten. Capped for the same reason as the tombstone path.
+    small.sort_by_key(|(id, h)| (h.rows, *id));
+    small.truncate(policy.max_inputs.max(1));
 
     if small.len() >= policy.min_merge_count {
         return Some(CompactionPlan {

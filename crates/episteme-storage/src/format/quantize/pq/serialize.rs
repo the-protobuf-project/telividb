@@ -64,12 +64,25 @@ impl PqCodebook {
         }
         let sub_dim = dim / m;
 
-        let expected = m * CENTROIDS * sub_dim;
+        // Checked, in a function whose whole contract is validating declared
+        // lengths before they are used. `dim` and `m` come from the file, so on
+        // a 32-bit target the product overflows well inside `u32` — and an
+        // overflowed length wraps to something small that passes the check
+        // below, then indexes far past the buffer.
+        let expected = m
+            .checked_mul(CENTROIDS)
+            .and_then(|n| n.checked_mul(sub_dim))
+            .ok_or(Error::InvalidPqShape { dim, m })?;
+        let needed_bytes = expected
+            .checked_mul(4)
+            .and_then(|n| n.checked_add(HEADER_BYTES))
+            .ok_or(Error::InvalidPqShape { dim, m })?;
+
         let body = &bytes[HEADER_BYTES..];
-        if body.len() < expected * 4 {
+        if bytes.len() < needed_bytes {
             return Err(Error::Truncated {
                 what: "pq centroids",
-                needed: HEADER_BYTES + expected * 4,
+                needed: needed_bytes,
                 found: bytes.len(),
             });
         }

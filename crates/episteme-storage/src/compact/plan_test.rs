@@ -78,3 +78,66 @@ fn a_stricter_policy_triggers_earlier() {
 fn an_empty_collection_needs_nothing() {
     assert_eq!(plan(&[], CompactionPolicy::default()), None);
 }
+
+#[test]
+fn a_tombstone_heavy_plan_is_capped() {
+    // Every tombstone-heavy segment used to go into one plan. With hundreds of
+    // them that is a single unbounded rewrite: it reads the whole database,
+    // publishes nothing until the end, and cannot be resumed partway.
+    let policy = CompactionPolicy {
+        max_inputs: 8,
+        ..CompactionPolicy::default()
+    };
+    let segments: Vec<(u64, SegmentHeader)> = (0..200)
+        .map(|id| {
+            let mut header = SegmentHeader::new(Fingerprint::unset(), 1_000);
+            header.deleted = 900;
+            (id, header)
+        })
+        .collect();
+
+    let plan = plan(&segments, policy).expect("tombstone pressure is a reason to compact");
+    assert_eq!(plan.inputs.len(), 8, "the plan was not capped");
+}
+
+#[test]
+fn the_worst_segments_are_compacted_first() {
+    // A capped plan must spend its budget where it repays most, or the next
+    // run keeps picking up the same marginal segments.
+    let policy = CompactionPolicy {
+        max_inputs: 2,
+        ..CompactionPolicy::default()
+    };
+    let segments: Vec<(u64, SegmentHeader)> = [(0u64, 300u64), (1, 900), (2, 500), (3, 250)]
+        .into_iter()
+        .map(|(id, deleted)| {
+            let mut header = SegmentHeader::new(Fingerprint::unset(), 1_000);
+            header.deleted = deleted;
+            (id, header)
+        })
+        .collect();
+
+    let plan = plan(&segments, policy).expect("a plan");
+    assert_eq!(plan.inputs, vec![1, 2], "expected the two most tombstoned");
+}
+
+#[test]
+fn a_capped_plan_is_reproducible() {
+    // Two segments with the same ratio must break the tie the same way every
+    // run, or a retried compaction rewrites a different set than it planned.
+    let policy = CompactionPolicy {
+        max_inputs: 2,
+        ..CompactionPolicy::default()
+    };
+    let segments: Vec<(u64, SegmentHeader)> = (0..6)
+        .map(|id| {
+            let mut header = SegmentHeader::new(Fingerprint::unset(), 1_000);
+            header.deleted = 500;
+            (id, header)
+        })
+        .collect();
+
+    let first = plan(&segments, policy).expect("a plan");
+    let second = plan(&segments, policy).expect("a plan");
+    assert_eq!(first.inputs, second.inputs);
+}

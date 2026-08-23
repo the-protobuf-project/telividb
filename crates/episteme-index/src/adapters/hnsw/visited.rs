@@ -17,6 +17,7 @@ pub struct VisitedSet {
 }
 
 impl VisitedSet {
+    /// A set covering `rows`, with nothing visited.
     pub fn with_capacity(rows: usize) -> Self {
         Self {
             stamps: vec![0; rows],
