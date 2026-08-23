@@ -2,7 +2,6 @@
 
 use super::layout::{FieldLayout, field_dir};
 use crate::error::Result;
-use crate::format::quantize::{BinaryCodes, F16Row, Int8Row, PqCodebook, PqParams};
 use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
 use episteme_core::{Fingerprint, VectorStore};
 use episteme_telemetry::{fields, metrics_names};
