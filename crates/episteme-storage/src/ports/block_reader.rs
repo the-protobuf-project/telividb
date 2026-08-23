@@ -14,6 +14,7 @@ pub trait BlockReader: Send + Sync {
     /// Total length of the underlying file.
     fn len(&self) -> u64;
 
+    /// Whether the underlying file is empty.
     fn is_empty(&self) -> bool {
         self.len() == 0
     }

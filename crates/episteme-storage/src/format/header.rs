@@ -3,10 +3,13 @@
 use crate::error::{Error, Result};
 use episteme_core::Fingerprint;
 
+/// Magic bytes at the head of every `header.bin`.
 pub const SEGMENT_MAGIC: [u8; 4] = *b"EPSG";
+/// Highest segment-header version this build writes and reads.
 pub const SEGMENT_VERSION: u16 = 1;
 
 /// `magic(4) version(2) reserved(2) schema_fp(32) rows(8) deleted(8) crc(4)`
+/// Fixed encoded size of a segment header.
 pub const HEADER_BYTES: usize = 60;
 
 /// Fixed-size preamble of a sealed segment.
@@ -24,11 +27,14 @@ pub struct SegmentHeader {
     /// refused rather than reconciled: reading columns under the wrong schema
     /// lands values in the wrong places and reports no error at all.
     pub schema_fingerprint: Fingerprint,
+    /// Rows written, including tombstoned ones.
     pub rows: u64,
+    /// Rows tombstoned since sealing. Bytes remain until compaction.
     pub deleted: u64,
 }
 
 impl SegmentHeader {
+    /// A header for a freshly sealed segment, with no tombstones.
     pub fn new(schema_fingerprint: Fingerprint, rows: u64) -> Self {
         Self {
             schema_fingerprint,
@@ -37,6 +43,7 @@ impl SegmentHeader {
         }
     }
 
+    /// Serialize, appending a checksum over the preceding bytes.
     pub fn encode(&self) -> [u8; HEADER_BYTES] {
         let mut out = [0u8; HEADER_BYTES];
         out[0..4].copy_from_slice(&SEGMENT_MAGIC);
@@ -50,6 +57,7 @@ impl SegmentHeader {
         out
     }
 
+    /// Parse and validate: magic, version, then checksum, in that order.
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.len() < HEADER_BYTES {
             return Err(Error::Truncated {

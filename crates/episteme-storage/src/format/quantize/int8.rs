@@ -8,8 +8,11 @@
 /// One quantized row: `dim` codes followed by `scale` and `offset`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Int8Row {
+    /// One byte per dimension, mapping `[offset, offset + 255 * scale]`.
     pub codes: Vec<u8>,
+    /// Width of one quantization step. Zero for a constant row.
     pub scale: f32,
+    /// Value that code zero decodes to — the row's minimum.
     pub offset: f32,
 }
 

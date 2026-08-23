@@ -19,6 +19,7 @@ impl PqCodebook {
         HEADER_BYTES + self.centroids.len() * 4
     }
 
+    /// Append the codebook: magic, version, shape, then the centroid run.
     pub fn write_to(&self, out: &mut Vec<u8>) {
         out.extend_from_slice(&CODEBOOK_MAGIC);
         out.extend_from_slice(&CODEBOOK_VERSION.to_le_bytes());
@@ -29,6 +30,9 @@ impl PqCodebook {
         }
     }
 
+    /// Parse a codebook, validating every declared length before using it.
+    ///
+    /// Codebooks arrive inside archives, so this is untrusted input.
     pub fn read_from(bytes: &[u8]) -> Result<Self> {
         if bytes.len() < HEADER_BYTES {
             return Err(Error::Truncated {

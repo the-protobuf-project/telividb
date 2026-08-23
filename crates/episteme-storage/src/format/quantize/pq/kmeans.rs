@@ -8,9 +8,13 @@
 //! mutually unreadable codes.
 
 /// Deterministic generator, so training reproduces exactly.
-pub struct Rng(pub u64);
+pub struct Rng(
+    /// Current state. Seeded so training reproduces exactly.
+    pub u64,
+);
 
 impl Rng {
+    /// Next value in the sequence.
     pub fn next_u64(&mut self) -> u64 {
         self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
         let mut z = self.0;
@@ -19,6 +23,7 @@ impl Rng {
         z ^ (z >> 31)
     }
 
+    /// A value in `[0, bound)`, or zero when `bound` is zero.
     pub fn below(&mut self, bound: usize) -> usize {
         if bound == 0 {
             0

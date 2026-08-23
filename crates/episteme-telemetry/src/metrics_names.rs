@@ -33,22 +33,31 @@ pub const SEARCH_RECALL: &str = "episteme_search_recall_at_k";
 
 // --- write path -------------------------------------------------------------
 
+/// Histogram. Time to flush and fsync one group commit — the write path's real cost.
 pub const WAL_COMMIT_DURATION: &str = "episteme_wal_commit_duration_seconds";
+/// Histogram. Records per group commit. Falling toward one means batching has stopped working.
 pub const WAL_COMMIT_RECORDS: &str = "episteme_wal_commit_records";
+/// Counter. Bytes appended to the log.
 pub const WAL_BYTES: &str = "episteme_wal_bytes_total";
 
 /// Counter. Torn tails found during recovery. Expected after a hard kill;
 /// a rising rate in steady state means something is wrong with the host.
 pub const WAL_TORN_RECOVERIES: &str = "episteme_wal_torn_recoveries_total";
 
+/// Histogram. Time to seal a buffer into an immutable segment.
 pub const SEGMENT_SEAL_DURATION: &str = "episteme_segment_seal_duration_seconds";
+/// Histogram. Time to build an index over a sealed segment.
 pub const INDEX_BUILD_DURATION: &str = "episteme_index_build_duration_seconds";
+/// Histogram. Time to publish a new manifest generation.
 pub const MANIFEST_SWAP_DURATION: &str = "episteme_manifest_swap_duration_seconds";
+/// Histogram. Time to merge segments and drop tombstoned rows.
 pub const COMPACTION_DURATION: &str = "episteme_compaction_duration_seconds";
 
 // --- state ------------------------------------------------------------------
 
+/// Gauge. Segments named by the current manifest.
 pub const SEGMENTS_LIVE: &str = "episteme_segments_live";
+/// Gauge. Rows visible to readers.
 pub const ROWS_LIVE: &str = "episteme_rows_live";
 
 /// Gauge. Tombstoned rows still occupying space. Rising without compaction
@@ -57,7 +66,9 @@ pub const ROWS_TOMBSTONED: &str = "episteme_rows_tombstoned";
 
 // --- embedding --------------------------------------------------------------
 
+/// Histogram. Time to embed one batch.
 pub const EMBED_DURATION: &str = "episteme_embed_duration_seconds";
+/// Histogram. Inputs per embedding batch.
 pub const EMBED_BATCH_SIZE: &str = "episteme_embed_batch_size";
 
 // --- policy -----------------------------------------------------------------
@@ -73,7 +84,9 @@ pub const POLICY_RESOLVE_DURATION: &str = "episteme_policy_resolve_duration_seco
 
 // --- bulk jobs --------------------------------------------------------------
 
+/// Counter. Bulk job records, labelled by outcome.
 pub const JOB_RECORDS: &str = "episteme_job_records_total";
+/// Histogram. Bulk job wall-clock duration.
 pub const JOB_DURATION: &str = "episteme_job_duration_seconds";
 
 /// Every metric with its description, for registration at startup.

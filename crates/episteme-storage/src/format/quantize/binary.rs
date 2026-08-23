@@ -33,18 +33,22 @@ impl BinaryCodes {
         }
     }
 
+    /// Number of components these bits describe.
     pub fn dim(&self) -> usize {
         self.dim
     }
 
+    /// The packed sign bits.
     pub fn as_bytes(&self) -> &[u8] {
         &self.bits
     }
 
+    /// Bytes one row occupies, rounded up to whole bytes.
     pub fn encoded_len(dim: usize) -> usize {
         dim.div_ceil(8)
     }
 
+    /// Parse packed bits, returning `None` if the buffer is short.
     pub fn from_bytes(bytes: &[u8], dim: usize) -> Option<Self> {
         if bytes.len() < Self::encoded_len(dim) {
             return None;

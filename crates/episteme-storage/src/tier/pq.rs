@@ -42,10 +42,12 @@ impl PqTier {
         Ok(Self { codebook, rows })
     }
 
+    /// The codebook these codes were encoded against.
     pub fn codebook(&self) -> &PqCodebook {
         &self.codebook
     }
 
+    /// Bytes the codes occupy, excluding the codebook itself.
     pub fn bytes(&self) -> usize {
         self.rows.iter().flatten().count() * self.codebook.m()
     }

@@ -18,7 +18,9 @@ pub fn field_dir(segment: &Path, field: &str) -> PathBuf {
 /// is why the header is padded rather than packed tight against the data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FieldLayout {
+    /// Fixed stride of one row.
     pub row_bytes: usize,
+    /// Rows the file holds.
     pub rows: u64,
     /// Where row zero begins. Aligned to [`FieldLayout::ALIGN`].
     pub data_offset: u64,
@@ -28,6 +30,9 @@ impl FieldLayout {
     /// Rows begin on a 64-byte boundary so a mapped region feeds SIMD directly.
     pub const ALIGN: u64 = 64;
 
+    /// Compute offsets for a file with a header of `header_bytes`.
+    ///
+    /// Row zero is pushed to the next [`FieldLayout::ALIGN`] boundary.
     pub fn new(header_bytes: usize, row_bytes: usize, rows: u64) -> Self {
         Self {
             row_bytes,

@@ -72,10 +72,12 @@ impl SegmentReader {
         })
     }
 
+    /// This field's header, carrying its dimension, codec and provenance.
     pub fn header(&self) -> &FieldHeader {
         &self.header
     }
 
+    /// Byte offsets of the rows within `raw.bin`.
     pub fn layout(&self) -> FieldLayout {
         self.layout
     }

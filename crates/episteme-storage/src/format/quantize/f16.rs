@@ -38,6 +38,7 @@ impl F16Row {
         }
     }
 
+    /// Widen back to single precision.
     pub fn decode(&self) -> Vec<f32> {
         self.values.iter().map(|v| v.to_f32()).collect()
     }
@@ -49,10 +50,12 @@ impl F16Row {
         }
     }
 
+    /// Number of components.
     pub fn len(&self) -> usize {
         self.values.len()
     }
 
+    /// Whether this row has no components.
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()
     }
@@ -70,6 +73,7 @@ impl F16Row {
         f16::from_bits(1).to_f32()
     }
 
+    /// Bytes one row occupies: two per component.
     pub fn encoded_len(dim: usize) -> usize {
         dim * 2
     }
@@ -81,6 +85,7 @@ impl F16Row {
         }
     }
 
+    /// Parse a row, returning `None` if the buffer is short.
     pub fn read_from(bytes: &[u8], dim: usize) -> Option<Self> {
         if bytes.len() < Self::encoded_len(dim) {
             return None;

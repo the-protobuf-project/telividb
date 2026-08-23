@@ -19,7 +19,11 @@ pub struct HnswParams {
     /// Layer zero holds every node and carries most of the search, so it is
     /// given more room than the sparse upper layers.
     pub m0: usize,
+    /// Candidate breadth while inserting. Larger builds a better graph and
+    /// costs build time, paid once.
     pub ef_construction: usize,
+    /// Candidate breadth while querying. Larger improves recall and costs
+    /// latency on every request — the lever to tune.
     pub ef_search: usize,
     /// Seed for level assignment.
     ///

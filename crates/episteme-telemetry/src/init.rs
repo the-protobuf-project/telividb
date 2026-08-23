@@ -78,6 +78,7 @@ impl Telemetry {
         Ok(Self { config })
     }
 
+    /// The configuration this pipeline was installed with.
     pub fn config(&self) -> &TelemetryConfig {
         &self.config
     }
@@ -99,6 +100,7 @@ pub fn describe_all() {
 }
 
 #[derive(Debug, thiserror::Error)]
+/// Why installing the telemetry pipeline failed.
 pub enum TelemetryError {
     #[error("invalid filter directive: {0}")]
     Filter(String),

@@ -16,6 +16,7 @@ pub struct BinaryTier {
 }
 
 impl BinaryTier {
+    /// Pack sign bits for every present row of `store`.
     pub fn build(store: &dyn episteme_core::VectorStore) -> Self {
         let rows = (0..store.len())
             .map(|row| {
@@ -30,6 +31,7 @@ impl BinaryTier {
         }
     }
 
+    /// Bytes this tier occupies, for sizing decisions.
     pub fn bytes(&self) -> usize {
         self.rows.iter().flatten().count() * BinaryCodes::encoded_len(self.dim.get())
     }

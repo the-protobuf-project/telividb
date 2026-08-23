@@ -96,10 +96,12 @@ impl PqCodebook {
         })
     }
 
+    /// Full vector width this codebook was trained for.
     pub fn dim(&self) -> usize {
         self.dim
     }
 
+    /// Subspaces, and therefore bytes per encoded row.
     pub fn m(&self) -> usize {
         self.m
     }

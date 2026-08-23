@@ -2,6 +2,7 @@
 
 use crate::error::{Error, Result};
 
+/// Bytes preceding each record: a length and a checksum.
 pub const FRAME_HEADER_BYTES: usize = 8;
 
 /// Serialize one record's frame header.

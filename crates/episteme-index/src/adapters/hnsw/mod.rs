@@ -65,10 +65,12 @@ impl HnswIndex {
         Self { graph, params }
     }
 
+    /// The parameters this index was built and searches with.
     pub fn params(&self) -> HnswParams {
         self.params
     }
 
+    /// The underlying proximity graph, for diagnostics and sizing.
     pub fn graph(&self) -> &Graph {
         &self.graph
     }

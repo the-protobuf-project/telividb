@@ -5,12 +5,16 @@ use crate::error::{Error, Result};
 /// Precision of the vectors in `raw.bin`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DType {
+    /// Single precision. The default and the rerank tier.
     F32,
+    /// IEEE 754 binary16.
     F16,
+    /// Brain float: f32's exponent range at f16's width.
     BF16,
 }
 
 impl DType {
+    /// Storage width of one component.
     pub fn bytes_per_element(self) -> usize {
         match self {
             DType::F32 => 4,
