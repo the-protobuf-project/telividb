@@ -10,6 +10,8 @@ on:
   pull_request:
     paths:
       - "protobuf/**/*.proto"
+      - "buf.yaml"
+      - "buf.gen.yaml"
       - ".github/workflows/api-lint.yml"
   push:
     branches: [main]
@@ -29,10 +31,16 @@ jobs:
         with:
           paths: protobuf/**/*.proto
           # Imports are written relative to the module root, e.g.
-          # `episteme/v1/common.proto`, so the linter needs `protobuf/` on its
-          # search path or it cannot resolve them.
+          # `episteme/point/v1/point.proto`, so the linter needs `protobuf/` on
+          # its search path or it cannot resolve them.
           proto-paths: protobuf
-          # Strict mode: in-proto `(-- api-linter: ... --)` comments are ignored.
+          # Resolve `google/api/*` through `buf export`. Without it every
+          # annotation import fails, and each failure cascades into a "cannot
+          # find" for every annotation in the file — one missing path reads as
+          # a hundred errors.
+          buf: true
+          # Strict mode: in-proto `(-- api-linter: ... --)` comments are
+          # ignored.
           #
           # This makes CLAUDE.md rule 38 mechanical rather than a promise. A
           # suppression cannot be added to make a build green, because the
@@ -47,21 +55,38 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Breaking-change detection needs a baseline. Before the protos first
+      # land on `main` there is none, and `buf breaking` fails with "had no
+      # .proto files" — which is not a breakage, only an absence.
+      #
+      # Checked rather than hard-coded so this enables itself on the commit
+      # after the protos merge, instead of waiting for someone to notice.
+      - id: baseline
+        run: |
+          if git ls-tree -r origin/main --name-only | grep -q '\.proto$'; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No protos on main yet; skipping breaking-change detection."
+          fi
+
       - uses: bufbuild/buf-action@v1
         with:
-          # No lint. The AIP linter above owns the API surface; running a second
-          # linter means two opinions and, eventually, a suppression added to
-          # reconcile them — which is the one thing never allowed here.
+          # No lint. The AIP linter above owns the API surface; running a
+          # second linter means two opinions and, eventually, a suppression
+          # added to reconcile them — which is the one thing never allowed
+          # here.
           lint: false
           format: true
           # A shipped field number is permanent: a segment written under an
           # older schema still names its fields by number, so renumbering
           # reinterprets stored data rather than failing.
-          breaking: true
+          breaking: ${{ steps.baseline.outputs.exists }}
           breaking_against: "https://github.com/${{ github.repository }}.git#branch=main"
 
   generated:
-    name: generated code is current
+    name: generated code · docs are current
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,14 +96,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: Swatinem/rust-cache@v2
       - run: cargo install protoc-gen-prost protoc-gen-tonic --locked
+
       # Committed generation only helps if the committed output is actually
-      # current. This is what makes that true rather than hoped for.
+      # current. These make that true rather than hoped for.
+      #
+      # Linting is not repeated here — the job above owns it, and it is the one
+      # with the linter installed.
       - run: cargo xtask check-proto
-      # Documentation is generated from the protos and committed, so it can
-      # drift the same way generated code can.
       - run: cargo xtask check-protodoc
-      # The same lint the action above runs, but resolved through `buf export`
-      # so imports actually load, and checked by exit status rather than by
-      # counting output lines. A count cannot tell a clean run from one that
-      # never linted anything.
-      - run: cargo xtask lint-proto

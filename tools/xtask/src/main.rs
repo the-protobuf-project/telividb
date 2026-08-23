@@ -6,7 +6,9 @@ mod check_docs;
 mod check_len;
 mod gen_proto;
 mod lint_proto;
+mod proc;
 mod protodoc;
+mod vendor_proto;
 
 fn main() -> std::process::ExitCode {
     let task = std::env::args().nth(1);
@@ -16,7 +18,7 @@ fn main() -> std::process::ExitCode {
         Some("gen-proto") => gen_proto::run(false),
         Some("check-proto") => gen_proto::run(true),
         Some("lint-proto") => lint_proto::run(),
-        Some("vendor-proto") => lint_proto::vendor(),
+        Some("vendor-proto") => vendor_proto::run(),
         Some("protodoc") => protodoc::run(false),
         Some("check-protodoc") => protodoc::run(true),
         Some(other) => {
