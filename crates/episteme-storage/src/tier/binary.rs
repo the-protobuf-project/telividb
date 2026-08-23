@@ -31,6 +31,35 @@ impl BinaryTier {
         }
     }
 
+    /// Parse a `codes.bin` written with this codec.
+    pub fn from_codes(
+        codes: &[u8],
+        dim: usize,
+        rows: usize,
+        is_present: &dyn Fn(usize) -> bool,
+    ) -> crate::error::Result<Self> {
+        let row_bytes = BinaryCodes::encoded_len(dim);
+        let parsed = (0..rows)
+            .map(|row| {
+                if !is_present(row) {
+                    return Ok(None);
+                }
+                let start = row * row_bytes;
+                BinaryCodes::from_bytes(&codes[start..], dim).map(Some).ok_or(
+                    crate::error::Error::Truncated {
+                        what: "binary codes",
+                        needed: start + row_bytes,
+                        found: codes.len(),
+                    },
+                )
+            })
+            .collect::<crate::error::Result<Vec<_>>>()?;
+        Ok(Self {
+            rows: parsed,
+            dim: Dim::new(dim as u32)?,
+        })
+    }
+
     /// Bytes this tier occupies, for sizing decisions.
     pub fn bytes(&self) -> usize {
         self.rows.iter().flatten().count() * BinaryCodes::encoded_len(self.dim.get())

@@ -42,6 +42,36 @@ impl PqTier {
         Ok(Self { codebook, rows })
     }
 
+    /// Parse a `codes.bin` written with this codec.
+    pub fn from_codes(
+        codes: &[u8],
+        codebook: PqCodebook,
+        rows: usize,
+        is_present: &dyn Fn(usize) -> bool,
+    ) -> StorageResult<Self> {
+        let m = codebook.m();
+        let parsed = (0..rows)
+            .map(|row| {
+                if !is_present(row) {
+                    return Ok(None);
+                }
+                let start = row * m;
+                codes
+                    .get(start..start + m)
+                    .map(|c| Some(c.to_vec()))
+                    .ok_or(crate::error::Error::Truncated {
+                        what: "pq codes",
+                        needed: start + m,
+                        found: codes.len(),
+                    })
+            })
+            .collect::<StorageResult<Vec<_>>>()?;
+        Ok(Self {
+            codebook,
+            rows: parsed,
+        })
+    }
+
     /// The codebook these codes were encoded against.
     pub fn codebook(&self) -> &PqCodebook {
         &self.codebook

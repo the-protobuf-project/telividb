@@ -1,29 +1,27 @@
-//! Scan tier over int8 codes.
+//! Scan tier over half-precision rows.
 //!
-//! Decodes a row before scoring it, because the per-row scale and offset mean
-//! codes from different rows are not directly comparable. That still beats full
-//! precision: the decode reads a quarter as many bytes, and memory bandwidth is
-//! what a scan is actually bound by.
+//! The mildest tier: half the bytes and effectively lossless for ranking, so it
+//! needs the least over-fetch of any codec. Useful where memory is tight but
+//! recall must not move at all.
 
-use crate::format::quantize::Int8Row;
+use crate::error::{Error, Result as StorageResult};
+use crate::format::quantize::F16Row;
 use episteme_core::{Dim, Metric, Ordinal, PreparedQuery, PreparedState, Result, ScanTier};
 
-/// Int8-quantized rows for one field.
+/// Half-precision rows for one field.
 #[derive(Debug)]
-pub struct Int8Tier {
-    rows: Vec<Option<Int8Row>>,
+pub struct F16Tier {
+    /// One entry per row; `None` where the field is absent.
+    rows: Vec<Option<F16Row>>,
+    /// Width of every row.
     dim: Dim,
 }
 
-impl Int8Tier {
-    /// Quantize every present row of `store`.
+impl F16Tier {
+    /// Convert every present row of `store`.
     pub fn build(store: &dyn episteme_core::VectorStore) -> Self {
         let rows = (0..store.len())
-            .map(|row| {
-                store
-                    .get(Ordinal::from_row(row as u32))
-                    .map(Int8Row::encode)
-            })
+            .map(|row| store.get(Ordinal::from_row(row as u32)).map(F16Row::encode))
             .collect();
         Self {
             rows,
@@ -37,23 +35,23 @@ impl Int8Tier {
         dim: usize,
         rows: usize,
         is_present: &dyn Fn(usize) -> bool,
-    ) -> crate::error::Result<Self> {
-        let row_bytes = Int8Row::encoded_len(dim);
+    ) -> StorageResult<Self> {
+        let row_bytes = F16Row::encoded_len(dim);
         let parsed = (0..rows)
             .map(|row| {
                 if !is_present(row) {
                     return Ok(None);
                 }
                 let start = row * row_bytes;
-                Int8Row::read_from(&codes[start..], dim).map(Some).ok_or(
-                    crate::error::Error::Truncated {
-                        what: "int8 codes",
+                F16Row::read_from(&codes[start..], dim).map(Some).ok_or(
+                    Error::Truncated {
+                        what: "f16 codes",
                         needed: start + row_bytes,
                         found: codes.len(),
                     },
                 )
             })
-            .collect::<crate::error::Result<Vec<_>>>()?;
+            .collect::<StorageResult<Vec<_>>>()?;
         Ok(Self {
             rows: parsed,
             dim: Dim::new(dim as u32)?,
@@ -62,13 +60,13 @@ impl Int8Tier {
 
     /// Bytes this tier occupies, for sizing decisions.
     pub fn bytes(&self) -> usize {
-        self.rows.iter().flatten().count() * Int8Row::encoded_len(self.dim.get())
+        self.rows.iter().flatten().count() * F16Row::encoded_len(self.dim.get())
     }
 }
 
-impl ScanTier for Int8Tier {
+impl ScanTier for F16Tier {
     fn codec(&self) -> &'static str {
-        "int8"
+        "f16"
     }
 
     fn len(&self) -> usize {
@@ -82,8 +80,6 @@ impl ScanTier for Int8Tier {
                 actual: query.len(),
             });
         }
-        // The query stays full precision — quantizing both sides would compound
-        // the error for no saving, since the query is transformed once.
         Ok(PreparedQuery::vector(metric, query.to_vec()))
     }
 

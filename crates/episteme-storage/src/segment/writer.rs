@@ -2,7 +2,8 @@
 
 use super::layout::{FieldLayout, field_dir};
 use crate::error::Result;
-use crate::format::{FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
+use crate::format::quantize::{BinaryCodes, F16Row, Int8Row, PqCodebook, PqParams};
+use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
 use episteme_core::{Fingerprint, VectorStore};
 use episteme_telemetry::{fields, metrics_names};
 use std::fs;
@@ -39,15 +40,32 @@ impl SegmentWriter {
         })
     }
 
-    /// Write one named vector field from any [`VectorStore`].
-    ///
-    /// Takes the store rather than raw bytes so the same call seals an unsealed
-    /// buffer or re-writes an existing segment during compaction.
+    /// Write one named vector field at full precision, with no scan tier.
     pub fn write_field(
         &mut self,
         name: &str,
         store: &dyn VectorStore,
         model_fingerprint: Fingerprint,
+    ) -> Result<()> {
+        self.write_field_with_codec(name, store, model_fingerprint, Codec::None)
+    }
+
+    /// Write one named vector field, optionally with a compressed scan tier.
+    ///
+    /// Takes the store rather than raw bytes so the same call seals an unsealed
+    /// buffer or re-writes an existing segment during compaction.
+    ///
+    /// When `codec` is not [`Codec::None`], a second file is written beside
+    /// `raw.bin` holding the same rows compressed. That is the two-tier layout:
+    /// scan wide and cheap over the codes, rescore the survivors at full
+    /// precision. Both files carry every row at fixed stride, so an absent row
+    /// still occupies its slot in each.
+    pub fn write_field_with_codec(
+        &mut self,
+        name: &str,
+        store: &dyn VectorStore,
+        model_fingerprint: Fingerprint,
+        codec: Codec,
     ) -> Result<()> {
         let span = tracing::info_span!(
             "episteme.segment.write_field",
@@ -63,7 +81,7 @@ impl SegmentWriter {
         let header = FieldHeader {
             dim: store.dim(),
             dtype: crate::format::DType::F32,
-            codec: crate::format::Codec::None,
+            codec,
             metric: store.metric(),
             model_fingerprint,
             rows: store.len() as u64,
@@ -95,6 +113,9 @@ impl SegmentWriter {
         file.sync_all()?;
 
         fs::write(dir.join("present.roar"), &present)?;
+        if codec != Codec::None {
+            write_codes(&dir, store, codec)?;
+        }
         self.rows = self.rows.max(store.len() as u64);
         Ok(())
     }
@@ -123,6 +144,64 @@ impl SegmentWriter {
         tracing::info!({ fields::ROWS } = self.rows, "segment sealed");
         Ok(self.final_path)
     }
+}
+
+/// Write the compressed scan tier.
+///
+/// Every row occupies its slot whether present or not, so `codes.bin` keeps the
+/// same fixed stride as `raw.bin` and a row's offset is computable from its
+/// ordinal alone. PQ additionally writes its codebook, because a code is
+/// meaningless without exactly the codebook that produced it.
+fn write_codes(dir: &Path, store: &dyn VectorStore, codec: Codec) -> Result<()> {
+    let dim = store.dim().get();
+    let row_bytes = codec.row_bytes(dim);
+    let mut out = Vec::with_capacity(store.len() * row_bytes);
+
+    // PQ must see the whole field before it can encode any of it.
+    let codebook = if let Codec::Pq { m } = codec {
+        let rows: Vec<&[f32]> = (0..store.len())
+            .filter_map(|r| store.get(episteme_core::Ordinal::from_row(r as u32)))
+            .collect();
+        Some(PqCodebook::train(
+            &rows,
+            dim,
+            PqParams {
+                m: m as usize,
+                ..Default::default()
+            },
+        )?)
+    } else {
+        None
+    };
+
+    for row in 0..store.len() {
+        let ordinal = episteme_core::Ordinal::from_row(row as u32);
+        let Some(vector) = store.get(ordinal) else {
+            out.extend(std::iter::repeat_n(0u8, row_bytes));
+            continue;
+        };
+        match codec {
+            Codec::None => {}
+            Codec::F16 => F16Row::encode(vector).write_to(&mut out),
+            Codec::Int8 => Int8Row::encode(vector).write_to(&mut out),
+            Codec::Binary => out.extend_from_slice(BinaryCodes::encode(vector).as_bytes()),
+            Codec::Pq { .. } => {
+                let book = codebook.as_ref().expect("trained above for pq");
+                out.extend_from_slice(&book.encode(vector)?);
+            }
+        }
+    }
+
+    let mut file = fs::File::create(dir.join("codes.bin"))?;
+    file.write_all(&out)?;
+    file.sync_all()?;
+
+    if let Some(book) = codebook {
+        let mut bytes = Vec::with_capacity(book.encoded_len());
+        book.write_to(&mut bytes);
+        fs::write(dir.join("codebook.pq"), &bytes)?;
+    }
+    Ok(())
 }
 
 /// Write a float slice as explicit little-endian bytes.
