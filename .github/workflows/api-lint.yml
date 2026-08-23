@@ -90,6 +90,16 @@ jobs:
 
       - uses: bufbuild/buf-action@v1
         with:
+          # Pinned rather than `latest`, for the same reason api-linter is: a
+          # new release can add a check, and CI failing on a commit that
+          # changed nothing is indistinguishable from a real regression.
+          version: 1.72.0
+          # The action posts a summary comment by default, which needs
+          # `pull-requests: write`. A lint workflow should not hold write
+          # permission on pull requests, and the token is read-only for fork
+          # pull requests regardless — so the comment would fail there even if
+          # it were granted. The check status already reports the result.
+          pr_comment: false
           # No lint. The AIP linter above owns the API surface; running a
           # second linter means two opinions and, eventually, a suppression
           # added to reconcile them — which is the one thing never allowed
@@ -109,6 +119,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-action@v1
         with:
+          version: 1.72.0
           setup_only: true
       - uses: dtolnay/rust-toolchain@1.98.0
       - uses: Swatinem/rust-cache@v2
