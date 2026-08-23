@@ -9,28 +9,45 @@ use super::{Codec, DType};
 use crate::error::{Error, Result};
 use episteme_core::{Dim, Fingerprint, Metric};
 
+/// Magic bytes distinguishing a field header from a segment header.
+///
+/// They are the same length, so without distinct magic one could be read as
+/// the other and silently produce nonsense.
 pub const FIELD_MAGIC: [u8; 4] = *b"EPFD";
+/// Highest field-header version this build writes and reads.
 pub const FIELD_VERSION: u16 = 1;
 
 /// `magic(4) version(2) dim(4) dtype(1) codec_tag(1) codec_param(2) metric(1)
 ///  reserved(1) model_fp(32) rows(8) crc(4)`
+/// Fixed encoded size of a field header.
 pub const FIELD_HEADER_BYTES: usize = 60;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Metadata for one named vector field.
+///
+/// Separate from the segment header because a point carries several vector
+/// fields with different dimensions, metrics, codecs and models — so none of
+/// those facts can live at segment level.
 pub struct FieldHeader {
+    /// Width of every vector in this field.
     pub dim: Dim,
+    /// Precision of the full-fidelity tier.
     pub dtype: DType,
+    /// Compression applied to the scan tier, if any.
     pub codec: Codec,
+    /// How similarity is measured.
     pub metric: Metric,
     /// Digest of the model file that produced every vector in this field.
     ///
     /// Mixing models within one field is the failure that never announces
     /// itself: no error, no crash, just neighbours that are plausible and wrong.
     pub model_fingerprint: Fingerprint,
+    /// Rows this field covers, present or absent.
     pub rows: u64,
 }
 
 impl FieldHeader {
+    /// Serialize, appending a checksum over the preceding bytes.
     pub fn encode(&self) -> [u8; FIELD_HEADER_BYTES] {
         let mut out = [0u8; FIELD_HEADER_BYTES];
         let (codec_tag, codec_param) = self.codec.to_bytes();
@@ -50,6 +67,7 @@ impl FieldHeader {
         out
     }
 
+    /// Parse and validate: magic, version, then checksum, in that order.
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         if bytes.len() < FIELD_HEADER_BYTES {
             return Err(Error::Truncated {

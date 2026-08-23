@@ -43,6 +43,7 @@ pub fn vector_shape(vector: &[f32]) -> VectorShape {
 /// Emittable facts about a vector.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct VectorShape {
+    /// Number of components. Discloses nothing about their values.
     pub dim: usize,
 }
 

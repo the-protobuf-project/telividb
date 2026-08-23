@@ -16,6 +16,7 @@ use std::time::Instant;
 pub struct FlatIndex;
 
 impl FlatIndex {
+    /// A flat index. Stateless — it holds no structure of its own.
     pub fn new() -> Self {
         Self
     }

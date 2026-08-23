@@ -2,7 +2,7 @@
 
 use super::layout::{FieldLayout, field_dir};
 use crate::error::Result;
-use crate::format::{FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
+use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
 use episteme_core::{Fingerprint, VectorStore};
 use episteme_telemetry::{fields, metrics_names};
 use std::fs;
@@ -39,15 +39,32 @@ impl SegmentWriter {
         })
     }
 
-    /// Write one named vector field from any [`VectorStore`].
-    ///
-    /// Takes the store rather than raw bytes so the same call seals an unsealed
-    /// buffer or re-writes an existing segment during compaction.
+    /// Write one named vector field at full precision, with no scan tier.
     pub fn write_field(
         &mut self,
         name: &str,
         store: &dyn VectorStore,
         model_fingerprint: Fingerprint,
+    ) -> Result<()> {
+        self.write_field_with_codec(name, store, model_fingerprint, Codec::None)
+    }
+
+    /// Write one named vector field, optionally with a compressed scan tier.
+    ///
+    /// Takes the store rather than raw bytes so the same call seals an unsealed
+    /// buffer or re-writes an existing segment during compaction.
+    ///
+    /// When `codec` is not [`Codec::None`], a second file is written beside
+    /// `raw.bin` holding the same rows compressed. That is the two-tier layout:
+    /// scan wide and cheap over the codes, rescore the survivors at full
+    /// precision. Both files carry every row at fixed stride, so an absent row
+    /// still occupies its slot in each.
+    pub fn write_field_with_codec(
+        &mut self,
+        name: &str,
+        store: &dyn VectorStore,
+        model_fingerprint: Fingerprint,
+        codec: Codec,
     ) -> Result<()> {
         let span = tracing::info_span!(
             "episteme.segment.write_field",
@@ -63,7 +80,7 @@ impl SegmentWriter {
         let header = FieldHeader {
             dim: store.dim(),
             dtype: crate::format::DType::F32,
-            codec: crate::format::Codec::None,
+            codec,
             metric: store.metric(),
             model_fingerprint,
             rows: store.len() as u64,
@@ -95,6 +112,9 @@ impl SegmentWriter {
         file.sync_all()?;
 
         fs::write(dir.join("present.roar"), &present)?;
+        if codec != Codec::None {
+            super::codes::write_codes(&dir, store, codec)?;
+        }
         self.rows = self.rows.max(store.len() as u64);
         Ok(())
     }

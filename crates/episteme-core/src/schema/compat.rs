@@ -25,11 +25,16 @@ pub enum Compatibility {
     Identical,
     /// Readable. The current schema only adds to what the segment holds.
     Additive {
+        /// Point types the current schema has that the segment does not.
         added_point_types: Vec<String>,
+        /// Vector fields added to a point type the segment already knew.
         added_fields: Vec<String>,
     },
     /// Not readable. Each reason names one incompatibility.
-    Breaking { reasons: Vec<String> },
+    Breaking {
+        /// Every incompatibility found, not merely the first.
+        reasons: Vec<String>,
+    },
 }
 
 impl Compatibility {

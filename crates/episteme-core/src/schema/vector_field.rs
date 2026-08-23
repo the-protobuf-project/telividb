@@ -7,11 +7,14 @@ use crate::{Dim, Fingerprint, Metric};
 pub enum IndexKind {
     /// Exhaustive. Ground truth, and correct for small fields.
     Flat,
+    /// Hierarchical navigable small world graph. The default above trivial sizes.
     Hnsw,
+    /// Inverted file with product quantization, for memory-constrained fields.
     IvfPq,
 }
 
 impl IndexKind {
+    /// The name used in configuration and telemetry.
     pub fn as_str(self) -> &'static str {
         match self {
             IndexKind::Flat => "flat",
@@ -30,9 +33,13 @@ impl IndexKind {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VectorFieldSpec {
     /// Field name, e.g. `image_clip`. Unique within a point type.
+    /// Field name, e.g. `image_clip`. Unique within a point type.
     pub name: String,
+    /// Vector width. Every row in this field is exactly this wide.
     pub dim: Dim,
+    /// How similarity is measured.
     pub metric: Metric,
+    /// Which search algorithm indexes this field.
     pub index: IndexKind,
 
     /// The model that produces vectors for this field.
@@ -59,6 +66,9 @@ pub struct VectorFieldSpec {
 
 impl VectorFieldSpec {
     /// Minimal spec, for tests and for fields declared without provenance.
+    /// A field with no declared model, index or permission.
+    ///
+    /// For tests and for fields whose provenance is not yet bound.
     pub fn new(name: impl Into<String>, dim: Dim, metric: Metric) -> Self {
         Self {
             name: name.into(),

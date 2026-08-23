@@ -78,6 +78,7 @@ impl Telemetry {
         Ok(Self { config })
     }
 
+    /// The configuration this pipeline was installed with.
     pub fn config(&self) -> &TelemetryConfig {
         &self.config
     }
@@ -99,13 +100,29 @@ pub fn describe_all() {
 }
 
 #[derive(Debug, thiserror::Error)]
+/// Why installing the telemetry pipeline failed.
 pub enum TelemetryError {
+    /// A filter directive could not be parsed.
     #[error("invalid filter directive: {0}")]
-    Filter(String),
+    Filter(
+        /// The directive that failed to parse.
+        String,
+    ),
+    /// A subscriber or recorder was already installed.
+    ///
+    /// Worth failing on: two pipelines split the data unpredictably between
+    /// them, which is harder to diagnose than a refusal at startup.
     #[error("telemetry already installed: {0}")]
-    AlreadyInstalled(String),
+    AlreadyInstalled(
+        /// What the subscriber registry reported.
+        String,
+    ),
+    /// The metrics exporter could not start, usually a bound port.
     #[error("exporter failed to start: {0}")]
-    Exporter(String),
+    Exporter(
+        /// What the exporter reported.
+        String,
+    ),
 }
 
 #[cfg(test)]

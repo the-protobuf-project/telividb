@@ -7,6 +7,7 @@ use std::io::Write;
 use std::path::Path;
 use std::time::Instant;
 
+/// Highest manifest version this build writes and reads.
 pub const MANIFEST_VERSION: u16 = 1;
 const MANIFEST_MAGIC: [u8; 4] = *b"EPMF";
 
@@ -25,6 +26,7 @@ pub struct Manifest {
 }
 
 impl Manifest {
+    /// An empty manifest at generation zero.
     pub fn new() -> Self {
         Self::default()
     }
@@ -48,6 +50,7 @@ impl Manifest {
         self
     }
 
+    /// Serialize, appending a checksum over the whole body.
     pub fn encode(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(18 + self.segments.len() * 8);
         out.extend_from_slice(&MANIFEST_MAGIC);
@@ -62,6 +65,7 @@ impl Manifest {
         out
     }
 
+    /// Parse and validate: magic, version, checksum, then the segment list.
     pub fn decode(bytes: &[u8]) -> Result<Self> {
         const PREFIX: usize = 18;
         if bytes.len() < PREFIX + 4 {
@@ -163,6 +167,7 @@ impl Manifest {
         Ok(())
     }
 
+    /// Read and validate a manifest from disk.
     pub fn read(path: impl AsRef<Path>) -> Result<Self> {
         Self::decode(&fs::read(path)?)
     }

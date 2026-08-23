@@ -11,7 +11,11 @@ use crate::{Dim, Metric, Ordinal};
 /// Deliberately narrow. An index gets vectors and counts — never paths, never
 /// file handles, never knowledge of quantization or mmap. Widening this trait
 /// is how storage and search become coupled.
-pub trait VectorStore {
+///
+/// `Send + Sync` because concurrent reads are the point of immutable segments:
+/// once sealed, a store is shared across threads without locking, and parallel
+/// index construction depends on it.
+pub trait VectorStore: Send + Sync {
     /// Width of every vector in this field.
     fn dim(&self) -> Dim;
 
@@ -21,6 +25,7 @@ pub trait VectorStore {
     /// Number of rows, including any that are tombstoned or absent.
     fn len(&self) -> usize;
 
+    /// Whether this store holds no rows.
     fn is_empty(&self) -> bool {
         self.len() == 0
     }

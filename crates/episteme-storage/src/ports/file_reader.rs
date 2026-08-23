@@ -19,6 +19,7 @@ pub struct FileBlockReader {
 }
 
 impl FileBlockReader {
+    /// Open a segment file for positional reads.
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
         let file = File::open(path)?;
         let len = file.metadata()?.len();
@@ -66,6 +67,7 @@ fn read_at(file: &File, offset: u64, buf: &mut [u8]) -> Result<()> {
 pub struct MemoryBlockReader(Vec<u8>);
 
 impl MemoryBlockReader {
+    /// Wrap an in-memory buffer as a block reader.
     pub fn new(bytes: Vec<u8>) -> Self {
         Self(bytes)
     }

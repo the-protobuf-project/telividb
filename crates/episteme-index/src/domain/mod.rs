@@ -2,6 +2,10 @@
 
 mod candidate;
 mod merge;
+mod rerank;
+mod two_tier;
 
 pub use candidate::Candidate;
 pub use merge::{Hit, MergeStats, Merged, Source, merge_top_k};
+pub use rerank::{OverFetch, RerankStats, rerank, rerank_measured};
+pub use two_tier::{TwoTierStats, rerank_candidates, search as two_tier_search};

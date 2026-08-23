@@ -11,6 +11,9 @@ episteme-telemetry.workspace = true
 tracing = "0.1"
 metrics = "0.24"
 crc32fast = "1.4"
+# IEEE 754-2008 binary16. Pure Rust, no build script — hand-rolling the
+# subnormal and rounding cases is a known source of subtle, silent errors.
+half = { version = "2", default-features = false, features = ["std"] }
 thiserror.workspace = true
 
 [dev-dependencies]

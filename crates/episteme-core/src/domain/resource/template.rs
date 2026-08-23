@@ -9,6 +9,7 @@ use crate::error::{Error, Result};
 /// Compile once, then parse or format repeatedly.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Template {
+    /// Literals and placeholders, in the order they appear.
     segments: Vec<Segment>,
 }
 
@@ -19,6 +20,7 @@ enum Segment {
 }
 
 impl Template {
+    /// Parse a pattern into a reusable template.
     pub fn compile(pattern: &str) -> Result<Self> {
         let segments = pattern
             .split('/')

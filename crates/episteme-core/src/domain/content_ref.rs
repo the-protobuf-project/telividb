@@ -21,6 +21,7 @@ pub struct ContentRef {
 }
 
 impl ContentRef {
+    /// A reference to a whole source, with no range, hash or inlined copy.
     pub fn uri(uri: impl Into<String>) -> Self {
         Self {
             uri: uri.into(),
@@ -30,6 +31,10 @@ impl ContentRef {
         }
     }
 
+    /// Attach an inlined copy of the source text.
+    ///
+    /// Only for sources small enough to store; this is what keeps a point
+    /// re-embeddable without fetching the original.
     pub fn with_inline(mut self, text: impl Into<String>) -> Self {
         self.inline = Some(text.into());
         self

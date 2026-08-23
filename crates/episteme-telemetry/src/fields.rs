@@ -52,12 +52,19 @@ pub const RESOURCE: &str = "episteme.resource";
 // Measurements
 // ---------------------------------------------------------------------------
 
+/// Requested number of results.
 pub const K: &str = "episteme.query.k";
+/// Vectors actually scored while answering. Latency tracks this far more closely than it tracks `k`.
 pub const CANDIDATES_VISITED: &str = "episteme.query.candidates_visited";
+/// Results returned. Persistently below `k` means a filter is too selective for the chosen strategy.
 pub const RESULTS_RETURNED: &str = "episteme.query.results_returned";
+/// Row count of whatever the span covers.
 pub const ROWS: &str = "episteme.rows";
+/// Byte count of whatever the span covers.
 pub const BYTES: &str = "episteme.bytes";
+/// Record count, for WAL commits and bulk jobs.
 pub const RECORDS: &str = "episteme.records";
+/// Vector width. Safe to emit — shape discloses nothing.
 pub const DIM: &str = "episteme.dim";
 
 /// Field names that are safe to use as **metric labels** because their value

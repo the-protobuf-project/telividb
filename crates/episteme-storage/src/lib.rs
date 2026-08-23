@@ -12,18 +12,23 @@
 //! Together these give lock-free reads, snapshot isolation for free, and — much
 //! later — sharding, because a shard is just a set of segments.
 #![forbid(unsafe_code)]
+#![deny(missing_docs)]
 
 pub mod buffer;
+pub mod compact;
 pub mod error;
 pub mod format;
 pub mod manifest;
 pub mod ports;
 pub mod segment;
+pub mod tier;
 pub mod wal;
 
 pub use buffer::MutableBuffer;
+pub use compact::{CompactionPlan, CompactionPolicy, CompactionResult, compact_field};
 pub use error::{Error, Result};
 pub use format::{Codec, DType, FieldHeader, SegmentHeader};
 pub use manifest::Manifest;
 pub use segment::{SegmentReader, SegmentWriter};
+pub use tier::{BinaryTier, F16Tier, Int8Tier, PqTier};
 pub use wal::{WalReader, WalWriter};

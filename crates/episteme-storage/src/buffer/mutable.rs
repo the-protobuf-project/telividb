@@ -28,6 +28,7 @@ pub struct MutableBuffer {
 }
 
 impl MutableBuffer {
+    /// An empty buffer for vectors of `dim` width scored by `metric`.
     pub fn new(dim: Dim, metric: Metric) -> Self {
         Self {
             data: Vec::new(),
