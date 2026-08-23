@@ -133,11 +133,15 @@ impl ScanTier for PqTier {
         // The sum of per-subspace partials. Exact for dot and L2, since both
         // decompose additively across disjoint subspaces — which is precisely
         // why product quantization works at all.
-        let total: f32 = codes
-            .iter()
-            .enumerate()
-            .map(|(sub, &code)| distances[sub * CENTROIDS + code as usize])
-            .sum();
+        //
+        // `get` rather than an index: `PreparedQuery::table` is public and
+        // accepts an arbitrary `distances` vector, so a table shorter than
+        // `subspaces * CENTROIDS` reaches here and a raw index panics. A
+        // caller-supplied length must not be able to abort the process.
+        let mut total = 0f32;
+        for (sub, &code) in codes.iter().enumerate() {
+            total += *distances.get(sub * CENTROIDS + code as usize)?;
+        }
         Some(total)
     }
 }
@@ -155,3 +159,7 @@ fn partial(metric: Metric, query: &[f32], centroid: &[f32]) -> f32 {
             .sum(),
     }
 }
+
+#[cfg(test)]
+#[path = "pq_test.rs"]
+mod tests;
