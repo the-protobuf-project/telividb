@@ -25,6 +25,36 @@ pub struct HnswParams {
     /// Candidate breadth while querying. Larger improves recall and costs
     /// latency on every request — the lever to tune.
     pub ef_search: usize,
+    /// Nodes inserted per parallel batch. **Defaults to one — no batching.**
+    ///
+    /// Within a batch, nodes search concurrently against one graph snapshot and
+    /// therefore cannot link to each other. Larger batches parallelise better
+    /// and diverge further from a sequential build.
+    ///
+    /// Deterministic at any value: batches are fixed by row order, so the result
+    /// never depends on thread count or scheduling.
+    ///
+    /// # Why the default is one
+    ///
+    /// Measured on 20k clustered vectors at 128 dimensions:
+    ///
+    /// | `batch_size` | build | recall@10 |
+    /// |---|---|---|
+    /// | 1 | 7.98s | **1.0000** |
+    /// | 32 | 7.56s | 0.9970 |
+    /// | 128 | 6.85s | 0.9860 |
+    /// | 512 | 6.32s | 0.9430 |
+    ///
+    /// A 1.26x speedup for 5.7 points of recall is a bad trade, and the shape of
+    /// the curve says why: only the *search* half of an insert parallelises.
+    /// Neighbour selection and pruning mutate the graph, so they stay
+    /// sequential and cap the whole thing — Amdahl, not a tuning problem.
+    ///
+    /// **The lever that actually pays here is SIMD distance kernels**, which
+    /// speed up both halves and cost no recall at all. Raise this only when
+    /// build latency matters more than the last point of recall.
+    pub batch_size: usize,
+
     /// Seed for level assignment.
     ///
     /// Fixed rather than drawn from the system, so a build is reproducible: a
@@ -40,6 +70,7 @@ impl Default for HnswParams {
             m0: 32,
             ef_construction: 200,
             ef_search: 64,
+            batch_size: 1,
             seed: 0x5eed_1234_abcd_ef01,
         }
     }

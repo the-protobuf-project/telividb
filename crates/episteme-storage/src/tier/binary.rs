@@ -45,13 +45,13 @@ impl BinaryTier {
                     return Ok(None);
                 }
                 let start = row * row_bytes;
-                BinaryCodes::from_bytes(&codes[start..], dim).map(Some).ok_or(
-                    crate::error::Error::Truncated {
+                BinaryCodes::from_bytes(&codes[start..], dim)
+                    .map(Some)
+                    .ok_or(crate::error::Error::Truncated {
                         what: "binary codes",
                         needed: start + row_bytes,
                         found: codes.len(),
-                    },
-                )
+                    })
             })
             .collect::<crate::error::Result<Vec<_>>>()?;
         Ok(Self {

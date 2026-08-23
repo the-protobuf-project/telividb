@@ -1,7 +1,6 @@
 //! Choosing which neighbours to keep.
 
-use super::scored::Scored;
-use super::search::distance_to;
+use super::scored::{Scored, to_distance};
 use episteme_core::{Metric, VectorStore};
 
 /// Select up to `m` neighbours from `candidates`, favouring diversity.
@@ -25,6 +24,15 @@ pub fn select_neighbours(
 ) -> Vec<u32> {
     let mut selected: Vec<Scored> = Vec::with_capacity(m);
 
+    // The vectors of everything selected so far, held alongside.
+    //
+    // The dominance check below runs once per (candidate, selected) pair —
+    // thousands of times per insert — and fetching a kept vector through the
+    // store on every comparison put a bounds check and a slice construction
+    // inside the innermost loop. Caching at most `m` vectors turns it into
+    // arithmetic. Nothing about the result changes; only the cost does.
+    let mut selected_vectors: Vec<&[f32]> = Vec::with_capacity(m);
+
     for &candidate in candidates {
         if selected.len() >= m {
             break;
@@ -36,13 +44,13 @@ pub fn select_neighbours(
 
         // Keep it only if it is nearer to the query than to anything already
         // chosen — otherwise an existing edge already covers that direction.
-        let dominated = selected.iter().any(|kept| {
-            distance_to(store, metric, vector, kept.ordinal)
-                .is_some_and(|to_kept| to_kept < candidate.distance)
+        let dominated = selected_vectors.iter().any(|kept| {
+            to_distance(metric, episteme_distance::score(metric, vector, kept)) < candidate.distance
         });
 
         if !dominated {
             selected.push(candidate);
+            selected_vectors.push(vector);
         }
     }
 

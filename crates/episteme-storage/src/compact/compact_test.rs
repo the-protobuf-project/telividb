@@ -75,8 +75,13 @@ fn the_live_predicate_sees_which_input_a_row_came_from() {
     let inputs: Vec<&dyn VectorStore> = vec![&a, &b];
     let drop_first_input = |i: usize, _: Ordinal| i != 0;
 
-    let (out, _) =
-        compact_field(&inputs, &drop_first_input, Fingerprint::unset(), Codec::None).unwrap();
+    let (out, _) = compact_field(
+        &inputs,
+        &drop_first_input,
+        Fingerprint::unset(),
+        Codec::None,
+    )
+    .unwrap();
     assert_eq!(out.len(), 1);
     assert_eq!(out.get(Ordinal::from_row(0)), Some([0.0, 1.0].as_slice()));
 }
@@ -111,6 +116,7 @@ fn reclaimed_fraction_reports_whether_the_run_was_worth_it() {
     let inputs: Vec<&dyn VectorStore> = vec![&a];
     let keep_half = |_: usize, o: Ordinal| o.row() < 2;
 
-    let (_, result) = compact_field(&inputs, &keep_half, Fingerprint::unset(), Codec::None).unwrap();
+    let (_, result) =
+        compact_field(&inputs, &keep_half, Fingerprint::unset(), Codec::None).unwrap();
     assert_eq!(result.reclaimed_fraction(), 0.5);
 }

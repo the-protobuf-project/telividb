@@ -44,7 +44,10 @@ pub fn open_tier(segment: &Path, field: &str) -> Result<Option<Box<dyn ScanTier>
 
     let present = std::fs::read(dir.join("present.roar")).unwrap_or_default();
     let is_present = |row: usize| {
-        present.is_empty() || present.get(row / 8).is_some_and(|b| b & (1 << (row % 8)) != 0)
+        present.is_empty()
+            || present
+                .get(row / 8)
+                .is_some_and(|b| b & (1 << (row % 8)) != 0)
     };
 
     let tier: Box<dyn ScanTier> = match header.codec {

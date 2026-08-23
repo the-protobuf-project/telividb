@@ -43,13 +43,13 @@ impl F16Tier {
                     return Ok(None);
                 }
                 let start = row * row_bytes;
-                F16Row::read_from(&codes[start..], dim).map(Some).ok_or(
-                    Error::Truncated {
+                F16Row::read_from(&codes[start..], dim)
+                    .map(Some)
+                    .ok_or(Error::Truncated {
                         what: "f16 codes",
                         needed: start + row_bytes,
                         found: codes.len(),
-                    },
-                )
+                    })
             })
             .collect::<StorageResult<Vec<_>>>()?;
         Ok(Self {

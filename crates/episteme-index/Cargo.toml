@@ -10,6 +10,13 @@ episteme-telemetry.workspace = true
 tracing = "0.1"
 metrics = "0.24"
 episteme-distance.workspace = true
+rayon = { version = "1.10", optional = true }
+
+[features]
+default = ["parallel"]
+# Parallel graph construction. See adapters::hnsw::build for the determinism
+# guarantee it preserves and the one it does not.
+parallel = ["dep:rayon"]
 
 [dev-dependencies]
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

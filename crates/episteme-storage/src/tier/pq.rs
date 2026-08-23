@@ -56,14 +56,13 @@ impl PqTier {
                     return Ok(None);
                 }
                 let start = row * m;
-                codes
-                    .get(start..start + m)
-                    .map(|c| Some(c.to_vec()))
-                    .ok_or(crate::error::Error::Truncated {
+                codes.get(start..start + m).map(|c| Some(c.to_vec())).ok_or(
+                    crate::error::Error::Truncated {
                         what: "pq codes",
                         needed: start + m,
                         found: codes.len(),
-                    })
+                    },
+                )
             })
             .collect::<StorageResult<Vec<_>>>()?;
         Ok(Self {

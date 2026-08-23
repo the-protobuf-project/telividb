@@ -14,6 +14,19 @@ use episteme_core::{Metric, Ordinal, VectorStore};
 /// Insertion order is the store's row order, and level assignment is seeded, so
 /// the same input always yields the same graph. That reproducibility is what
 /// makes a recall regression attributable to a code change rather than to luck.
+///
+/// # Parallelism
+///
+/// With the `parallel` feature, insertion runs in **fixed-size batches**: every
+/// node in a batch searches the same read-only graph snapshot concurrently, and
+/// their connections are then applied in row order. That keeps the build
+/// deterministic — the same input yields the same graph on any machine and any
+/// thread count — which naive parallel insertion does not.
+///
+/// The cost is that nodes within a batch cannot link to each other, so the
+/// graph differs slightly from a purely sequential build. Batches are small
+/// enough that the effect on recall is negligible, and
+/// `parallel_matches_sequential_recall` holds it to that.
 pub fn build(store: &dyn VectorStore, params: &HnswParams) -> Graph {
     let mut graph = Graph::new();
     let mut rng = SplitMix64::new(params.seed);
@@ -22,7 +35,16 @@ pub fn build(store: &dyn VectorStore, params: &HnswParams) -> Graph {
     // One allocation for the entire build rather than one per layer visit.
     let mut visited = VisitedSet::with_capacity(store.len());
 
-    for row in 0..store.len() {
+    // Levels are drawn up front, in row order, so the sequence never depends on
+    // how the work is later divided.
+    let levels: Vec<usize> = (0..store.len()).map(|_| rng.level(factor)).collect();
+
+    #[cfg(feature = "parallel")]
+    if params.batch_size > 1 && store.len() > params.batch_size {
+        return super::batched::build_batched(store, params, &levels, metric);
+    }
+
+    for (row, &level) in levels.iter().enumerate() {
         let ordinal = Ordinal::from_row(row as u32);
         let Some(vector) = store.get(ordinal) else {
             // Absent for this field. It still occupies an ordinal so stride
@@ -30,7 +52,6 @@ pub fn build(store: &dyn VectorStore, params: &HnswParams) -> Graph {
             graph.push_node(0);
             continue;
         };
-        let level = rng.level(factor);
         insert(
             &mut graph,
             store,
@@ -105,7 +126,7 @@ fn insert(
 }
 
 /// Re-run the selection heuristic over a node's neighbours and keep the best.
-fn prune(
+pub(super) fn prune(
     graph: &mut Graph,
     store: &dyn VectorStore,
     metric: Metric,

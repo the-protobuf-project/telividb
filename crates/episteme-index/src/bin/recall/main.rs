@@ -72,6 +72,7 @@ fn main() {
         &store,
         HnswParams {
             ef_search: args.ef,
+            batch_size: args.batch,
             ..Default::default()
         },
     );

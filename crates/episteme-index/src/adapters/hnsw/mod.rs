@@ -13,6 +13,8 @@
 //!   ([`search`]). Refusing to walk through excluded nodes strands regions and
 //!   silently costs recall.
 
+#[cfg(feature = "parallel")]
+mod batched;
 mod build;
 mod graph;
 mod params;

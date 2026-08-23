@@ -67,11 +67,14 @@ pub fn compact_field(
             episteme_core::Dim::new(1).expect("one is non-zero"),
             episteme_core::Metric::Dot,
         );
-        return Ok((empty, CompactionResult {
-            rows_read: 0,
-            rows_written: 0,
-            rows_reclaimed: 0,
-        }));
+        return Ok((
+            empty,
+            CompactionResult {
+                rows_read: 0,
+                rows_written: 0,
+                rows_reclaimed: 0,
+            },
+        ));
     };
 
     let total: usize = inputs.iter().map(|s| s.len()).sum();
@@ -109,8 +112,7 @@ pub fn compact_field(
         rows_reclaimed: read - written,
     };
 
-    metrics::histogram!(metrics_names::COMPACTION_DURATION)
-        .record(started.elapsed().as_secs_f64());
+    metrics::histogram!(metrics_names::COMPACTION_DURATION).record(started.elapsed().as_secs_f64());
     metrics::gauge!(metrics_names::ROWS_TOMBSTONED).set(0.0);
     tracing::info!(
         rows_written = written,

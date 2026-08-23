@@ -48,6 +48,13 @@ fn level_factor_decays_with_m() {
 }
 
 #[test]
+fn batching_is_off_by_default() {
+    // Measured: batching caps at ~1.26x and costs real recall, because only the
+    // search half of an insert parallelises. See the field docs for the table.
+    assert_eq!(HnswParams::default().batch_size, 1);
+}
+
+#[test]
 fn the_seed_is_fixed_so_builds_reproduce() {
     assert_eq!(HnswParams::default().seed, HnswParams::default().seed);
 }

@@ -29,6 +29,8 @@ pub struct Args {
     pub metric: Metric,
     pub distribution: Distribution,
     pub clusters: usize,
+    /// Nodes per parallel build batch. One disables batching.
+    pub batch: usize,
 }
 
 impl Default for Args {
@@ -42,6 +44,7 @@ impl Default for Args {
             metric: Metric::Cosine,
             distribution: Distribution::Clustered,
             clusters: 64,
+            batch: 1,
         }
     }
 }
@@ -65,6 +68,7 @@ pub fn parse() -> Args {
                 }
             }
             "--clusters" => args.clusters = value.parse().unwrap_or(args.clusters),
+            "--batch" => args.batch = value.parse().unwrap_or(args.batch),
             "--metric" => {
                 args.metric = match value.as_str() {
                     "dot" => Metric::Dot,

@@ -75,6 +75,9 @@ pub fn decode(bytes: &[u8], rows: usize) -> Result<Vec<Option<Span>>> {
 }
 
 /// Byte offset of one row's span.
+///
+/// Fixed stride means a single span can be read without parsing the file, which
+/// is what a span predicate needs once filtering exists.
 pub fn offset_of(row: usize) -> usize {
     row * SPAN_BYTES
 }

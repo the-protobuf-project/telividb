@@ -44,12 +44,7 @@ fn a_field_without_a_codec_has_no_scan_tier() {
 
 #[test]
 fn every_codec_round_trips_through_a_sealed_segment() {
-    for codec in [
-        Codec::F16,
-        Codec::Int8,
-        Codec::Binary,
-        Codec::Pq { m: 8 },
-    ] {
+    for codec in [Codec::F16, Codec::Int8, Codec::Binary, Codec::Pq { m: 8 }] {
         let dir = tempfile::tempdir().unwrap();
         let (exact, tier) = seal_and_reopen(codec, dir.path());
         let tier = tier.unwrap_or_else(|| panic!("{codec:?} produced no tier"));
