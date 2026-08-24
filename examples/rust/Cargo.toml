@@ -29,6 +29,9 @@ telividb-proto.workspace = true
 telividb-server.workspace = true
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
 tempfile = "3"
+# BEIR datasets ship as JSONL. The HuggingFace mirror ships Parquet, which
+# would pull arrow in to read three columns.
+serde_json = "1"
 
 [features]
 default = ["gpu"]

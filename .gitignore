@@ -17,3 +17,6 @@
 .vscode/
 AGENT_*.md
 docs/STATUS.md
+
+# Evaluation datasets. Fetched by examples/datasets/download.sh.
+/examples/datasets/*/

@@ -2996,6 +2996,7 @@ dependencies = [
 name = "telividb-examples"
 version = "0.1.0"
 dependencies = [
+ "serde_json",
  "telividb-client",
  "telividb-core",
  "telividb-embed",
