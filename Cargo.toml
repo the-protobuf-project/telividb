@@ -5,6 +5,7 @@ members = [
     "crates/adapters/*",
     "crates/platform/*",
     "crates/bin/*",
+    "crates/sdk/*",
     "tools/*",
     "examples/rust",
 ]
@@ -39,7 +40,7 @@ license = "AGPL-3.0-or-later"
 repository = "https://github.com/oh-tarnished/telividb"
 
 [workspace.dependencies]
-telividb-client     = { path = "crates/bin/telividb-client" }
+telividb-client     = { path = "crates/sdk/telividb-client" }
 telividb-core       = { path = "crates/domain/telividb-core" }
 telividb-graph      = { path = "crates/domain/telividb-graph" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }

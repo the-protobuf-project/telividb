@@ -399,9 +399,10 @@ telividb/
 │  │  ├─ telividb-telemetry/  # span/metric vocabulary, redaction, subscriber wiring
 │  │  ├─ telividb-proto/      # buf-generated from protobuf/, committed; no build script
 │  │  └─ telividb-ui/         # embedded web assets (axum + rust-embed) + declarative panel handlers
+│  ├─ sdk/                     # client libraries. No engine, no storage — the wire protocol only.
+│  │  └─ telividb-client/     # Rust SDK: a gRPC client for telividb-server
 │  └─ bin/                     # composition roots — the only place adapters get chosen and wired
-│     ├─ telividb-server/     # binary: gRPC services, observability
-│     └─ telividb-client/     # Rust SDK
+│     └─ telividb-server/     # binary: gRPC services, inference server, observability
 ├─ sdk/{python,typescript}/   # generated clients
 ├─ ui/                        # UI source; built assets baked into telividb-ui
 ├─ benches/                   # criterion/divan benchmarks + recall harness
@@ -433,7 +434,15 @@ level up.** `domain/` crates depend on nothing outward and contain the logic tha
 correct on a whiteboard with no database attached; `adapters/` crates are the replaceable,
 I/O-shaped implementations of the ports `domain/` defines; `platform/` is the handful of
 cross-cutting concerns (telemetry, generated proto code, the embedded UI) that don't belong to one
-domain concept; `bin/` is where everything gets wired together and nowhere else. This is not
+domain concept; `sdk/` holds client libraries, which speak the wire protocol and own no engine at
+all; `bin/` is where everything gets wired together and nowhere else.
+
+**`sdk/` is separate from `bin/` because a client is a library, not a binary.** Lumping them
+together made `telividb-client` — which produces no executable — live in a directory named for
+executables, and that misnomer is the kind that quietly justifies putting engine code in a client
+later. The SDK depends on `telividb-proto` and nothing else; if it ever needs `telividb-storage` or
+`telividb-index`, the boundary has been crossed and inference or search has leaked client-side,
+which rules 42–45 exist to prevent. This is not
 cosmetic directory tidiness — it is what makes the crates under `domain/` and `adapters/`
 independently publishable.
 
