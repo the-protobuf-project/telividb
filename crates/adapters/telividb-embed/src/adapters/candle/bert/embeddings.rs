@@ -11,7 +11,9 @@ use std::sync::Arc;
 /// The input layer: three lookups, summed, then normalized.
 pub struct Embeddings {
     tokens: Arc<QTensor>,
-    positions: Arc<QTensor>,
+    /// Absent for a rotary model, where position is applied inside attention
+    /// rather than added here.
+    positions: Option<Arc<QTensor>>,
     /// Segment embedding. Present in BERT proper, absent in `nomic-bert`,
     /// which dropped the next-sentence objective it served.
     types: Option<Arc<QTensor>>,
@@ -26,7 +28,10 @@ impl Embeddings {
         let types = weights.quantized("token_types.weight").ok();
         Ok(Self {
             tokens: weights.quantized("token_embd.weight")?,
-            positions: weights.quantized("position_embd.weight")?,
+            positions: match config.uses_rope() {
+                true => None,
+                false => Some(weights.quantized("position_embd.weight")?),
+            },
             types,
             norm_weight: weights.dequantized("token_embd_norm.weight")?,
             norm_bias: weights.dequantized("token_embd_norm.bias")?,
@@ -39,10 +44,12 @@ impl Embeddings {
         let (_, seq) = ids.dims2()?;
         let mut xs = self.tokens.embedding(ids)?;
 
-        // Positions are the same for every row in the batch, so the lookup is
-        // done once and broadcast rather than per row.
-        let steps = Tensor::arange(0u32, seq as u32, device)?;
-        xs = xs.broadcast_add(&self.positions.embedding(&steps)?)?;
+        if let Some(positions) = &self.positions {
+            // Positions are the same for every row in the batch, so the lookup
+            // is done once and broadcast rather than per row.
+            let steps = Tensor::arange(0u32, seq as u32, device)?;
+            xs = xs.broadcast_add(&positions.embedding(&steps)?)?;
+        }
 
         if let Some(types) = &self.types {
             // Single-segment input: every token is type 0. Kept rather than

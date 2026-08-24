@@ -2,6 +2,7 @@
 
 use super::block::Block;
 use super::embeddings::Embeddings;
+use super::rope::Rope;
 use crate::adapters::candle::config::BertConfig;
 use crate::adapters::candle::weights::Weights;
 use crate::domain::Pooling;
@@ -12,6 +13,9 @@ use candle_core::{D, DType, Device, Tensor};
 pub struct QuantizedBert {
     embeddings: Embeddings,
     blocks: Vec<Block>,
+    /// Shared across every block: the frequencies depend only on head width
+    /// and base, so twelve blocks would otherwise hold twelve identical tables.
+    rope: Option<Rope>,
     config: BertConfig,
     device: Device,
 }
@@ -29,9 +33,20 @@ impl QuantizedBert {
             .map(|i| Block::load(weights, &config, i))
             .collect::<Result<Vec<_>>>()?;
 
+        let rope = match config.rope_freq_base {
+            Some(base) => Some(Rope::new(
+                config.head_dim(),
+                config.context,
+                base,
+                weights.device(),
+            )?),
+            None => None,
+        };
+
         Ok(Self {
             embeddings,
             blocks,
+            rope,
             device: weights.device().clone(),
             config,
         })
@@ -57,6 +72,16 @@ impl QuantizedBert {
         self.config.ff
     }
 
+    /// Whether position enters through rotation rather than a lookup table.
+    pub fn uses_rope(&self) -> bool {
+        self.config.uses_rope()
+    }
+
+    /// The pooling the model declares, if it declares one.
+    pub fn declared_pooling(&self) -> Option<Pooling> {
+        self.config.pooling
+    }
+
     /// Where this model is resident.
     pub fn device(&self) -> &Device {
         &self.device
@@ -70,7 +95,7 @@ impl QuantizedBert {
         let mut xs = self.embeddings.forward(ids, &self.device)?;
         let mask = additive_mask(attention)?;
         for block in &self.blocks {
-            xs = block.forward(&xs, &mask)?;
+            xs = block.forward(&xs, &mask, self.rope.as_ref())?;
         }
         Ok(pool(&xs, attention, pooling)?)
     }

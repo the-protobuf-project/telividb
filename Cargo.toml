@@ -6,6 +6,7 @@ members = [
     "crates/platform/*",
     "crates/bin/*",
     "tools/*",
+    "examples/rust",
 ]
 
 # The desktop app is packaging, not architecture (CLAUDE.md's gotchas), and it

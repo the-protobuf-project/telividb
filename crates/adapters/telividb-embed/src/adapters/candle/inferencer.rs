@@ -33,12 +33,28 @@ impl CandleInferencer {
         Self::default()
     }
 
-    /// Load `path` and keep it resident under `id`.
+    /// Load `path` and keep it resident under `id`, taking the pooling mode
+    /// the model itself declares.
     ///
     /// Takes `&mut self` — registration is the composition root's job and
     /// happens before serving, while [`Inferencer::embed`] takes `&self` so
     /// concurrent callers can be batched together.
-    pub fn register(&mut self, id: &ModelId, path: &Path, pooling: Pooling) -> Result<&mut Self> {
+    pub fn register(&mut self, id: &ModelId, path: &Path) -> Result<&mut Self> {
+        self.register_with_pooling(id, path, None)
+    }
+
+    /// The same, overriding the declared pooling mode.
+    ///
+    /// Separate rather than an argument on [`Self::register`] because the
+    /// override is the rare case: a model that declares its pooling should be
+    /// believed, and a caller passing one on every call is a caller who will
+    /// eventually pass the wrong one.
+    pub fn register_with_pooling(
+        &mut self,
+        id: &ModelId,
+        path: &Path,
+        pooling: Option<Pooling>,
+    ) -> Result<&mut Self> {
         let model = ResidentModel::load(id, path, pooling)?;
         self.models.insert(id.name.clone(), model);
         Ok(self)

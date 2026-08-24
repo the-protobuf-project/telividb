@@ -8,8 +8,8 @@
 //! where that point actually is on real hardware.
 //!
 //! ```text
-//! cargo run --release --example gpu_memory
-//! cargo run --release --example gpu_memory -- --dim 1536 --max-rows 2000000
+//! cargo run --release -p telividb-examples --bin gpu_memory
+//! cargo run --release -p telividb-examples --bin gpu_memory -- --dim 1536 --max-rows 2000000
 //! ```
 //!
 //! Refusals are reported and the run continues: the interesting output is

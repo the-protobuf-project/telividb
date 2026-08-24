@@ -14,7 +14,10 @@ mod attention;
 mod block;
 mod embeddings;
 mod encode;
+mod ffn;
 mod linear;
 mod ops;
+mod qkv;
+mod rope;
 
 pub use encode::QuantizedBert;

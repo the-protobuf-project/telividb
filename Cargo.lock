@@ -2980,6 +2980,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "telividb-examples"
+version = "0.1.0"
+dependencies = [
+ "telividb-core",
+ "telividb-embed",
+ "telividb-index",
+ "telividb-storage",
+ "telividb-telemetry",
+]
+
+[[package]]
 name = "telividb-graph"
 version = "0.1.0"
 dependencies = [

@@ -10,7 +10,7 @@ fn resident() -> (tempfile::TempDir, CandleInferencer, ModelId) {
 
     let mut server = CandleInferencer::new();
     let id = ModelId::new("tiny", Fingerprint::unset());
-    server.register(&id, &path, Pooling::Mean).unwrap();
+    server.register(&id, &path).unwrap();
 
     // The digest the model actually loaded under, which is what a field would
     // be bound to.
@@ -129,7 +129,7 @@ fn loading_a_file_that_is_not_what_the_caller_pinned_is_refused() {
     let lying = ModelId::new("tiny", Fingerprint::of(b"not this file"));
 
     assert!(matches!(
-        server.register(&lying, &path, Pooling::Mean),
+        server.register(&lying, &path),
         Err(crate::Error::DigestMismatch { .. })
     ));
 }
@@ -170,11 +170,7 @@ fn a_model_deregisters_from_the_residency_registry_when_dropped() {
     {
         let mut server = CandleInferencer::new();
         server
-            .register(
-                &ModelId::new(unique, Fingerprint::unset()),
-                &path,
-                Pooling::Mean,
-            )
+            .register(&ModelId::new(unique, Fingerprint::unset()), &path)
             .unwrap();
         assert_eq!(listed(), 1, "a resident model should be listed");
     }

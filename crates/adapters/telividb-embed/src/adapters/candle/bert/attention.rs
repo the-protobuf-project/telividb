@@ -2,33 +2,34 @@
 
 use super::linear::QLinear;
 use super::ops::softmax;
+use super::qkv::Qkv;
+use super::rope::Rope;
 use crate::adapters::candle::config::BertConfig;
 use crate::adapters::candle::weights::Weights;
 use crate::error::Result;
 use candle_core::Tensor;
 
-/// One block's attention: three projections in, one out.
+/// One block's attention: a projection in, a projection out.
 pub struct Attention {
-    query: QLinear,
-    key: QLinear,
-    value: QLinear,
+    qkv: Qkv,
     output: QLinear,
+    hidden: usize,
     heads: usize,
     head_dim: usize,
-    /// `1/sqrt(head_dim)`, precomputed — it is constant per model and this is
-    /// the innermost loop in the encoder.
+    /// `1/sqrt(head_dim)`, precomputed — constant per model, and this is the
+    /// innermost loop in the encoder.
     scale: f64,
 }
 
 impl Attention {
     /// Load block `i`'s attention weights.
     pub fn load(weights: &mut Weights, config: &BertConfig, i: usize) -> Result<Self> {
-        let at = |part: &str| format!("blk.{i}.attn_{part}");
+        let weight = weights.quantized(&format!("blk.{i}.attn_output.weight"))?;
+        let bias = weights.optional(&format!("blk.{i}.attn_output.bias"));
         Ok(Self {
-            query: load(weights, &at("q"))?,
-            key: load(weights, &at("k"))?,
-            value: load(weights, &at("v"))?,
-            output: load(weights, &at("output"))?,
+            qkv: Qkv::load(weights, i)?,
+            output: QLinear::new(weight, bias)?,
+            hidden: config.hidden,
             heads: config.heads,
             head_dim: config.head_dim(),
             scale: 1.0 / (config.head_dim() as f64).sqrt(),
@@ -37,7 +38,11 @@ impl Attention {
 
     /// Attend over `xs` (`[batch, seq, hidden]`), with `mask` additive and
     /// broadcastable over heads.
-    pub fn forward(&self, xs: &Tensor, mask: &Tensor) -> Result<Tensor> {
+    ///
+    /// `rope` is applied to queries and keys when the model carries no learned
+    /// position table — that rotation is the only thing telling the model
+    /// where a token sits.
+    pub fn forward(&self, xs: &Tensor, mask: &Tensor, rope: Option<&Rope>) -> Result<Tensor> {
         let (batch, seq, _) = xs.dims3()?;
         let split = |t: Tensor| -> candle_core::Result<Tensor> {
             t.reshape((batch, seq, self.heads, self.head_dim))?
@@ -45,9 +50,12 @@ impl Attention {
                 .contiguous()
         };
 
-        let q = split(self.query.forward(xs)?)?;
-        let k = split(self.key.forward(xs)?)?;
-        let v = split(self.value.forward(xs)?)?;
+        let (q, k, v) = self.qkv.project(xs, self.hidden)?;
+        let (mut q, mut k, v) = (split(q)?, split(k)?, split(v)?);
+        if let Some(rope) = rope {
+            q = rope.apply(&q)?;
+            k = rope.apply(&k)?;
+        }
 
         // The mask is added, not multiplied: a large negative before the
         // softmax sends a padded position to ~0 weight. Zeroing afterwards
@@ -63,11 +71,4 @@ impl Attention {
         ))?;
         Ok(self.output.forward(&context)?)
     }
-}
-
-/// Load a `<prefix>.weight` / `<prefix>.bias` pair.
-fn load(weights: &mut Weights, prefix: &str) -> Result<QLinear> {
-    let w = weights.quantized(&format!("{prefix}.weight"))?;
-    let b = weights.optional(&format!("{prefix}.bias"));
-    Ok(QLinear::new(w, b)?)
 }

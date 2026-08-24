@@ -38,7 +38,7 @@ impl ResidentModel {
     /// The digest is computed over the bytes actually read, not trusted from
     /// the caller: rule 12's guarantee is only worth having if the identity is
     /// checked against the file rather than asserted alongside it.
-    pub fn load(id: &ModelId, path: &std::path::Path, pooling: Pooling) -> Result<Self> {
+    pub fn load(id: &ModelId, path: &std::path::Path, pooling: Option<Pooling>) -> Result<Self> {
         let bytes = std::fs::read(path)?;
         let found = Fingerprint::of(&bytes);
         if !id.fingerprint.is_unset() && found != id.fingerprint {
@@ -57,6 +57,13 @@ impl ResidentModel {
 
         let mut weights = Weights::new(content, file, device.clone());
         let encoder = QuantizedBert::load(&mut weights)?;
+
+        // The caller's choice wins when they made one; otherwise take what the
+        // model declares. Mean is the last resort rather than the default,
+        // because it is only reached when the file says nothing at all.
+        let pooling = pooling
+            .or_else(|| encoder.declared_pooling())
+            .unwrap_or(Pooling::Mean);
 
         let resident_bytes = std::fs::metadata(path).map(|m| m.len() as usize)?;
         let location = match device {

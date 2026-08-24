@@ -96,3 +96,59 @@ fn an_integer_written_at_any_width_is_accepted() {
 
     assert_eq!(BertConfig::from_gguf(&content).unwrap().layers, 2);
 }
+
+#[test]
+fn a_declared_pooling_mode_is_read_from_the_file() {
+    // The model knows; asking the caller invites a wrong guess that produces
+    // right-shaped, badly-ranked vectors with no error anywhere.
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("tiny.gguf");
+    write_tiny_gguf(&path, &TinyModel::default()).unwrap();
+
+    let mut content = read(&path);
+    content.metadata.insert(
+        "bert.pooling_type".to_owned(),
+        candle_core::quantized::gguf_file::Value::U32(2),
+    );
+
+    let config = BertConfig::from_gguf(&content).unwrap();
+    assert_eq!(config.pooling, Some(crate::Pooling::Cls));
+}
+
+#[test]
+fn an_unpooled_mode_is_reported_as_no_declaration_rather_than_guessed() {
+    // 0 is "no pooling" and 3/4 are last-token and rerank — none of them is a
+    // pooled sentence embedding, so the honest answer is that the file did
+    // not declare one and the caller must decide.
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("tiny.gguf");
+    write_tiny_gguf(&path, &TinyModel::default()).unwrap();
+
+    let mut content = read(&path);
+    for mode in [0u32, 3, 4] {
+        content.metadata.insert(
+            "bert.pooling_type".to_owned(),
+            candle_core::quantized::gguf_file::Value::U32(mode),
+        );
+        assert_eq!(BertConfig::from_gguf(&content).unwrap().pooling, None);
+    }
+}
+
+#[test]
+fn rope_is_detected_from_the_files_own_metadata() {
+    // A rotary model carries no position table at all, so this is what
+    // decides whether the loader looks for one.
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("tiny.gguf");
+    write_tiny_gguf(&path, &TinyModel::default()).unwrap();
+
+    let plain = BertConfig::from_gguf(&read(&path)).unwrap();
+    assert!(!plain.uses_rope(), "classic BERT has learned positions");
+
+    let mut content = read(&path);
+    content.metadata.insert(
+        "bert.rope.freq_base".to_owned(),
+        candle_core::quantized::gguf_file::Value::F32(1000.0),
+    );
+    assert!(BertConfig::from_gguf(&content).unwrap().uses_rope());
+}

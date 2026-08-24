@@ -27,8 +27,20 @@ pub struct BertConfig {
     pub heads: usize,
     /// Epsilon inside every layer norm.
     pub eps: f64,
-    /// Longest sequence the position embeddings cover.
+    /// Longest sequence the model covers.
     pub context: usize,
+    /// Pooling the model declares, if it declares one. See
+    /// [`Pooling::from_declared`].
+    ///
+    /// [`Pooling::from_declared`]: crate::domain::Pooling::from_declared
+    pub pooling: Option<crate::domain::Pooling>,
+    /// Base frequency for rotary position embeddings, when the model uses
+    /// them instead of a learned position table.
+    ///
+    /// `None` means classic learned positions. The distinction is structural:
+    /// a rotary model carries no `position_embd.weight` at all, so treating
+    /// one as the other fails at load rather than silently.
+    pub rope_freq_base: Option<f64>,
 }
 
 impl BertConfig {
@@ -60,6 +72,10 @@ impl BertConfig {
             heads,
             eps: f64_at(content, &format!("{arch}.attention.layer_norm_epsilon"))?,
             context: usize_at(content, &format!("{arch}.context_length"))?,
+            pooling: usize_at(content, &format!("{arch}.pooling_type"))
+                .ok()
+                .and_then(|v| crate::domain::Pooling::from_declared(v as u32)),
+            rope_freq_base: f64_at(content, &format!("{arch}.rope.freq_base")).ok(),
             arch,
         })
     }
@@ -67,6 +83,11 @@ impl BertConfig {
     /// Width of one attention head.
     pub fn head_dim(&self) -> usize {
         self.hidden / self.heads
+    }
+
+    /// Whether position enters through rotation rather than a lookup table.
+    pub fn uses_rope(&self) -> bool {
+        self.rope_freq_base.is_some()
     }
 }
 

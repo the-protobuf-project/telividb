@@ -1,0 +1,30 @@
+[package]
+name = "telividb-examples"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+# Examples live in one crate at the top level rather than under
+# `crates/*/examples/`, because the interesting ones cross crate boundaries:
+# the walkthrough below embeds with `telividb-embed`, stores with
+# `telividb-storage` and searches with `telividb-index`. As a per-crate example
+# that is impossible — an example may only use its own crate's dependencies,
+# and adding the others would put an outward dependency in an adapter's
+# manifest, which is exactly what rule 14 and `check-layers` forbid.
+#
+# It is also a composition root, so it is the right place to choose and wire
+# adapters (rule 14 again) and to install telemetry.
+
+[dependencies]
+telividb-core.workspace = true
+telividb-embed.workspace = true
+telividb-index.workspace = true
+telividb-storage.workspace = true
+telividb-telemetry.workspace = true
+
+[features]
+default = ["gpu"]
+# Search the corpus on the GPU. On by default with an automatic CPU fallback,
+# matching `telividb-index`'s own posture (rule 46).
+gpu = ["telividb-index/gpu"]

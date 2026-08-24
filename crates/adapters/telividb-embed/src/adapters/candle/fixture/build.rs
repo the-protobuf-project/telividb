@@ -140,7 +140,13 @@ fn build_tensors(
     Ok(out)
 }
 
-/// A WordPiece vocabulary just large enough to tokenize the test corpus.
+/// A vocabulary just large enough to tokenize the test corpus.
+///
+/// Written in the **GGUF convention**, not WordPiece's: word-initial pieces
+/// carry `▁` (U+2581) and continuations go bare. That is what llama.cpp
+/// actually produces for a BERT vocabulary, so a fixture using `##` here
+/// would test the loader against a file shape that never occurs — and would
+/// have hidden the conversion bug this convention exists to catch.
 ///
 /// Order is the token id, and the first four positions are fixed because the
 /// metadata above points at them by index.
@@ -152,12 +158,12 @@ fn tiny_vocab(size: usize) -> Vec<String> {
         "[SEP]".to_owned(),
     ];
     for word in [
-        "search", "document", "query", ":", "the", "cat", "sat", "dog",
+        "search", "document", "query", ":", "the", "cat", "sat", "dog", "_",
     ] {
-        tokens.push(word.to_owned());
+        tokens.push(format!("\u{2581}{word}"));
     }
     while tokens.len() < size {
-        tokens.push(format!("tok{}", tokens.len()));
+        tokens.push(format!("\u{2581}tok{}", tokens.len()));
     }
     tokens.truncate(size);
     tokens
