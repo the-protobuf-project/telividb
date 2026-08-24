@@ -14,7 +14,12 @@ use super::cursor::Cursor;
 use super::graph::Graph;
 use episteme_core::{Error, Result};
 
+/// File header magic identifying an encoded HNSW graph. A mismatch means the
+/// bytes are not this format at all, and `decode` refuses them.
 pub const GRAPH_MAGIC: [u8; 4] = *b"EPHN";
+
+/// Format version of the encoded layout. `decode` refuses any version it does
+/// not recognize rather than guessing at a layout that may have changed.
 pub const GRAPH_VERSION: u16 = 1;
 
 /// `magic(4) version(2) reserved(2) nodes(8) entry(4) max_level(4) edges(8)`
