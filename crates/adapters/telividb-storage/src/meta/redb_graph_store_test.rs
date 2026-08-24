@@ -98,3 +98,20 @@ fn reopening_the_same_file_sees_prior_edges() {
     let edges: Vec<_> = reopened.iter_edges().unwrap().collect();
     assert_eq!(edges.len(), 1);
 }
+
+#[test]
+fn an_edge_type_containing_nul_is_refused() {
+    // The key is NUL-delimited, so such a type would split into the wrong
+    // fields on the way back. Refusing beats reporting success for an edge
+    // that can never be read again.
+    let dir = tempfile::tempdir().unwrap();
+    let store = RedbGraphStore::open(&dir.path().join("meta.redb")).unwrap();
+    let edge = Edge::new(name("a"), name("b"), "BAD\0TYPE", 1.0);
+
+    assert!(store.insert_edge(&edge).is_err());
+    assert_eq!(
+        store.iter_edges().unwrap().count(),
+        0,
+        "nothing was written"
+    );
+}

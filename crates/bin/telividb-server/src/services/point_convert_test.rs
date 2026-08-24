@@ -94,7 +94,7 @@ fn a_full_content_ref_round_trips() {
         sha256: vec![7u8; 32].into(),
         inline_text: "hello".to_owned(),
     };
-    let domain = content_ref_to_domain(wire.clone());
+    let domain = content_ref_to_domain(wire.clone()).unwrap();
     assert_eq!(domain.uri, "s3://bucket/key");
     assert_eq!(domain.byte_range, Some((10, 20)));
     assert_eq!(domain.sha256, Some([7u8; 32]));
@@ -113,11 +113,48 @@ fn a_minimal_content_ref_round_trips() {
         sha256: Vec::new().into(),
         inline_text: String::new(),
     };
-    let domain = content_ref_to_domain(wire.clone());
+    let domain = content_ref_to_domain(wire.clone()).unwrap();
     assert!(domain.byte_range.is_none());
     assert!(domain.sha256.is_none());
     assert!(domain.inline.is_none());
 
     let back = content_ref_to_wire(domain);
     assert_eq!(back, wire);
+}
+
+#[test]
+fn a_sha256_of_the_wrong_length_is_refused_not_dropped() {
+    // Silently discarding it would leave a point that looks unhashed, and
+    // stale-content detection depends on the digest being present.
+    let wire = WireContentRef {
+        uri: "s3://b/k".to_owned(),
+        range_start: 0,
+        range_end: 0,
+        sha256: vec![7u8; 20].into(),
+        inline_text: String::new(),
+    };
+    let err = content_ref_to_domain(wire).unwrap_err();
+    assert!(err.message().contains("32 bytes"), "{}", err.message());
+}
+
+#[test]
+fn a_negative_content_range_is_refused() {
+    let wire = WireContentRef {
+        uri: "s3://b/k".to_owned(),
+        range_start: -1,
+        range_end: 10,
+        sha256: Vec::new().into(),
+        inline_text: String::new(),
+    };
+    assert!(content_ref_to_domain(wire).is_err());
+}
+
+#[test]
+fn a_span_offset_that_overflows_milliseconds_is_refused() {
+    // Unchecked, this wrapped and produced a silently wrong span.
+    let huge = prost_types::Duration {
+        seconds: i64::MAX,
+        nanos: 0,
+    };
+    assert!(duration_to_ms(&huge).is_err());
 }

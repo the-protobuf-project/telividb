@@ -143,3 +143,25 @@ fn a_binding_survives_a_reopen() {
     let reopened = RedbPointStore::open(&path).unwrap();
     assert_eq!(reopened.row_owner("text_bge", 3).unwrap(), Some(point));
 }
+
+#[test]
+fn list_excludes_nested_names_that_merely_share_the_prefix() {
+    // `collections/a/points/1/parts/2` starts with the same prefix but is a
+    // different resource one level deeper; AIP-132 lists direct children.
+    let dir = tempfile::tempdir().unwrap();
+    let store = RedbPointStore::open(&dir.path().join("points.redb")).unwrap();
+    store
+        .create(&Point::new(name("collections/a/points/1")))
+        .unwrap();
+    store
+        .create(&Point::new(name("collections/a/points/1/parts/2")))
+        .unwrap();
+
+    let listed: Vec<_> = store
+        .list(&name("collections/a"))
+        .unwrap()
+        .into_iter()
+        .map(|p| p.name)
+        .collect();
+    assert_eq!(listed, vec![name("collections/a/points/1")]);
+}

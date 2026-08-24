@@ -167,8 +167,14 @@ impl PointStore for RedbPointStore {
             .map_err(point_store_err)?;
         for row in range {
             let (key, value) = row.map_err(point_store_err)?;
-            if !key.value().starts_with(&prefix) {
+            let Some(suffix) = key.value().strip_prefix(&prefix) else {
                 break;
+            };
+            // Direct children only. A nested name like
+            // `collections/a/points/1/parts/2` shares the prefix but is a
+            // different resource, and AIP-132 lists one level.
+            if suffix.contains('/') {
+                continue;
             }
             let name =
                 ResourceName::parse(key.value()).map_err(|e| telividb_core::Error::PointStore {

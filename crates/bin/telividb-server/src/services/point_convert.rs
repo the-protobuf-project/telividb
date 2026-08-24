@@ -18,7 +18,7 @@ pub(super) fn to_domain(
 ) -> Result<telividb_core::Point, Status> {
     let mut point = telividb_core::Point::new(name);
     point.span = wire.span.map(span_to_domain).transpose()?;
-    point.content_ref = wire.content_ref.map(content_ref_to_domain);
+    point.content_ref = wire.content_ref.map(content_ref_to_domain).transpose()?;
     for named in wire.vectors {
         let field = named.field_id;
         if field.is_empty() {
@@ -109,7 +109,12 @@ fn duration_to_ms(d: &prost_types::Duration) -> Result<u64, Status> {
             "a span offset must not be negative",
         ));
     }
-    Ok(d.seconds as u64 * 1000 + d.nanos as u64 / 1_000_000)
+    // Checked: a large `seconds` would otherwise wrap and yield a span that
+    // is silently wrong rather than refused.
+    (d.seconds as u64)
+        .checked_mul(1000)
+        .and_then(|ms| ms.checked_add(d.nanos as u64 / 1_000_000))
+        .ok_or_else(|| Status::invalid_argument("span offset overflows milliseconds"))
 }
 
 fn ms_to_duration(ms: u64) -> prost_types::Duration {
@@ -123,16 +128,33 @@ fn ms_to_duration(ms: u64) -> prost_types::Duration {
 /// so "absent" is a convention (zero, empty) rather than a wire-level fact —
 /// unlike everywhere else in this codebase, where presence is explicit. This
 /// is the one place that convention is applied.
-fn content_ref_to_domain(wire: WireContentRef) -> ContentRef {
-    ContentRef {
+fn content_ref_to_domain(wire: WireContentRef) -> Result<ContentRef, Status> {
+    if wire.range_start < 0 || wire.range_end < 0 {
+        return Err(Status::invalid_argument(
+            "a content range must not be negative",
+        ));
+    }
+    // A digest of the wrong length is refused rather than dropped. Silently
+    // discarding it would leave a point that looks unhashed, and stale-content
+    // detection depends on the hash being there.
+    let sha256 = if wire.sha256.is_empty() {
+        None
+    } else {
+        let bytes: [u8; 32] = wire.sha256.as_ref().try_into().map_err(|_| {
+            Status::invalid_argument(format!(
+                "sha256 must be 32 bytes, got {}",
+                wire.sha256.len()
+            ))
+        })?;
+        Some(bytes)
+    };
+    Ok(ContentRef {
         uri: wire.uri,
         byte_range: (wire.range_start != 0 || wire.range_end != 0)
             .then_some((wire.range_start as u64, wire.range_end as u64)),
-        sha256: (!wire.sha256.is_empty())
-            .then(|| wire.sha256.to_vec())
-            .and_then(|v| v.try_into().ok()),
+        sha256,
         inline: (!wire.inline_text.is_empty()).then_some(wire.inline_text),
-    }
+    })
 }
 
 fn content_ref_to_wire(content_ref: ContentRef) -> WireContentRef {

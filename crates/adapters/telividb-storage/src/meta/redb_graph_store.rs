@@ -72,7 +72,21 @@ impl RedbGraphStore {
     }
 
     /// Persist one edge.
+    ///
+    /// Refuses an edge type containing a NUL byte. The key format is
+    /// NUL-delimited, so such a type would split into the wrong fields on the
+    /// way back out — and the write would have reported success for an edge
+    /// that can never be read again.
     pub fn insert_edge(&self, edge: &Edge) -> Result<()> {
+        if edge.edge_type.contains('\0') {
+            return Err(telividb_core::Error::GraphStore {
+                reason: format!(
+                    "edge type {:?} contains a NUL byte, which is the key separator",
+                    edge.edge_type
+                ),
+            }
+            .into());
+        }
         let key = encode_key(edge);
         let value = edge.weight.to_le_bytes();
         let write = self.db.begin_write().map_err(redb::Error::from)?;

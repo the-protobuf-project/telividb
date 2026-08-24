@@ -5,9 +5,23 @@ members = [
     "crates/adapters/*",
     "crates/platform/*",
     "crates/bin/*",
-    "app/src-tauri",
     "tools/*",
 ]
+
+# The desktop app is packaging, not architecture (CLAUDE.md's gotchas), and it
+# is excluded from the workspace for two concrete reasons rather than taste:
+#
+#   - It needs GTK/webkit system libraries that CI runners do not carry, so
+#     `cargo build --workspace` fails on Linux for a reason unrelated to the
+#     database.
+#   - Tauri drags `cc` in through `tauri-build`, `embed-resource` and
+#     `tauri-winres`, which is a third native path invariant 1 does not
+#     sanction — and sanctioning a GUI toolchain to keep a workspace glob tidy
+#     would gut the rule.
+#
+# It still builds: `cargo build --manifest-path app/src-tauri/Cargo.toml`, or
+# through the Tauri CLI, which is how a Tauri app is normally driven anyway.
+exclude = ["app/src-tauri"]
 
 # The engine is AGPL-3.0-or-later; commercial licences are available for
 # proprietary use — see LICENSE-COMMERCIAL.md.
