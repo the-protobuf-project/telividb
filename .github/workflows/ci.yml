@@ -48,7 +48,7 @@ jobs:
             os: macos-latest
             target: aarch64-apple-darwin
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # No toolchain version here — rust-toolchain.toml is authoritative and
       # rustup honours it. Stated twice, the two would eventually disagree.
       - run: rustup target add ${{ matrix.target }}
@@ -80,7 +80,7 @@ jobs:
     name: fmt · clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug
@@ -94,7 +94,7 @@ jobs:
     name: file length · doc coverage · layering
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug
@@ -112,7 +112,7 @@ jobs:
     name: no C toolchain
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug
@@ -192,7 +192,7 @@ jobs:
     name: toolchain is pinned
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Verify the running compiler matches the pin
         run: |
           pinned=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' rust-toolchain.toml | tr -d '"')
@@ -220,7 +220,7 @@ jobs:
     name: crash consistency · telemetry leaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug

@@ -15,6 +15,7 @@ use super::graph::Graph;
 use super::params::HnswParams;
 use super::visited::VisitedSet;
 use episteme_core::{Metric, Ordinal, VectorStore};
+use helpers::{apply, find_candidates};
 
 /// Insert in batches: search concurrently, apply in row order.
 ///
