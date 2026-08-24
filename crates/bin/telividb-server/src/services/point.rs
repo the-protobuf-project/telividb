@@ -1,10 +1,11 @@
 //! The Points service — create, get, list, delete.
 //!
-//! Batch operations and search return `Status::unimplemented`: batching is a
-//! later optimization pass, and search is the vector service's job, which
-//! needs the named-vector fields this slice deliberately leaves out.
+//! Batch operations return `Status::unimplemented` — batching is a later
+//! optimization pass. Search lives in `point_search.rs`: it is the one handler
+//! that composes several pieces rather than making a single store call.
 
-use super::point_convert::{to_domain, to_wire};
+use super::point_convert::to_wire;
+use super::vectors::VectorFields;
 use crate::error::{storage_status, to_status};
 use std::path::PathBuf;
 use telividb_core::{PointStore, ResourceName};
@@ -23,12 +24,21 @@ use tonic::{Request, Response, Status};
 /// collection under `data_dir`.
 pub struct PointsSvc {
     data_dir: PathBuf,
+    /// Vector fields, held across requests.
+    ///
+    /// Unlike every other store here, these cannot be opened per request: a
+    /// field's unsealed buffer *is* its newest data, and dropping it between
+    /// calls would discard every write since the last seal.
+    pub(super) vectors: VectorFields,
 }
 
 impl PointsSvc {
     /// Serve points from underneath `data_dir`, opened lazily per request.
     pub fn new(data_dir: PathBuf) -> Self {
-        Self { data_dir }
+        Self {
+            vectors: VectorFields::new(data_dir.clone()),
+            data_dir,
+        }
     }
 
     /// Path to the `redb` file for `collection`, e.g. `media` from
@@ -44,12 +54,12 @@ impl PointsSvc {
         .map_err(|e| storage_status(&e))
     }
 
-    fn open_writer(&self, collection: &ResourceName) -> Result<RedbPointStore, Status> {
+    pub(super) fn open_writer(&self, collection: &ResourceName) -> Result<RedbPointStore, Status> {
         RedbPointStore::open(&self.store_path(collection)).map_err(|e| storage_status(&e))
     }
 }
 
-fn parse_name(raw: &str) -> Result<ResourceName, Status> {
+pub(super) fn parse_name(raw: &str) -> Result<ResourceName, Status> {
     ResourceName::parse(raw).map_err(|e| Status::invalid_argument(e.to_string()))
 }
 
@@ -59,33 +69,7 @@ impl Points for PointsSvc {
         &self,
         request: Request<CreatePointRequest>,
     ) -> Result<Response<Point>, Status> {
-        let req = request.into_inner();
-        if req.point_id.is_empty() {
-            return Err(Status::invalid_argument(
-                "point_id must not be empty: it forms the final path segment \
-                 of the point's resource name",
-            ));
-        }
-        let parent = parse_name(&req.parent)?;
-        let name = parse_name(&format!("{}/points/{}", parent.as_str(), req.point_id))?;
-
-        logger::info!("create point").with_data(&serde_json::json!({
-            fields::COLLECTION: redact::collection_label(parent.as_str()),
-            fields::RESOURCE: redact::resource_token(name.as_str()),
-        }));
-
-        let point = to_domain(name, req.point.unwrap_or_default())?;
-        let store = self.open_writer(&parent)?;
-        if !store.create(&point).map_err(|e| storage_status(&e))? {
-            logger::debug!("create refused: point already exists").with_data(&serde_json::json!({
-                fields::RESOURCE: redact::resource_token(point.name.as_str()),
-            }));
-            return Err(Status::already_exists(format!(
-                "point {} already exists",
-                point.name
-            )));
-        }
-        Ok(Response::new(to_wire(point)))
+        super::point_create::create_point(self, request).await
     }
 
     async fn get_point(
@@ -157,38 +141,30 @@ impl Points for PointsSvc {
 
     async fn batch_create_points(
         &self,
-        _request: Request<BatchCreatePointsRequest>,
+        request: Request<BatchCreatePointsRequest>,
     ) -> Result<Response<BatchCreatePointsResponse>, Status> {
-        Err(Status::unimplemented(
-            "batch point operations are not yet implemented",
-        ))
+        super::point_batch::create(request)
     }
 
     async fn batch_get_points(
         &self,
-        _request: Request<BatchGetPointsRequest>,
+        request: Request<BatchGetPointsRequest>,
     ) -> Result<Response<BatchGetPointsResponse>, Status> {
-        Err(Status::unimplemented(
-            "batch point operations are not yet implemented",
-        ))
+        super::point_batch::get(request)
     }
 
     async fn batch_delete_points(
         &self,
-        _request: Request<BatchDeletePointsRequest>,
+        request: Request<BatchDeletePointsRequest>,
     ) -> Result<Response<BatchDeletePointsResponse>, Status> {
-        Err(Status::unimplemented(
-            "batch point operations are not yet implemented",
-        ))
+        super::point_batch::delete(request)
     }
 
     async fn search_points(
         &self,
-        _request: Request<SearchPointsRequest>,
+        request: Request<SearchPointsRequest>,
     ) -> Result<Response<SearchPointsResponse>, Status> {
-        Err(Status::unimplemented(
-            "search is not yet implemented; it lands with the vector service",
-        ))
+        super::point_search::search_points(self, request).await
     }
 }
 

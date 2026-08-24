@@ -93,3 +93,53 @@ fn delete_reports_whether_the_point_existed() {
     assert!(!store.delete(&point.name).unwrap(), "already gone");
     assert!(store.get(&point.name).unwrap().is_none());
 }
+
+#[test]
+fn a_bound_row_resolves_back_to_its_point() {
+    // The mapping that keeps invariant 9 honest: a search returns a
+    // segment-local ordinal, and only this turns it into a portable identity.
+    let dir = tempfile::tempdir().unwrap();
+    let store = RedbPointStore::open(&dir.path().join("points.redb")).unwrap();
+    let point = name("collections/media/points/doc-1");
+
+    store.bind_row("text_bge", 7, &point).unwrap();
+    assert_eq!(store.row_owner("text_bge", 7).unwrap(), Some(point));
+}
+
+#[test]
+fn an_unbound_row_has_no_owner() {
+    // Ordinary, not exceptional: a crash between appending a vector and
+    // binding its row looks exactly like this.
+    let dir = tempfile::tempdir().unwrap();
+    let store = RedbPointStore::open(&dir.path().join("points.redb")).unwrap();
+    assert!(store.row_owner("text_bge", 0).unwrap().is_none());
+}
+
+#[test]
+fn rows_are_numbered_per_field() {
+    // Each named vector field numbers its rows independently, so the same row
+    // number in two fields is two different points.
+    let dir = tempfile::tempdir().unwrap();
+    let store = RedbPointStore::open(&dir.path().join("points.redb")).unwrap();
+    let a = name("collections/media/points/a");
+    let b = name("collections/media/points/b");
+
+    store.bind_row("text_bge", 0, &a).unwrap();
+    store.bind_row("image_clip", 0, &b).unwrap();
+
+    assert_eq!(store.row_owner("text_bge", 0).unwrap(), Some(a));
+    assert_eq!(store.row_owner("image_clip", 0).unwrap(), Some(b));
+}
+
+#[test]
+fn a_binding_survives_a_reopen() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("points.redb");
+    let point = name("collections/media/points/doc-1");
+    {
+        let store = RedbPointStore::open(&path).unwrap();
+        store.bind_row("text_bge", 3, &point).unwrap();
+    }
+    let reopened = RedbPointStore::open(&path).unwrap();
+    assert_eq!(reopened.row_owner("text_bge", 3).unwrap(), Some(point));
+}

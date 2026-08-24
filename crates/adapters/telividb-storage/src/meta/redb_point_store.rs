@@ -19,6 +19,17 @@ use telividb_telemetry::{fields, logger};
 
 const POINTS: TableDefinition<&str, &[u8]> = TableDefinition::new("points_v1");
 
+/// `(field, row) -> point name`, so a search hit resolves back to a resource.
+///
+/// Necessary because a hit is a *segment-local ordinal* (invariant 9) which
+/// means nothing outside the segment that produced it. `VectorField::row_of`
+/// turns that into a field-wide row; this turns the row into the only
+/// identity that may cross a process boundary — the point's resource name.
+///
+/// Keyed on `(field, row)` rather than row alone because each named vector
+/// field numbers its rows independently.
+const ROWS: TableDefinition<(&str, u64), &str> = TableDefinition::new("vector_rows_v1");
+
 /// Point storage backed by one `redb` database file.
 ///
 /// Read-only access goes through [`PointStore`]; `create` and `delete` are
@@ -47,6 +58,7 @@ impl RedbPointStore {
         let write = db.begin_write().map_err(redb::Error::from)?;
         {
             write.open_table(POINTS).map_err(redb::Error::from)?;
+            write.open_table(ROWS).map_err(redb::Error::from)?;
         }
         write.commit().map_err(redb::Error::from)?;
 
@@ -92,6 +104,31 @@ impl RedbPointStore {
         };
         write.commit().map_err(redb::Error::from)?;
         Ok(created)
+    }
+
+    /// Record that `field`'s row `row` belongs to the point named `name`.
+    pub fn bind_row(&self, field: &str, row: u64, name: &ResourceName) -> Result<()> {
+        let write = self.db.begin_write().map_err(redb::Error::from)?;
+        {
+            let mut table = write.open_table(ROWS).map_err(redb::Error::from)?;
+            table
+                .insert((field, row), name.as_str())
+                .map_err(redb::Error::from)?;
+        }
+        write.commit().map_err(redb::Error::from)?;
+        Ok(())
+    }
+
+    /// The point a field's row belongs to, if that row was ever bound.
+    ///
+    /// `None` is ordinary rather than exceptional: a row can exist in a
+    /// segment while its binding is absent, which is what a crash between the
+    /// vector append and this write looks like.
+    pub fn row_owner(&self, field: &str, row: u64) -> Result<Option<ResourceName>> {
+        let read = self.db.begin_read().map_err(redb::Error::from)?;
+        let table = read.open_table(ROWS).map_err(redb::Error::from)?;
+        let found = table.get((field, row)).map_err(redb::Error::from)?;
+        Ok(found.and_then(|v| ResourceName::parse(v.value()).ok()))
     }
 
     /// Remove a point. Returns whether it existed.

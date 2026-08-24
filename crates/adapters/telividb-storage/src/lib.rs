@@ -17,6 +17,7 @@
 pub mod buffer;
 pub mod compact;
 pub mod error;
+pub mod field;
 pub mod format;
 pub mod manifest;
 pub mod meta;
@@ -28,6 +29,7 @@ pub mod wal;
 pub use buffer::MutableBuffer;
 pub use compact::{CompactionPlan, CompactionPolicy, CompactionResult, compact_field};
 pub use error::{Error, Result};
+pub use field::{DEFAULT_SEAL_BYTES, VectorField};
 pub use format::{Codec, DType, FieldHeader, SegmentHeader};
 pub use manifest::Manifest;
 pub use meta::{

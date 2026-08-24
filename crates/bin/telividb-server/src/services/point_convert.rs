@@ -5,36 +5,81 @@
 
 use telividb_core::{ContentRef, ResourceName, Span};
 use telividb_proto::point::v1::{
-    ContentRef as WireContentRef, Point as WirePoint, Span as WireSpan,
+    ContentRef as WireContentRef, NamedVector, Point as WirePoint, Span as WireSpan,
+    Vector as WireVector,
 };
 use tonic::Status;
 
 /// Build a domain `Point` from a wire `Point` and the name it will be
 /// created under.
-///
-/// Refuses named vectors outright rather than silently dropping them: the
-/// caller would otherwise believe they were stored. Vectors arrive with the
-/// vector service.
 pub(super) fn to_domain(
     name: ResourceName,
     wire: WirePoint,
 ) -> Result<telividb_core::Point, Status> {
-    if !wire.vectors.is_empty() {
-        return Err(Status::unimplemented(
-            "named vectors are not yet supported; they land with the vector service",
-        ));
-    }
     let mut point = telividb_core::Point::new(name);
     point.span = wire.span.map(span_to_domain).transpose()?;
     point.content_ref = wire.content_ref.map(content_ref_to_domain);
+    for named in wire.vectors {
+        let field = named.field_id;
+        if field.is_empty() {
+            return Err(Status::invalid_argument(
+                "a named vector needs a field_id: each field has its own model \
+                 and metric, so a vector without one cannot be stored",
+            ));
+        }
+        let vector = named
+            .vector
+            .ok_or_else(|| Status::invalid_argument(format!("vector for {field:?} is missing")))?;
+        point.vectors.insert(field, vector_to_domain(&vector)?);
+    }
     Ok(point)
+}
+
+/// Decode a wire vector's raw little-endian `f32` payload.
+///
+/// The bytes are carried as a length-delimited field rather than a repeated
+/// scalar because protobuf encodes the latter element by element — 768 varint
+/// operations per message on the hot path.
+pub(super) fn vector_to_domain(wire: &WireVector) -> Result<Vec<f32>, Status> {
+    let declared = wire.dimensions as usize;
+    if wire.data.len() != declared * 4 {
+        return Err(Status::invalid_argument(format!(
+            "vector declares {declared} dimensions but carries {} bytes; expected {}",
+            wire.data.len(),
+            declared * 4,
+        )));
+    }
+    Ok(wire
+        .data
+        .chunks_exact(4)
+        .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+        .collect())
+}
+
+/// The reverse of [`vector_to_domain`].
+fn vector_to_wire(vector: &[f32]) -> WireVector {
+    let mut data = Vec::with_capacity(vector.len() * 4);
+    for value in vector {
+        data.extend_from_slice(&value.to_le_bytes());
+    }
+    WireVector {
+        data: data.into(),
+        dimensions: vector.len() as i32,
+    }
 }
 
 /// The reverse of [`to_domain`], for responses.
 pub(super) fn to_wire(point: telividb_core::Point) -> WirePoint {
     WirePoint {
         name: point.name.as_str().to_owned(),
-        vectors: Vec::new(),
+        vectors: point
+            .vectors
+            .iter()
+            .map(|(field, vector)| NamedVector {
+                field_id: field.clone(),
+                vector: Some(vector_to_wire(vector)),
+            })
+            .collect(),
         span: point.span.map(span_to_wire),
         content_ref: point.content_ref.map(content_ref_to_wire),
     }

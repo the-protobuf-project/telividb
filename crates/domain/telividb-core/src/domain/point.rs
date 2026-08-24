@@ -1,14 +1,19 @@
-//! A single indexed item, minus the vectors.
+//! A single indexed item.
 //!
-//! Deliberately narrower than the `Point` message in `point.proto`: this
-//! carries a point's resource name, span and content reference, but no named
-//! vectors. Wiring vectors means engaging the segment/buffer machinery and
-//! real schema resolution, neither of which exists yet — that lands with the
-//! vector service, not here.
+//! Carries a point's resource name, span, content reference, and its named
+//! vector fields. **Not every point has every field** — a text-only point has
+//! no image vector, and that absence is ordinary rather than exceptional
+//! (invariant 17), which is why vectors are a map rather than a fixed slot.
 
 use super::{ContentRef, ResourceName, Span};
+use std::collections::BTreeMap;
 
-/// One point's non-vector fields.
+/// One point, as it arrives and as it is stored.
+///
+/// Vectors are keyed by field name — `text_bge`, `image_clip` — because each
+/// field has its own model, dimension and metric (ARCHITECTURE §4.1). A
+/// `BTreeMap` rather than a `HashMap` so iteration order is stable, which
+/// matters when the same point is written twice and the bytes should match.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Point {
     /// Resource name, e.g. `collections/media/points/doc-1`.
@@ -17,6 +22,9 @@ pub struct Point {
     pub span: Option<Span>,
     /// Reference to the bytes this point was derived from, if any.
     pub content_ref: Option<ContentRef>,
+    /// Named vector fields this point carries. Absent fields are simply not
+    /// present, never zero-filled.
+    pub vectors: BTreeMap<String, Vec<f32>>,
 }
 
 impl Point {
@@ -26,7 +34,14 @@ impl Point {
             name,
             span: None,
             content_ref: None,
+            vectors: BTreeMap::new(),
         }
+    }
+
+    /// Attach a vector for one named field.
+    pub fn with_vector(mut self, field: impl Into<String>, vector: Vec<f32>) -> Self {
+        self.vectors.insert(field.into(), vector);
+        self
     }
 
     /// Attach a temporal span.
