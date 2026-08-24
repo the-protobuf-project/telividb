@@ -52,7 +52,7 @@ pub fn to_status(error: &episteme_core::Error) -> tonic::Status {
         // Deliberately opaque: a malformed index is an operator problem, and its
         // detail belongs in the log rather than in a response.
         E::MalformedIndex { .. } => {
-            tracing::error!(%error, "malformed index");
+            episteme_telemetry::logger::error!("malformed index: {error}");
             tonic::Status::internal("index could not be read")
         }
     }

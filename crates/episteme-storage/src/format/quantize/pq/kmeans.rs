@@ -112,6 +112,15 @@ fn seed_centroids(points: &[&[f32]], dim: usize, k: usize, rng: &mut Rng) -> Vec
     centroids
 }
 
+/// Index of the centroid nearest `point`, by squared L2.
+///
+/// Squared rather than actual distance: the square root is monotonic, so it
+/// cannot change which centroid wins, and this runs once per point per
+/// iteration of training.
+///
+/// Returns zero when `centroids` is empty, which callers must not rely on —
+/// [`super::codebook::PqCodebook::train`] rejects an empty training set
+/// before anything reaches here.
 pub fn nearest_centroid(point: &[f32], centroids: &[f32], dim: usize) -> usize {
     let mut best = 0usize;
     let mut best_distance = f32::INFINITY;

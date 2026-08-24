@@ -6,6 +6,7 @@
 
 use super::model::{Enum, EnumValue, Field, Message, Rpc, Service};
 
+/// Extract each RPC in a service body, with its leading doc comment.
 pub fn parse_service_body<'a>(
     lines: &mut std::iter::Peekable<impl Iterator<Item = &'a str>>,
     service: &mut Service,
@@ -53,6 +54,7 @@ fn parse_rpc(rest: &str, comment: String) -> Rpc {
     }
 }
 
+/// Extract each field in a message body, with its leading doc comment.
 pub fn parse_message_body<'a>(
     lines: &mut std::iter::Peekable<impl Iterator<Item = &'a str>>,
     message: &mut Message,
@@ -112,6 +114,7 @@ fn parse_field(line: &str, comment: &str) -> Option<Field> {
     })
 }
 
+/// Extract each value in an enum body, with its leading doc comment.
 pub fn parse_enum_body<'a>(
     lines: &mut std::iter::Peekable<impl Iterator<Item = &'a str>>,
     value: &mut Enum,

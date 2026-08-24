@@ -17,7 +17,7 @@ fn score(store: &MemoryStore, queries: &[Vec<f32>]) -> RecallReport {
     let per_query: Vec<f64> = queries
         .iter()
         .map(|q| {
-            let truth = FlatIndex.search(store, q, 10, None).unwrap();
+            let truth = FlatIndex::new().search(store, q, 10, None).unwrap();
             let approx = hnsw.search(store, q, 10, None).unwrap();
             recall_at_k(&approx, &truth, 10)
         })

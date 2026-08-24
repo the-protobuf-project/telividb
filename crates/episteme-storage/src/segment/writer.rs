@@ -1,10 +1,11 @@
 //! Sealing a buffer into an immutable segment.
 
+use super::durable::{building_path, sync_dir, write_synced};
 use super::layout::{FieldLayout, field_dir};
 use crate::error::Result;
 use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader, HEADER_BYTES, SegmentHeader};
 use episteme_core::{Fingerprint, VectorStore};
-use episteme_telemetry::{fields, metrics_names};
+use episteme_telemetry::{Meter, fields, logger, metrics_names};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -20,13 +21,19 @@ pub struct SegmentWriter {
     final_path: PathBuf,
     schema_fingerprint: Fingerprint,
     rows: u64,
+    /// Where seal measurements go. Disabled until a composition root wires one
+    /// in, so writing a segment never needs a pipeline or a runtime.
+    meter: Meter,
 }
 
 impl SegmentWriter {
     /// Begin a segment at `path`, which must not already exist.
     pub fn create(path: impl AsRef<Path>, schema_fingerprint: Fingerprint) -> Result<Self> {
         let final_path = path.as_ref().to_path_buf();
-        let tmp = final_path.with_extension("building");
+        // Appended, not `with_extension`, which *replaces* an existing
+        // extension — so `seg.1` and `seg.2` both produced `seg.building` and
+        // two concurrent seals scribbled over each other's temp directory.
+        let tmp = building_path(&final_path);
         if tmp.exists() {
             fs::remove_dir_all(&tmp)?;
         }
@@ -36,7 +43,17 @@ impl SegmentWriter {
             final_path,
             schema_fingerprint,
             rows: 0,
+            meter: Meter::disabled(),
         })
+    }
+
+    /// Record seal measurements through `meter`.
+    ///
+    /// Separate from [`SegmentWriter::create`] so that beginning a segment
+    /// stays a filesystem operation, with no pipeline and no runtime involved.
+    pub fn with_meter(mut self, meter: Meter) -> Self {
+        self.meter = meter;
+        self
     }
 
     /// Write one named vector field at full precision, with no scan tier.
@@ -66,13 +83,11 @@ impl SegmentWriter {
         model_fingerprint: Fingerprint,
         codec: Codec,
     ) -> Result<()> {
-        let span = tracing::info_span!(
-            "episteme.segment.write_field",
-            { fields::FIELD } = name,
-            { fields::ROWS } = store.len(),
-            { fields::DIM } = store.dim().get(),
-        );
-        let _guard = span.enter();
+        logger::debug!("writing field {name}").with_data(&serde_json::json!({
+            fields::FIELD: name,
+            fields::ROWS: store.len(),
+            fields::DIM: store.dim().get(),
+        }));
 
         let dir = field_dir(&self.tmp, name);
         fs::create_dir_all(&dir)?;
@@ -111,10 +126,14 @@ impl SegmentWriter {
         }
         file.sync_all()?;
 
-        fs::write(dir.join("present.roar"), &present)?;
+        write_synced(dir.join("present.roar"), &present)?;
         if codec != Codec::None {
             super::codes::write_codes(&dir, store, codec)?;
         }
+        // The field's files exist and are durable; this makes their *names*
+        // durable too. Without it a crash can publish a segment whose
+        // directory entries were never recorded.
+        sync_dir(&dir)?;
         self.rows = self.rows.max(store.len() as u64);
         Ok(())
     }
@@ -127,20 +146,31 @@ impl SegmentWriter {
         let started = Instant::now();
 
         let header = SegmentHeader::new(self.schema_fingerprint, self.rows);
-        let mut file = fs::File::create(self.tmp.join("header.bin"))?;
-        file.write_all(&header.encode())?;
-        file.sync_all()?;
-        debug_assert_eq!(header.encode().len(), HEADER_BYTES);
+        let encoded = header.encode();
+        debug_assert_eq!(encoded.len(), HEADER_BYTES);
+        write_synced(self.tmp.join("header.bin"), &encoded)?;
 
+        // Every file is durable and every field directory is synced; this syncs
+        // the entries naming them, so the whole tree is on disk before the
+        // rename makes it visible.
+        sync_dir(&self.tmp)?;
         fs::rename(&self.tmp, &self.final_path)?;
+        // And the parent, so the rename itself survives a power loss.
         if let Some(parent) = self.final_path.parent() {
-            let _ = fs::File::open(parent).and_then(|d| d.sync_all());
+            sync_dir(parent)?;
         }
 
-        metrics::histogram!(metrics_names::SEGMENT_SEAL_DURATION)
-            .record(started.elapsed().as_secs_f64());
-        metrics::gauge!(metrics_names::ROWS_LIVE).set(self.rows as f64);
-        tracing::info!({ fields::ROWS } = self.rows, "segment sealed");
+        let elapsed = started.elapsed().as_secs_f64();
+        self.meter
+            .histogram(metrics_names::SEGMENT_SEAL_DURATION, elapsed);
+        // No `ROWS_LIVE` gauge here. This function knows the row count of the
+        // segment it just wrote, not the database's — setting a process-wide
+        // gauge from it would report the last segment sealed as the whole
+        // corpus. That gauge belongs to whatever owns the manifest.
+        logger::info!("segment sealed").with_data(&serde_json::json!({
+            fields::ROWS: self.rows,
+            fields::DURATION_SECONDS: elapsed,
+        }));
         Ok(self.final_path)
     }
 }

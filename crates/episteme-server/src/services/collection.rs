@@ -26,15 +26,12 @@ impl Collections for CollectionSvc {
 
         // Collection names reach telemetry, so a vault name would leak simply
         // by being created.
-        let span = tracing::info_span!(
-            "episteme.collection.create",
-            { fields::COLLECTION } = redact::collection_label(&req.collection_id),
-        );
-        let _guard = span.enter();
-        logger::info!(
-            "create collection {}",
-            redact::collection_label(&req.collection_id)
-        );
+        //
+        // A mutation is worth one record per call: they are rare, operator-
+        // initiated, and the thing you reconstruct an incident from.
+        logger::info!("create collection").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(&req.collection_id),
+        }));
 
         if req.collection_id.is_empty() {
             return Err(Status::invalid_argument(
@@ -57,7 +54,7 @@ impl Collections for CollectionSvc {
 
         // The fingerprint every segment written under this schema will carry.
         let fingerprint = episteme_core::Fingerprint::of(&descriptor_set);
-        logger::info!("collection schema fingerprinted: {fingerprint}");
+        logger::debug!("collection schema fingerprinted: {fingerprint}");
 
         Err(Status::unimplemented(
             "collection catalogue is not yet implemented; \
@@ -70,11 +67,9 @@ impl Collections for CollectionSvc {
         request: Request<GetCollectionRequest>,
     ) -> Result<Response<Collection>, Status> {
         let name = request.into_inner().name;
-        let span = tracing::info_span!(
-            "episteme.collection.get",
-            { fields::COLLECTION } = redact::collection_label(&name),
-        );
-        let _guard = span.enter();
+        logger::debug!("get collection").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(&name),
+        }));
         Err(Status::unimplemented(
             "collection catalogue is not yet implemented",
         ))
@@ -84,11 +79,11 @@ impl Collections for CollectionSvc {
         &self,
         _request: Request<ListCollectionsRequest>,
     ) -> Result<Response<ListCollectionsResponse>, Status> {
-        let span = tracing::info_span!("episteme.collection.list");
-        let _guard = span.enter();
-        // The span reaches a collector as a trace; this event is what shows on
-        // a console. Without it a server looks idle while serving requests.
-        logger::info!("list collections");
+        // Deliberately silent. `ListCollections` always succeeds, which makes
+        // it the natural liveness probe, and a polling client would turn one
+        // record per call into unbounded synchronous console volume on the
+        // tonic handler thread. A read that always succeeds is not news.
+        //
         // Answers rather than failing, so a client can confirm the server is
         // wired end to end before any collection exists.
         Ok(Response::new(ListCollectionsResponse {
@@ -102,11 +97,9 @@ impl Collections for CollectionSvc {
         request: Request<DeleteCollectionRequest>,
     ) -> Result<Response<()>, Status> {
         let name = request.into_inner().name;
-        let span = tracing::info_span!(
-            "episteme.collection.delete",
-            { fields::COLLECTION } = redact::collection_label(&name),
-        );
-        let _guard = span.enter();
+        logger::info!("delete collection").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(&name),
+        }));
         Err(Status::unimplemented(
             "collection catalogue is not yet implemented",
         ))

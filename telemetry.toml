@@ -1,23 +1,34 @@
 # Telemetry configuration, auto-discovered by `Telemetry::new()`.
 #
-# Exporting is off by default so a developer running `cargo serve` with no
-# collector does not get a connection-refused error on every batch. Turn it on
-# here, or pass `--otlp <addr>` which overrides this file.
+# The stack ranks configuration lowest-to-highest as: defaults, this file,
+# `TELEMETRY_*` environment variables, then builder calls in code. So anything
+# the server sets from a flag wins over this file, and anything it leaves unset
+# is decided here.
+#
+# Discovery is relative to the process working directory, or wherever
+# `TELEMETRY_CONFIG_PATH` points. A deployed binary should set that variable
+# rather than assume its CWD.
 
 [service]
 name = "episteme"
-version = "0.1.0"
-environment = "development"
 description = "Multimodal vector and graph database"
+# No `version` key. It would duplicate the workspace version and drift silently
+# at the next bump; the server passes its own `CARGO_PKG_VERSION` instead, which
+# outranks this file anyway.
+#
+# No `environment` key either — `--environment` always sets it, so a value here
+# could never take effect.
 
-[telemetry]
-# Master switch for the OTLP pipeline. Off by default so a developer with no
-# collector running does not get a connection-refused error on every batch.
-# Console logging is unaffected. `--otlp <addr>` turns it on.
-enabled = false
+# Verbosity. This is the setting to reach for, and the reason this file is
+# load-bearing rather than decorative: the server only sets a level when
+# `--log-level` is passed, so with no flag the value here decides.
+#
+#   1 = error   2 = info   3 = debug
+[logging]
+level = 2
 
-[telemetry.otlp]
-# Off by default: nothing should leave the machine because nobody said not to,
-# and a missing collector should not produce noise.
-enabled = false
-endpoint = "localhost:4317"
+# Per-module overrides, which exist only here — there is no flag for them.
+# Raise one crate to debug without drowning in the rest.
+#
+# [logging.modules.episteme-storage]
+# level = 3

@@ -23,7 +23,7 @@ fn measure(store: &MemoryStore, tier: &dyn ScanTier, queries: &[Vec<f32>]) -> (f
     let mut fractions = Vec::new();
 
     for q in queries {
-        let truth = FlatIndex.search(store, q, 10, None).unwrap();
+        let truth = FlatIndex::new().search(store, q, 10, None).unwrap();
         let (hits, stats) =
             two_tier_search(tier, store, q, 10, OverFetch::default(), None).unwrap();
         recalls.push(recall_at_k(&hits, &truth, 10));
@@ -86,7 +86,7 @@ fn pq_needs_over_fetch_proportional_to_its_compression() {
     let mut recalls = Vec::new();
     let mut fractions = Vec::new();
     for q in &queries {
-        let truth = FlatIndex.search(&store, q, 10, None).unwrap();
+        let truth = FlatIndex::new().search(&store, q, 10, None).unwrap();
         let (hits, stats) = two_tier_search(&tier, &store, q, 10, wide, None).unwrap();
         recalls.push(recall_at_k(&hits, &truth, 10));
         fractions.push(stats.rerank_fraction());
@@ -119,7 +119,7 @@ fn binary_two_tier_turns_a_useless_ranking_into_a_usable_one() {
     };
     let mut recalls = Vec::new();
     for q in &queries {
-        let truth = FlatIndex.search(&store, q, 10, None).unwrap();
+        let truth = FlatIndex::new().search(&store, q, 10, None).unwrap();
         let (hits, _) = two_tier_search(&tier, &store, q, 10, wide, None).unwrap();
         recalls.push(recall_at_k(&hits, &truth, 10));
     }
@@ -155,7 +155,9 @@ fn a_filtered_two_tier_search_matches_a_filtered_exhaustive_one() {
     let keep_even = |o: episteme_core::Ordinal| o.row().is_multiple_of(2);
 
     for q in queries.iter().take(10) {
-        let truth = FlatIndex.search(&store, q, 10, Some(&keep_even)).unwrap();
+        let truth = FlatIndex::new()
+            .search(&store, q, 10, Some(&keep_even))
+            .unwrap();
         let (hits, _) =
             two_tier_search(&tier, &store, q, 10, OverFetch::default(), Some(&keep_even)).unwrap();
         assert!(hits.iter().all(|h| h.ordinal.row().is_multiple_of(2)));

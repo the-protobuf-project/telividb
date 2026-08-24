@@ -3,9 +3,16 @@
 //! Named per Prometheus convention — `_seconds`, `_bytes`, `_total` — because
 //! the unit belongs in the name where a dashboard author will see it.
 //!
-//! Every name here is registered with a description at startup via
-//! [`describe_all`], so `/metrics` is self-documenting rather than a list of
-//! bare counters somebody has to guess at.
+//! Each name is paired with its instrument kind and a description in [`ALL`],
+//! which lives in [`crate::catalogue`].
+//! The kind is not decoration: a counter recorded as a histogram reaches the
+//! collector mislabelled, which decides how the series is stored and which
+//! queries are valid against it.
+//!
+//! The stack has no "describe every metric at startup" call — descriptions
+//! travel with the metric, either from this table or from a `#[derive(Metrics)]`
+//! field attribute. [`ALL`] is therefore the documentation of record, and a
+//! test holds it to that.
 
 // --- query path -------------------------------------------------------------
 
@@ -89,58 +96,7 @@ pub const JOB_RECORDS: &str = "episteme_job_records_total";
 /// Histogram. Bulk job wall-clock duration.
 pub const JOB_DURATION: &str = "episteme_job_duration_seconds";
 
-/// Every metric with its description, for registration at startup.
-pub const ALL: &[(&str, &str)] = &[
-    (SEARCH_DURATION, "End-to-end search latency in seconds"),
-    (SEARCH_CANDIDATES, "Vectors scored while answering a search"),
-    (SEARCH_RESULTS, "Results returned by a search"),
-    (
-        SEARCH_INCOMPLETE,
-        "Searches that returned an incomplete result set",
-    ),
-    (SEARCH_RECALL, "Sampled recall@k against exhaustive search"),
-    (
-        WAL_COMMIT_DURATION,
-        "Time to flush and fsync a WAL group commit",
-    ),
-    (
-        WAL_COMMIT_RECORDS,
-        "Records included in one WAL group commit",
-    ),
-    (WAL_BYTES, "Bytes appended to the write-ahead log"),
-    (WAL_TORN_RECOVERIES, "WAL recoveries that found a torn tail"),
-    (
-        SEGMENT_SEAL_DURATION,
-        "Time to seal a segment and write its files",
-    ),
-    (
-        INDEX_BUILD_DURATION,
-        "Time to build an index over a sealed segment",
-    ),
-    (
-        MANIFEST_SWAP_DURATION,
-        "Time to publish a new manifest generation",
-    ),
-    (
-        COMPACTION_DURATION,
-        "Time to merge segments and drop tombstoned rows",
-    ),
-    (SEGMENTS_LIVE, "Segments currently in the manifest"),
-    (ROWS_LIVE, "Rows visible to readers"),
-    (
-        ROWS_TOMBSTONED,
-        "Rows tombstoned but not yet compacted away",
-    ),
-    (EMBED_DURATION, "Time to embed one batch"),
-    (EMBED_BATCH_SIZE, "Inputs per embedding batch"),
-    (POLICY_DENIED, "Requests denied by policy, by action"),
-    (
-        POLICY_RESOLVE_DURATION,
-        "Time to resolve a principal to a visibility context",
-    ),
-    (JOB_RECORDS, "Bulk job records, by outcome"),
-    (JOB_DURATION, "Bulk job wall-clock duration"),
-];
+pub use crate::catalogue::ALL;
 
 #[cfg(test)]
 #[path = "metrics_names_test.rs"]

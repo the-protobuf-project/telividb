@@ -10,10 +10,16 @@
 //! the whole reason the format is shaped this way rather than being whatever a
 //! derive macro would emit.
 
+use super::cursor::Cursor;
 use super::graph::Graph;
 use episteme_core::{Error, Result};
 
+/// File header magic identifying an encoded HNSW graph. A mismatch means the
+/// bytes are not this format at all, and `decode` refuses them.
 pub const GRAPH_MAGIC: [u8; 4] = *b"EPHN";
+
+/// Format version of the encoded layout. `decode` refuses any version it does
+/// not recognize rather than guessing at a layout that may have changed.
 pub const GRAPH_VERSION: u16 = 1;
 
 /// `magic(4) version(2) reserved(2) nodes(8) entry(4) max_level(4) edges(8)`
@@ -70,9 +76,9 @@ pub fn decode(bytes: &[u8]) -> Result<Graph> {
     cursor.take(2)?; // reserved
 
     let nodes = cursor.u64()? as usize;
-    let _entry = cursor.u32()?;
-    let _max_level = cursor.u32()?;
-    let _edges = cursor.u64()?;
+    let declared_entry = cursor.u32()?;
+    let declared_max_level = cursor.u32()? as usize;
+    let declared_edges = cursor.u64()? as usize;
 
     // Never allocate on a length the file claims. The smallest possible node
     // costs eight bytes — a level and one layer length — so a node count that
@@ -103,9 +109,52 @@ pub fn decode(bytes: &[u8]) -> Result<Graph> {
     }
 
     let mut graph = Graph::new();
+    // `push_node` rather than `push_absent`, then the entry is set from the
+    // header below. An absent row and a present row that drew level zero are
+    // indistinguishable once written, so replay cannot infer the entry point —
+    // it has to be restored from what the writer recorded.
     for (level, _) in &shape {
         graph.push_node(*level);
     }
+
+    // The header is a claim about the graph that follows, so it is checked
+    // against it rather than discarded. Reconstruction happens to reproduce the
+    // same entry for a well-formed file, which is exactly why a disagreeing
+    // header decoded silently into a different graph before.
+    let entry = match declared_entry {
+        u32::MAX => None,
+        row if (row as usize) < nodes => Some(row),
+        _ => {
+            return Err(Error::MalformedIndex {
+                reason: "hnsw entry point is not a node in this graph",
+            });
+        }
+    };
+    if entry.is_none() && declared_edges != 0 {
+        return Err(Error::MalformedIndex {
+            reason: "hnsw graph has edges but declares no entry point",
+        });
+    }
+    if let Some(row) = entry
+        && shape[row as usize].0 != declared_max_level
+    {
+        return Err(Error::MalformedIndex {
+            reason: "hnsw entry point is not on the declared top layer",
+        });
+    }
+    if shape.iter().map(|(level, _)| *level).max().unwrap_or(0) != declared_max_level && nodes != 0
+    {
+        return Err(Error::MalformedIndex {
+            reason: "hnsw max level disagrees with the node levels",
+        });
+    }
+    let counted_edges: usize = shape.iter().flat_map(|(_, lengths)| lengths.iter()).sum();
+    if counted_edges != declared_edges {
+        return Err(Error::MalformedIndex {
+            reason: "hnsw edge count disagrees with the per-layer lengths",
+        });
+    }
+    graph.set_entry(entry, declared_max_level);
     for (node, (_, lengths)) in shape.iter().enumerate() {
         for (layer, &count) in lengths.iter().enumerate() {
             if count.saturating_mul(4) > cursor.remaining() {
@@ -121,57 +170,6 @@ pub fn decode(bytes: &[u8]) -> Result<Graph> {
         }
     }
     Ok(graph)
-}
-
-/// Bounds-checked sequential reader.
-///
-/// Every read is checked because a graph file is untrusted input the moment an
-/// archive arrives from elsewhere — a length field lying about its size must
-/// produce an error, never a panic or an out-of-bounds read.
-struct Cursor<'a> {
-    bytes: &'a [u8],
-    at: usize,
-}
-
-impl<'a> Cursor<'a> {
-    fn new(bytes: &'a [u8]) -> Self {
-        Self { bytes, at: 0 }
-    }
-
-    /// Bytes not yet consumed. Every length read from the file is checked
-    /// against this before it is used to allocate.
-    fn remaining(&self) -> usize {
-        self.bytes.len().saturating_sub(self.at)
-    }
-
-    fn take(&mut self, n: usize) -> Result<&'a [u8]> {
-        let end = self.at.checked_add(n).ok_or(Error::MalformedIndex {
-            reason: "length overflow",
-        })?;
-        let slice = self.bytes.get(self.at..end).ok_or(Error::MalformedIndex {
-            reason: "truncated",
-        })?;
-        self.at = end;
-        Ok(slice)
-    }
-
-    fn u16(&mut self) -> Result<u16> {
-        Ok(u16::from_le_bytes(
-            self.take(2)?.try_into().expect("2 bytes"),
-        ))
-    }
-
-    fn u32(&mut self) -> Result<u32> {
-        Ok(u32::from_le_bytes(
-            self.take(4)?.try_into().expect("4 bytes"),
-        ))
-    }
-
-    fn u64(&mut self) -> Result<u64> {
-        Ok(u64::from_le_bytes(
-            self.take(8)?.try_into().expect("8 bytes"),
-        ))
-    }
 }
 
 #[cfg(test)]

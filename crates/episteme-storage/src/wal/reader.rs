@@ -2,7 +2,7 @@
 
 use super::frame::{self, FRAME_HEADER_BYTES};
 use crate::error::Result;
-use episteme_telemetry::{fields, metrics_names};
+use episteme_telemetry::{Meter, fields, logger, metrics_names};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::Path;
@@ -24,6 +24,9 @@ pub enum WalTail {
 pub struct WalReader {
     inner: BufReader<File>,
     offset: u64,
+    /// Where torn-tail recoveries are counted. Disabled until a composition
+    /// root wires one in, so replaying a log never needs a pipeline.
+    meter: Meter,
 }
 
 impl WalReader {
@@ -32,7 +35,17 @@ impl WalReader {
         Ok(Self {
             inner: BufReader::new(File::open(path)?),
             offset: 0,
+            meter: Meter::disabled(),
         })
+    }
+
+    /// Count torn-tail recoveries through `meter`.
+    ///
+    /// Separate from [`WalReader::open`] so that opening a log stays a
+    /// filesystem operation, with no pipeline and no runtime involved.
+    pub fn with_meter(mut self, meter: Meter) -> Self {
+        self.meter = meter;
+        self
     }
 
     /// Replay every intact record, reporting how the file ended.
@@ -41,15 +54,14 @@ impl WalReader {
     /// by a process that was killed, and recovery must proceed from the last
     /// good record rather than refusing to start.
     pub fn replay(mut self, mut on_record: impl FnMut(&[u8])) -> Result<WalTail> {
-        let span = tracing::info_span!("episteme.wal.replay");
-        let _guard = span.enter();
         let mut records = 0u64;
 
         loop {
             let mut header = [0u8; FRAME_HEADER_BYTES];
             match read_full(&mut self.inner, &mut header)? {
                 Fill::Eof => {
-                    tracing::info!({ fields::RECORDS } = records, "wal replay clean");
+                    logger::info!("wal replay clean")
+                        .with_data(&serde_json::json!({ fields::RECORDS: records }));
                     return Ok(WalTail::Clean);
                 }
                 Fill::Partial => return Ok(self.torn(records)),
@@ -79,11 +91,12 @@ impl WalReader {
     /// but a rising rate in steady state means the host is losing writes and
     /// that deserves an alert rather than a line in a log nobody reads.
     fn torn(&self, records: u64) -> WalTail {
-        metrics::counter!(metrics_names::WAL_TORN_RECOVERIES).increment(1);
-        tracing::warn!(
-            { fields::RECORDS } = records,
-            offset = self.offset,
-            "wal tail was torn; recovering to last intact record"
+        self.meter.counter(metrics_names::WAL_TORN_RECOVERIES, 1.0);
+        logger::warn!("wal tail was torn; recovering to last intact record").with_data(
+            &serde_json::json!({
+                fields::RECORDS: records,
+                fields::OFFSET: self.offset,
+            }),
         );
         WalTail::Torn {
             at_offset: self.offset,

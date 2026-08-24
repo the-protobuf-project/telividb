@@ -8,8 +8,14 @@ license.workspace = true
 episteme-core.workspace = true
 episteme-distance.workspace = true
 episteme-telemetry.workspace = true
-tracing = "0.1"
-metrics = "0.24"
+# The pipeline itself, not a facade in front of it — CLAUDE.md rule 41.
+# Emission is a no-op until a composition root installs it, so this crate stays
+# synchronous, benchable and embeddable.
+telemetry.workspace = true
+# Structured data on a log record is a JSON value, and its keys are the
+# `fields::` constants — which a serde derive could not name, since
+# `#[serde(rename)]` takes a literal and these are consts.
+serde_json = "1"
 crc32fast = "1.4"
 # IEEE 754-2008 binary16. Pure Rust, no build script — hand-rolling the
 # subnormal and rounding cases is a known source of subtle, silent errors.

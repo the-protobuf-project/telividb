@@ -66,6 +66,30 @@ pub const BYTES: &str = "episteme.bytes";
 pub const RECORDS: &str = "episteme.records";
 /// Vector width. Safe to emit — shape discloses nothing.
 pub const DIM: &str = "episteme.dim";
+/// Wall-clock duration of whatever the record covers, in seconds.
+///
+/// Carried on the log record as well as in a histogram: the histogram is
+/// what a dashboard reads, and this is what someone reading one operation's
+/// log line needs in order to see why it was slow.
+pub const DURATION_SECONDS: &str = "episteme.duration_seconds";
+/// Byte offset within a file — where a torn WAL tail was found.
+pub const OFFSET: &str = "episteme.offset";
+/// Segment count of whatever the record covers.
+pub const SEGMENTS: &str = "episteme.segments";
+/// Rows written by a compaction.
+pub const ROWS_WRITTEN: &str = "episteme.rows_written";
+/// Rows dropped by a compaction because they were tombstoned.
+pub const ROWS_RECLAIMED: &str = "episteme.rows_reclaimed";
+/// Whether a search carried an authorization or attribute filter.
+pub const FILTERED: &str = "episteme.query.filtered";
+/// The query, **as a shape only** — never values. See [`crate::redact`].
+pub const QUERY: &str = "episteme.query.shape";
+/// Edge count of a built graph.
+pub const EDGES: &str = "episteme.index.edges";
+/// Layer count of a built graph.
+pub const LEVELS: &str = "episteme.index.levels";
+/// Search breadth an HNSW query actually used.
+pub const EF: &str = "episteme.query.ef";
 
 /// Field names that are safe to use as **metric labels** because their value
 /// space is bounded by schema or by a closed enum.

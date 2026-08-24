@@ -61,9 +61,24 @@ impl PqCodebook {
     /// Rejects a width that does not divide evenly rather than padding: a
     /// silent pad would make the last subspace partly meaningless and the
     /// resulting recall loss would be very hard to attribute.
+    ///
+    /// # Errors
+    ///
+    /// Also rejects a training set smaller than [`CENTROIDS`]. There is no
+    /// useful codebook to be had from fewer vectors than centroids — at zero,
+    /// seeding returns zeros and the update loop never runs, so every row
+    /// encodes to code 0 and the tier ranks nothing. That failure is total,
+    /// silent, and indistinguishable from a working index until someone
+    /// measures recall.
     pub fn train(training: &[&[f32]], dim: usize, params: PqParams) -> Result<Self> {
         if params.m == 0 || dim == 0 || !dim.is_multiple_of(params.m) {
             return Err(Error::InvalidPqShape { dim, m: params.m });
+        }
+        if training.len() < CENTROIDS {
+            return Err(Error::PqTrainingTooSmall {
+                needed: CENTROIDS,
+                found: training.len(),
+            });
         }
         let sub_dim = dim / params.m;
         let mut centroids = Vec::with_capacity(params.m * CENTROIDS * sub_dim);

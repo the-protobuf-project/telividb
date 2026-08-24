@@ -12,7 +12,7 @@
 //! Keeping the choice in the search path means all of those are the same code
 //! with different arguments.
 
-use crate::domain::{Candidate, OverFetch, RerankStats};
+use crate::domain::{Candidate, OverFetch, RerankStats, TopK};
 use episteme_core::{Ordinal, Result, ScanTier, VectorStore};
 
 /// What a two-tier search did, for query explain and for tuning.
@@ -73,7 +73,11 @@ pub fn search(
     let prepared = tier.prepare(query, metric)?;
     let want = over_fetch.candidates_for(k);
 
-    let mut coarse: Vec<Candidate> = Vec::new();
+    // Bounded rather than collect-then-sort. This loop runs once per row in
+    // the field, and the pass exists to be the cheap one: materialising every
+    // score and sorting the lot to keep `want` of them is an O(n) allocation
+    // and an O(n log n) sort per query.
+    let mut best = TopK::new(want, metric.higher_is_nearer());
     let mut scanned = 0usize;
 
     for row in 0..tier.len() {
@@ -87,11 +91,10 @@ pub fn search(
             continue;
         };
         scanned += 1;
-        coarse.push(Candidate::new(ordinal, score));
+        best.offer(Candidate::new(ordinal, score));
     }
 
-    sort_best_first(&mut coarse, metric.higher_is_nearer());
-    coarse.truncate(want);
+    let coarse = best.into_sorted();
 
     let (hits, rerank_stats) = crate::domain::rerank_measured(exact, query, &coarse, k);
     let stats = TwoTierStats {
@@ -115,14 +118,6 @@ pub fn rerank_candidates(
     k: usize,
 ) -> (Vec<Candidate>, RerankStats) {
     crate::domain::rerank_measured(exact, query, candidates, k)
-}
-
-fn sort_best_first(candidates: &mut [Candidate], higher_is_nearer: bool) {
-    if higher_is_nearer {
-        candidates.sort_unstable_by(|a, b| b.score.total_cmp(&a.score));
-    } else {
-        candidates.sort_unstable_by(|a, b| a.score.total_cmp(&b.score));
-    }
 }
 
 #[cfg(test)]

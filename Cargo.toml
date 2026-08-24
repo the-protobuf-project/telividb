@@ -23,6 +23,11 @@ episteme-index    = { path = "crates/episteme-index" }
 episteme-storage  = { path = "crates/episteme-storage" }
 episteme-telemetry = { path = "crates/episteme-telemetry" }
 episteme-proto    = { path = "crates/episteme-proto" }
+
+# The observability stack for the whole workspace. Pinned to a tag so a push
+# upstream cannot change this build; declared once here so every crate that
+# emits telemetry agrees on the version.
+telemetry = { git = "https://github.com/the-protobuf-project/telemetry", tag = "v1.1.0" }
 thiserror = "2"
 
 # Tests are compiled optimized.

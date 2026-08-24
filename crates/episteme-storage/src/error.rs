@@ -97,6 +97,24 @@ pub enum Error {
         m: usize,
     },
 
+    /// A PQ codebook was trained on too few vectors to be meaningful.
+    ///
+    /// With no training vectors at all, seeding returns zeros and the update
+    /// loop exits before it runs, so `train` used to succeed with a degenerate
+    /// codebook: every row then encodes to code 0, every distance is identical,
+    /// and the scan tier ranks nothing — silently, with no error anywhere and
+    /// full recall loss.
+    #[error(
+        "pq codebook needs at least {needed} training vectors per subspace, got {found}; \
+         a codebook trained on fewer cannot distinguish rows"
+    )]
+    PqTrainingTooSmall {
+        /// Vectors required — one per centroid.
+        needed: usize,
+        /// Vectors actually supplied.
+        found: usize,
+    },
+
     /// A vector or code run did not match the codebook it was used with.
     #[error("pq length mismatch: expected {expected}, got {actual}")]
     PqDimMismatch {

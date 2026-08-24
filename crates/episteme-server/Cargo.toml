@@ -9,7 +9,7 @@ episteme-core.workspace = true
 episteme-index.workspace = true
 episteme-proto.workspace = true
 episteme-storage.workspace = true
-episteme-telemetry = { workspace = true, features = ["subscriber"] }
+episteme-telemetry.workspace = true
 
 tonic = { version = "0.14", features = ["router"] }
 tonic-health = "0.14"
@@ -19,8 +19,11 @@ tonic-reflection = "0.14"
 # reworking streaming semantics later.
 tonic-web = "0.14"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
-tracing = "0.1"
 thiserror.workspace = true
+# Structured data on a log record is a JSON value, keyed by the `fields::`
+# constants — which a serde derive could not name.
+serde_json = "1"
+tokio-stream = { version = "0.1", features = ["net"] }
 
 [dev-dependencies]
 bytes = "1"

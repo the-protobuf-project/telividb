@@ -37,6 +37,7 @@ pub struct Scored {
 }
 
 impl Scored {
+    /// Pair an ordinal with its distance from the query.
     pub fn new(distance: f32, ordinal: Ordinal) -> Self {
         Self { distance, ordinal }
     }

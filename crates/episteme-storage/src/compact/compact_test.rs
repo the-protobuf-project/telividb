@@ -1,6 +1,7 @@
 use super::*;
 use crate::buffer::MutableBuffer;
 use episteme_core::{Dim, Metric};
+use episteme_telemetry::Meter;
 
 fn store(rows: &[&[f32]]) -> MutableBuffer {
     let mut b = MutableBuffer::new(Dim::new(2).unwrap(), Metric::Dot);
@@ -18,8 +19,7 @@ fn all_live(_: usize, _: Ordinal) -> bool {
 fn a_clean_segment_survives_intact() {
     let a = store(&[&[1.0, 0.0], &[0.0, 1.0]]);
     let inputs: Vec<&dyn VectorStore> = vec![&a];
-    let (out, result) =
-        compact_field(&inputs, &all_live, Fingerprint::unset(), Codec::None).unwrap();
+    let (out, result) = compact_field(&inputs, &all_live, &Meter::disabled()).unwrap();
 
     assert_eq!(out.len(), 2);
     assert_eq!(result.rows_written, 2);
@@ -32,8 +32,7 @@ fn tombstoned_rows_are_dropped() {
     let inputs: Vec<&dyn VectorStore> = vec![&a];
     let drop_middle = |_: usize, o: Ordinal| o.row() != 1;
 
-    let (out, result) =
-        compact_field(&inputs, &drop_middle, Fingerprint::unset(), Codec::None).unwrap();
+    let (out, result) = compact_field(&inputs, &drop_middle, &Meter::disabled()).unwrap();
 
     assert_eq!(out.len(), 2);
     assert_eq!(result.rows_read, 3);
@@ -48,7 +47,7 @@ fn ordinals_are_renumbered() {
     let inputs: Vec<&dyn VectorStore> = vec![&a];
     let drop_first = |_: usize, o: Ordinal| o.row() != 0;
 
-    let (out, _) = compact_field(&inputs, &drop_first, Fingerprint::unset(), Codec::None).unwrap();
+    let (out, _) = compact_field(&inputs, &drop_first, &Meter::disabled()).unwrap();
     assert_eq!(out.get(Ordinal::from_row(0)), Some([1.0, 0.0].as_slice()));
 }
 
@@ -58,8 +57,7 @@ fn several_segments_merge_in_order() {
     let b = store(&[&[0.0, 1.0]]);
     let inputs: Vec<&dyn VectorStore> = vec![&a, &b];
 
-    let (out, result) =
-        compact_field(&inputs, &all_live, Fingerprint::unset(), Codec::None).unwrap();
+    let (out, result) = compact_field(&inputs, &all_live, &Meter::disabled()).unwrap();
     assert_eq!(out.len(), 2);
     assert_eq!(result.rows_read, 2);
     assert_eq!(out.get(Ordinal::from_row(0)), Some([1.0, 0.0].as_slice()));
@@ -75,13 +73,7 @@ fn the_live_predicate_sees_which_input_a_row_came_from() {
     let inputs: Vec<&dyn VectorStore> = vec![&a, &b];
     let drop_first_input = |i: usize, _: Ordinal| i != 0;
 
-    let (out, _) = compact_field(
-        &inputs,
-        &drop_first_input,
-        Fingerprint::unset(),
-        Codec::None,
-    )
-    .unwrap();
+    let (out, _) = compact_field(&inputs, &drop_first_input, &Meter::disabled()).unwrap();
     assert_eq!(out.len(), 1);
     assert_eq!(out.get(Ordinal::from_row(0)), Some([0.0, 1.0].as_slice()));
 }
@@ -95,8 +87,7 @@ fn absent_rows_survive_as_absent() {
     a.push_absent();
     let inputs: Vec<&dyn VectorStore> = vec![&a];
 
-    let (out, result) =
-        compact_field(&inputs, &all_live, Fingerprint::unset(), Codec::None).unwrap();
+    let (out, result) = compact_field(&inputs, &all_live, &Meter::disabled()).unwrap();
     assert_eq!(out.len(), 2);
     assert_eq!(out.get(Ordinal::from_row(1)), None);
     assert_eq!(result.rows_reclaimed, 0, "absent is not deleted");
@@ -104,7 +95,7 @@ fn absent_rows_survive_as_absent() {
 
 #[test]
 fn no_inputs_is_not_an_error() {
-    let (out, result) = compact_field(&[], &all_live, Fingerprint::unset(), Codec::None).unwrap();
+    let (out, result) = compact_field(&[], &all_live, &Meter::disabled()).unwrap();
     assert!(out.is_empty());
     assert_eq!(result.rows_read, 0);
     assert_eq!(result.reclaimed_fraction(), 0.0);
@@ -116,7 +107,6 @@ fn reclaimed_fraction_reports_whether_the_run_was_worth_it() {
     let inputs: Vec<&dyn VectorStore> = vec![&a];
     let keep_half = |_: usize, o: Ordinal| o.row() < 2;
 
-    let (_, result) =
-        compact_field(&inputs, &keep_half, Fingerprint::unset(), Codec::None).unwrap();
+    let (_, result) = compact_field(&inputs, &keep_half, &Meter::disabled()).unwrap();
     assert_eq!(result.reclaimed_fraction(), 0.5);
 }

@@ -20,7 +20,7 @@ async fn start() -> SocketAddr {
         let outcome = serve(ServerConfig {
             // Telemetry installs globally and only once per process, so tests
             // sharing a binary must not each try to install it.
-            environment: "production".to_owned(),
+            environment: episteme_telemetry::Environment::Production,
             ..ServerConfig::at(addr)
         })
         .await;

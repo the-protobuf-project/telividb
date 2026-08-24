@@ -61,7 +61,7 @@ fn the_environment_is_validated() {
     let config = parse_args(&["--environment", "production"])
         .unwrap()
         .unwrap();
-    assert_eq!(config.environment, "production");
+    assert!(matches!(config.environment, Environment::Production));
 
     let err = parse_args(&["--environment", "prod"]).unwrap_err();
     assert!(err.contains("development"), "{err}");
@@ -72,7 +72,7 @@ fn jetson_is_a_recognised_environment() {
     // The telemetry stack targets it directly, and it is a real deployment
     // target for this database — CUDA on aarch64.
     let config = parse_args(&["--environment", "jetson"]).unwrap().unwrap();
-    assert_eq!(config.environment, "jetson");
+    assert!(matches!(config.environment, Environment::Jetson));
 }
 
 #[test]

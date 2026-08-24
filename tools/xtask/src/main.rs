@@ -3,6 +3,7 @@
 //! Usage: `cargo xtask check-len`
 
 mod check_docs;
+mod check_layers;
 mod check_len;
 mod gen_proto;
 mod lint_proto;
@@ -15,6 +16,7 @@ fn main() -> std::process::ExitCode {
     match task.as_deref() {
         Some("check-len") => check_len::run(),
         Some("check-docs") => check_docs::run(),
+        Some("check-layers") => check_layers::run(),
         Some("gen-proto") => gen_proto::run(false),
         Some("check-proto") => gen_proto::run(true),
         Some("lint-proto") => lint_proto::run(),
@@ -37,7 +39,8 @@ fn usage() {
     eprintln!(
         "tasks:\n  \
          check-len    fail on any .rs file over the line limit\n  \
-         check-docs    fail on any public item without a doc comment\n  \
+         check-docs    fail on an undocumented `pub` item or an empty doc comment\n  \
+         check-layers  fail on an outward crate or module dependency\n  \
          gen-proto     regenerate Rust from protobuf/ with buf\n  \
          check-proto   fail if the committed generated code has drifted\n  \
          lint-proto    run the AIP linter over the full import closure\n  \

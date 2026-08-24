@@ -186,25 +186,50 @@ Violating any of these is a bug, not a style preference.
 41. **Telemetry goes through `telemetry-rs`, always.** The ecosystem's stack —
     `the-protobuf-project/telemetry` — is the pipeline for logging, tracing, metrics and MCAP
     recording. Never hand-roll a `tracing-subscriber` stack, never add a second exporter, never
-    reach for `tracing-appender` or `metrics-exporter-prometheus` directly.
+    reach for `tracing-appender` or `metrics-exporter-prometheus` directly, and never put a
+    facade in front of it.
 
-    It is installed in exactly one place, `episteme-telemetry`'s `subscriber` feature, and wired
-    once in a composition root. Library crates keep emitting through the `tracing` and `metrics`
-    facades and never know which pipeline is behind them.
+    **There is no facade.** Every crate that emits depends on `telemetry` directly and logs
+    through `logger::info!` / `logger::debug!` / `logger::warn!` / `logger::error!`. The
+    `tracing` and `metrics` crates are not dependencies of this workspace and must not be
+    reintroduced: the stack installs a `tracing` subscriber only when an OTLP tracer exists, so a
+    `tracing::` call site is silent in the default configuration, and the stack installs no
+    `metrics` recorder at all, so a `metrics::` call site is silent in *every* configuration.
+    Both failures are invisible at the call site, which is how the instrumentation came to be
+    disconnected from the pipeline while looking correct.
+
+    This is safe in a library crate because emission is a no-op until a composition root builds
+    the pipeline: `logger::` checks a `OnceLock` and returns, and a `Meter` defaults to disabled.
+    `episteme-storage` and `episteme-index` stay synchronous, benchable and embeddable.
+
+    **Metrics need a handle.** `telemetry::Metrics` records through `&mut self` and the stack
+    exposes no global for it. Since every episteme call site that records sits behind `&self`,
+    the recorder is shared as an `episteme_telemetry::Meter` — construct one from the pipeline in
+    the composition root and pass it in (`with_meter`). A default `Meter` records nothing, which
+    is what every test and benchmark uses. Note the stack's metrics take **no attributes**: a
+    dimension like index kind travels on the log record, not as a metric label.
 
     Use it the way its own examples do: `Telemetry::new().with_service(name, version)
-    .environment(Environment::…).build()`, and log through `logger::info!` — not
-    `Telemetry::builder(...)`, not `with_log_level`, not raw `tracing::` macros in a composition
-    root. Verbosity is the environment, not a log level.
+    .environment(Environment::…).build()` — not `Telemetry::builder(...)`.
 
-    Library crates still emit through the `tracing` and `metrics` facades: they must not know
-    which pipeline is behind them.
+    **Verbosity is a log level, and it lives in `telemetry.toml`.** `[logging] level` (1=error,
+    2=info, 3=debug) sets it, `[logging.modules.<name>]` overrides per module, and
+    `.with_log_level()` overrides both from code. `--log-level` maps onto it and is left unset by
+    default *so that the file decides* — a flag that always won would make that section dead.
+    `Environment` is a resource attribute telling a collector which deployment a record came
+    from; it is not the verbosity control.
 
-    Three consequences worth knowing rather than rediscovering: building the pipeline needs a
+    `telemetry.toml` is therefore load-bearing, and its `[telemetry] enabled` is the master
+    switch for the OTLP pipeline. The file is discovered relative to the process working
+    directory, so a deployed binary sets `TELEMETRY_CONFIG_PATH` rather than assuming its CWD.
+
+    Four consequences worth knowing rather than rediscovering: building the pipeline needs a
     tokio runtime, so anything testable without one belongs in a free function; `logger::info!`
-    returns a builder that emits on drop, so a match arm needs a block; and the OTLP pipeline is
-    on unless `telemetry.toml` disables it, which is why that file exists at the repository root
-    with `[telemetry] enabled = false`.
+    returns a builder that emits on drop, so a match arm needs a block; `flush()` reports an
+    error when no collector is configured, because the meter has nothing to force-flush, so a
+    clean shutdown must not treat that as fatal; and the stack installs a *global* logger, so a
+    test binary gets exactly one `install` and must share its result rather than installing per
+    test.
 
 ---
 
@@ -320,7 +345,7 @@ cargo build -p episteme-embed-llama --features llama            # opt-in FFI pat
 buf format --diff --exit-code            # buf lint is never used — see rule 37
 
 cargo xtask check-len                   # fails on any .rs over 200 lines
-cargo xtask check-docs                  # fails on an undocumented or empty doc comment
+cargo xtask check-docs                  # fails on an undocumented `pub` item or an empty doc comment
 cargo xtask gen-proto                   # regenerate Rust from protobuf/ (needs buf)
 cargo xtask check-proto                 # fails if the committed generated code has drifted
 cargo xtask protodoc                    # regenerate protobuf/**/README.md

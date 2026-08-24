@@ -13,9 +13,8 @@
 
 use crate::buffer::MutableBuffer;
 use crate::error::Result;
-use crate::format::Codec;
-use episteme_core::{Fingerprint, Ordinal, VectorStore};
-use episteme_telemetry::{fields, metrics_names};
+use episteme_core::{Ordinal, VectorStore};
+use episteme_telemetry::{Meter, fields, logger, metrics_names};
 use std::time::Instant;
 
 /// What a compaction actually did.
@@ -25,7 +24,12 @@ pub struct CompactionResult {
     pub rows_read: u64,
     /// Rows written to the new segment.
     pub rows_written: u64,
-    /// Rows dropped because they were tombstoned or absent.
+    /// Rows dropped because they were tombstoned.
+    ///
+    /// Absent rows are *not* reclaimed: a row with no vector for this field
+    /// still occupies its ordinal, because the fixed stride is what makes the
+    /// read path a cast rather than a lookup. It is written and counted in
+    /// [`rows_written`](Self::rows_written) like any other.
     pub rows_reclaimed: u64,
 }
 
@@ -48,18 +52,21 @@ impl CompactionResult {
 /// Returns the merged rows as a buffer, ready to be sealed. Producing a buffer
 /// rather than writing directly means the caller controls when the new segment
 /// becomes visible — and the manifest swap stays the single publish point.
+/// `meter` records the compaction duration; pass [`Meter::disabled`] when there
+/// is no pipeline, which is what every test and embedded caller does.
+///
+/// Deliberately takes neither a schema fingerprint nor a codec. Both belong to
+/// sealing rather than merging: the fingerprint is fixed by
+/// [`SegmentWriter::create`](crate::SegmentWriter::create) and the codec by
+/// `write_field_with_codec`, which the caller invokes on the buffer this
+/// returns. Accepting them here and dropping them — which is what this
+/// signature used to do — read as though a compacted field kept its scan tier
+/// when nothing here could have written one.
 pub fn compact_field(
     inputs: &[&dyn VectorStore],
     is_live: &dyn Fn(usize, Ordinal) -> bool,
-    _schema: Fingerprint,
-    _codec: Codec,
+    meter: &Meter,
 ) -> Result<(MutableBuffer, CompactionResult)> {
-    let span = tracing::info_span!(
-        "episteme.compaction",
-        inputs = inputs.len(),
-        { fields::ROWS } = inputs.iter().map(|s| s.len()).sum::<usize>(),
-    );
-    let _guard = span.enter();
     let started = Instant::now();
 
     let Some(first) = inputs.first() else {
@@ -112,13 +119,18 @@ pub fn compact_field(
         rows_reclaimed: read - written,
     };
 
-    metrics::histogram!(metrics_names::COMPACTION_DURATION).record(started.elapsed().as_secs_f64());
-    metrics::gauge!(metrics_names::ROWS_TOMBSTONED).set(0.0);
-    tracing::info!(
-        rows_written = written,
-        rows_reclaimed = result.rows_reclaimed,
-        "compaction complete"
-    );
+    let elapsed = started.elapsed().as_secs_f64();
+    meter.histogram(metrics_names::COMPACTION_DURATION, elapsed);
+    // No `ROWS_TOMBSTONED` gauge here. Compacting one field of some segments
+    // does not make the database's tombstone count zero, and setting it to zero
+    // from here reported exactly that. The gauge belongs to whatever owns the
+    // manifest and can see every segment.
+    logger::info!("compaction complete").with_data(&serde_json::json!({
+        fields::ROWS: result.rows_read,
+        fields::ROWS_WRITTEN: written,
+        fields::ROWS_RECLAIMED: result.rows_reclaimed,
+        fields::DURATION_SECONDS: elapsed,
+    }));
     Ok((out, result))
 }
 

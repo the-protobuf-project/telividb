@@ -20,26 +20,39 @@ pub struct Graph {
 }
 
 impl Graph {
+    /// An empty graph with no nodes and no entry point.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Rows the graph covers, including absent ones.
+    ///
+    /// This is the store's row count, not the number of searchable nodes: an
+    /// absent row still occupies a slot so the ordinal space stays dense.
     pub fn len(&self) -> usize {
         self.levels.len()
     }
 
+    /// Whether the graph covers no rows at all.
     pub fn is_empty(&self) -> bool {
         self.levels.is_empty()
     }
 
+    /// The row every descent starts from.
+    ///
+    /// `None` for an empty graph and also when every row was added via
+    /// [`Graph::push_absent`] — so a non-empty graph may have no entry point.
+    /// When present, the entry is always a row with a vector for this field.
     pub fn entry(&self) -> Option<Ordinal> {
         self.entry.map(Ordinal::from_row)
     }
 
+    /// The top layer, which is the layer the entry point sits on.
     pub fn max_level(&self) -> usize {
         self.max_level
     }
 
+    /// The highest layer `node` appears on; zero for an unknown node.
     pub fn level_of(&self, node: u32) -> usize {
         self.levels.get(node as usize).copied().unwrap_or(0)
     }
@@ -57,11 +70,12 @@ impl Graph {
     ///
     /// Becomes the entry point when it reaches higher than anything so far —
     /// the descent must start from the top or the upper layers are unreachable.
+    ///
+    /// Only for rows that actually have a vector for this field. A row without
+    /// one must go through [`Graph::push_absent`]: it cannot be scored, so as
+    /// an entry point it strands every insert that follows.
     pub fn push_node(&mut self, level: usize) -> u32 {
-        let node = self.levels.len() as u32;
-        self.levels.push(level);
-        self.links.push(vec![Vec::new(); level + 1]);
-
+        let node = self.push_slot(level);
         if self.entry.is_none() || level > self.max_level {
             self.entry = Some(node);
             self.max_level = level;
@@ -69,6 +83,39 @@ impl Graph {
         node
     }
 
+    /// Add a placeholder for a row with no vector for this field.
+    ///
+    /// The row still occupies an ordinal so the fixed stride holds, but it is
+    /// not a node in the graph and — critically — **never becomes the entry
+    /// point**. An absent entry cannot be scored, so `distance_to` returns
+    /// `None` and every subsequent insert bails out before linking anything.
+    /// With an absent row at the head of a field that stranded present rows
+    /// until some later node happened to draw a higher level and take over.
+    pub fn push_absent(&mut self) -> u32 {
+        self.push_slot(0)
+    }
+
+    /// Reserve the storage one row occupies, without touching the entry point.
+    fn push_slot(&mut self, level: usize) -> u32 {
+        let node = self.levels.len() as u32;
+        self.levels.push(level);
+        self.links.push(vec![Vec::new(); level + 1]);
+        node
+    }
+
+    /// Set the entry point and top layer directly.
+    ///
+    /// For [`super::serialize::decode`], which restores what the header
+    /// recorded rather than inferring it by replaying inserts. Inference cannot
+    /// work on a decoded graph: an absent row and a present row that drew level
+    /// zero are indistinguishable once written, so replay would pick the wrong
+    /// entry for exactly the graphs [`Graph::push_absent`] exists to protect.
+    pub fn set_entry(&mut self, entry: Option<u32>, max_level: usize) {
+        self.entry = entry;
+        self.max_level = max_level;
+    }
+
+    /// Replace `node`'s neighbours at `layer`, ignoring an out-of-range node.
     pub fn set_neighbours(&mut self, node: u32, layer: usize, neighbours: Vec<u32>) {
         if let Some(layers) = self.links.get_mut(node as usize)
             && let Some(slot) = layers.get_mut(layer)

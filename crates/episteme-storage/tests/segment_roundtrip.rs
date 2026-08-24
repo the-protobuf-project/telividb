@@ -116,7 +116,7 @@ fn a_sealed_segment_is_searchable_through_the_same_port() {
         dir.path(),
     );
 
-    let hits = FlatIndex
+    let hits = FlatIndex::new()
         .search(&reader, &[1.0, 0.0, 0.0, 0.0], 2, None)
         .unwrap();
     assert_eq!(hits[0].ordinal.row(), 1);
@@ -170,7 +170,7 @@ fn an_empty_field_seals_and_reopens() {
     let reader = seal_and_reopen(&[], dir.path());
     assert_eq!(reader.len(), 0);
     assert!(reader.is_empty());
-    let hits = FlatIndex
+    let hits = FlatIndex::new()
         .search(&reader, &[1.0, 0.0, 0.0, 0.0], 5, None)
         .unwrap();
     assert!(hits.is_empty());

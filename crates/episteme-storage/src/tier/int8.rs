@@ -44,14 +44,19 @@ impl Int8Tier {
                 if !is_present(row) {
                     return Ok(None);
                 }
+                // `codes.get(..)` rather than `codes[..]`: this is a public
+                // function taking untrusted bytes, and the slice panicked
+                // before the `Truncated` error below could ever be built.
                 let start = row * row_bytes;
-                Int8Row::read_from(&codes[start..], dim).map(Some).ok_or(
-                    crate::error::Error::Truncated {
+                codes
+                    .get(start..)
+                    .and_then(|rest| Int8Row::read_from(rest, dim))
+                    .map(Some)
+                    .ok_or(crate::error::Error::Truncated {
                         what: "int8 codes",
                         needed: start + row_bytes,
                         found: codes.len(),
-                    },
-                )
+                    })
             })
             .collect::<crate::error::Result<Vec<_>>>()?;
         Ok(Self {
@@ -97,3 +102,7 @@ impl ScanTier for Int8Tier {
         Some(episteme_distance::score(prepared.metric, query, &decoded))
     }
 }
+
+#[cfg(test)]
+#[path = "int8_test.rs"]
+mod tests;

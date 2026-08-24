@@ -6,10 +6,16 @@ license.workspace = true
 
 [dependencies]
 episteme-core.workspace = true
-episteme-telemetry.workspace = true
-tracing = "0.1"
-metrics = "0.24"
 episteme-distance.workspace = true
+episteme-telemetry.workspace = true
+# The pipeline itself, not a facade in front of it — CLAUDE.md rule 41.
+# Emission is a no-op until a composition root installs it, so this crate stays
+# synchronous, benchable and embeddable.
+telemetry.workspace = true
+# Structured data on a log record is a JSON value, and its keys are the
+# `fields::` constants — which a serde derive could not name, since
+# `#[serde(rename)]` takes a literal and these are consts.
+serde_json = "1"
 rayon = { version = "1.10", optional = true }
 
 [features]
@@ -19,4 +25,9 @@ default = ["parallel"]
 parallel = ["dep:rayon"]
 
 [dev-dependencies]
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tempfile = "3"
+# MCAP message payloads are zstd-compressed, so a substring search over the
+# raw file only ever sees schema metadata. Reading the recording properly is
+# what stops the leak assertions passing vacuously.
+mcap = "0.24"

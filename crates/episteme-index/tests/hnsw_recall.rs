@@ -30,7 +30,7 @@ fn measure(
     let per_query: Vec<f64> = queries
         .iter()
         .map(|q| {
-            let truth = FlatIndex.search(store, q, k, None).unwrap();
+            let truth = FlatIndex::new().search(store, q, k, None).unwrap();
             let approx = hnsw.search(store, q, k, None).unwrap();
             recall_at_k(&approx, &truth, k)
         })
@@ -122,7 +122,9 @@ fn filtering_restricts_results_without_stranding_the_graph() {
     let per_query: Vec<f64> = queries
         .iter()
         .map(|q| {
-            let truth = FlatIndex.search(&store, q, 10, Some(&keep_even)).unwrap();
+            let truth = FlatIndex::new()
+                .search(&store, q, 10, Some(&keep_even))
+                .unwrap();
             let approx = hnsw.search(&store, q, 10, Some(&keep_even)).unwrap();
             assert!(
                 approx.iter().all(|c| c.ordinal.row().is_multiple_of(2)),

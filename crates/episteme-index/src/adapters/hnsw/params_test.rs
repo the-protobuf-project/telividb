@@ -48,10 +48,13 @@ fn level_factor_decays_with_m() {
 }
 
 #[test]
-fn batching_is_off_by_default() {
-    // Measured: batching caps at ~1.26x and costs real recall, because only the
-    // search half of an insert parallelises. See the field docs for the table.
-    assert_eq!(HnswParams::default().batch_size, 1);
+fn batching_is_on_by_default() {
+    // It was off because the measured recall curve fell away with batch size.
+    // That curve was a bug — the first batch searched an empty graph and was
+    // orphaned wholesale — and with it fixed, recall is flat across batch
+    // sizes while the build gets about 1.25x faster. See the field docs for the
+    // table and `hnsw_parallel` for the floor that keeps it honest.
+    assert_eq!(HnswParams::default().batch_size, 128);
 }
 
 #[test]

@@ -44,8 +44,13 @@ impl BinaryTier {
                 if !is_present(row) {
                     return Ok(None);
                 }
+                // `codes.get(..)` rather than `codes[..]`: this is a public
+                // function taking untrusted bytes, and the slice panicked
+                // before the `Truncated` error below could ever be built.
                 let start = row * row_bytes;
-                BinaryCodes::from_bytes(&codes[start..], dim)
+                codes
+                    .get(start..)
+                    .and_then(|rest| BinaryCodes::from_bytes(rest, dim))
                     .map(Some)
                     .ok_or(crate::error::Error::Truncated {
                         what: "binary codes",
@@ -106,3 +111,7 @@ impl ScanTier for BinaryTier {
         })
     }
 }
+
+#[cfg(test)]
+#[path = "binary_test.rs"]
+mod tests;
