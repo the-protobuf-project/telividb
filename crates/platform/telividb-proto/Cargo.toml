@@ -1,0 +1,18 @@
+[package]
+name = "telividb-proto"
+version.workspace = true
+edition.workspace = true
+# Apache-2.0, not AGPL: writing a proprietary client that merely talks to an
+# telividb server must not require a commercial licence. The line is drawn at
+# linking the engine, not at speaking to it.
+license = "Apache-2.0"
+
+# No build script. The Rust in `src/generated/` is produced by `buf` and
+# committed, so `cargo build` needs no protobuf toolchain — see buf.gen.yaml.
+
+[dependencies]
+tonic = { version = "0.14", features = ["router", "codegen"] }
+tonic-prost = "0.14"
+prost-types = "0.14"
+prost = "0.14"
+bytes = "1"

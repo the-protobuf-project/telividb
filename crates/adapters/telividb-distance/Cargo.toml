@@ -1,0 +1,8 @@
+[package]
+name = "telividb-distance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+telividb-core.workspace = true

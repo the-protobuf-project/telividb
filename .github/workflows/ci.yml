@@ -70,7 +70,7 @@ jobs:
 
       # Both feature sets, because `--all-features` is *not* a superset of the
       # default run: it changes which `#[cfg(feature = ...)]` code compiles.
-      # `episteme-index` without `parallel` takes the sequential builder, which
+      # `telividb-index` without `parallel` takes the sequential builder, which
       # is the configuration every embedded caller gets, and running only
       # `--all-features` left it compile-checked but never executed.
       - run: cargo test --workspace --target ${{ matrix.target }}
@@ -122,7 +122,7 @@ jobs:
           set -euo pipefail
 
           # `cc` reaches the tree through exactly one sanctioned path:
-          #   episteme-* -> telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
+          #   telividb-* -> telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
           #
           # MCAP recording is not optional in the telemetry stack, and that
           # stack is mandated by CLAUDE.md rule 41. The carve-out is recorded
@@ -134,7 +134,7 @@ jobs:
           # An earlier version compared against evidence of the *expected*
           # chain, which is permanently present — so its condition never fired
           # and any new native dependency passed green.
-          allowed='cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|episteme-[a-z]+|xtask'
+          allowed='cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask'
 
           status=0
           for pkg in cc cmake bindgen; do
@@ -173,20 +173,20 @@ jobs:
       - name: Prove the guard fails on a new native dependency
         run: |
           set -euo pipefail
-          cp crates/episteme-core/Cargo.toml /tmp/core-manifest.bak
+          cp crates/domain/telividb-core/Cargo.toml /tmp/core-manifest.bak
           # `ring` builds with `cc` and has nothing to do with MCAP.
-          printf '\nring = "0.17"\n' >> crates/episteme-core/Cargo.toml
+          printf '\nring = "0.17"\n' >> crates/domain/telividb-core/Cargo.toml
 
           if cargo tree --workspace --edges normal,build --invert cc --prefix none \
              2>/dev/null | awk 'NF { print $1 }' | sort -u \
-             | grep -Eqv '^(cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|episteme-[a-z]+|xtask)$'; then
+             | grep -Eqv '^(cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask)$'; then
             echo "guard correctly detects a new native path"
           else
             echo "::error::the no-C-toolchain guard did not detect an added cc dependency"
-            cp /tmp/core-manifest.bak crates/episteme-core/Cargo.toml
+            cp /tmp/core-manifest.bak crates/domain/telividb-core/Cargo.toml
             exit 1
           fi
-          cp /tmp/core-manifest.bak crates/episteme-core/Cargo.toml
+          cp /tmp/core-manifest.bak crates/domain/telividb-core/Cargo.toml
 
   toolchain:
     name: toolchain is pinned
@@ -225,11 +225,11 @@ jobs:
         with:
           shared-key: debug
           cache-on-failure: true
-      - run: cargo test -p episteme-storage --test crash_consistency
-      - run: cargo test -p episteme-storage --test buffer_visibility
-      - run: cargo test -p episteme-storage --test segment_roundtrip
-      - run: cargo test -p episteme-index  --test telemetry_leaks
-      - run: cargo test -p episteme-server --test wiring
+      - run: cargo test -p telividb-storage --test crash_consistency
+      - run: cargo test -p telividb-storage --test buffer_visibility
+      - run: cargo test -p telividb-storage --test segment_roundtrip
+      - run: cargo test -p telividb-index  --test telemetry_leaks
+      - run: cargo test -p telividb-server --test wiring
 
   # Recall is the only number that makes an ANN change meaningful. Release mode
   # because a debug-built graph is too slow to measure at a useful size.
@@ -244,14 +244,14 @@ jobs:
           # sharing a key with the debug jobs would store both and hit neither.
           shared-key: release
           cache-on-failure: true
-      - run: cargo test -p episteme-index --test hnsw_recall --release -- --nocapture
-      - run: cargo test -p episteme-index --test hnsw_distribution --release -- --nocapture
-      - run: cargo test -p episteme-index --test hnsw_persist --release
+      - run: cargo test -p telividb-index --test hnsw_recall --release -- --nocapture
+      - run: cargo test -p telividb-index --test hnsw_distribution --release -- --nocapture
+      - run: cargo test -p telividb-index --test hnsw_persist --release
       # The batched builder has its own recall floor per batch size. It was
       # absent from this gate while the first batch of every build was being
       # orphaned wholesale, so nothing here noticed recall at 0.57.
-      - run: cargo test -p episteme-index --test hnsw_parallel --release -- --nocapture
-      - run: cargo test -p episteme-storage --test codec_recall --release -- --nocapture
-      - run: cargo test -p episteme-storage --test two_tier_recall --release -- --nocapture
+      - run: cargo test -p telividb-index --test hnsw_parallel --release -- --nocapture
+      - run: cargo test -p telividb-storage --test codec_recall --release -- --nocapture
+      - run: cargo test -p telividb-storage --test two_tier_recall --release -- --nocapture
       - name: Recall gate at 128 dimensions
-        run: cargo run --release -p episteme-index --bin recall -- --rows 20000 --dim 128 --ef 64
+        run: cargo run --release -p telividb-index --bin recall -- --rows 20000 --dim 128 --ef 64

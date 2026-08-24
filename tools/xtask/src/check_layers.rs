@@ -15,7 +15,7 @@
 //!    concrete adapter, "bring your own index" stops being true.
 //!
 //! Dev-dependencies and `*_test.rs` siblings are deliberately not checked. An
-//! integration test in `episteme-storage` that exercises a real index, or a
+//! integration test in `telividb-storage` that exercises a real index, or a
 //! `domain` unit test that needs a concrete store to run against, is testing
 //! the seam rather than crossing it. Forbidding either would only push the test
 //! somewhere less useful, which buys nothing and costs coverage.
@@ -24,37 +24,61 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+#[path = "check_layers_modules.rs"]
+mod modules;
+use modules::check_modules;
+
 /// What each crate is allowed to depend on, inside the workspace.
 ///
 /// Listed rather than derived from a rank, because the interesting constraint
 /// is not "lower number" but *which* boundary a crate is allowed to see. A rank
-/// would silently permit `episteme-storage` to depend on `episteme-index`, and
+/// would silently permit `telividb-storage` to depend on `telividb-index`, and
 /// that is precisely the edge invariant 6 exists to forbid.
 const ALLOWED: &[(&str, &[&str])] = &[
-    ("episteme-core", &[]),
-    ("episteme-proto", &[]),
-    ("episteme-telemetry", &[]),
-    ("episteme-distance", &["episteme-core"]),
+    ("telividb-core", &[]),
+    ("telividb-proto", &[]),
+    ("telividb-telemetry", &[]),
+    ("telividb-distance", &["telividb-core"]),
     (
-        "episteme-storage",
-        &["episteme-core", "episteme-distance", "episteme-telemetry"],
+        "telividb-storage",
+        &["telividb-core", "telividb-distance", "telividb-telemetry"],
     ),
     (
-        "episteme-index",
-        &["episteme-core", "episteme-distance", "episteme-telemetry"],
+        "telividb-index",
+        &["telividb-core", "telividb-distance", "telividb-telemetry"],
     ),
     (
-        "episteme-server",
+        "telividb-server",
         &[
-            "episteme-core",
-            "episteme-distance",
-            "episteme-index",
-            "episteme-proto",
-            "episteme-storage",
-            "episteme-telemetry",
+            "telividb-core",
+            "telividb-distance",
+            "telividb-index",
+            "telividb-proto",
+            "telividb-storage",
+            "telividb-telemetry",
         ],
     ),
 ];
+
+/// Every crate directory two levels under `crates/` —
+/// `crates/<domain|adapters|platform|bin>/<crate>/`.
+fn find_crates(root: &Path) -> Vec<PathBuf> {
+    let mut found = Vec::new();
+    let Ok(groups) = std::fs::read_dir(root.join("crates")) else {
+        return found;
+    };
+    for group in groups.flatten() {
+        let Ok(entries) = std::fs::read_dir(group.path()) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            if entry.path().join("Cargo.toml").is_file() {
+                found.push(entry.path());
+            }
+        }
+    }
+    found
+}
 
 /// Check every crate and inner module, reporting each violation found.
 ///
@@ -65,26 +89,20 @@ pub fn run() -> ExitCode {
     let mut problems: Vec<String> = Vec::new();
     let allowed: BTreeMap<&str, &[&str]> = ALLOWED.iter().copied().collect();
 
-    let crates_dir = root.join("crates");
-    let Ok(entries) = std::fs::read_dir(&crates_dir) else {
-        eprintln!("check-layers: no crates/ directory at {}", root.display());
+    let crates = find_crates(&root);
+    if crates.is_empty() {
+        eprintln!("check-layers: no crates found under {}", root.display());
         return ExitCode::FAILURE;
-    };
+    }
 
-    let mut checked = 0usize;
-    for entry in entries.flatten() {
-        let dir = entry.path();
-        let manifest = dir.join("Cargo.toml");
-        if !manifest.is_file() {
-            continue;
-        }
+    for dir in &crates {
         let Some(name) = dir.file_name().and_then(|n| n.to_str()) else {
             continue;
         };
-        checked += 1;
-
         match allowed.get(name) {
-            Some(permitted) => check_manifest(&manifest, name, permitted, &mut problems),
+            Some(permitted) => {
+                check_manifest(&dir.join("Cargo.toml"), name, permitted, &mut problems)
+            }
             None => problems.push(format!(
                 "{name} is not listed in check-layers. Add it to ALLOWED with the \
                  crates it may depend on — a new crate without a declared \
@@ -95,7 +113,10 @@ pub fn run() -> ExitCode {
     }
 
     if problems.is_empty() {
-        println!("check-layers: {checked} crates, every dependency points inward");
+        println!(
+            "check-layers: {} crates, every dependency points inward",
+            crates.len()
+        );
         return ExitCode::SUCCESS;
     }
     eprintln!("check-layers: {} violation(s)\n", problems.len());
@@ -129,7 +150,7 @@ fn check_manifest(manifest: &Path, name: &str, permitted: &[&str], problems: &mu
         let Some(dep) = trimmed.split(['=', '.']).next().map(str::trim) else {
             continue;
         };
-        if !dep.starts_with("episteme-") || dep == name {
+        if !dep.starts_with("telividb-") || dep == name {
             continue;
         }
         if !permitted.contains(&dep) {
@@ -137,56 +158,6 @@ fn check_manifest(manifest: &Path, name: &str, permitted: &[&str], problems: &mu
                 "{name} depends on {dep}, which points outward. \
                  Permitted: {permitted:?}"
             ));
-        }
-    }
-}
-
-/// Flag `domain` or `ports` naming a concrete adapter.
-fn check_modules(src: &Path, name: &str, problems: &mut Vec<String>) {
-    for inner in ["domain", "ports"] {
-        let dir = src.join(inner);
-        if !dir.is_dir() {
-            continue;
-        }
-        visit_rs(&dir, &mut |path| {
-            // A sibling test may name an adapter: it needs something concrete
-            // to exercise the domain logic against. See the module docs.
-            if path
-                .file_name()
-                .and_then(|n| n.to_str())
-                .is_some_and(|n| n.ends_with("_test.rs"))
-            {
-                return;
-            }
-            let Ok(text) = std::fs::read_to_string(path) else {
-                return;
-            };
-            for (number, line) in text.lines().enumerate() {
-                let code = line.split("//").next().unwrap_or("");
-                if code.contains("adapters::") || code.contains("mod adapters") {
-                    problems.push(format!(
-                        "{name}: {}:{} — {inner} names an adapter. {inner} defines \
-                         the boundary; adapters plug into it from outside.",
-                        path.display(),
-                        number + 1
-                    ));
-                }
-            }
-        });
-    }
-}
-
-/// Call `f` for every `.rs` file under `dir`.
-fn visit_rs(dir: &Path, f: &mut impl FnMut(&PathBuf)) {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            visit_rs(&path, f);
-        } else if path.extension().is_some_and(|e| e == "rs") {
-            f(&path);
         }
     }
 }

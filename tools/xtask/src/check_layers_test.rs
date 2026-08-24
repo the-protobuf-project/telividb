@@ -6,18 +6,18 @@ fn every_crate_in_the_workspace_has_a_declared_position() {
     // silently permitting whatever it depends on is how the direction gets
     // lost, one crate at a time.
     let root = std::env::current_dir().expect("cwd");
-    let crates = root.join("crates");
-    let Ok(entries) = std::fs::read_dir(&crates) else {
+    let crates = find_crates(&root);
+    if crates.is_empty() {
         return; // Run from somewhere without the workspace; nothing to assert.
-    };
+    }
     let declared: Vec<&str> = ALLOWED.iter().map(|(name, _)| *name).collect();
-    for entry in entries.flatten() {
-        if !entry.path().join("Cargo.toml").is_file() {
-            continue;
-        }
-        let name = entry.file_name().to_string_lossy().into_owned();
+    for dir in &crates {
+        let name = dir
+            .file_name()
+            .expect("crate dir has a name")
+            .to_string_lossy();
         assert!(
-            declared.contains(&name.as_str()),
+            declared.contains(&name.as_ref()),
             "{name} has no entry in check-layers::ALLOWED"
         );
     }
@@ -29,7 +29,7 @@ fn core_depends_on_nothing_in_the_workspace() {
     // dependency, "dependencies point inward" has no fixed point left.
     let (_, permitted) = ALLOWED
         .iter()
-        .find(|(name, _)| *name == "episteme-core")
+        .find(|(name, _)| *name == "telividb-core")
         .expect("core is declared");
     assert!(
         permitted.is_empty(),
@@ -43,15 +43,15 @@ fn storage_cannot_see_the_index() {
     // search algorithm evolve independently. An edge either way collapses that.
     let (_, storage) = ALLOWED
         .iter()
-        .find(|(name, _)| *name == "episteme-storage")
+        .find(|(name, _)| *name == "telividb-storage")
         .expect("storage is declared");
-    assert!(!storage.contains(&"episteme-index"));
+    assert!(!storage.contains(&"telividb-index"));
 
     let (_, index) = ALLOWED
         .iter()
-        .find(|(name, _)| *name == "episteme-index")
+        .find(|(name, _)| *name == "telividb-index")
         .expect("index is declared");
-    assert!(!index.contains(&"episteme-storage"));
+    assert!(!index.contains(&"telividb-storage"));
 }
 
 #[test]
@@ -61,14 +61,14 @@ fn an_outward_dependency_is_reported() {
     let manifest = dir.join("Cargo.toml");
     std::fs::write(
         &manifest,
-        "[package]\nname = \"episteme-core\"\n\n[dependencies]\nepisteme-index.workspace = true\n",
+        "[package]\nname = \"telividb-core\"\n\n[dependencies]\ntelividb-index.workspace = true\n",
     )
     .expect("write manifest");
 
     let mut problems = Vec::new();
-    check_manifest(&manifest, "episteme-core", &[], &mut problems);
+    check_manifest(&manifest, "telividb-core", &[], &mut problems);
     assert_eq!(problems.len(), 1, "{problems:?}");
-    assert!(problems[0].contains("episteme-index"));
+    assert!(problems[0].contains("telividb-index"));
 }
 
 #[test]
@@ -79,15 +79,15 @@ fn a_dev_dependency_is_allowed_to_point_outward() {
     let manifest = dir.join("Cargo.toml");
     std::fs::write(
         &manifest,
-        "[package]\nname = \"episteme-storage\"\n\n[dev-dependencies]\nepisteme-index.workspace = true\n",
+        "[package]\nname = \"telividb-storage\"\n\n[dev-dependencies]\ntelividb-index.workspace = true\n",
     )
     .expect("write manifest");
 
     let mut problems = Vec::new();
     check_manifest(
         &manifest,
-        "episteme-storage",
-        &["episteme-core"],
+        "telividb-storage",
+        &["telividb-core"],
         &mut problems,
     );
     assert!(problems.is_empty(), "{problems:?}");

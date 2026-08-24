@@ -6,12 +6,12 @@
 
 /// A directory whose version sub-directories hold `.proto` files.
 ///
-/// `protobuf/episteme/collection/` is a module; `v1/` inside it is a version.
+/// `protobuf/telividb/collection/` is a module; `v1/` inside it is a version.
 #[derive(Debug, Default, Clone)]
 pub struct Module {
     /// Display name, derived from the directory, e.g. `Collection`.
     pub name: String,
-    /// Protobuf package, e.g. `episteme.collection.v1`.
+    /// Protobuf package, e.g. `telividb.collection.v1`.
     pub package: String,
     /// Path to the module directory, relative to the protobuf root.
     pub dir: String,

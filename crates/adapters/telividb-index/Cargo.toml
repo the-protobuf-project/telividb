@@ -1,0 +1,33 @@
+[package]
+name = "telividb-index"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+telividb-core.workspace = true
+telividb-distance.workspace = true
+telividb-telemetry.workspace = true
+# The pipeline itself, not a facade in front of it — CLAUDE.md rule 41.
+# Emission is a no-op until a composition root installs it, so this crate stays
+# synchronous, benchable and embeddable.
+telemetry.workspace = true
+# Structured data on a log record is a JSON value, and its keys are the
+# `fields::` constants — which a serde derive could not name, since
+# `#[serde(rename)]` takes a literal and these are consts.
+serde_json = "1"
+rayon = { version = "1.10", optional = true }
+
+[features]
+default = ["parallel"]
+# Parallel graph construction. See adapters::hnsw::build for the determinism
+# guarantee it preserves and the one it does not.
+parallel = ["dep:rayon"]
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tempfile = "3"
+# MCAP message payloads are zstd-compressed, so a substring search over the
+# raw file only ever sees schema metadata. Reading the recording properly is
+# what stops the leak assertions passing vacuously.
+mcap = "0.24"

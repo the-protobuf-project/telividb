@@ -1,4 +1,4 @@
-# episteme
+# telividb
 
 A multimodal **vector and graph database** written in Rust. Bring your own
 embedding model, bring your own search algorithm.
@@ -33,13 +33,13 @@ while it was spoken.
 
 | Crate | State |
 |---|---|
-| `episteme-core` | Domain types, AIP-122 resource names, spans, content refs, **collection schema + additive-compatibility rules**, `SchemaReader` / `VectorStore` ports |
-| `episteme-distance` | Scalar dot / L2 / normalize. **No SIMD yet** |
-| `episteme-index` | `VectorIndex` port, exhaustive + **HNSW** (persistable), **two-tier scan + rerank**, buffer/segment merge with provenance, recall harness |
-| `episteme-storage` | Segment + field headers with schema/model fingerprints, segment writer + reader, **int8, f16, binary and PQ quantization**, WAL with torn-tail recovery, atomic manifest, searchable mutable buffer |
-| `episteme-telemetry` | Span/metric vocabulary, redaction; pipeline via `telemetry-rs` (OTLP + MCAP) |
-| `episteme-server` | Not started |
-| `episteme-embed` | Not started |
+| `telividb-core` | Domain types, AIP-122 resource names, spans, content refs, **collection schema + additive-compatibility rules**, `SchemaReader` / `VectorStore` ports |
+| `telividb-distance` | Scalar dot / L2 / normalize. **No SIMD yet** |
+| `telividb-index` | `VectorIndex` port, exhaustive + **HNSW** (persistable), **two-tier scan + rerank**, buffer/segment merge with provenance, recall harness |
+| `telividb-storage` | Segment + field headers with schema/model fingerprints, segment writer + reader, **int8, f16, binary and PQ quantization**, WAL with torn-tail recovery, atomic manifest, searchable mutable buffer |
+| `telividb-telemetry` | Span/metric vocabulary, redaction; pipeline via `telemetry-rs` (OTLP + MCAP) |
+| `telividb-server` | Not started |
+| `telividb-embed` | Not started |
 
 Roughly Phase 1 of [eleven](./AGENT_START.md#17-roadmap). Phases 1 and 2 are the
 real project; everything after is comparatively mechanical.
@@ -64,7 +64,7 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo xtask check-len            # no file over 200 lines
 
 # Recall against exhaustive search — the only number that makes an ANN change mean anything
-cargo run --release -p episteme-index --bin recall -- --rows 20000 --dim 128 --ef 64
+cargo run --release -p telividb-index --bin recall -- --rows 20000 --dim 128 --ef 64
 ```
 
 Toolchain is **pinned to Rust 1.98.0** in `rust-toolchain.toml`; rustup installs
@@ -109,10 +109,10 @@ Dual-licensed.
   products, and for offering a network service without publishing your source.
 
 Client SDKs and `.proto` definitions are **Apache-2.0**, so a proprietary
-application that merely *talks to* an episteme server needs no commercial
+application that merely *talks to* an telividb server needs no commercial
 licence. The line is drawn at linking against or modifying the engine.
 
-Note that episteme is designed to be embedded, and **static linking counts** —
+Note that telividb is designed to be embedded, and **static linking counts** —
 a closed-source binary that links the engine needs a commercial licence.
 
 ## Contributing

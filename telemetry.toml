@@ -10,7 +10,7 @@
 # rather than assume its CWD.
 
 [service]
-name = "episteme"
+name = "telividb"
 description = "Multimodal vector and graph database"
 # No `version` key. It would duplicate the workspace version and drift silently
 # at the next bump; the server passes its own `CARGO_PKG_VERSION` instead, which
@@ -30,5 +30,5 @@ level = 2
 # Per-module overrides, which exist only here — there is no flag for them.
 # Raise one crate to debug without drowning in the rest.
 #
-# [logging.modules.episteme-storage]
+# [logging.modules.telividb-storage]
 # level = 3

@@ -1,0 +1,30 @@
+[package]
+name = "telividb-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+telividb-core.workspace = true
+telividb-index.workspace = true
+telividb-proto.workspace = true
+telividb-storage.workspace = true
+telividb-telemetry.workspace = true
+
+tonic = { version = "0.14", features = ["router"] }
+tonic-health = "0.14"
+tonic-reflection = "0.14"
+# Browsers cannot speak native gRPC: HTTP/2 trailers are unreachable from
+# `fetch`. The embedded UI therefore needs gRPC-web, and layering it now avoids
+# reworking streaming semantics later.
+tonic-web = "0.14"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
+thiserror.workspace = true
+# Structured data on a log record is a JSON value, keyed by the `fields::`
+# constants — which a serde derive could not name.
+serde_json = "1"
+tokio-stream = { version = "0.1", features = ["net"] }
+
+[dev-dependencies]
+bytes = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }

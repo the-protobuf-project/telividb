@@ -1,8 +1,0 @@
-[package]
-name = "episteme-distance"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-
-[dependencies]
-episteme-core.workspace = true

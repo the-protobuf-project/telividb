@@ -8,12 +8,12 @@
 xtask = "run --package xtask --"
 
 # Start the server. Flags pass straight through: `cargo serve --addr 0.0.0.0:7700`
-serve = "run --release --package episteme-server --bin episteme --"
+serve = "run --release --package telividb-server --bin telividb --"
 
 # The same, unoptimized and verbose. Verbosity is a log level in the telemetry
 # stack — CLAUDE.md rule 41 — so this passes one rather than the `--log` filter
 # string it used to, which `args::parse` rejects as an unknown flag.
-dev = "run --package episteme-server --bin episteme -- --environment development --log-level debug"
+dev = "run --package telividb-server --bin telividb -- --environment development --log-level debug"
 
 # Measure recall against exhaustive search.
-recall = "run --release --package episteme-index --bin recall --"
+recall = "run --release --package telividb-index --bin recall --"

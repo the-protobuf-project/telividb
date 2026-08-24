@@ -46,16 +46,16 @@ jobs:
           #
           # AIP-191 checks that a file's path matches its package, and the path
           # it sees is the one given on the command line. From the repository
-          # root that path is `protobuf/episteme/point/v1/...` against package
-          # `episteme.point.v1` — a mismatch on the `protobuf/` prefix alone.
+          # root that path is `protobuf/telividb/point/v1/...` against package
+          # `telividb.point.v1` — a mismatch on the `protobuf/` prefix alone.
           #
           # Normally an import path strips that prefix, but `buf: true`
           # replaces the import paths with the export directory, so nothing
           # strips it and every file fails. Running from here makes the path
-          # `episteme/point/v1/...`, which matches both the package and the
+          # `telividb/point/v1/...`, which matches both the package and the
           # export layout.
           working-directory: protobuf
-          paths: episteme/**/*.proto
+          paths: telividb/**/*.proto
           proto-paths: .
           # Resolve `google/api/*` through `buf export`. Without it every
           # annotation import fails, and each failure cascades into a "cannot

@@ -1,12 +1,18 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "tools/*"]
+members = [
+    "crates/domain/*",
+    "crates/adapters/*",
+    "crates/platform/*",
+    "crates/bin/*",
+    "tools/*",
+]
 
 # The engine is AGPL-3.0-or-later; commercial licences are available for
 # proprietary use — see LICENSE-COMMERCIAL.md.
 #
 # Client SDKs and generated proto code override this with Apache-2.0, so that
-# writing a proprietary application that *talks to* episteme needs no licence.
+# writing a proprietary application that *talks to* telividb needs no licence.
 # Those crates set `license = "Apache-2.0"` in their own manifest.
 [workspace.package]
 version = "0.1.0"
@@ -14,15 +20,15 @@ edition = "2024"
 # Pinned exactly; see rust-toolchain.toml.
 rust-version = "1.98.0"
 license = "AGPL-3.0-or-later"
-repository = "https://github.com/oh-tarnished/episteme"
+repository = "https://github.com/oh-tarnished/telividb"
 
 [workspace.dependencies]
-episteme-core     = { path = "crates/episteme-core" }
-episteme-distance = { path = "crates/episteme-distance" }
-episteme-index    = { path = "crates/episteme-index" }
-episteme-storage  = { path = "crates/episteme-storage" }
-episteme-telemetry = { path = "crates/episteme-telemetry" }
-episteme-proto    = { path = "crates/episteme-proto" }
+telividb-core       = { path = "crates/domain/telividb-core" }
+telividb-distance   = { path = "crates/adapters/telividb-distance" }
+telividb-index      = { path = "crates/adapters/telividb-index" }
+telividb-storage    = { path = "crates/adapters/telividb-storage" }
+telividb-telemetry  = { path = "crates/platform/telividb-telemetry" }
+telividb-proto      = { path = "crates/platform/telividb-proto" }
 
 # The observability stack for the whole workspace. Pinned to a tag so a push
 # upstream cannot change this build; declared once here so every crate that
