@@ -13,7 +13,7 @@
 
 use std::net::SocketAddr;
 use std::time::Duration;
-use telividb_client::Client;
+use telividb_client::{Client, NewCollection};
 use telividb_server::{ServerConfig, serve};
 
 /// Start a server on an ephemeral port and wait until it accepts connections.
@@ -59,16 +59,30 @@ pub async fn connected() -> (Client, tempfile::TempDir) {
     (client, dir)
 }
 
-/// A handle to a collection, without creating one.
+/// Create a collection declaring one text field of `dim` dimensions, and
+/// return a handle to it.
 ///
-/// **The catalogue is not implemented yet.** `CreateCollection` returns
-/// `Unimplemented`, blocked on the `telividb.v1` schema vocabulary — see the
-/// test at the bottom of this file, which pins that so it is a recorded state
-/// rather than a surprise. Points do not need it: the server creates a
-/// collection's directory on first write, so the whole vector path below is
-/// real.
-pub fn collection(client: &Client, id: &str) -> telividb_client::Collection {
+/// Points cannot be written to a collection that does not exist, so every test
+/// starts here — which is the flow a real caller follows too.
+pub async fn collection(
+    client: &mut Client,
+    id: &str,
+    dim: usize,
+) -> telividb_client::Collection {
+    client
+        .create_collection(NewCollection::new(id, descriptor_set()).text_field("text", dim))
+        .await
+        .expect("create collection");
     client.collection(id)
+}
+
+/// A real compiled descriptor set.
+///
+/// This workspace's own, which is not the schema a production collection would
+/// carry — but it is genuinely a `FileDescriptorSet`, which is what the server
+/// refuses to create a collection without.
+pub fn descriptor_set() -> Vec<u8> {
+    telividb_proto::FILE_DESCRIPTOR_SET.to_vec()
 }
 
 /// The GGUF the text tests need, if it has been downloaded.
@@ -76,8 +90,8 @@ pub fn collection(client: &Client, id: &str) -> telividb_client::Collection {
 /// Looked up rather than required: the file is 80 MiB and not committed, so a
 /// fresh clone has none and those tests skip instead of failing.
 pub fn model_path() -> Option<std::path::PathBuf> {
-    let dir =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../examples/models/gguf/text");
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../examples/models/gguf/text");
     std::fs::read_dir(dir)
         .ok()?
         .flatten()

@@ -12,7 +12,8 @@
 
 mod common;
 
-use common::model_server;
+use common::{descriptor_set, model_server};
+use telividb_client::NewCollection;
 
 /// The corpus, spanning topics far enough apart that a wrong ranking is
 /// unmistakable rather than a judgement call.
@@ -32,13 +33,25 @@ const DOCUMENTS: &[(&str, &str)] = &[
     ),
 ];
 
+/// The width nomic-embed-text-v1.5 produces.
+const MODEL_DIM: usize = 768;
+
+/// Create a collection declaring a field at the model's width.
+async fn declare(client: &mut telividb_client::Client, id: &str) -> telividb_client::Collection {
+    client
+        .create_collection(NewCollection::new(id, descriptor_set()).text_field("text", MODEL_DIM))
+        .await
+        .expect("create collection");
+    client.collection(id)
+}
+
 #[tokio::test]
 async fn text_is_embedded_by_the_server_and_found_by_meaning() {
-    let Some((client, _dir)) = model_server().await else {
+    let Some((mut client, _dir)) = model_server().await else {
         eprintln!("SKIPPED: no GGUF model; run examples/models/download.sh");
         return;
     };
-    let mut docs = client.collection("semantic");
+    let mut docs = declare(&mut client, "semantic").await;
 
     let entries: Vec<(String, String)> = DOCUMENTS
         .iter()
@@ -67,11 +80,11 @@ async fn text_is_embedded_by_the_server_and_found_by_meaning() {
 
 #[tokio::test]
 async fn a_hit_carries_the_text_it_was_stored_with() {
-    let Some((client, _dir)) = model_server().await else {
+    let Some((mut client, _dir)) = model_server().await else {
         eprintln!("SKIPPED: no GGUF model; run examples/models/download.sh");
         return;
     };
-    let mut docs = client.collection("withtext");
+    let mut docs = declare(&mut client, "withtext").await;
 
     docs.add_text("cat", "text", DOCUMENTS[0].1)
         .await
@@ -88,8 +101,8 @@ async fn a_hit_carries_the_text_it_was_stored_with() {
 async fn a_server_without_a_model_refuses_text_instead_of_storing_nothing() {
     // The failure that would otherwise be silent: accepting the text, storing
     // no vector, and reporting success. The message has to name the flag.
-    let (client, _dir) = common::connected().await;
-    let mut docs = client.collection("nomodel");
+    let (mut client, _dir) = common::connected().await;
+    let mut docs = declare(&mut client, "nomodel").await;
 
     match docs.add_text("doc-1", "text", "anything").await {
         Err(telividb_client::Error::Server { message, .. }) => {

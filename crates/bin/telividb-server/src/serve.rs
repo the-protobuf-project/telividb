@@ -30,7 +30,11 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
     })
     .map_err(|e| Error::Telemetry(e.to_string()))?;
 
-    let points = build_points(&config)?;
+    // One catalogue, shared: the collection service owns it and the point
+    // service consults it, so the two cannot disagree about what exists.
+    let collections = CollectionSvc::open(config.data_dir.clone())
+        .map_err(|e| Error::Model(format!("catalogue: {e}")))?;
+    let points = build_points(&config)?.with_catalogue(collections.catalogue());
 
     // Health reports SERVING once the router is up. A load balancer needs this
     // to distinguish "starting" from "broken", and it costs one service.
@@ -44,7 +48,7 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
 
     let mut router = tonic::service::Routes::default()
         .add_service(health_service)
-        .add_service(CollectionsServer::new(CollectionSvc::default()))
+        .add_service(CollectionsServer::new(collections))
         .add_service(PointsServer::new(points));
 
     if config.reflection {

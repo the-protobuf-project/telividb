@@ -51,11 +51,13 @@ mod collection_text;
 mod convert;
 mod error;
 mod names;
+mod new_collection;
 mod record;
 mod search;
 
 pub use client::Client;
 pub use collection::Collection;
 pub use error::{Error, Result};
+pub use new_collection::{Metric, NewCollection};
 pub use record::Record;
 pub use search::{Hit, SearchResults};

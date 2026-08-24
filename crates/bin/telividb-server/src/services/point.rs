@@ -46,6 +46,12 @@ pub struct PointsSvc {
     /// message naming the flag that would enable it, rather than accepted and
     /// silently storing nothing.
     pub(super) embeddings: super::embed::Embeddings,
+    /// The collection catalogue, shared with the collection service.
+    ///
+    /// `None` only in tests that exercise the point path directly. In a served
+    /// process it is always present, and a write to an undeclared collection
+    /// is refused rather than creating one as a side effect.
+    pub(super) catalogue: Option<Arc<telividb_storage::RedbCollectionStore>>,
 }
 
 impl PointsSvc {
@@ -58,7 +64,17 @@ impl PointsSvc {
             stores: Mutex::new(HashMap::new()),
             data_dir,
             embeddings: super::embed::Embeddings::default(),
+            catalogue: None,
         }
+    }
+
+    /// Consult `catalogue` before accepting a write.
+    pub fn with_catalogue(
+        mut self,
+        catalogue: Arc<telividb_storage::RedbCollectionStore>,
+    ) -> Self {
+        self.catalogue = Some(catalogue);
+        self
     }
 
     /// Serve text-to-vector requests with `embeddings`.

@@ -10,21 +10,79 @@ use common::{collection, connected, start};
 use telividb_client::Client;
 
 #[tokio::test]
-async fn the_collection_catalogue_reports_that_it_is_not_implemented_yet() {
-    // Pinned deliberately. `CreateCollection` is blocked on the `telividb.v1`
-    // schema vocabulary, and a client that quietly swallowed the refusal would
-    // make it look like collections were being created. When the catalogue
-    // lands this test fails, which is the reminder to write the real one.
+async fn a_collection_must_exist_before_a_point_can_be_written_to_it() {
+    // The structural rule. Without it the first write creates the field
+    // implicitly, and its width and model become whatever that writer happened
+    // to send — which a later writer either collides with or, worse, is
+    // silently merged into.
+    let (client, _dir) = connected().await;
+    let mut absent = client.collection("never-created");
+
+    match absent.insert("doc-1", "text", &[1.0, 0.0]).await {
+        Err(telividb_client::Error::NotFound { name }) => {
+            assert!(name.contains("create it first"), "got {name}");
+        }
+        other => panic!("expected a NotFound telling the caller to create it, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn a_vector_of_the_wrong_width_is_refused_against_the_declaration() {
+    // A field's width is fixed at declaration because stored vectors are read
+    // at that stride. Accepting a different one would reinterpret bytes.
     let (mut client, _dir) = connected().await;
+    let mut docs = collection(&mut client, "widths", 3).await;
+
+    match docs.insert("doc-1", "text", &[1.0, 0.0]).await {
+        Err(telividb_client::Error::InvalidArgument { message }) => {
+            assert!(message.contains("3 dimensions"), "got {message}");
+        }
+        other => panic!("expected a width refusal, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn a_field_the_collection_never_declared_is_refused() {
+    let (mut client, _dir) = connected().await;
+    let mut docs = collection(&mut client, "undeclared", 2).await;
+
+    match docs.insert("doc-1", "not-declared", &[1.0, 0.0]).await {
+        Err(telividb_client::Error::InvalidArgument { message }) => {
+            assert!(message.contains("declares no vector field"), "got {message}");
+        }
+        other => panic!("expected an undeclared-field refusal, got {other:?}"),
+    }
+}
+
+#[tokio::test]
+async fn collections_round_trip_through_the_catalogue() {
+    let (mut client, _dir) = connected().await;
+    collection(&mut client, "first", 4).await;
+    collection(&mut client, "second", 8).await;
+
+    let mut listed = client.list_collections().await.expect("list");
+    listed.sort();
+    assert_eq!(listed, vec!["first".to_owned(), "second".to_owned()]);
+
+    client.delete_collection("first").await.expect("delete");
+    let remaining = client.list_collections().await.expect("list again");
+    assert_eq!(remaining, vec!["second".to_owned()]);
+}
+
+#[tokio::test]
+async fn creating_the_same_collection_twice_is_refused() {
+    let (mut client, _dir) = connected().await;
+    collection(&mut client, "twice", 2).await;
 
     match client
-        .create_collection("anything", telividb_proto::FILE_DESCRIPTOR_SET.to_vec())
+        .create_collection(
+            telividb_client::NewCollection::new("twice", common::descriptor_set())
+                .text_field("text", 2),
+        )
         .await
     {
-        Err(telividb_client::Error::Server { code, .. }) => {
-            assert_eq!(code, tonic::Code::Unimplemented);
-        }
-        other => panic!("expected Unimplemented from the catalogue, got {other:?}"),
+        Err(telividb_client::Error::AlreadyExists { .. }) => {}
+        other => panic!("expected AlreadyExists, got {other:?}"),
     }
 }
 
@@ -66,8 +124,8 @@ async fn the_batch_rpc_is_still_unimplemented() {
 
 #[tokio::test]
 async fn a_written_point_reads_back_with_its_identity_and_text() {
-    let (client, _dir) = connected().await;
-    let mut docs = collection(&client, "readback");
+    let (mut client, _dir) = connected().await;
+    let mut docs = collection(&mut client, "readback", 2).await;
 
     docs.insert_with_text("doc-1", "text", &[1.5, -2.5], "the cat sat")
         .await
@@ -87,8 +145,8 @@ async fn get_does_not_hand_back_raw_vectors() {
     //
     // If this starts failing, the server has grown a `read_mask` path for
     // vectors; `Record::vectors` is already shaped to carry them.
-    let (client, _dir) = connected().await;
-    let mut docs = collection(&client, "novectors");
+    let (mut client, _dir) = connected().await;
+    let mut docs = collection(&mut client, "novectors", 2).await;
 
     docs.insert("doc-1", "text", &[1.5, -2.5])
         .await
@@ -104,16 +162,16 @@ async fn get_does_not_hand_back_raw_vectors() {
 
 #[tokio::test]
 async fn getting_a_point_that_was_never_written_is_none_not_an_error() {
-    let (client, _dir) = connected().await;
-    let mut docs = collection(&client, "absent");
+    let (mut client, _dir) = connected().await;
+    let mut docs = collection(&mut client, "absent", 2).await;
 
     assert_eq!(docs.get("never-written").await.expect("get"), None);
 }
 
 #[tokio::test]
 async fn listing_returns_every_written_point() {
-    let (client, _dir) = connected().await;
-    let mut docs = collection(&client, "listing");
+    let (mut client, _dir) = connected().await;
+    let mut docs = collection(&mut client, "listing", 1).await;
 
     for i in 0..3 {
         docs.insert(&format!("doc-{i}"), "text", &[i as f32])

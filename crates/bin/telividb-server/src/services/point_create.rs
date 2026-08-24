@@ -43,6 +43,11 @@ pub(super) async fn create_point(
     svc.embeddings.resolve_point(&mut wire).await?;
     let point = to_domain(name, wire)?;
 
+    // Checked before any write: a rejected point must leave no partial state.
+    if let Some(declared) = svc.declared(&parent)? {
+        PointsSvc::check_fields(&declared, &point.vectors)?;
+    }
+
     // Storage is synchronous: redb commits, WAL fsyncs and mmap'd segment
     // reads all block. Running them on a tonic executor thread would stall
     // every other request sharing it, which invariant 5 forbids — so the whole

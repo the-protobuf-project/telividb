@@ -2,6 +2,7 @@
 
 use crate::collection::Collection;
 use crate::error::Result;
+use crate::new_collection::NewCollection;
 use crate::names;
 use telividb_proto::collection::v1 as wire;
 use telividb_proto::collection::v1::collections_client::CollectionsClient;
@@ -73,29 +74,31 @@ impl Client {
         Collection::new(self.points.clone(), id.into())
     }
 
-    /// Create a collection from a compiled descriptor set.
+    /// Create a collection, declaring the vector fields its points will
+    /// carry.
     ///
-    /// The descriptor set is required rather than optional or derived. The
-    /// engine never parses `.proto` — it is handed the compiled bytes, whose
-    /// digest becomes the schema's identity — so a collection created without
-    /// one could not validate anything written to it afterwards.
+    /// ```no_run
+    /// # async fn example(db: &mut telividb_client::Client) -> telividb_client::Result<()> {
+    /// use telividb_client::NewCollection;
     ///
-    /// Produce the bytes with `protoc --descriptor_set_out` or `buf build -o`.
-    pub async fn create_collection(
-        &mut self,
-        id: impl Into<String>,
-        descriptor_set: Vec<u8>,
-    ) -> Result<String> {
-        let id = id.into();
+    /// db.create_collection(
+    ///     NewCollection::new("documents", descriptor_set())
+    ///         .text_field("text", 768),
+    /// )
+    /// .await?;
+    /// # Ok(()) }
+    /// # fn descriptor_set() -> Vec<u8> { Vec::new() }
+    /// ```
+    ///
+    /// Points cannot be written to a collection that does not exist — the
+    /// server refuses rather than creating one implicitly, which is what makes
+    /// the declaration above worth anything.
+    pub async fn create_collection(&mut self, spec: NewCollection) -> Result<String> {
         let created = self
             .collections
             .create_collection(wire::CreateCollectionRequest {
-                collection_id: id.clone(),
-                collection: Some(wire::Collection {
-                    name: names::collection(&id),
-                    descriptor_set: descriptor_set.into(),
-                    ..Default::default()
-                }),
+                collection_id: spec.id.clone(),
+                collection: Some(spec.to_wire()),
             })
             .await?
             .into_inner();
