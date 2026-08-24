@@ -12,6 +12,7 @@ mod helpers;
 
 use super::graph::Graph;
 use super::params::HnswParams;
+use super::scored::Scored;
 use super::visited::VisitedSet;
 use episteme_core::{Metric, Ordinal, VectorStore};
 use helpers::{apply, find_candidates};
@@ -83,5 +84,3 @@ pub(super) fn build_batched(
     }
     graph
 }
-
-use super::scored::Scored;
