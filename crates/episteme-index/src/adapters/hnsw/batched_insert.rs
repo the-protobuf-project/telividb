@@ -19,7 +19,7 @@ use super::scored::Scored;
 use super::search::{distance_to, greedy_descend, search_layer};
 use super::select::select_neighbours;
 use super::visited::VisitedSet;
-use episteme_core::{Metric, Ordinal, VectorStore};
+use episteme_core::{Metric, VectorStore};
 
 /// Candidate neighbours for one node, tagged with the layer each list belongs to.
 ///
