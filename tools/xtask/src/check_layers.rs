@@ -48,11 +48,17 @@ const ALLOWED: &[(&str, &[&str])] = &[
         "telividb-index",
         &["telividb-core", "telividb-distance", "telividb-telemetry"],
     ),
+    // Note what is absent: `telividb-index`. The inference server and the GPU
+    // index both sit on candle, but neither may reach into the other — a
+    // shared device helper would put one adapter behind the other's optional
+    // feature, which is the outward dependency rule 14 forbids.
+    ("telividb-embed", &["telividb-core", "telividb-telemetry"]),
     (
         "telividb-server",
         &[
             "telividb-core",
             "telividb-distance",
+            "telividb-embed",
             "telividb-index",
             "telividb-proto",
             "telividb-storage",

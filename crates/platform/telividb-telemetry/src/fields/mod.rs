@@ -3,6 +3,14 @@
 //! One name per concept, used everywhere. Add here rather than inventing a key
 //! at a call site — a field spelled two ways is two fields, and nothing joins
 //! them back together.
+//!
+//! The inference server's own vocabulary lives in [`model`] and is re-exported
+//! here, so every call site still writes `fields::MODEL` — the split is about
+//! file length, not about there being two vocabularies.
+
+mod model;
+
+pub use model::{MODEL, MODEL_FINGERPRINT, POOLING, TASK};
 
 /// Collection the operation targets. **Label-safe** — bounded by how many
 /// collections exist.
@@ -14,13 +22,19 @@ pub const FIELD: &str = "telividb.field";
 /// Index algorithm: `flat`, `hnsw`, `ivfpq`, `gpu-flat`. **Label-safe.**
 pub const INDEX_KIND: &str = "telividb.index.kind";
 
-/// Where a GPU-resident index actually landed: `metal`, `cuda`, `cpu`.
+/// Where GPU-resident work actually landed: `metal`, `cuda`, `cpu`.
 /// **Label-safe** — a closed set of three.
 ///
-/// Worth emitting on every build and search: an index that silently fell back
-/// to CPU is otherwise indistinguishable from a working GPU one, and would
-/// pass every correctness test while delivering none of the speed.
-pub const DEVICE: &str = "telividb.index.device";
+/// Covers indexes and resident models alike, which is why the key is not
+/// `index`-prefixed: both select a device the same way and fall back the same
+/// way, and one key means "what fell back to CPU?" is a single query rather
+/// than a union of two.
+///
+/// Worth emitting on every build, search and model load: something that
+/// silently fell back to CPU is otherwise indistinguishable from a working
+/// GPU path, and would pass every correctness test while delivering none of
+/// the speed.
+pub const DEVICE: &str = "telividb.device";
 
 /// Distance metric: `dot`, `l2`, `cosine`. **Label-safe.**
 pub const METRIC: &str = "telividb.metric";
@@ -114,6 +128,7 @@ pub const REJECTED: &str = "telividb.rejected";
 pub const RECORDS: &str = "telividb.records";
 /// Vector width. Safe to emit — shape discloses nothing.
 pub const DIM: &str = "telividb.dim";
+
 /// Wall-clock duration of whatever the record covers, in seconds.
 ///
 /// Carried on the log record as well as in a histogram: the histogram is
@@ -156,6 +171,9 @@ pub const LABEL_SAFE: &[&str] = &[
     STORE,
     RESIDENT_KIND,
     LOCATION,
+    MODEL,
+    POOLING,
+    TASK,
     EDGE_TYPE,
     INCOMPLETE_REASON,
 ];

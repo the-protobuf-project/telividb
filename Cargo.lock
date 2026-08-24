@@ -2966,6 +2966,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "telividb-embed"
+version = "0.1.0"
+dependencies = [
+ "candle-core",
+ "serde_json",
+ "telemetry",
+ "telividb-core",
+ "telividb-telemetry",
+ "tempfile",
+ "thiserror 2.0.20",
+ "tokenizers",
+]
+
+[[package]]
 name = "telividb-graph"
 version = "0.1.0"
 dependencies = [
