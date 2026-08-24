@@ -25,6 +25,7 @@ OPTIONS:
                            [default: from telemetry.toml]
     --telemetry-config <PATH>
                            Path to telemetry.toml   [default: discovered by CWD]
+    --data-dir <PATH>      Where collection data lives [default: ./data]
     -h, --help             Print this message
 ";
 
@@ -65,6 +66,7 @@ pub fn parse(args: impl Iterator<Item = String>) -> Result<Option<ServerConfig>,
             }
             "--mcap" => config.mcap_path = Some(value.into()),
             "--telemetry-config" => config.telemetry_config = Some(value.into()),
+            "--data-dir" => config.data_dir = value.into(),
             "--environment" => config.environment = environment_of(&value)?,
             "--log-level" => config.log_level = Some(log_level_of(&value)?),
             other => return Err(format!("unknown flag {other}")),

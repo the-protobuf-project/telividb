@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use telividb_telemetry::{Environment, LogLevel};
 
 /// Listen addresses and feature toggles.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ServerConfig {
     /// Address to serve gRPC on.
     pub addr: SocketAddr,
@@ -56,6 +56,21 @@ pub struct ServerConfig {
     /// where the OTLP pipeline is *enabled*, and reports a refused connection
     /// on every batch. A daemon should set this.
     pub telemetry_config: Option<PathBuf>,
+
+    /// An external stop signal, in addition to ctrl-c.
+    ///
+    /// A server that can only be stopped by a process signal cannot be run
+    /// twice in one process, which makes restart behaviour untestable and
+    /// makes embedding awkward — an embedded caller has no signal to send.
+    /// Resolving this future begins a graceful shutdown just as ctrl-c does.
+    pub shutdown: Option<tokio::sync::oneshot::Receiver<()>>,
+
+    /// Where collection data lives, one subdirectory per collection.
+    ///
+    /// Relative by default, matching `telemetry_config`'s CWD-relative
+    /// discovery — right for `cargo run` from the repository root, wrong for
+    /// a deployed binary, which should set this explicitly.
+    pub data_dir: PathBuf,
 }
 
 impl Default for ServerConfig {
@@ -73,6 +88,8 @@ impl Default for ServerConfig {
             otlp_addr: None,
             mcap_path: None,
             telemetry_config: None,
+            shutdown: None,
+            data_dir: PathBuf::from("./data"),
         }
     }
 }

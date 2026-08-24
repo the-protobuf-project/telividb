@@ -19,6 +19,18 @@ pub enum Error {
         telividb_core::Error,
     ),
 
+    /// A `redb`-backed metadata store failed.
+    ///
+    /// `redb::Error` is itself a superset of every operation-specific error
+    /// the crate defines (database, transaction, table, storage), so this one
+    /// variant covers all of them.
+    #[error("redb: {0}")]
+    Redb(
+        /// The underlying redb failure.
+        #[from]
+        redb::Error,
+    ),
+
     /// The magic bytes did not match. This is not our file.
     #[error("bad magic: expected {expected:?}, found {found:?}")]
     BadMagic {
@@ -122,6 +134,21 @@ pub enum Error {
         expected: usize,
         /// Length actually supplied.
         actual: usize,
+    },
+
+    /// A field was opened under different terms than it was created with.
+    ///
+    /// Refused rather than reconciled: the wrong dimension reinterprets the
+    /// field's bytes, and the wrong metric ranks correctly-read vectors
+    /// wrongly. Both fail silently, so both are caught here.
+    #[error("field {what} mismatch: stored {stored}, requested {requested}")]
+    FieldMismatch {
+        /// Which property disagreed.
+        what: &'static str,
+        /// What the field was created with.
+        stored: String,
+        /// What the caller asked for.
+        requested: String,
     },
 
     /// A byte did not correspond to any known enum variant.

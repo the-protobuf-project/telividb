@@ -55,10 +55,22 @@ Violating any of these is a bug, not a style preference.
    optional FAISS index backend (rule 46) — both behind non-default features. No CMake, no CUDA
    SDK beyond what `candle-cuda` itself requires.
 
-   **One carve-out, recorded rather than hidden:** the mandated telemetry stack depends on MCAP,
-   which depends on lz4, which builds with `cc`. MCAP is not optional there, so a C compiler is
-   needed to build the workspace. The `no C toolchain` job allows that exact path and still
-   fails on any other native dependency — the promise narrowed, it did not disappear.
+   **Two carve-outs, recorded rather than hidden.**
+
+   *One:* the mandated telemetry stack depends on MCAP, which depends on lz4, which builds with
+   `cc`. MCAP is not optional there, so a C compiler is needed to build the workspace.
+
+   *Two:* `candle-core` (rule 42, and rule 46's GPU index) has a **non-optional** dependency on
+   `tokenizers`, which pulls Oniguruma (`onig_sys`) and so `cc`. This is unrelated to anything
+   this project uses candle for — we want tensors and GGUF, not tokenization — and it cannot be
+   switched off, because Cargo unifies features as a union: a `default-features = false` on our
+   side cannot undo what candle asks for. candle 0.9 predates the dependency and is clean, but
+   pinning three minor versions back to dodge a transitive regex library is the worse trade;
+   **take the latest candle and record the cost here.**
+
+   The `no C toolchain` job allows exactly those two paths and still fails on any other native
+   dependency — the promise narrowed twice, it did not disappear. Adding a third is a decision
+   to record here, never a quiet addition to the CI allowlist.
 2. **Sealed segments are immutable.** Once a segment is sealed, its `vectors.bin`, `ids.bin` and
    `index.*` files are never written again. Mutation happens by writing a new segment plus a
    tombstone bitmap. This is what makes lock-free concurrent reads and `mmap` safe — do not
@@ -256,14 +268,23 @@ Violating any of these is a bug, not a style preference.
     clean shutdown must not treat that as fatal; and the stack installs a *global* logger, so a
     test binary gets exactly one `install` and must share its result rather than installing per
     test.
-42. **Inference is GGUF-via-candle only — no second runtime, ever.** `telividb-embed` has exactly
-    one model-execution adapter: `candle-core`/`candle-nn` dispatched to `candle-metal` or
-    `candle-cuda`. Do not add an `ort`/ONNX adapter, a TensorRT path, or an OpenVINO path to this
-    crate under any justification ("just for this one model," "just as a fallback") — that
-    reintroduces a second C++ dependency tree and a second hardware-backend surface this project
-    explicitly rejected. If a model has no candle path, it is out of scope for local inference;
-    the only sanctioned exception is `RemoteEmbedder`, a declared network call with the same
-    provenance tracking as a local model (rule 12), never a second in-process runtime.
+42. **candle is the only tensor runtime, for inference *and* for GPU search — no second one,
+    ever.** `telividb-embed` has exactly one model-execution adapter: `candle-core`/`candle-nn`
+    dispatched to `candle-metal` or `candle-cuda`. Do not add an `ort`/ONNX adapter, a TensorRT
+    path, or an OpenVINO path to this crate under any justification ("just for this one model,"
+    "just as a fallback") — that reintroduces a second C++ dependency tree and a second
+    hardware-backend surface this project explicitly rejected. If a model has no candle path, it
+    is out of scope for local inference; the only sanctioned exception is `RemoteEmbedder`, a
+    declared network call with the same provenance tracking as a local model (rule 12), never a
+    second in-process runtime.
+
+    **The same runtime backs the GPU index** (`telividb-index`'s `gpu` feature, rule 46): a
+    corpus is written as a GGUF tensor and scored with one `candle` matmul on the device. That
+    is deliberate rather than incidental — one tensor library serving both means one set of
+    hardware backends to reason about, one place GPU memory is allocated, and no second
+    C-dependency tree. GGUF is written and read by `candle` itself
+    (`candle_core::quantized::gguf_file`), so **ggml is not a dependency of this project** and
+    adding it would be the second runtime this rule forbids.
 43. **No plugin loads a model file directly.** A `transform`/`rerank`/`embedder`-kind plugin
     manifest declares a pinned GGUF reference (`[model]` block: path, sha256) and calls the
     inference server with it; the plugin process itself never opens a `.gguf` file or touches a
@@ -289,6 +310,28 @@ Violating any of these is a bug, not a style preference.
     fallback that silently activates, and it is never the crate a fresh `cargo build --workspace`
     pulls in. The index is the highest-frequency call in the system (rule 22); a C++ FFI boundary
     there is the single worst place to introduce one.
+
+    **The GPU index is on by default, and falls back rather than failing.** `telividb-index`'s
+    `gpu` feature (`GpuFlatIndex`) is `candle`-backed and therefore pure Rust, so it is nothing
+    like the FAISS carve-out above. It ships enabled because `best_device` degrades safely:
+    Metal, then CUDA, then CPU, with identical results on every one — only the speed differs.
+    **Metal is compiled in automatically on macOS** through a `cfg(target_os = "macos")` target
+    dependency rather than a default feature, because `candle-core/metal` does not build
+    elsewhere and a default that broke every Linux build is not a default. **CUDA stays opt-in**
+    (`--features cuda`): it needs the CUDA SDK at build time, which most machines lack.
+
+    The cost is build weight — candle is large and brings the `onig_sys` C path recorded in
+    rule 1 — so `--no-default-features --features parallel` stays a supported configuration and
+    CI builds it, keeping the no-candle path from quietly rotting.
+
+    **GPU search is exhaustive, and that is the whole design.** It scores every row with one
+    matmul, so results are exact and it needs no build step and never degrades under deletes.
+    **HNSW is not ported to the GPU and should not be**: traversal is sequential
+    pointer-chasing where each hop depends on the last, which is the access pattern a GPU is
+    worst at — FAISS ships no GPU HNSW for the same reason. The two are complementary, not
+    alternatives. An index that has quietly fallen back to CPU passes every correctness test
+    while delivering none of the speed, so the selected device is emitted on every build and
+    search (`fields::DEVICE`) rather than left to be inferred.
 47. **The in-memory graph is rehydrated, not its own persisted format.** `telividb-graph` wraps
     `petgraph`, built in memory from `telividb-storage`'s edge records on collection load. This is
     a stated v1 capacity ceiling — very large, dense-edge collections become RAM-bound before the

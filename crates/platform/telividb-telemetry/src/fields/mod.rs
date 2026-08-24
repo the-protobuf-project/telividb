@@ -3,6 +3,14 @@
 //! One name per concept, used everywhere. Add here rather than inventing a key
 //! at a call site — a field spelled two ways is two fields, and nothing joins
 //! them back together.
+//!
+//! The inference server's own vocabulary lives in [`model`] and is re-exported
+//! here, so every call site still writes `fields::MODEL` — the split is about
+//! file length, not about there being two vocabularies.
+
+mod model;
+
+pub use model::{MODEL, MODEL_FINGERPRINT, POOLING, TASK};
 
 /// Collection the operation targets. **Label-safe** — bounded by how many
 /// collections exist.
@@ -11,8 +19,22 @@ pub const COLLECTION: &str = "telividb.collection";
 /// Named vector field, e.g. `text_bge`. **Label-safe** — bounded by schema.
 pub const FIELD: &str = "telividb.field";
 
-/// Index algorithm: `flat`, `hnsw`, `ivfpq`. **Label-safe.**
+/// Index algorithm: `flat`, `hnsw`, `ivfpq`, `gpu-flat`. **Label-safe.**
 pub const INDEX_KIND: &str = "telividb.index.kind";
+
+/// Where GPU-resident work actually landed: `metal`, `cuda`, `cpu`.
+/// **Label-safe** — a closed set of three.
+///
+/// Covers indexes and resident models alike, which is why the key is not
+/// `index`-prefixed: both select a device the same way and fall back the same
+/// way, and one key means "what fell back to CPU?" is a single query rather
+/// than a union of two.
+///
+/// Worth emitting on every build, search and model load: something that
+/// silently fell back to CPU is otherwise indistinguishable from a working
+/// GPU path, and would pass every correctness test while delivering none of
+/// the speed.
+pub const DEVICE: &str = "telividb.device";
 
 /// Distance metric: `dot`, `l2`, `cosine`. **Label-safe.**
 pub const METRIC: &str = "telividb.metric";
@@ -23,6 +45,42 @@ pub const CODEC: &str = "telividb.codec";
 /// Filter strategy the planner chose: `prefilter`, `traversal`, `postfilter`.
 /// **Label-safe** — and the field you need to explain a slow query.
 pub const STRATEGY: &str = "telividb.query.strategy";
+
+/// Which store backend answered: `redb`, `postgres`, `arango`.
+/// **Label-safe** — a closed set, one per adapter that exists.
+pub const BACKEND: &str = "telividb.store.backend";
+
+/// Which store was opened: `point`, `graph`. **Label-safe** — a closed set.
+///
+/// Deliberately *not* a path. A store's path is built from a collection's
+/// resource name, and a collection may be a vault — emitting one would
+/// disclose that vault's existence, which is what rule 28 forbids. The kind of
+/// store is safe; which collection it belongs to travels separately, through
+/// [`RESOURCE`] after [`redact::resource_token`](crate::redact::resource_token).
+pub const STORE: &str = "telividb.store.kind";
+
+/// What kind of thing is holding memory: `point-store`, `graph-store`,
+/// `vector-index`, `model`. **Label-safe** — a closed set.
+pub const RESIDENT_KIND: &str = "telividb.resident.kind";
+
+/// Where resident memory sits: `host` or `device`. **Label-safe.**
+///
+/// The dimension that matters for a model zoo: it is what separates an index
+/// competing for VRAM from a store that merely occupies disk and page cache.
+pub const LOCATION: &str = "telividb.resident.location";
+
+/// Bytes a resident thing holds. A measurement, so span-only.
+pub const RESIDENT_BYTES: &str = "telividb.resident.bytes";
+
+/// Graph edge type, e.g. `HAS_SHOT`. **Label-safe** — bounded by schema, the
+/// same way [`FIELD`] is.
+pub const EDGE_TYPE: &str = "telividb.graph.edge_type";
+
+/// Hop limit on a traversal. Span-only: it is caller-supplied and unbounded.
+pub const HOPS: &str = "telividb.graph.hops";
+
+/// Number of graph nodes, whether rehydrated or reached by a traversal.
+pub const NODES: &str = "telividb.graph.nodes";
 
 /// Why a result set was incomplete: `shard_timeout`, `vault_locked`.
 /// **Label-safe.**
@@ -62,10 +120,15 @@ pub const RESULTS_RETURNED: &str = "telividb.query.results_returned";
 pub const ROWS: &str = "telividb.rows";
 /// Byte count of whatever the span covers.
 pub const BYTES: &str = "telividb.bytes";
+/// Records a recovery could not restore — an undecodable payload, or one the
+/// buffer refused. Emitted beside [`RECORDS`] so a lossy replay is visible
+/// rather than looking complete.
+pub const REJECTED: &str = "telividb.rejected";
 /// Record count, for WAL commits and bulk jobs.
 pub const RECORDS: &str = "telividb.records";
 /// Vector width. Safe to emit — shape discloses nothing.
 pub const DIM: &str = "telividb.dim";
+
 /// Wall-clock duration of whatever the record covers, in seconds.
 ///
 /// Carried on the log record as well as in a histogram: the histogram is
@@ -100,9 +163,18 @@ pub const LABEL_SAFE: &[&str] = &[
     COLLECTION,
     FIELD,
     INDEX_KIND,
+    DEVICE,
     METRIC,
     CODEC,
     STRATEGY,
+    BACKEND,
+    STORE,
+    RESIDENT_KIND,
+    LOCATION,
+    MODEL,
+    POOLING,
+    TASK,
+    EDGE_TYPE,
     INCOMPLETE_REASON,
 ];
 

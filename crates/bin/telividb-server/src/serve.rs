@@ -1,17 +1,19 @@
 //! Starting the server.
 
+use crate::announce::{announce, announce_residency};
 use crate::config::ServerConfig;
 use crate::error::{Error, Result};
-use crate::services::CollectionSvc;
+use crate::services::{CollectionSvc, PointsSvc};
 use telividb_proto::FILE_DESCRIPTOR_SET;
 use telividb_proto::collection::v1::collections_server::CollectionsServer;
+use telividb_proto::point::v1::points_server::PointsServer;
 use telividb_telemetry::{Telemetry, TelemetryConfig, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
 ///
 /// Telemetry is installed here rather than in any library, because a library
 /// that installs a subscriber decides for every binary that ever links it.
-pub async fn serve(config: ServerConfig) -> Result<()> {
+pub async fn serve(mut config: ServerConfig) -> Result<()> {
     // A failure here is fatal, and deliberately so. The previous behaviour
     // treated every error as "already installed" and reported it through a
     // facade that, in the failure case, has no pipeline behind it — so an
@@ -34,10 +36,14 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
     health_reporter
         .set_serving::<CollectionsServer<CollectionSvc>>()
         .await;
+    health_reporter
+        .set_serving::<PointsServer<PointsSvc>>()
+        .await;
 
     let mut router = tonic::service::Routes::default()
         .add_service(health_service)
-        .add_service(CollectionsServer::new(CollectionSvc::default()));
+        .add_service(CollectionsServer::new(CollectionSvc::default()))
+        .add_service(PointsServer::new(PointsSvc::new(config.data_dir.clone())));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()
@@ -59,6 +65,7 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
             source,
         })?;
 
+    let stop = config.shutdown.take();
     announce(&config);
 
     let incoming = tokio_stream::wrappers::TcpListenerStream::new(listener);
@@ -73,12 +80,12 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
             .accept_http1(true)
             .layer(tonic_web::GrpcWebLayer::new())
             .add_routes(router)
-            .serve_with_incoming_shutdown(incoming, shutdown())
+            .serve_with_incoming_shutdown(incoming, shutdown(stop))
             .await
     } else {
         server
             .add_routes(router)
-            .serve_with_incoming_shutdown(incoming, shutdown())
+            .serve_with_incoming_shutdown(incoming, shutdown(stop))
             .await
     };
 
@@ -92,44 +99,29 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
     served.map_err(|e| Error::Transport(e.to_string()))
 }
 
-/// Say where every stream of telemetry goes, at startup, every time.
-///
-/// The alternative is what this replaced: a server that logs one line and then
-/// appears silent, with no indication that the instrumentation exists, that
-/// metrics are off, or where a log file would be if there were one.
-fn announce(config: &ServerConfig) {
-    logger::info!(
-        "telividb listening on {} (grpc-web {}, reflection {})",
-        config.addr,
-        config.grpc_web,
-        config.reflection
-    );
-    // Each macro returns a `LogBuilder` that emits when it drops — hence the
-    // blocks: a bare match arm would make the arms' types the builder rather
-    // than `()`.
-    match config.otlp_addr {
-        Some(addr) => {
-            logger::info!("telemetry: exporting logs, traces and metrics to {addr}");
-        }
-        None => {
-            logger::info!("telemetry: console only — pass --otlp <addr> to export");
-        }
-    }
-    if let Some(path) = &config.mcap_path {
-        logger::info!(
-            "telemetry: recording MCAP for Foxglove at {}",
-            path.display()
-        );
-    }
-    logger::info!("telemetry: environment {}", config.environment);
-}
-
 /// Resolve when the process is asked to stop.
 ///
 /// Graceful shutdown matters more here than in most servers: a sealed segment
 /// half-written is a temp directory, but an interrupted manifest swap would be
 /// the one moment a collection is mid-publish.
-async fn shutdown() {
+async fn shutdown(stop: Option<tokio::sync::oneshot::Receiver<()>>) {
+    // Either signal ends the server. A dropped sender counts as a stop, so a
+    // caller that goes away does not leave the server running forever.
+    if let Some(stop) = stop {
+        tokio::select! {
+            _ = stop => {
+                logger::info!("shutdown requested");
+                announce_residency();
+                return;
+            }
+            _ = ctrl_c() => return,
+        }
+    }
+    ctrl_c().await
+}
+
+/// Wait for ctrl-c, then report what was resident.
+async fn ctrl_c() {
     // A failure to *install* the handler must not resolve: `ctrl_c` returning
     // `Err` would otherwise trigger an immediate graceful shutdown, so a server
     // that could not register a signal handler would exit the instant it
@@ -138,6 +130,7 @@ async fn shutdown() {
     match tokio::signal::ctrl_c().await {
         Ok(()) => {
             logger::info!("shutdown requested");
+            announce_residency();
         }
         Err(error) => {
             logger::error!("cannot install the ctrl-c handler: {error}");

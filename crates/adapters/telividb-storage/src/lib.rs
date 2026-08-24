@@ -17,8 +17,10 @@
 pub mod buffer;
 pub mod compact;
 pub mod error;
+pub mod field;
 pub mod format;
 pub mod manifest;
+pub mod meta;
 pub mod ports;
 pub mod segment;
 pub mod tier;
@@ -27,8 +29,13 @@ pub mod wal;
 pub use buffer::MutableBuffer;
 pub use compact::{CompactionPlan, CompactionPolicy, CompactionResult, compact_field};
 pub use error::{Error, Result};
+pub use field::{DEFAULT_SEAL_BYTES, VectorField};
 pub use format::{Codec, DType, FieldHeader, SegmentHeader};
 pub use manifest::Manifest;
+pub use meta::{
+    GraphStoreConfig, PointStoreConfig, RedbGraphStore, RedbPointStore, open_graph_store,
+    open_point_store,
+};
 pub use segment::{SegmentReader, SegmentWriter, field_dir, open_tier};
 pub use tier::{BinaryTier, F16Tier, Int8Tier, PqTier};
 pub use wal::{WalReader, WalWriter};

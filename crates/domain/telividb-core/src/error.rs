@@ -51,6 +51,38 @@ pub enum Error {
         /// Which rule it broke.
         reason: &'static str,
     },
+
+    /// A [`GraphStore`](crate::ports::GraphStore) adapter could not read or
+    /// decode its edge records.
+    ///
+    /// `String` rather than `&'static str`: unlike `MalformedIndex`, the
+    /// underlying failure comes from an adapter's own storage engine (a redb
+    /// I/O error, a corrupt key), whose message is not one of a fixed set
+    /// this crate can name in advance.
+    #[error("graph store: {reason}")]
+    GraphStore {
+        /// What the adapter reported, as it reported it.
+        reason: String,
+    },
+
+    /// A [`PointStore`](crate::ports::PointStore) adapter could not read or
+    /// decode its point records. Same reasoning as `GraphStore` above.
+    #[error("point store: {reason}")]
+    PointStore {
+        /// What the adapter reported, as it reported it.
+        reason: String,
+    },
+
+    /// A GPU index failed to build, load, or score.
+    ///
+    /// Covers device allocation, GGUF decoding and tensor arithmetic alike:
+    /// the underlying message comes from `candle`, which this crate cannot
+    /// name as a type because dependencies point inward (invariant 14).
+    #[error("gpu index: {reason}")]
+    GpuIndex {
+        /// What the tensor runtime reported, as it reported it.
+        reason: String,
+    },
 }
 
 /// Convenience alias for a domain-layer result.

@@ -21,7 +21,11 @@ crc32fast = "1.4"
 # subnormal and rounding cases is a known source of subtle, silent errors.
 half = { version = "2", default-features = false, features = ["std"] }
 thiserror.workspace = true
+# Small mutable metadata — today, the graph's persisted edges. Pure Rust,
+# ACID, no C dependency (CLAUDE.md invariant 1).
+redb.workspace = true
 
 [dev-dependencies]
 tempfile = "3"
 telividb-index.workspace = true
+telividb-graph.workspace = true

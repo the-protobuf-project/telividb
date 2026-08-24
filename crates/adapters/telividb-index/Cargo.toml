@@ -17,12 +17,47 @@ telemetry.workspace = true
 # `#[serde(rename)]` takes a literal and these are consts.
 serde_json = "1"
 rayon = { version = "1.10", optional = true }
+candle-core = { workspace = true, optional = true }
+
+# Metal comes on automatically wherever it exists.
+#
+# Cargo unions features across target sections, so on macOS `candle-core`
+# gains `metal` and `best_device` finds a real GPU; everywhere else this
+# section simply does not apply. Expressed as a target dependency rather than
+# a default feature because `candle-core/metal` does not build off macOS —
+# a default that broke every Linux build is not a default.
+#
+# CUDA is deliberately *not* automatic: it needs the CUDA SDK present at build
+# time, so enabling it by default would break every Linux machine without one.
+# Opt in with `--features cuda`.
+[target.'cfg(target_os = "macos")'.dependencies]
+candle-core = { workspace = true, optional = true, features = ["metal"] }
+# Metal's own memory reporting: `recommendedMaxWorkingSetSize` is Apple's
+# statement of what the GPU can use with good performance, which is a far
+# better budget base than a fraction of total system RAM. Already in the tree
+# as candle's own dependency; named here so the getters can be called.
+#
+# Its wrappers are safe methods, so this needs no `unsafe` and no direct objc2
+# dependency — `#![forbid(unsafe_code)]` on this crate stays intact.
+candle-metal-kernels = { version = "0.11", optional = true }
 
 [features]
-default = ["parallel"]
+default = ["parallel", "gpu"]
 # Parallel graph construction. See adapters::hnsw::build for the determinism
 # guarantee it preserves and the one it does not.
 parallel = ["dep:rayon"]
+# GPU-resident exhaustive search: the corpus as a GGUF tensor, scored with one
+# candle matmul.
+#
+# **On by default, with an automatic CPU fallback.** `best_device` tries Metal,
+# then CUDA, then CPU, so this is safe to ship enabled: a machine with no GPU
+# gets identical results, only slower. The cost is build weight — candle is a
+# large dependency and brings the `onig_sys` C path recorded in rule 1 — which
+# is why `--no-default-features --features parallel` remains a supported way to
+# build without it.
+gpu = ["dep:candle-core", "dep:candle-metal-kernels"]
+# Dispatch the GPU index to CUDA. Requires the CUDA SDK at build time.
+cuda = ["gpu", "candle-core/cuda"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }

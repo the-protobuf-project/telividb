@@ -6,7 +6,23 @@ members = [
     "crates/platform/*",
     "crates/bin/*",
     "tools/*",
+    "examples/rust",
 ]
+
+# The desktop app is packaging, not architecture (CLAUDE.md's gotchas), and it
+# is excluded from the workspace for two concrete reasons rather than taste:
+#
+#   - It needs GTK/webkit system libraries that CI runners do not carry, so
+#     `cargo build --workspace` fails on Linux for a reason unrelated to the
+#     database.
+#   - Tauri drags `cc` in through `tauri-build`, `embed-resource` and
+#     `tauri-winres`, which is a third native path invariant 1 does not
+#     sanction — and sanctioning a GUI toolchain to keep a workspace glob tidy
+#     would gut the rule.
+#
+# It still builds: `cargo build --manifest-path app/src-tauri/Cargo.toml`, or
+# through the Tauri CLI, which is how a Tauri app is normally driven anyway.
+exclude = ["app/src-tauri"]
 
 # The engine is AGPL-3.0-or-later; commercial licences are available for
 # proprietary use — see LICENSE-COMMERCIAL.md.
@@ -24,7 +40,9 @@ repository = "https://github.com/oh-tarnished/telividb"
 
 [workspace.dependencies]
 telividb-core       = { path = "crates/domain/telividb-core" }
+telividb-graph      = { path = "crates/domain/telividb-graph" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }
+telividb-embed      = { path = "crates/adapters/telividb-embed" }
 telividb-index      = { path = "crates/adapters/telividb-index" }
 telividb-storage    = { path = "crates/adapters/telividb-storage" }
 telividb-telemetry  = { path = "crates/platform/telividb-telemetry" }
@@ -35,6 +53,18 @@ telividb-proto      = { path = "crates/platform/telividb-proto" }
 # emits telemetry agrees on the version.
 telemetry = { git = "https://github.com/the-protobuf-project/telemetry", tag = "v1.1.0" }
 thiserror = "2"
+# Plan A1.1's in-memory graph (CLAUDE.md rule 47). `Graph`, not `GraphMap`: a
+# GraphMap keys nodes by weight and allows at most one edge per pair, and two
+# points can carry more than one edge type between them.
+petgraph = "0.8"
+# Small mutable metadata — the graph's persisted edges today, meta.redb's
+# other tables later. Pure Rust, ACID, no C dependency (CLAUDE.md invariant 1).
+redb = "4"
+# GGUF read/write and GPU tensor compute, both in pure Rust. Optional
+# everywhere it appears: only the `gpu` feature of telividb-index pulls it in,
+# so a default build carries none of it. Metal and CUDA are candle's own
+# feature flags, selected by whichever composition root wants them.
+candle-core = { version = "0.11", default-features = false }
 
 # Tests are compiled optimized.
 #

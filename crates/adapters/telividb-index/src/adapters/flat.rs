@@ -126,7 +126,7 @@ impl VectorIndex for FlatIndex {
 ///
 /// `select_nth_unstable_by` keeps this O(n) rather than O(n log n); only the
 /// retained prefix is sorted.
-fn sort_best_first(scored: &mut [Candidate], k: usize, higher_is_nearer: bool) {
+pub(crate) fn sort_best_first(scored: &mut [Candidate], k: usize, higher_is_nearer: bool) {
     let better = |a: &Candidate, b: &Candidate| {
         // NaN scores would make this ordering inconsistent; they are rejected at
         // ingest, so `total_cmp` here is a defensive tie-break, not a policy.

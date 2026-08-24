@@ -1,7 +1,7 @@
 //! Sealing a buffer into an immutable segment, and reading one back.
 
 pub(crate) mod codes;
-mod durable;
+pub(crate) mod durable;
 mod layout;
 mod reader;
 mod spans;

@@ -8,6 +8,11 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -D warnings
+  # LLVM for the two sanctioned native paths (CLAUDE.md rule 1), matching the
+  # `[env]` block in `.cargo/config.toml` so a local build and a CI build
+  # compile them the same way rather than diverging on the runner's default.
+  CC: clang
+  CXX: clang++
 
 # Cancel a run when a newer commit lands on the same branch.
 #
@@ -68,13 +73,21 @@ jobs:
 
       - run: cargo build --workspace --all-targets --target ${{ matrix.target }}
 
-      # Both feature sets, because `--all-features` is *not* a superset of the
-      # default run: it changes which `#[cfg(feature = ...)]` code compiles.
-      # `telividb-index` without `parallel` takes the sequential builder, which
-      # is the configuration every embedded caller gets, and running only
-      # `--all-features` left it compile-checked but never executed.
+      # Both feature sets, because neither is a superset of the other: they
+      # change which `#[cfg(feature = ...)]` code compiles. `telividb-index`
+      # without `parallel` takes the sequential builder, which is the
+      # configuration every embedded caller gets, and without `gpu` it takes
+      # the pure-Rust flat path with no candle in the tree at all (rule 46
+      # keeps that configuration supported, so it has to be *run*, not just
+      # built).
+      #
+      # Deliberately not `--all-features`. The only thing it adds over the
+      # defaults is `cuda`, which pulls `cudarc` and panics in its build script
+      # without `nvcc` on PATH — so on a runner with no CUDA SDK that flag can
+      # only ever fail. CUDA is opt-in by design (rule 46) and is not
+      # CI-verifiable here; it needs a GPU runner to mean anything.
       - run: cargo test --workspace --target ${{ matrix.target }}
-      - run: cargo test --workspace --all-features --target ${{ matrix.target }}
+      - run: cargo test --workspace --no-default-features --target ${{ matrix.target }}
 
   lint:
     name: fmt · clippy
@@ -86,7 +99,10 @@ jobs:
           shared-key: debug
           cache-on-failure: true
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      # Not `--all-features`: see the test job. `cuda` cannot build without the
+      # CUDA SDK, so linting both real configurations is the useful pair.
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
 
   # Structural rules from CLAUDE.md, enforced because rules that depend on
   # discipline decay.
@@ -121,20 +137,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          # `cc` reaches the tree through exactly one sanctioned path:
+          # `cc` reaches the tree through exactly two sanctioned paths:
           #   telividb-* -> telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
+          #   telividb-index[gpu] -> candle-core -> tokenizers -> onig -> onig_sys
           #
           # MCAP recording is not optional in the telemetry stack, and that
-          # stack is mandated by CLAUDE.md rule 41. The carve-out is recorded
-          # here rather than the check being deleted, so a *second* native
-          # dependency still fails the build.
+          # stack is mandated by CLAUDE.md rule 41. The candle path is not
+          # optional either: `tokenizers` is a hard dependency of candle-core,
+          # and Cargo's feature union means it cannot be switched off from
+          # here. Both carve-outs are recorded in CLAUDE.md rule 1 rather than
+          # the check being deleted, so a *third* native dependency still
+          # fails the build.
           #
           # The check works by inversion: everything that pulls in a native
           # builder must already be named below. Anything else is a new path.
           # An earlier version compared against evidence of the *expected*
           # chain, which is permanently present — so its condition never fired
           # and any new native dependency passed green.
-          allowed='cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask'
+          allowed='cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask|candle-core|tokenizers|onig|onig_sys'
 
           status=0
           for pkg in cc cmake bindgen; do
@@ -160,9 +180,10 @@ jobs:
           done
 
           if [ "$status" -ne 0 ]; then
-            echo "Invariant 1 allows exactly one C-compiled path: the MCAP"
-            echo "chain under the telemetry stack. Anything else needs a"
-            echo "decision recorded in CLAUDE.md, not an addition to this list."
+            echo "Invariant 1 allows exactly two C-compiled paths: the MCAP"
+            echo "chain under the telemetry stack, and tokenizers/onig_sys"
+            echo "under candle-core. Anything else needs a decision recorded"
+            echo "in CLAUDE.md, not an addition to this list."
             exit 1
           fi
           echo "no unexpected native build dependencies"
@@ -179,7 +200,7 @@ jobs:
 
           if cargo tree --workspace --edges normal,build --invert cc --prefix none \
              2>/dev/null | awk 'NF { print $1 }' | sort -u \
-             | grep -Eqv '^(cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask)$'; then
+             | grep -Eqv '^(cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask|candle-core|tokenizers|onig|onig_sys)$'; then
             echo "guard correctly detects a new native path"
           else
             echo "::error::the no-C-toolchain guard did not detect an added cc dependency"
@@ -228,6 +249,7 @@ jobs:
       - run: cargo test -p telividb-storage --test crash_consistency
       - run: cargo test -p telividb-storage --test buffer_visibility
       - run: cargo test -p telividb-storage --test segment_roundtrip
+      - run: cargo test -p telividb-storage --test graph_roundtrip
       - run: cargo test -p telividb-index  --test telemetry_leaks
       - run: cargo test -p telividb-server --test wiring
 
@@ -253,5 +275,36 @@ jobs:
       - run: cargo test -p telividb-index --test hnsw_parallel --release -- --nocapture
       - run: cargo test -p telividb-storage --test codec_recall --release -- --nocapture
       - run: cargo test -p telividb-storage --test two_tier_recall --release -- --nocapture
+
+  # The GPU index, exercised on its CPU fallback.
+  #
+  # No Linux runner here has a GPU, and that is precisely what makes this worth
+  # running: the `gpu` feature is on by default, so `best_device` must resolve
+  # to CPU and still return the same neighbours as exhaustive search. Metal is
+  # covered by the macOS leg of the `test` matrix, where it is compiled in
+  # automatically; CUDA is verified on real hardware by hand, because no runner
+  # here has it.
+  gpu:
+    name: gpu index · cpu fallback
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
+      - run: cargo test -p telividb-index -- --nocapture
+      # The no-GPU build must keep working: it is the escape hatch for anyone
+      # who does not want candle's weight, and a feature that became load-
+      # bearing without anyone noticing would only surface here.
+      - name: the workspace still builds without candle
+        run: |
+          cargo build -p telividb-index --no-default-features --features parallel
+          if cargo tree -p telividb-index --no-default-features --features parallel \
+             --edges normal | grep -qi candle; then
+            echo "::error::candle is reachable even with default features off"
+            exit 1
+          fi
+          echo "no-default-features build is candle-free"
       - name: Recall gate at 128 dimensions
         run: cargo run --release -p telividb-index --bin recall -- --rows 20000 --dim 128 --ef 64
