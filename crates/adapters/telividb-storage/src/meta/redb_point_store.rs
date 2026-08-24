@@ -15,6 +15,7 @@ use crate::error::Result;
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::path::Path;
 use telividb_core::{Point, PointStore, ResourceName};
+use telividb_telemetry::{fields, logger};
 
 const POINTS: TableDefinition<&str, &[u8]> = TableDefinition::new("points_v1");
 
@@ -25,6 +26,13 @@ const POINTS: TableDefinition<&str, &[u8]> = TableDefinition::new("points_v1");
 /// draws between reading a store and the separate writes that populate one.
 pub struct RedbPointStore {
     db: Database,
+    /// Registration in the shared residency registry, released on drop.
+    ///
+    /// Sized by the backing file, so an operator listing what is resident sees
+    /// this store beside the indexes and models competing for the same host.
+    /// `Location::Host`: a redb file is page cache and system memory, and must
+    /// not shrink the device ceiling a GPU index draws on.
+    _resident: telividb_telemetry::residency::Handle,
 }
 
 impl RedbPointStore {
@@ -41,7 +49,25 @@ impl RedbPointStore {
             write.open_table(POINTS).map_err(redb::Error::from)?;
         }
         write.commit().map_err(redb::Error::from)?;
-        Ok(Self { db })
+
+        // Size after creation, so a brand-new store registers its real (small)
+        // footprint rather than zero.
+        let bytes = std::fs::metadata(path)
+            .map(|m| m.len() as usize)
+            .unwrap_or(0);
+        let _resident = telividb_telemetry::residency::register(
+            telividb_telemetry::residency::ResidentKind::PointStore,
+            telividb_telemetry::residency::Location::Host,
+            path.display().to_string(),
+            bytes,
+        );
+        logger::debug!("point opened").with_data(&serde_json::json!({
+            fields::STORE: "point",
+            fields::BACKEND: "redb",
+            fields::RESIDENT_BYTES: bytes,
+        }));
+
+        Ok(Self { db, _resident })
     }
 
     /// Persist a new point. Returns `false`, without writing, if a point

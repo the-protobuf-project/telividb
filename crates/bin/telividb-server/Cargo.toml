@@ -29,6 +29,18 @@ prost-types = "0.14"
 serde_json = "1"
 tokio-stream = { version = "0.1", features = ["net"] }
 
+[features]
+# GPU-accelerated search, on by default and forwarded to the index crate.
+#
+# The server carries its own flag rather than reading the index crate's
+# because a `#[cfg]` only sees features of the crate it is compiled in — so
+# without this, the startup device announcement could not tell whether the
+# GPU path was even built.
+default = ["gpu"]
+gpu = ["telividb-index/gpu"]
+# CUDA needs the SDK at build time, so it stays opt-in. See the index crate.
+cuda = ["gpu", "telividb-index/cuda"]
+
 [dev-dependencies]
 bytes = "1"
 tempfile = "3"

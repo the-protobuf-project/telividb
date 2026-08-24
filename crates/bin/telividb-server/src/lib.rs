@@ -17,6 +17,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod announce;
 pub mod args;
 pub mod config;
 pub mod error;

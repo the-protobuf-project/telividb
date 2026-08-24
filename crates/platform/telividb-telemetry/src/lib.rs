@@ -42,10 +42,12 @@ pub mod init;
 pub mod meter;
 pub mod metrics_names;
 pub mod redact;
+pub mod residency;
 
 pub use config::TelemetryConfig;
 pub use init::{Telemetry, TelemetryError, should_sample};
 pub use meter::Meter;
+pub use residency::{Location, ResidentKind};
 
 /// The telemetry stack's logging macros, re-exported.
 ///

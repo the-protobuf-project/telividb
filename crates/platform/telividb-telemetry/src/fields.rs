@@ -11,8 +11,16 @@ pub const COLLECTION: &str = "telividb.collection";
 /// Named vector field, e.g. `text_bge`. **Label-safe** — bounded by schema.
 pub const FIELD: &str = "telividb.field";
 
-/// Index algorithm: `flat`, `hnsw`, `ivfpq`. **Label-safe.**
+/// Index algorithm: `flat`, `hnsw`, `ivfpq`, `gpu-flat`. **Label-safe.**
 pub const INDEX_KIND: &str = "telividb.index.kind";
+
+/// Where a GPU-resident index actually landed: `metal`, `cuda`, `cpu`.
+/// **Label-safe** — a closed set of three.
+///
+/// Worth emitting on every build and search: an index that silently fell back
+/// to CPU is otherwise indistinguishable from a working GPU one, and would
+/// pass every correctness test while delivering none of the speed.
+pub const DEVICE: &str = "telividb.index.device";
 
 /// Distance metric: `dot`, `l2`, `cosine`. **Label-safe.**
 pub const METRIC: &str = "telividb.metric";
@@ -23,6 +31,42 @@ pub const CODEC: &str = "telividb.codec";
 /// Filter strategy the planner chose: `prefilter`, `traversal`, `postfilter`.
 /// **Label-safe** — and the field you need to explain a slow query.
 pub const STRATEGY: &str = "telividb.query.strategy";
+
+/// Which store backend answered: `redb`, `postgres`, `arango`.
+/// **Label-safe** — a closed set, one per adapter that exists.
+pub const BACKEND: &str = "telividb.store.backend";
+
+/// Which store was opened: `point`, `graph`. **Label-safe** — a closed set.
+///
+/// Deliberately *not* a path. A store's path is built from a collection's
+/// resource name, and a collection may be a vault — emitting one would
+/// disclose that vault's existence, which is what rule 28 forbids. The kind of
+/// store is safe; which collection it belongs to travels separately, through
+/// [`RESOURCE`] after [`redact::resource_token`](crate::redact::resource_token).
+pub const STORE: &str = "telividb.store.kind";
+
+/// What kind of thing is holding memory: `point-store`, `graph-store`,
+/// `vector-index`, `model`. **Label-safe** — a closed set.
+pub const RESIDENT_KIND: &str = "telividb.resident.kind";
+
+/// Where resident memory sits: `host` or `device`. **Label-safe.**
+///
+/// The dimension that matters for a model zoo: it is what separates an index
+/// competing for VRAM from a store that merely occupies disk and page cache.
+pub const LOCATION: &str = "telividb.resident.location";
+
+/// Bytes a resident thing holds. A measurement, so span-only.
+pub const RESIDENT_BYTES: &str = "telividb.resident.bytes";
+
+/// Graph edge type, e.g. `HAS_SHOT`. **Label-safe** — bounded by schema, the
+/// same way [`FIELD`] is.
+pub const EDGE_TYPE: &str = "telividb.graph.edge_type";
+
+/// Hop limit on a traversal. Span-only: it is caller-supplied and unbounded.
+pub const HOPS: &str = "telividb.graph.hops";
+
+/// Number of graph nodes, whether rehydrated or reached by a traversal.
+pub const NODES: &str = "telividb.graph.nodes";
 
 /// Why a result set was incomplete: `shard_timeout`, `vault_locked`.
 /// **Label-safe.**
@@ -100,9 +144,15 @@ pub const LABEL_SAFE: &[&str] = &[
     COLLECTION,
     FIELD,
     INDEX_KIND,
+    DEVICE,
     METRIC,
     CODEC,
     STRATEGY,
+    BACKEND,
+    STORE,
+    RESIDENT_KIND,
+    LOCATION,
+    EDGE_TYPE,
     INCOMPLETE_REASON,
 ];
 

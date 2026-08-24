@@ -1,5 +1,6 @@
 //! Starting the server.
 
+use crate::announce::{announce, announce_residency};
 use crate::config::ServerConfig;
 use crate::error::{Error, Result};
 use crate::services::{CollectionSvc, PointsSvc};
@@ -97,38 +98,6 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
     served.map_err(|e| Error::Transport(e.to_string()))
 }
 
-/// Say where every stream of telemetry goes, at startup, every time.
-///
-/// The alternative is what this replaced: a server that logs one line and then
-/// appears silent, with no indication that the instrumentation exists, that
-/// metrics are off, or where a log file would be if there were one.
-fn announce(config: &ServerConfig) {
-    logger::info!(
-        "telividb listening on {} (grpc-web {}, reflection {})",
-        config.addr,
-        config.grpc_web,
-        config.reflection
-    );
-    // Each macro returns a `LogBuilder` that emits when it drops — hence the
-    // blocks: a bare match arm would make the arms' types the builder rather
-    // than `()`.
-    match config.otlp_addr {
-        Some(addr) => {
-            logger::info!("telemetry: exporting logs, traces and metrics to {addr}");
-        }
-        None => {
-            logger::info!("telemetry: console only — pass --otlp <addr> to export");
-        }
-    }
-    if let Some(path) = &config.mcap_path {
-        logger::info!(
-            "telemetry: recording MCAP for Foxglove at {}",
-            path.display()
-        );
-    }
-    logger::info!("telemetry: environment {}", config.environment);
-}
-
 /// Resolve when the process is asked to stop.
 ///
 /// Graceful shutdown matters more here than in most servers: a sealed segment
@@ -143,6 +112,7 @@ async fn shutdown() {
     match tokio::signal::ctrl_c().await {
         Ok(()) => {
             logger::info!("shutdown requested");
+            announce_residency();
         }
         Err(error) => {
             logger::error!("cannot install the ctrl-c handler: {error}");

@@ -66,6 +66,12 @@ pub fn to_status(error: &telividb_core::Error) -> tonic::Status {
             telividb_telemetry::logger::error!("point store: {error}");
             tonic::Status::internal("point store could not be read")
         }
+        // A device allocation or tensor failure is an operator problem too —
+        // and its detail names GPU internals a caller has no use for.
+        E::GpuIndex { .. } => {
+            telividb_telemetry::logger::error!("gpu index: {error}");
+            tonic::Status::internal("index could not be searched")
+        }
     }
 }
 

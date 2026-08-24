@@ -72,6 +72,17 @@ pub enum Error {
         /// What the adapter reported, as it reported it.
         reason: String,
     },
+
+    /// A GPU index failed to build, load, or score.
+    ///
+    /// Covers device allocation, GGUF decoding and tensor arithmetic alike:
+    /// the underlying message comes from `candle`, which this crate cannot
+    /// name as a type because dependencies point inward (invariant 14).
+    #[error("gpu index: {reason}")]
+    GpuIndex {
+        /// What the tensor runtime reported, as it reported it.
+        reason: String,
+    },
 }
 
 /// Convenience alias for a domain-layer result.

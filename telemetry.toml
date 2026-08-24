@@ -24,8 +24,22 @@ description = "Multimodal vector and graph database"
 # `--log-level` is passed, so with no flag the value here decides.
 #
 #   1 = error   2 = info   3 = debug
+#
+# **Debug by default, deliberately.** At level 1 every `logger::info!` and
+# `logger::debug!` in the workspace is dropped before it reaches a sink, so a
+# server that is instrumented throughout looks completely silent — which is
+# indistinguishable from one that emits nothing at all. Development wants to
+# see the whole pipeline: which device an index landed on, every segment seal,
+# every RPC, every store open.
+#
+# A deployment that wants less turns it down here, or per module below, or
+# passes `--log-level info`. Nothing about the default makes the quiet path
+# unavailable — it makes the loud path the one you get without asking.
 [logging]
-level = 2
+level = 3
+
+[telemetry.otlp]
+endpoint = "localhost:6009"   # Port 6009 auto-added
 
 # Per-module overrides, which exist only here — there is no flag for them.
 # Raise one crate to debug without drowning in the rest.

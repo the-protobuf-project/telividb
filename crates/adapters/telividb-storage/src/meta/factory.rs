@@ -17,6 +17,7 @@ use crate::error::Result;
 use crate::meta::{RedbGraphStore, RedbPointStore};
 use std::path::PathBuf;
 use telividb_core::{GraphStore, PointStore};
+use telividb_telemetry::{fields, logger};
 
 /// Which concrete adapter backs a [`GraphStore`], and what it needs to open.
 ///
@@ -41,7 +42,18 @@ pub enum GraphStoreConfig {
 /// integration tests, goes through this and sees `Box<dyn GraphStore>`.
 pub fn open_graph_store(config: &GraphStoreConfig) -> Result<Box<dyn GraphStore>> {
     match config {
-        GraphStoreConfig::Redb { path } => Ok(Box::new(RedbGraphStore::open(path)?)),
+        GraphStoreConfig::Redb { path } => {
+            // Backend only, never the path. These paths are built from a
+            // collection's resource name, and a collection may be a vault —
+            // emitting one would disclose that vault's existence, which is
+            // exactly what rule 28 forbids. The caller logs the collection
+            // itself, redacted, where it knows what it is holding.
+            logger::debug!("opening graph store").with_data(&serde_json::json!({
+                fields::BACKEND: "redb",
+                fields::STORE: "graph",
+            }));
+            Ok(Box::new(RedbGraphStore::open(path)?))
+        }
     }
 }
 
@@ -62,7 +74,13 @@ pub enum PointStoreConfig {
 /// adapter directly — everything downstream sees `Box<dyn PointStore>`.
 pub fn open_point_store(config: &PointStoreConfig) -> Result<Box<dyn PointStore>> {
     match config {
-        PointStoreConfig::Redb { path } => Ok(Box::new(RedbPointStore::open(path)?)),
+        PointStoreConfig::Redb { path } => {
+            logger::debug!("opening point store").with_data(&serde_json::json!({
+                fields::BACKEND: "redb",
+                fields::STORE: "point",
+            }));
+            Ok(Box::new(RedbPointStore::open(path)?))
+        }
     }
 }
 

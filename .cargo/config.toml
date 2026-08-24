@@ -17,3 +17,16 @@ dev = "run --package telividb-server --bin telividb -- --environment development
 
 # Measure recall against exhaustive search.
 recall = "run --release --package telividb-index --bin recall --"
+
+# LLVM for every C dependency that reaches the build.
+#
+# Invariant 1 permits exactly two native paths — the MCAP/lz4 chain and
+# candle's `tokenizers` -> `onig_sys`. Both compile through whatever `cc`
+# finds, which is gcc on most Linux runners and clang on macOS. Pinning both
+# to LLVM means one compiler's diagnostics, one set of flags, and no
+# platform-dependent divergence in how those two C libraries are built.
+#
+# Set here rather than only in CI so a local build matches what CI produces.
+[env]
+CC = "clang"
+CXX = "clang++"

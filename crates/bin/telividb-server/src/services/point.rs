@@ -70,12 +70,16 @@ impl Points for PointsSvc {
         let name = parse_name(&format!("{}/points/{}", parent.as_str(), req.point_id))?;
 
         logger::info!("create point").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(parent.as_str()),
             fields::RESOURCE: redact::resource_token(name.as_str()),
         }));
 
         let point = to_domain(name, req.point.unwrap_or_default())?;
         let store = self.open_writer(&parent)?;
         if !store.create(&point).map_err(|e| storage_status(&e))? {
+            logger::debug!("create refused: point already exists").with_data(&serde_json::json!({
+                fields::RESOURCE: redact::resource_token(point.name.as_str()),
+            }));
             return Err(Status::already_exists(format!(
                 "point {} already exists",
                 point.name
@@ -90,10 +94,23 @@ impl Points for PointsSvc {
     ) -> Result<Response<Point>, Status> {
         let name = parse_name(&request.into_inner().name)?;
         let collection = parent_collection(&name)?;
+        logger::debug!("get point").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(collection.as_str()),
+            fields::RESOURCE: redact::resource_token(name.as_str()),
+        }));
+
         let store = self.open(&collection)?;
         match store.get(&name).map_err(|e| to_status(&e))? {
             Some(point) => Ok(Response::new(to_wire(point))),
-            None => Err(Status::not_found(format!("point {name} not found"))),
+            None => {
+                // A miss is worth a record: "not found" is the answer most
+                // often blamed on the wrong thing — a stale name, the wrong
+                // collection, or a store that was never written to.
+                logger::debug!("point not found").with_data(&serde_json::json!({
+                    fields::RESOURCE: redact::resource_token(name.as_str()),
+                }));
+                Err(Status::not_found(format!("point {name} not found")))
+            }
         }
     }
 
@@ -104,6 +121,10 @@ impl Points for PointsSvc {
         let parent = parse_name(&request.into_inner().parent)?;
         let store = self.open(&parent)?;
         let points = store.list(&parent).map_err(|e| to_status(&e))?;
+        logger::debug!("list points").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(parent.as_str()),
+            fields::RESULTS_RETURNED: points.len(),
+        }));
         Ok(Response::new(ListPointsResponse {
             points: points.into_iter().map(to_wire).collect(),
             next_page_token: String::new(),
@@ -116,10 +137,20 @@ impl Points for PointsSvc {
     ) -> Result<Response<()>, Status> {
         let name = parse_name(&request.into_inner().name)?;
         let collection = parent_collection(&name)?;
+        // A mutation is worth one record per call at info: they are rare and
+        // they are what an incident gets reconstructed from.
+        logger::info!("delete point").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(collection.as_str()),
+            fields::RESOURCE: redact::resource_token(name.as_str()),
+        }));
+
         let store = self.open_writer(&collection)?;
         if store.delete(&name).map_err(|e| storage_status(&e))? {
             Ok(Response::new(()))
         } else {
+            logger::debug!("delete missed: no such point").with_data(&serde_json::json!({
+                fields::RESOURCE: redact::resource_token(name.as_str()),
+            }));
             Err(Status::not_found(format!("point {name} not found")))
         }
     }

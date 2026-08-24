@@ -44,6 +44,11 @@ petgraph = "0.8"
 # Small mutable metadata — the graph's persisted edges today, meta.redb's
 # other tables later. Pure Rust, ACID, no C dependency (CLAUDE.md invariant 1).
 redb = "4"
+# GGUF read/write and GPU tensor compute, both in pure Rust. Optional
+# everywhere it appears: only the `gpu` feature of telividb-index pulls it in,
+# so a default build carries none of it. Metal and CUDA are candle's own
+# feature flags, selected by whichever composition root wants them.
+candle-core = { version = "0.11", default-features = false }
 
 # Tests are compiled optimized.
 #

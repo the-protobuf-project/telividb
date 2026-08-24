@@ -9,7 +9,9 @@
 
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
+use std::time::Instant;
 use telividb_core::{Edge, GraphStore, ResourceName, Result};
+use telividb_telemetry::{fields, logger};
 
 /// A directed, typed graph over point resource names.
 ///
@@ -35,10 +37,21 @@ impl Graph {
     /// This is the "on collection load" rehydration rule 47 describes: the
     /// store is scanned once, not consulted per traversal step.
     pub fn rehydrate(store: &dyn GraphStore) -> Result<Self> {
+        let started = Instant::now();
         let mut graph = Self::new();
         for edge in store.iter_edges()? {
             graph.insert_edge(edge?);
         }
+
+        // Worth a record on every collection load: this is the whole graph in
+        // RAM (rule 47), so its size is the capacity ceiling anyone debugging
+        // memory pressure needs, and a graph that came back empty is the
+        // first symptom of edges never having been written.
+        logger::info!("graph rehydrated").with_data(&serde_json::json!({
+            fields::NODES: graph.node_count(),
+            fields::EDGES: graph.edge_count(),
+            fields::DURATION_SECONDS: started.elapsed().as_secs_f64(),
+        }));
         Ok(graph)
     }
 

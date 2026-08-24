@@ -15,6 +15,7 @@ use crate::error::Result;
 use redb::{Database, ReadableDatabase, TableDefinition};
 use std::path::Path;
 use telividb_core::{Edge, GraphStore, ResourceName};
+use telividb_telemetry::{fields, logger};
 
 const EDGES: TableDefinition<&str, &[u8]> = TableDefinition::new("edges_v1");
 
@@ -25,6 +26,13 @@ const EDGES: TableDefinition<&str, &[u8]> = TableDefinition::new("edges_v1");
 /// reading a store and the separate writer that populates one.
 pub struct RedbGraphStore {
     db: Database,
+    /// Registration in the shared residency registry, released on drop.
+    ///
+    /// Sized by the backing file, so an operator listing what is resident sees
+    /// this store beside the indexes and models competing for the same host.
+    /// `Location::Host`: a redb file is page cache and system memory, and must
+    /// not shrink the device ceiling a GPU index draws on.
+    _resident: telividb_telemetry::residency::Handle,
 }
 
 impl RedbGraphStore {
@@ -42,7 +50,25 @@ impl RedbGraphStore {
             write.open_table(EDGES).map_err(redb::Error::from)?;
         }
         write.commit().map_err(redb::Error::from)?;
-        Ok(Self { db })
+
+        // Size after creation, so a brand-new store registers its real (small)
+        // footprint rather than zero.
+        let bytes = std::fs::metadata(path)
+            .map(|m| m.len() as usize)
+            .unwrap_or(0);
+        let _resident = telividb_telemetry::residency::register(
+            telividb_telemetry::residency::ResidentKind::GraphStore,
+            telividb_telemetry::residency::Location::Host,
+            path.display().to_string(),
+            bytes,
+        );
+        logger::debug!("graph opened").with_data(&serde_json::json!({
+            fields::STORE: "graph",
+            fields::BACKEND: "redb",
+            fields::RESIDENT_BYTES: bytes,
+        }));
+
+        Ok(Self { db, _resident })
     }
 
     /// Persist one edge.

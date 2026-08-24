@@ -3,7 +3,9 @@
 use crate::Graph;
 use petgraph::visit::EdgeRef;
 use std::collections::{HashSet, VecDeque};
+use std::time::Instant;
 use telividb_core::ResourceName;
+use telividb_telemetry::{fields, logger, redact};
 
 impl Graph {
     /// Every resource reachable from `seed` within `hops` edges.
@@ -27,7 +29,14 @@ impl Graph {
         edge_type: Option<&str>,
         allowed: Option<&dyn Fn(&ResourceName) -> bool>,
     ) -> Vec<ResourceName> {
+        let started = Instant::now();
         let Some(&start) = self.index.get(seed) else {
+            // Distinct from "reached nothing": an unknown seed usually means a
+            // name was mistyped or the graph was never populated, and the two
+            // look identical in an empty result.
+            logger::debug!("traversal seed is not in the graph").with_data(&serde_json::json!({
+                fields::RESOURCE: redact::resource_token(seed.as_str()),
+            }));
             return Vec::new();
         };
 
@@ -58,6 +67,14 @@ impl Graph {
             }
         }
 
+        logger::debug!("traversal complete").with_data(&serde_json::json!({
+            fields::RESOURCE: redact::resource_token(seed.as_str()),
+            fields::HOPS: hops,
+            fields::EDGE_TYPE: edge_type.unwrap_or("*"),
+            fields::FILTERED: allowed.is_some(),
+            fields::NODES: reached.len(),
+            fields::DURATION_SECONDS: started.elapsed().as_secs_f64(),
+        }));
         reached
     }
 }
