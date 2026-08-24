@@ -30,7 +30,14 @@ pub(super) fn to_domain(
         let vector = named
             .vector
             .ok_or_else(|| Status::invalid_argument(format!("vector for {field:?} is missing")))?;
-        point.vectors.insert(field, vector_to_domain(&vector)?);
+        let decoded = vector_to_domain(&vector)?;
+        // A repeat would silently overwrite the earlier vector, so the caller
+        // would believe both were stored.
+        if point.vectors.insert(field.clone(), decoded).is_some() {
+            return Err(Status::invalid_argument(format!(
+                "field_id {field:?} appears more than once"
+            )));
+        }
     }
     Ok(point)
 }
@@ -41,12 +48,21 @@ pub(super) fn to_domain(
 /// scalar because protobuf encodes the latter element by element — 768 varint
 /// operations per message on the hot path.
 pub(super) fn vector_to_domain(wire: &WireVector) -> Result<Vec<f32>, Status> {
+    if wire.dimensions < 0 {
+        return Err(Status::invalid_argument(
+            "vector dimensions must not be negative",
+        ));
+    }
     let declared = wire.dimensions as usize;
-    if wire.data.len() != declared * 4 {
+    // Checked: a large declared width would otherwise wrap and accidentally
+    // match a short payload.
+    let expected = declared
+        .checked_mul(4)
+        .ok_or_else(|| Status::invalid_argument("vector dimensions overflow"))?;
+    if wire.data.len() != expected {
         return Err(Status::invalid_argument(format!(
-            "vector declares {declared} dimensions but carries {} bytes; expected {}",
+            "vector declares {declared} dimensions but carries {} bytes; expected {expected}",
             wire.data.len(),
-            declared * 4,
         )));
     }
     Ok(wire

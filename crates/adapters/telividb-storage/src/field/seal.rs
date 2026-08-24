@@ -33,7 +33,9 @@ impl VectorField {
 
     /// Seal the buffer into a segment regardless of size.
     pub fn seal(&mut self) -> Result<()> {
-        let id = self.manifest.segments.len() as u64 + 1;
+        // From the maximum, not the count: compaction removes ids, so a
+        // count-based id could collide with a segment that still exists.
+        let id = self.manifest.segments.iter().max().copied().unwrap_or(0) + 1;
         let path = segment_dir(&self.dir, id);
 
         let mut writer = SegmentWriter::create(&path, self.schema)?;
@@ -55,7 +57,14 @@ impl VectorField {
         // The log's records are all in the segment now, so the file can start
         // over — otherwise replay would re-add rows the segment already holds.
         let wal_path = self.dir.join("000001.wal");
-        std::fs::remove_file(&wal_path).ok();
+        // Propagated, not ignored. If removal fails the writer would reopen
+        // over a log still holding records the segment now owns, and the next
+        // restart would replay them a second time — silently doubling rows.
+        match std::fs::remove_file(&wal_path) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(e.into()),
+        }
         self.wal = WalWriter::open(&wal_path)?;
         Ok(())
     }

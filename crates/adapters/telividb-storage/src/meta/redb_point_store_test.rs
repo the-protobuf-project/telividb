@@ -1,5 +1,5 @@
 use super::*;
-use telividb_core::{ContentRef, Span};
+use telividb_core::{ContentRef, PointStore, Span};
 
 fn name(s: &str) -> ResourceName {
     ResourceName::parse(s).unwrap()

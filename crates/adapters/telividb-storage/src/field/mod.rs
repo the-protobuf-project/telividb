@@ -25,17 +25,20 @@
 //! than guessed at: the partial record never happened, and every intact record
 //! before it is restored.
 
+mod meta;
 mod record;
+mod recover;
 mod seal;
+
+pub use meta::FieldMeta;
 
 use crate::buffer::MutableBuffer;
 use crate::error::Result;
 use crate::manifest::Manifest;
 use crate::segment::SegmentReader;
-use crate::wal::{WalReader, WalWriter};
+use crate::wal::WalWriter;
 use std::path::{Path, PathBuf};
 use telividb_core::{Dim, Fingerprint, Metric, Ordinal, VectorStore};
-use telividb_telemetry::{fields, logger};
 
 /// Seal once the buffer holds this much. Deliberately modest: a larger buffer
 /// means more to replay after a crash and more memory held before anything is
@@ -73,6 +76,22 @@ impl VectorField {
         let dir = dir.as_ref().to_path_buf();
         std::fs::create_dir_all(&dir)?;
 
+        // The field's own dimension and metric, written once and read back
+        // thereafter. Without this a caller has to *supply* the width to open
+        // an existing field — and supplying the wrong one silently rejects
+        // every record replayed from the log, which looks like an empty field
+        // rather than a mismatch.
+        let (dim, metric) = match meta::read(&dir)? {
+            Some(found) => {
+                found.check(dim, metric)?;
+                (found.dim, found.metric)
+            }
+            None => {
+                meta::write(&dir, FieldMeta { dim, metric })?;
+                (dim, metric)
+            }
+        };
+
         let manifest = Manifest::read(dir.join("MANIFEST")).unwrap_or_default();
         let mut sealed = Vec::new();
         let mut sealed_rows = 0usize;
@@ -83,31 +102,10 @@ impl VectorField {
             sealed.push(reader);
         }
 
-        // Replay before accepting new writes: the log's records are the ones
-        // acknowledged but not yet sealed, and they belong at the front of the
-        // buffer in the order they were written.
-        let mut buffer = MutableBuffer::new(dim, metric);
-        let wal_path = dir.join("000001.wal");
-        let mut recovered = 0usize;
-        if wal_path.exists() {
-            let tail = WalReader::open(&wal_path)?.replay(|bytes| {
-                if let Some(vector) = record::decode(bytes, dim.get()) {
-                    let _ = buffer.push(&vector);
-                    recovered += 1;
-                }
-            })?;
-            logger::info!("wal replayed").with_data(&serde_json::json!({
-                fields::FIELD: field,
-                fields::RECORDS: recovered,
-                fields::INCOMPLETE_REASON: match tail {
-                    crate::wal::WalTail::Clean => "none",
-                    crate::wal::WalTail::Torn { .. } => "torn_tail",
-                },
-            }));
-        }
+        let (buffer, wal) = recover::replay(&dir, field, dim, metric)?;
 
         Ok(Self {
-            wal: WalWriter::open(&wal_path)?,
+            wal,
             dir,
             field: field.to_owned(),
             buffer,
@@ -159,6 +157,15 @@ impl VectorField {
     pub fn row_of(&self, index: usize, ordinal: Ordinal) -> usize {
         let base: usize = self.sealed.iter().take(index).map(|r| r.len()).sum();
         base + ordinal.row() as usize
+    }
+
+    /// The width every vector in this field has.
+    ///
+    /// Read from the field itself rather than inferred from whatever vector is
+    /// at hand: a query of the wrong width must be refused, not used to
+    /// reinterpret a persisted segment.
+    pub fn dim(&self) -> Dim {
+        self.buffer.dim()
     }
 
     /// Rows across sealed segments and the buffer together.

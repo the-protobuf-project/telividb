@@ -22,16 +22,47 @@ pub const DIM: usize = 4;
 /// start another over the same data — which is how restart recovery is
 /// observed from outside.
 pub async fn start_at(data_dir: PathBuf) -> SocketAddr {
+    let (addr, running) = started(data_dir).await;
+    // Deliberately leaked: dropping `Running` drops the stop-sender, which
+    // resolves the receiver and shuts the server down immediately. A test that
+    // never stops its server wants it alive for the whole run.
+    std::mem::forget(running);
+    addr
+}
+
+/// A running server, plus the handle that stops it.
+///
+/// Needed because `redb` holds an **exclusive** file lock: a second server over
+/// the same directory cannot open a collection the first still has open. A test
+/// that observes restart behaviour therefore has to stop the first one, not
+/// merely stop talking to it.
+pub struct Running {
+    stop: tokio::sync::oneshot::Sender<()>,
+    joined: tokio::task::JoinHandle<()>,
+}
+
+impl Running {
+    /// Stop the server and wait for it to finish releasing its files.
+    pub async fn stop(self) {
+        let _ = self.stop.send(());
+        let _ = self.joined.await;
+    }
+}
+
+/// Start a server and keep the means to stop it.
+pub async fn started(data_dir: PathBuf) -> (SocketAddr, Running) {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("ephemeral port");
     let addr = listener.local_addr().expect("bound address");
     drop(listener);
 
-    tokio::spawn(async move {
+    let (stop, stopped) = tokio::sync::oneshot::channel();
+    let joined = tokio::spawn(async move {
         let outcome = serve(ServerConfig {
             // Telemetry installs globally once per process, so tests sharing a
             // binary must not each try to install it.
             environment: telividb_telemetry::Environment::Production,
             data_dir,
+            shutdown: Some(stopped),
             ..ServerConfig::at(addr)
         })
         .await;
@@ -42,7 +73,7 @@ pub async fn start_at(data_dir: PathBuf) -> SocketAddr {
 
     for _ in 0..100 {
         if std::net::TcpStream::connect(addr).is_ok() {
-            return addr;
+            return (addr, Running { stop, joined });
         }
         tokio::time::sleep(Duration::from_millis(20)).await;
     }

@@ -6,7 +6,7 @@
 
 mod support;
 
-use support::vectors::{create, search, start_at};
+use support::vectors::{create, search, start_at, started};
 use telividb_proto::point::v1::points_client::PointsClient;
 
 #[tokio::test]
@@ -89,8 +89,10 @@ async fn vectors_survive_a_restart_through_the_wal() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().to_path_buf();
 
+    // Stopped, not merely abandoned: redb holds an exclusive lock, so the
+    // second server cannot open the collection until the first lets go.
+    let (addr, first) = started(path.clone()).await;
     {
-        let addr = start_at(path.clone()).await;
         let mut client = PointsClient::connect(format!("http://{addr}"))
             .await
             .expect("connect");
@@ -99,6 +101,7 @@ async fn vectors_survive_a_restart_through_the_wal() {
             .await
             .unwrap();
     }
+    first.stop().await;
 
     // A second server over the same directory: a fresh process would behave
     // the same way, and this is what a test can observe.

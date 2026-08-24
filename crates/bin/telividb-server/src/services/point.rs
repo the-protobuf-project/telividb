@@ -7,7 +7,9 @@
 use super::point_convert::to_wire;
 use super::vectors::VectorFields;
 use crate::error::{storage_status, to_status};
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use telividb_core::{PointStore, ResourceName};
 use telividb_proto::point::v1::points_server::Points;
 use telividb_proto::point::v1::{
@@ -16,7 +18,7 @@ use telividb_proto::point::v1::{
     DeletePointRequest, GetPointRequest, ListPointsRequest, ListPointsResponse, Point,
     SearchPointsRequest, SearchPointsResponse,
 };
-use telividb_storage::{PointStoreConfig, RedbPointStore, open_point_store};
+use telividb_storage::RedbPointStore;
 use telividb_telemetry::{fields, logger, redact};
 use tonic::{Request, Response, Status};
 
@@ -24,38 +26,50 @@ use tonic::{Request, Response, Status};
 /// collection under `data_dir`.
 pub struct PointsSvc {
     data_dir: PathBuf,
+    /// One open `redb` handle per collection.
+    ///
+    /// redb takes an **exclusive file lock**, so two concurrent requests
+    /// against the same collection cannot each open their own — the second
+    /// fails with "Database already open". Caching makes concurrent access
+    /// reuse one handle, and keeps a store open across requests rather than
+    /// paying an open per call.
+    stores: Mutex<HashMap<String, Arc<RedbPointStore>>>,
     /// Vector fields, held across requests.
     ///
     /// Unlike every other store here, these cannot be opened per request: a
     /// field's unsealed buffer *is* its newest data, and dropping it between
     /// calls would discard every write since the last seal.
-    pub(super) vectors: VectorFields,
+    pub(super) vectors: Arc<VectorFields>,
 }
 
 impl PointsSvc {
     /// Serve points from underneath `data_dir`, opened lazily per request.
     pub fn new(data_dir: PathBuf) -> Self {
         Self {
-            vectors: VectorFields::new(data_dir.clone()),
+            vectors: Arc::new(VectorFields::new(data_dir.clone())),
+            stores: Mutex::new(HashMap::new()),
             data_dir,
         }
     }
 
     /// Path to the `redb` file for `collection`, e.g. `media` from
     /// `collections/media`.
-    fn store_path(&self, collection: &ResourceName) -> PathBuf {
+    pub(super) fn store_path(&self, collection: &ResourceName) -> PathBuf {
         self.data_dir.join(collection.leaf()).join("points.redb")
     }
 
-    fn open(&self, collection: &ResourceName) -> Result<Box<dyn PointStore>, Status> {
-        open_point_store(&PointStoreConfig::Redb {
-            path: self.store_path(collection),
-        })
-        .map_err(|e| storage_status(&e))
-    }
-
-    pub(super) fn open_writer(&self, collection: &ResourceName) -> Result<RedbPointStore, Status> {
-        RedbPointStore::open(&self.store_path(collection)).map_err(|e| storage_status(&e))
+    /// The cached handle for `collection`, opening it on first use.
+    pub(super) fn store(&self, collection: &ResourceName) -> Result<Arc<RedbPointStore>, Status> {
+        let key = collection.as_str().to_owned();
+        let mut stores = self.stores.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(store) = stores.get(&key) {
+            return Ok(Arc::clone(store));
+        }
+        let opened = Arc::new(
+            RedbPointStore::open(&self.store_path(collection)).map_err(|e| storage_status(&e))?,
+        );
+        stores.insert(key, Arc::clone(&opened));
+        Ok(opened)
     }
 }
 
@@ -83,7 +97,7 @@ impl Points for PointsSvc {
             fields::RESOURCE: redact::resource_token(name.as_str()),
         }));
 
-        let store = self.open(&collection)?;
+        let store = self.store(&collection)?;
         match store.get(&name).map_err(|e| to_status(&e))? {
             Some(point) => Ok(Response::new(to_wire(point))),
             None => {
@@ -103,7 +117,7 @@ impl Points for PointsSvc {
         request: Request<ListPointsRequest>,
     ) -> Result<Response<ListPointsResponse>, Status> {
         let parent = parse_name(&request.into_inner().parent)?;
-        let store = self.open(&parent)?;
+        let store = self.store(&parent)?;
         let points = store.list(&parent).map_err(|e| to_status(&e))?;
         logger::debug!("list points").with_data(&serde_json::json!({
             fields::COLLECTION: redact::collection_label(parent.as_str()),
@@ -128,7 +142,7 @@ impl Points for PointsSvc {
             fields::RESOURCE: redact::resource_token(name.as_str()),
         }));
 
-        let store = self.open_writer(&collection)?;
+        let store = self.store(&collection)?;
         if store.delete(&name).map_err(|e| storage_status(&e))? {
             Ok(Response::new(()))
         } else {

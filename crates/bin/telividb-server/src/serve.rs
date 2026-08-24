@@ -13,7 +13,7 @@ use telividb_telemetry::{Telemetry, TelemetryConfig, logger};
 ///
 /// Telemetry is installed here rather than in any library, because a library
 /// that installs a subscriber decides for every binary that ever links it.
-pub async fn serve(config: ServerConfig) -> Result<()> {
+pub async fn serve(mut config: ServerConfig) -> Result<()> {
     // A failure here is fatal, and deliberately so. The previous behaviour
     // treated every error as "already installed" and reported it through a
     // facade that, in the failure case, has no pipeline behind it — so an
@@ -65,6 +65,7 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
             source,
         })?;
 
+    let stop = config.shutdown.take();
     announce(&config);
 
     let incoming = tokio_stream::wrappers::TcpListenerStream::new(listener);
@@ -79,12 +80,12 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
             .accept_http1(true)
             .layer(tonic_web::GrpcWebLayer::new())
             .add_routes(router)
-            .serve_with_incoming_shutdown(incoming, shutdown())
+            .serve_with_incoming_shutdown(incoming, shutdown(stop))
             .await
     } else {
         server
             .add_routes(router)
-            .serve_with_incoming_shutdown(incoming, shutdown())
+            .serve_with_incoming_shutdown(incoming, shutdown(stop))
             .await
     };
 
@@ -103,7 +104,24 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
 /// Graceful shutdown matters more here than in most servers: a sealed segment
 /// half-written is a temp directory, but an interrupted manifest swap would be
 /// the one moment a collection is mid-publish.
-async fn shutdown() {
+async fn shutdown(stop: Option<tokio::sync::oneshot::Receiver<()>>) {
+    // Either signal ends the server. A dropped sender counts as a stop, so a
+    // caller that goes away does not leave the server running forever.
+    if let Some(stop) = stop {
+        tokio::select! {
+            _ = stop => {
+                logger::info!("shutdown requested");
+                announce_residency();
+                return;
+            }
+            _ = ctrl_c() => return,
+        }
+    }
+    ctrl_c().await
+}
+
+/// Wait for ctrl-c, then report what was resident.
+async fn ctrl_c() {
     // A failure to *install* the handler must not resolve: `ctrl_c` returning
     // `Err` would otherwise trigger an immediate graceful shutdown, so a server
     // that could not register a signal handler would exit the instant it

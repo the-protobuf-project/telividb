@@ -141,8 +141,13 @@ fn model_fingerprint() -> Fingerprint {
     Fingerprint::of(b"telividb.interim.model.v1")
 }
 
+/// Fold a storage failure into the domain error type.
+///
+/// `PointStore` rather than `GpuIndex`: a WAL or segment failure has nothing to
+/// do with the device, and mislabelling it sends whoever reads the log to the
+/// wrong subsystem.
 fn storage_err(e: telividb_storage::Error) -> telividb_core::Error {
-    telividb_core::Error::GpuIndex {
+    telividb_core::Error::PointStore {
         reason: e.to_string(),
     }
 }

@@ -136,6 +136,21 @@ pub enum Error {
         actual: usize,
     },
 
+    /// A field was opened under different terms than it was created with.
+    ///
+    /// Refused rather than reconciled: the wrong dimension reinterprets the
+    /// field's bytes, and the wrong metric ranks correctly-read vectors
+    /// wrongly. Both fail silently, so both are caught here.
+    #[error("field {what} mismatch: stored {stored}, requested {requested}")]
+    FieldMismatch {
+        /// Which property disagreed.
+        what: &'static str,
+        /// What the field was created with.
+        stored: String,
+        /// What the caller asked for.
+        requested: String,
+    },
+
     /// A byte did not correspond to any known enum variant.
     #[error("unknown {what} discriminant {value}")]
     UnknownDiscriminant {

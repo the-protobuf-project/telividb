@@ -106,6 +106,10 @@ pub const RESULTS_RETURNED: &str = "telividb.query.results_returned";
 pub const ROWS: &str = "telividb.rows";
 /// Byte count of whatever the span covers.
 pub const BYTES: &str = "telividb.bytes";
+/// Records a recovery could not restore — an undecodable payload, or one the
+/// buffer refused. Emitted beside [`RECORDS`] so a lossy replay is visible
+/// rather than looking complete.
+pub const REJECTED: &str = "telividb.rejected";
 /// Record count, for WAL commits and bulk jobs.
 pub const RECORDS: &str = "telividb.records";
 /// Vector width. Safe to emit — shape discloses nothing.

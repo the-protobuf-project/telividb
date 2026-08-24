@@ -32,16 +32,31 @@ impl VectorFields {
         let state = match fields.entry(key) {
             std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
             std::collections::hash_map::Entry::Vacant(e) => {
-                let dim = Dim::new(query.len() as u32)?;
-                if !self.dir_for(collection, field).exists() {
+                let dir = self.dir_for(collection, field);
+                if !dir.exists() {
                     // Never written, here or in an earlier process: an empty
                     // result, not an error. A collection may simply not carry
                     // this field.
                     return Ok(Vec::new());
                 }
+                // The field's *own* width, not the query's. Opening under the
+                // query's width would reinterpret persisted bytes, and a
+                // wrong-width query would look like an empty field rather than
+                // a mismatch.
+                let dim = Dim::new(query.len() as u32)?;
                 e.insert(self.open_field(collection, field, dim)?)
             }
         };
+
+        // The open field knows its width; a query that disagrees is refused
+        // rather than scored against reinterpreted bytes.
+        let dim = state.field.dim();
+        if query.len() != dim.get() {
+            return Err(telividb_core::Error::DimMismatch {
+                expected: dim.get(),
+                actual: query.len(),
+            });
+        }
 
         // Sealed segments and the unsealed buffer are separate stores, so each
         // is searched and the results merged. The buffer's inclusion is what
@@ -69,6 +84,10 @@ impl VectorFields {
                 state.index = Some(gpu);
                 found
             } else {
+                // Several stores: the cached single-store index no longer
+                // describes the corpus, so drop it rather than let a later
+                // single-store search reuse a stale one.
+                state.index = None;
                 FlatIndex::new().search(*store, query, k, None)?
             };
 

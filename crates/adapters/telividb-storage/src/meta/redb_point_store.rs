@@ -10,14 +10,16 @@
 //! edge table's does — CLAUDE.md rule 4, a redb table treated the way a
 //! segment header already is.
 
-use super::point_record::{decode, encode};
+use super::point_record::encode;
 use crate::error::Result;
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::path::Path;
-use telividb_core::{Point, PointStore, ResourceName};
+use telividb_core::{Point, ResourceName};
 use telividb_telemetry::{fields, logger};
 
-const POINTS: TableDefinition<&str, &[u8]> = TableDefinition::new("points_v1");
+/// `resource name -> encoded point`. The read half lives in `point_read.rs`,
+/// which is why this is visible to the module rather than to this file alone.
+pub(super) const POINTS: TableDefinition<&str, &[u8]> = TableDefinition::new("points_v1");
 
 /// `(field, row) -> point name`, so a search hit resolves back to a resource.
 ///
@@ -28,7 +30,7 @@ const POINTS: TableDefinition<&str, &[u8]> = TableDefinition::new("points_v1");
 ///
 /// Keyed on `(field, row)` rather than row alone because each named vector
 /// field numbers its rows independently.
-const ROWS: TableDefinition<(&str, u64), &str> = TableDefinition::new("vector_rows_v1");
+pub(super) const ROWS: TableDefinition<(&str, u64), &str> = TableDefinition::new("vector_rows_v1");
 
 /// Point storage backed by one `redb` database file.
 ///
@@ -36,7 +38,7 @@ const ROWS: TableDefinition<(&str, u64), &str> = TableDefinition::new("vector_ro
 /// plain methods here, not part of that trait — the same split `GraphStore`
 /// draws between reading a store and the separate writes that populate one.
 pub struct RedbPointStore {
-    db: Database,
+    pub(super) db: Database,
     /// Registration in the shared residency registry, released on drop.
     ///
     /// Sized by the backing file, so an operator listing what is resident sees
@@ -82,6 +84,16 @@ impl RedbPointStore {
         Ok(Self { db, _resident })
     }
 
+    /// Whether a point with this name exists, without decoding its record.
+    pub fn exists(&self, name: &ResourceName) -> Result<bool> {
+        let read = self.db.begin_read().map_err(redb::Error::from)?;
+        let table = read.open_table(POINTS).map_err(redb::Error::from)?;
+        Ok(table
+            .get(name.as_str())
+            .map_err(redb::Error::from)?
+            .is_some())
+    }
+
     /// Persist a new point. Returns `false`, without writing, if a point
     /// with this name already exists — this is `Create`, not `Upsert`.
     /// A bool rather than an error, mirroring `delete`: "already exists" is
@@ -89,6 +101,16 @@ impl RedbPointStore {
     /// `ALREADY_EXISTS`, not an opaque internal failure), not a storage
     /// failure.
     pub fn create(&self, point: &Point) -> Result<bool> {
+        self.create_with_rows(point, &[])
+    }
+
+    /// Persist a point together with the vector rows that belong to it, in one
+    /// transaction.
+    ///
+    /// Atomic on purpose: writing the bindings separately leaves a window where
+    /// a crash produces rows pointing at a point that does not exist, and a
+    /// search would then resolve a hit to a missing resource.
+    pub fn create_with_rows(&self, point: &Point, rows: &[(String, u64)]) -> Result<bool> {
         let write = self.db.begin_write().map_err(redb::Error::from)?;
         let created = {
             let mut table = write.open_table(POINTS).map_err(redb::Error::from)?;
@@ -99,6 +121,12 @@ impl RedbPointStore {
                 table
                     .insert(key, encode(point).as_slice())
                     .map_err(redb::Error::from)?;
+                let mut bindings = write.open_table(ROWS).map_err(redb::Error::from)?;
+                for (field, row) in rows {
+                    bindings
+                        .insert((field.as_str(), *row), key)
+                        .map_err(redb::Error::from)?;
+                }
                 true
             }
         };
@@ -106,89 +134,39 @@ impl RedbPointStore {
         Ok(created)
     }
 
-    /// Record that `field`'s row `row` belongs to the point named `name`.
-    pub fn bind_row(&self, field: &str, row: u64, name: &ResourceName) -> Result<()> {
-        let write = self.db.begin_write().map_err(redb::Error::from)?;
-        {
-            let mut table = write.open_table(ROWS).map_err(redb::Error::from)?;
-            table
-                .insert((field, row), name.as_str())
-                .map_err(redb::Error::from)?;
-        }
-        write.commit().map_err(redb::Error::from)?;
-        Ok(())
-    }
-
-    /// The point a field's row belongs to, if that row was ever bound.
-    ///
-    /// `None` is ordinary rather than exceptional: a row can exist in a
-    /// segment while its binding is absent, which is what a crash between the
-    /// vector append and this write looks like.
-    pub fn row_owner(&self, field: &str, row: u64) -> Result<Option<ResourceName>> {
-        let read = self.db.begin_read().map_err(redb::Error::from)?;
-        let table = read.open_table(ROWS).map_err(redb::Error::from)?;
-        let found = table.get((field, row)).map_err(redb::Error::from)?;
-        Ok(found.and_then(|v| ResourceName::parse(v.value()).ok()))
-    }
-
     /// Remove a point. Returns whether it existed.
     pub fn delete(&self, name: &ResourceName) -> Result<bool> {
         let write = self.db.begin_write().map_err(redb::Error::from)?;
         let existed = {
             let mut table = write.open_table(POINTS).map_err(redb::Error::from)?;
-            table
+            let existed = table
                 .remove(name.as_str())
                 .map_err(redb::Error::from)?
-                .is_some()
+                .is_some();
+
+            // Clear this point's row bindings in the same transaction. Left
+            // behind, they would resolve a later search hit to a resource that
+            // no longer exists.
+            let mut bindings = write.open_table(ROWS).map_err(redb::Error::from)?;
+            let stale: Vec<(String, u64)> = bindings
+                .iter()
+                .map_err(redb::Error::from)?
+                .filter_map(|row| row.ok())
+                .filter(|(_, owner)| owner.value() == name.as_str())
+                .map(|(key, _)| {
+                    let (field, row) = key.value();
+                    (field.to_owned(), row)
+                })
+                .collect();
+            for (field, row) in stale {
+                bindings
+                    .remove((field.as_str(), row))
+                    .map_err(redb::Error::from)?;
+            }
+            existed
         };
         write.commit().map_err(redb::Error::from)?;
         Ok(existed)
-    }
-}
-
-impl PointStore for RedbPointStore {
-    fn get(&self, name: &ResourceName) -> telividb_core::Result<Option<Point>> {
-        let read = self.db.begin_read().map_err(point_store_err)?;
-        let table = read.open_table(POINTS).map_err(point_store_err)?;
-        match table.get(name.as_str()).map_err(point_store_err)? {
-            Some(value) => Ok(Some(decode(name.clone(), value.value())?)),
-            None => Ok(None),
-        }
-    }
-
-    fn list(&self, parent: &ResourceName) -> telividb_core::Result<Vec<Point>> {
-        let prefix = format!("{}/points/", parent.as_str());
-        let read = self.db.begin_read().map_err(point_store_err)?;
-        let table = read.open_table(POINTS).map_err(point_store_err)?;
-
-        let mut points = Vec::new();
-        let range = table
-            .range::<&str>(prefix.as_str()..)
-            .map_err(point_store_err)?;
-        for row in range {
-            let (key, value) = row.map_err(point_store_err)?;
-            let Some(suffix) = key.value().strip_prefix(&prefix) else {
-                break;
-            };
-            // Direct children only. A nested name like
-            // `collections/a/points/1/parts/2` shares the prefix but is a
-            // different resource, and AIP-132 lists one level.
-            if suffix.contains('/') {
-                continue;
-            }
-            let name =
-                ResourceName::parse(key.value()).map_err(|e| telividb_core::Error::PointStore {
-                    reason: e.to_string(),
-                })?;
-            points.push(decode(name, value.value())?);
-        }
-        Ok(points)
-    }
-}
-
-fn point_store_err<E: Into<redb::Error>>(e: E) -> telividb_core::Error {
-    telividb_core::Error::PointStore {
-        reason: e.into().to_string(),
     }
 }
 

@@ -7,8 +7,12 @@
 
 use super::point::{PointsSvc, parse_name};
 use super::point_convert::{to_domain, to_wire};
+use super::vectors::VectorFields;
 use crate::error::{storage_status, to_status};
+use std::sync::Arc;
+use telividb_core::ResourceName;
 use telividb_proto::point::v1::{CreatePointRequest, Point};
+use telividb_storage::RedbPointStore;
 use telividb_telemetry::{fields, logger, redact};
 use tonic::{Request, Response, Status};
 
@@ -33,28 +37,36 @@ pub(super) async fn create_point(
     }));
 
     let point = to_domain(name, req.point.unwrap_or_default())?;
-    let store = svc.open_writer(&parent)?;
 
-    // Vectors first. A vector written for a point that then fails to
-    // create leaves an orphan row — wasteful but harmless, since nothing
-    // binds it to a name. The reverse order would let a point exist whose
-    // vectors were never stored, which search would silently miss.
-    for (field, vector) in &point.vectors {
-        let row = svc
-            .vectors
-            .append(&parent, field, vector)
-            .map_err(|e| to_status(&e))?;
-        store
-            .bind_row(field, row as u64, &point.name)
-            .map_err(|e| storage_status(&e))?;
-        logger::debug!("vector appended").with_data(&serde_json::json!({
-            fields::COLLECTION: redact::collection_label(parent.as_str()),
-            fields::FIELD: field,
-            fields::DIM: vector.len(),
-        }));
-    }
+    // Storage is synchronous: redb commits, WAL fsyncs and mmap'd segment
+    // reads all block. Running them on a tonic executor thread would stall
+    // every other request sharing it, which invariant 5 forbids — so the whole
+    // write happens on the blocking pool.
+    let vectors = Arc::clone(&svc.vectors);
+    let store = svc.store(&parent)?;
+    let collection = parent.clone();
+    let point =
+        tokio::task::spawn_blocking(move || write_point(&vectors, &store, &collection, point))
+            .await
+            .map_err(|e| Status::internal(format!("create task failed: {e}")))??;
 
-    if !store.create(&point).map_err(|e| storage_status(&e))? {
+    Ok(Response::new(to_wire(point)))
+}
+
+/// The blocking half of a create: append vectors, then write the point and its
+/// row bindings in one transaction.
+///
+/// **Ordering matters.** The duplicate check happens *first*, before any vector
+/// is appended, so a rejected create leaves no orphan rows in the field's WAL.
+/// The bindings then land in the same transaction as the point itself, so a
+/// crash cannot leave a row pointing at a resource that was never created.
+fn write_point(
+    vectors: &VectorFields,
+    store: &RedbPointStore,
+    collection: &ResourceName,
+    point: telividb_core::Point,
+) -> Result<telividb_core::Point, Status> {
+    if store.exists(&point.name).map_err(|e| storage_status(&e))? {
         logger::debug!("create refused: point already exists").with_data(&serde_json::json!({
             fields::RESOURCE: redact::resource_token(point.name.as_str()),
         }));
@@ -63,5 +75,29 @@ pub(super) async fn create_point(
             point.name
         )));
     }
-    Ok(Response::new(to_wire(point)))
+
+    let mut rows = Vec::with_capacity(point.vectors.len());
+    for (field, vector) in &point.vectors {
+        let row = vectors
+            .append(collection, field, vector)
+            .map_err(|e| to_status(&e))?;
+        rows.push((field.clone(), row as u64));
+        logger::debug!("vector appended").with_data(&serde_json::json!({
+            fields::COLLECTION: redact::collection_label(collection.as_str()),
+            fields::FIELD: field,
+            fields::DIM: vector.len(),
+        }));
+    }
+
+    if !store
+        .create_with_rows(&point, &rows)
+        .map_err(|e| storage_status(&e))?
+    {
+        // Lost a race with a concurrent create of the same name.
+        return Err(Status::already_exists(format!(
+            "point {} already exists",
+            point.name
+        )));
+    }
+    Ok(point)
 }
