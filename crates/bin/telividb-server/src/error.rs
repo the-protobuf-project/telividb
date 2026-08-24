@@ -55,5 +55,29 @@ pub fn to_status(error: &telividb_core::Error) -> tonic::Status {
             telividb_telemetry::logger::error!("malformed index: {error}");
             tonic::Status::internal("index could not be read")
         }
+        // Same reasoning: a `GraphStore` adapter failure (a redb I/O error, a
+        // corrupt key) is an operator problem, not something the caller did.
+        E::GraphStore { .. } => {
+            telividb_telemetry::logger::error!("graph store: {error}");
+            tonic::Status::internal("graph could not be read")
+        }
+        // Same reasoning again, for the document service's `PointStore`.
+        E::PointStore { .. } => {
+            telividb_telemetry::logger::error!("point store: {error}");
+            tonic::Status::internal("point store could not be read")
+        }
     }
+}
+
+/// Map a `telividb-storage` failure onto a gRPC status.
+///
+/// A distinct function rather than a `to_status` overload: `PointsSvc` calls
+/// straight into `RedbPointStore`'s own `create`/`delete` and the factory
+/// that opens it, both of which return `telividb_storage::Error` — a
+/// different type from the `telividb_core::Error` the port methods
+/// (`get`/`list`) surface, which `to_status` already handles. Same posture
+/// either way: opaque to the caller, logged for the operator.
+pub fn storage_status(error: &telividb_storage::Error) -> tonic::Status {
+    telividb_telemetry::logger::error!("storage: {error}");
+    tonic::Status::internal("storage could not be read")
 }

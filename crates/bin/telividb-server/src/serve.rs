@@ -2,9 +2,10 @@
 
 use crate::config::ServerConfig;
 use crate::error::{Error, Result};
-use crate::services::CollectionSvc;
+use crate::services::{CollectionSvc, PointsSvc};
 use telividb_proto::FILE_DESCRIPTOR_SET;
 use telividb_proto::collection::v1::collections_server::CollectionsServer;
+use telividb_proto::point::v1::points_server::PointsServer;
 use telividb_telemetry::{Telemetry, TelemetryConfig, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
@@ -34,10 +35,14 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
     health_reporter
         .set_serving::<CollectionsServer<CollectionSvc>>()
         .await;
+    health_reporter
+        .set_serving::<PointsServer<PointsSvc>>()
+        .await;
 
     let mut router = tonic::service::Routes::default()
         .add_service(health_service)
-        .add_service(CollectionsServer::new(CollectionSvc::default()));
+        .add_service(CollectionsServer::new(CollectionSvc::default()))
+        .add_service(PointsServer::new(PointsSvc::new(config.data_dir.clone())));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()

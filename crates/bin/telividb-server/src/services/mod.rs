@@ -5,5 +5,8 @@
 //! the embedded path cannot bypass it.
 
 mod collection;
+mod point;
+mod point_convert;
 
 pub use collection::CollectionSvc;
+pub use point::PointsSvc;

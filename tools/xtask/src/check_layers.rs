@@ -38,6 +38,7 @@ const ALLOWED: &[(&str, &[&str])] = &[
     ("telividb-core", &[]),
     ("telividb-proto", &[]),
     ("telividb-telemetry", &[]),
+    ("telividb-graph", &["telividb-core"]),
     ("telividb-distance", &["telividb-core"]),
     (
         "telividb-storage",

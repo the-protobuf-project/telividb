@@ -20,6 +20,10 @@ tonic-reflection = "0.14"
 tonic-web = "0.14"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
 thiserror.workspace = true
+# `google.protobuf.Duration`, for converting a wire `Span`'s offsets to and
+# from milliseconds. Pinned to the same version telividb-proto builds
+# against, so there is exactly one `prost-types` in the dependency graph.
+prost-types = "0.14"
 # Structured data on a log record is a JSON value, keyed by the `fields::`
 # constants — which a serde derive could not name.
 serde_json = "1"
@@ -27,4 +31,5 @@ tokio-stream = { version = "0.1", features = ["net"] }
 
 [dev-dependencies]
 bytes = "1"
+tempfile = "3"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }

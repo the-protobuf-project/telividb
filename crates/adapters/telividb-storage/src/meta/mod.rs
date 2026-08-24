@@ -1,0 +1,11 @@
+//! Small, mutable, `redb`-backed metadata — today, the graph's edges and the
+//! document service's points.
+
+mod factory;
+mod point_record;
+mod redb_graph_store;
+mod redb_point_store;
+
+pub use factory::{GraphStoreConfig, PointStoreConfig, open_graph_store, open_point_store};
+pub use redb_graph_store::RedbGraphStore;
+pub use redb_point_store::RedbPointStore;

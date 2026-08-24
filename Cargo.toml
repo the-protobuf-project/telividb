@@ -5,6 +5,7 @@ members = [
     "crates/adapters/*",
     "crates/platform/*",
     "crates/bin/*",
+    "app/src-tauri",
     "tools/*",
 ]
 
@@ -24,6 +25,7 @@ repository = "https://github.com/oh-tarnished/telividb"
 
 [workspace.dependencies]
 telividb-core       = { path = "crates/domain/telividb-core" }
+telividb-graph      = { path = "crates/domain/telividb-graph" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }
 telividb-index      = { path = "crates/adapters/telividb-index" }
 telividb-storage    = { path = "crates/adapters/telividb-storage" }
@@ -35,6 +37,13 @@ telividb-proto      = { path = "crates/platform/telividb-proto" }
 # emits telemetry agrees on the version.
 telemetry = { git = "https://github.com/the-protobuf-project/telemetry", tag = "v1.1.0" }
 thiserror = "2"
+# Plan A1.1's in-memory graph (CLAUDE.md rule 47). `Graph`, not `GraphMap`: a
+# GraphMap keys nodes by weight and allows at most one edge per pair, and two
+# points can carry more than one edge type between them.
+petgraph = "0.8"
+# Small mutable metadata — the graph's persisted edges today, meta.redb's
+# other tables later. Pure Rust, ACID, no C dependency (CLAUDE.md invariant 1).
+redb = "4"
 
 # Tests are compiled optimized.
 #

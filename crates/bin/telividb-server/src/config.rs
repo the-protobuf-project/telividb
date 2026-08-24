@@ -56,6 +56,13 @@ pub struct ServerConfig {
     /// where the OTLP pipeline is *enabled*, and reports a refused connection
     /// on every batch. A daemon should set this.
     pub telemetry_config: Option<PathBuf>,
+
+    /// Where collection data lives, one subdirectory per collection.
+    ///
+    /// Relative by default, matching `telemetry_config`'s CWD-relative
+    /// discovery — right for `cargo run` from the repository root, wrong for
+    /// a deployed binary, which should set this explicitly.
+    pub data_dir: PathBuf,
 }
 
 impl Default for ServerConfig {
@@ -73,6 +80,7 @@ impl Default for ServerConfig {
             otlp_addr: None,
             mcap_path: None,
             telemetry_config: None,
+            data_dir: PathBuf::from("./data"),
         }
     }
 }

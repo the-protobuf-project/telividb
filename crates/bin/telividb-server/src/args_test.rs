@@ -96,3 +96,15 @@ fn mcap_recording_stays_opt_in() {
     let config = parse_args(&["--mcap", "/tmp/run.mcap"]).unwrap().unwrap();
     assert_eq!(config.mcap_path.unwrap().to_str().unwrap(), "/tmp/run.mcap");
 }
+
+#[test]
+fn data_dir_defaults_to_a_relative_path_and_is_overridable() {
+    assert_eq!(
+        parse_args(&[]).unwrap().unwrap().data_dir.to_str().unwrap(),
+        "./data"
+    );
+    let config = parse_args(&["--data-dir", "/var/lib/telividb"])
+        .unwrap()
+        .unwrap();
+    assert_eq!(config.data_dir.to_str().unwrap(), "/var/lib/telividb");
+}

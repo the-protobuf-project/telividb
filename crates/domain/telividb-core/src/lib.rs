@@ -8,8 +8,11 @@ pub mod ports;
 pub mod schema;
 
 pub use domain::{
-    ContentRef, Dim, ExternalId, Fingerprint, Metric, Ordinal, ResourceName, Span, Template,
+    ContentRef, Dim, Edge, ExternalId, Fingerprint, Metric, Ordinal, Point, ResourceName, Span,
+    Template,
 };
 pub use error::{Error, Result};
-pub use ports::{PreparedQuery, PreparedState, ScanTier, SchemaReader, VectorStore};
+pub use ports::{
+    GraphStore, PointStore, PreparedQuery, PreparedState, ScanTier, SchemaReader, VectorStore,
+};
 pub use schema::{CollectionSchema, Compatibility, IndexKind, PointType, VectorFieldSpec};

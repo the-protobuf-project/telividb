@@ -228,6 +228,7 @@ jobs:
       - run: cargo test -p telividb-storage --test crash_consistency
       - run: cargo test -p telividb-storage --test buffer_visibility
       - run: cargo test -p telividb-storage --test segment_roundtrip
+      - run: cargo test -p telividb-storage --test graph_roundtrip
       - run: cargo test -p telividb-index  --test telemetry_leaks
       - run: cargo test -p telividb-server --test wiring
 

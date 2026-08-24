@@ -19,6 +19,18 @@ pub enum Error {
         telividb_core::Error,
     ),
 
+    /// A `redb`-backed metadata store failed.
+    ///
+    /// `redb::Error` is itself a superset of every operation-specific error
+    /// the crate defines (database, transaction, table, storage), so this one
+    /// variant covers all of them.
+    #[error("redb: {0}")]
+    Redb(
+        /// The underlying redb failure.
+        #[from]
+        redb::Error,
+    ),
+
     /// The magic bytes did not match. This is not our file.
     #[error("bad magic: expected {expected:?}, found {found:?}")]
     BadMagic {
