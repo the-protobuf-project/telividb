@@ -73,13 +73,21 @@ jobs:
 
       - run: cargo build --workspace --all-targets --target ${{ matrix.target }}
 
-      # Both feature sets, because `--all-features` is *not* a superset of the
-      # default run: it changes which `#[cfg(feature = ...)]` code compiles.
-      # `telividb-index` without `parallel` takes the sequential builder, which
-      # is the configuration every embedded caller gets, and running only
-      # `--all-features` left it compile-checked but never executed.
+      # Both feature sets, because neither is a superset of the other: they
+      # change which `#[cfg(feature = ...)]` code compiles. `telividb-index`
+      # without `parallel` takes the sequential builder, which is the
+      # configuration every embedded caller gets, and without `gpu` it takes
+      # the pure-Rust flat path with no candle in the tree at all (rule 46
+      # keeps that configuration supported, so it has to be *run*, not just
+      # built).
+      #
+      # Deliberately not `--all-features`. The only thing it adds over the
+      # defaults is `cuda`, which pulls `cudarc` and panics in its build script
+      # without `nvcc` on PATH — so on a runner with no CUDA SDK that flag can
+      # only ever fail. CUDA is opt-in by design (rule 46) and is not
+      # CI-verifiable here; it needs a GPU runner to mean anything.
       - run: cargo test --workspace --target ${{ matrix.target }}
-      - run: cargo test --workspace --all-features --target ${{ matrix.target }}
+      - run: cargo test --workspace --no-default-features --target ${{ matrix.target }}
 
   lint:
     name: fmt · clippy
@@ -91,7 +99,10 @@ jobs:
           shared-key: debug
           cache-on-failure: true
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      # Not `--all-features`: see the test job. `cuda` cannot build without the
+      # CUDA SDK, so linting both real configurations is the useful pair.
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
 
   # Structural rules from CLAUDE.md, enforced because rules that depend on
   # discipline decay.
