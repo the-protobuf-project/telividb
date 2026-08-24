@@ -87,6 +87,13 @@ pub(crate) fn announce_device() {
 ///
 /// Called on a signal rather than on a timer: a periodic dump would be noise
 /// on an idle server and would not be there when someone actually needs it.
+///
+/// **Expect this to be empty today, and that is not a bug.** `PointsSvc` opens
+/// a store per request and drops it as the handler returns, so nothing is
+/// long-lived enough to still be registered at shutdown. It starts reporting
+/// real rows once something is *held* — a cached store handle, or a
+/// device-resident index or model, which is what the vector service and the
+/// inference server introduce.
 /// Names are redacted here even though the registry holds them raw — rule 28
 /// governs what reaches a pipeline, and a store path carries its collection's
 /// name, which may be a vault's.
