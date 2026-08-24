@@ -40,8 +40,9 @@ impl Graph {
 
     /// The row every descent starts from.
     ///
-    /// `None` only for an empty graph. It is always a row with a vector —
-    /// see [`Graph::push_absent`] for why that matters.
+    /// `None` for an empty graph and also when every row was added via
+    /// [`Graph::push_absent`] — so a non-empty graph may have no entry point.
+    /// When present, the entry is always a row with a vector for this field.
     pub fn entry(&self) -> Option<Ordinal> {
         self.entry.map(Ordinal::from_row)
     }

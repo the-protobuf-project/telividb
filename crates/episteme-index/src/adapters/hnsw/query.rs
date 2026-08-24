@@ -33,6 +33,15 @@ impl VectorIndex for HnswIndex {
             });
         }
 
+        // Graph and store must cover the same rows, or a graph edge can point at
+        // a row that does not exist in the store — and the visited set cannot be
+        // safely shared either, since it is sized to the store.
+        if self.graph.len() != store.len() {
+            return Err(episteme_core::Error::MalformedIndex {
+                reason: "hnsw graph row count disagrees with the store",
+            });
+        }
+
         let ef = self.params.effective_ef(k);
         let started = Instant::now();
 

@@ -52,14 +52,15 @@ pub async fn serve(config: ServerConfig) -> Result<()> {
         router = router.add_service(reflection);
     }
 
-    announce(&config);
-
     let listener = tokio::net::TcpListener::bind(config.addr)
         .await
         .map_err(|source| Error::Bind {
             addr: config.addr,
             source,
         })?;
+
+    announce(&config);
+
     let incoming = tokio_stream::wrappers::TcpListenerStream::new(listener);
 
     let mut server = tonic::transport::Server::builder();

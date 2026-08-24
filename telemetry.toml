@@ -19,18 +19,6 @@ description = "Multimodal vector and graph database"
 # No `environment` key either — `--environment` always sets it, so a value here
 # could never take effect.
 
-[telemetry]
-# Master switch for the whole OTLP pipeline. Off by default so a developer with
-# no collector running does not get a connection-refused error on every batch.
-# Console logging and MCAP recording are unaffected by this.
-#
-# `--otlp <addr>` turns exporting on from code, which outranks this.
-enabled = false
-
-[telemetry.otlp]
-enabled = false
-endpoint = "localhost:4317"
-
 # Verbosity. This is the setting to reach for, and the reason this file is
 # load-bearing rather than decorative: the server only sets a level when
 # `--log-level` is passed, so with no flag the value here decides.

@@ -186,6 +186,7 @@ fn a_batch_that_raises_the_top_layer_still_links_its_own_layer_zero() {
                 &store,
                 HnswParams {
                     batch_size,
+                    seed,
                     ..Default::default()
                 },
             );
