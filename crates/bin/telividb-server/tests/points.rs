@@ -162,6 +162,7 @@ async fn a_point_carrying_vectors_is_accepted_and_echoes_them_back() {
             point_id: "with-vectors".to_owned(),
             point: Some(Point {
                 vectors: vec![telividb_proto::point::v1::NamedVector {
+                    text: String::new(),
                     field_id: "text_bge".to_owned(),
                     vector: Some(telividb_proto::point::v1::Vector {
                         data: data.into(),

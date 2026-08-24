@@ -65,6 +65,22 @@ pub struct ServerConfig {
     /// Resolving this future begins a graceful shutdown just as ctrl-c does.
     pub shutdown: Option<tokio::sync::oneshot::Receiver<()>>,
 
+    /// GGUF embedding model to hold resident, so callers may send text
+    /// instead of vectors.
+    ///
+    /// `None` means the server accepts pre-computed vectors only, and refuses
+    /// text with a message naming this flag. Off by default because a model is
+    /// hundreds of megabytes of residency a vector-only deployment would never
+    /// use — and because loading one is the sort of thing an operator should
+    /// have asked for.
+    pub model_path: Option<PathBuf>,
+
+    /// Name the model is served under.
+    ///
+    /// A label; the model's real identity is the digest of its file (rule 12),
+    /// which the server computes on load rather than trusting from here.
+    pub model_name: String,
+
     /// Where collection data lives, one subdirectory per collection.
     ///
     /// Relative by default, matching `telemetry_config`'s CWD-relative
@@ -89,6 +105,8 @@ impl Default for ServerConfig {
             mcap_path: None,
             telemetry_config: None,
             shutdown: None,
+            model_path: None,
+            model_name: "default".to_owned(),
             data_dir: PathBuf::from("./data"),
         }
     }

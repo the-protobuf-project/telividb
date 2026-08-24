@@ -77,6 +77,19 @@ impl CandleInferencer {
         names
     }
 
+    /// The digest a resident model actually loaded under.
+    ///
+    /// A caller that registered with [`Fingerprint::unset`] — "whatever this
+    /// file is" — needs this to learn the identity it got, because that digest
+    /// is what a vector field's provenance is bound to (rule 12). Without it,
+    /// the binding could only ever be recorded as "unset", which records
+    /// nothing.
+    ///
+    /// [`Fingerprint::unset`]: telividb_core::Fingerprint::unset
+    pub fn resident_digest(&self, name: &str) -> Option<telividb_core::Fingerprint> {
+        self.models.get(name).map(|m| m.id.fingerprint)
+    }
+
     /// Look up a model, verifying the caller's digest against what is loaded.
     fn resolve(&self, id: &ModelId) -> Result<&ResidentModel> {
         let model = self

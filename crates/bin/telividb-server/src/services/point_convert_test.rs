@@ -29,6 +29,7 @@ fn named_vectors_are_carried_through() {
     let wire = WirePoint {
         name: String::new(),
         vectors: vec![NamedVector {
+            text: String::new(),
             field_id: "text_bge".to_owned(),
             vector: Some(WireVector {
                 data: vec![0u8; 8].into(),
@@ -49,6 +50,7 @@ fn a_vector_without_a_field_id_is_refused() {
     let wire = WirePoint {
         name: String::new(),
         vectors: vec![NamedVector {
+            text: String::new(),
             field_id: String::new(),
             vector: Some(WireVector {
                 data: vec![0u8; 8].into(),

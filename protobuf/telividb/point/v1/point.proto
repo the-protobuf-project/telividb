@@ -70,12 +70,35 @@ message ContentRef {
 }
 
 // One vector, keyed by the field it belongs to.
+//
+// Carries either a vector the caller computed or the text to compute one from.
+// Exactly one of `vector` and `text` must be set; both or neither is rejected.
+//
+// They are separate fields rather than a `oneof` because `vector` already
+// shipped outside one, and moving a field into a oneof is a breaking change to
+// the message's shape even though the bytes on the wire are unchanged.
 message NamedVector {
   // Identifier of the vector field this belongs to.
   string field_id = 1 [(google.api.field_behavior) = REQUIRED];
 
-  // The vector itself.
-  Vector vector = 2 [(google.api.field_behavior) = REQUIRED];
+  // A vector the caller computed.
+  //
+  // Optional only because `text` is the alternative — a request setting
+  // neither is refused.
+  Vector vector = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Text for the server to embed into this field.
+  //
+  // Embedding server-side rather than in the client is the point: one
+  // inference server serves ingest, query encoding and plugin compute alike,
+  // so the model that produced a field's vectors is a property of the server
+  // rather than of whichever client happened to write them. A client with its
+  // own model would be a second, unpoliced path to the same field — and mixed
+  // provenance inside one index degrades recall with nothing reporting it.
+  //
+  // The field must be bound to a model the server holds resident; if it is
+  // not, the request is refused rather than served by whatever is loaded.
+  string text = 3 [(google.api.field_behavior) = OPTIONAL];
 }
 
 // A single indexed item within a collection.

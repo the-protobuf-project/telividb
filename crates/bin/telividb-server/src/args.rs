@@ -26,6 +26,8 @@ OPTIONS:
     --telemetry-config <PATH>
                            Path to telemetry.toml   [default: discovered by CWD]
     --data-dir <PATH>      Where collection data lives [default: ./data]
+    --model <PATH>         GGUF model to hold resident [default: vectors only]
+    --model-name <NAME>    Name to serve the model under [default: default]
     -h, --help             Print this message
 ";
 
@@ -67,6 +69,8 @@ pub fn parse(args: impl Iterator<Item = String>) -> Result<Option<ServerConfig>,
             "--mcap" => config.mcap_path = Some(value.into()),
             "--telemetry-config" => config.telemetry_config = Some(value.into()),
             "--data-dir" => config.data_dir = value.into(),
+            "--model" => config.model_path = Some(value.into()),
+            "--model-name" => config.model_name = value,
             "--environment" => config.environment = environment_of(&value)?,
             "--log-level" => config.log_level = Some(log_level_of(&value)?),
             other => return Err(format!("unknown flag {other}")),

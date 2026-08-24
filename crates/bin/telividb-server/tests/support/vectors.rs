@@ -94,6 +94,7 @@ pub fn wire_vector(values: &[f32]) -> Vector {
 pub fn point_with(values: &[f32]) -> Point {
     Point {
         vectors: vec![NamedVector {
+            text: String::new(),
             field_id: FIELD.to_owned(),
             vector: Some(wire_vector(values)),
         }],

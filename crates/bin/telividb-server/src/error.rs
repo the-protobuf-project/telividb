@@ -3,6 +3,17 @@
 /// Failures starting or running the server.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// A configured embedding model could not be loaded.
+    ///
+    /// Fatal rather than degrading to vector-only: an operator who passed
+    /// `--model` expects text to work, and a server that quietly dropped the
+    /// capability would refuse every text request while reporting healthy.
+    #[error("could not load the embedding model {0}")]
+    Model(
+        /// Path and the underlying failure.
+        String,
+    ),
+
     /// The listen address could not be bound.
     #[error("bind {addr}: {source}")]
     Bind {

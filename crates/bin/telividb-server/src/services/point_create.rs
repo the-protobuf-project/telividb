@@ -36,7 +36,12 @@ pub(super) async fn create_point(
         fields::RESOURCE: redact::resource_token(name.as_str()),
     }));
 
-    let point = to_domain(name, req.point.unwrap_or_default())?;
+    // Text becomes a vector *before* the domain conversion, so everything
+    // downstream sees a point that carries vectors and nothing has to know
+    // that some of them started as text.
+    let mut wire = req.point.unwrap_or_default();
+    svc.embeddings.resolve_point(&mut wire).await?;
+    let point = to_domain(name, wire)?;
 
     // Storage is synchronous: redb commits, WAL fsyncs and mmap'd segment
     // reads all block. Running them on a tonic executor thread would stall

@@ -6,6 +6,7 @@ license.workspace = true
 
 [dependencies]
 telividb-core.workspace = true
+telividb-embed.workspace = true
 telividb-index.workspace = true
 telividb-proto.workspace = true
 telividb-storage.workspace = true
