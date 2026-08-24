@@ -407,96 +407,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "episteme-core"
-version = "0.1.0"
-dependencies = [
- "sha2",
- "thiserror 2.0.20",
-]
-
-[[package]]
-name = "episteme-distance"
-version = "0.1.0"
-dependencies = [
- "episteme-core",
-]
-
-[[package]]
-name = "episteme-index"
-version = "0.1.0"
-dependencies = [
- "episteme-core",
- "episteme-distance",
- "episteme-telemetry",
- "mcap",
- "rayon",
- "serde_json",
- "telemetry",
- "tempfile",
- "tokio",
-]
-
-[[package]]
-name = "episteme-proto"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "prost",
- "prost-types",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
-name = "episteme-server"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "episteme-core",
- "episteme-index",
- "episteme-proto",
- "episteme-storage",
- "episteme-telemetry",
- "serde_json",
- "thiserror 2.0.20",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-health",
- "tonic-reflection",
- "tonic-web",
-]
-
-[[package]]
-name = "episteme-storage"
-version = "0.1.0"
-dependencies = [
- "crc32fast",
- "episteme-core",
- "episteme-distance",
- "episteme-index",
- "episteme-telemetry",
- "half",
- "serde_json",
- "telemetry",
- "tempfile",
- "thiserror 2.0.20",
-]
-
-[[package]]
-name = "episteme-telemetry"
-version = "0.1.0"
-dependencies = [
- "episteme-core",
- "mcap",
- "serde",
- "telemetry",
- "tempfile",
- "thiserror 2.0.20",
- "tokio",
-]
-
-[[package]]
 name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1911,6 +1821,96 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "telividb-core"
+version = "0.1.0"
+dependencies = [
+ "sha2",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "telividb-distance"
+version = "0.1.0"
+dependencies = [
+ "telividb-core",
+]
+
+[[package]]
+name = "telividb-index"
+version = "0.1.0"
+dependencies = [
+ "mcap",
+ "rayon",
+ "serde_json",
+ "telemetry",
+ "telividb-core",
+ "telividb-distance",
+ "telividb-telemetry",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
+name = "telividb-proto"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "prost",
+ "prost-types",
+ "tonic",
+ "tonic-prost",
+]
+
+[[package]]
+name = "telividb-server"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "serde_json",
+ "telividb-core",
+ "telividb-index",
+ "telividb-proto",
+ "telividb-storage",
+ "telividb-telemetry",
+ "thiserror 2.0.20",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-health",
+ "tonic-reflection",
+ "tonic-web",
+]
+
+[[package]]
+name = "telividb-storage"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "half",
+ "serde_json",
+ "telemetry",
+ "telividb-core",
+ "telividb-distance",
+ "telividb-index",
+ "telividb-telemetry",
+ "tempfile",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "telividb-telemetry"
+version = "0.1.0"
+dependencies = [
+ "mcap",
+ "serde",
+ "telemetry",
+ "telividb-core",
+ "tempfile",
+ "thiserror 2.0.20",
+ "tokio",
 ]
 
 [[package]]

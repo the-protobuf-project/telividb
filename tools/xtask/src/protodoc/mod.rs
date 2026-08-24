@@ -27,7 +27,7 @@ use std::process::ExitCode;
 const PROTO_ROOT: &str = "protobuf";
 
 /// Import prefix identifying a module local to this repository.
-const LOCAL_PREFIX: &str = "episteme/";
+const LOCAL_PREFIX: &str = "telividb/";
 
 /// Generate the documentation, or verify it is current.
 pub fn run(check_only: bool) -> ExitCode {

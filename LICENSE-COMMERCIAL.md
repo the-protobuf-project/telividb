@@ -1,16 +1,16 @@
 # Commercial licence
 
-episteme is dual-licensed.
+telividb is dual-licensed.
 
 | You are | Your licence | Cost |
 |---|---|---|
 | Building open-source software whose licence is compatible with AGPL-3.0 | [AGPL-3.0-or-later](./LICENSE) | Free, forever |
 | Building proprietary or closed-source software | Commercial licence | Paid |
-| Embedding episteme in a product you distribute without source | Commercial licence | Paid |
-| Offering episteme, or a service built on it, over a network without publishing your source | Commercial licence | Paid |
+| Embedding telividb in a product you distribute without source | Commercial licence | Paid |
+| Offering telividb, or a service built on it, over a network without publishing your source | Commercial licence | Paid |
 
 The client SDKs and the `.proto` definitions are **Apache-2.0**, so writing a
-proprietary application that *talks to* an episteme server needs no commercial
+proprietary application that *talks to* an telividb server needs no commercial
 licence. The distinction is linking against or modifying the engine itself.
 
 ---
@@ -27,18 +27,18 @@ people building on top of it commercially without giving anything back.**
 
 ## What the AGPL asks of you
 
-Section 13 is the part most people have not read. If you modify episteme and let
+Section 13 is the part most people have not read. If you modify telividb and let
 users interact with it over a network, you must offer those users the source of
 your modified version — even if you never distribute a binary. That closes the
 gap the plain GPL leaves open for hosted services, and it is deliberate.
 
-Note that **static linking counts.** episteme is designed to be embedded, and a
+Note that **static linking counts.** telividb is designed to be embedded, and a
 Rust binary that links the engine is a derived work. If that binary is
 proprietary, you need a commercial licence.
 
 ## What a commercial licence grants
 
-- The right to embed, modify and distribute episteme in closed-source products
+- The right to embed, modify and distribute telividb in closed-source products
 - No obligation to publish your source under Section 13
 - Terms negotiated per deployment: seats, nodes, redistribution, support
 

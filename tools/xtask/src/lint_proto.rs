@@ -26,7 +26,7 @@ use std::path::Path;
 use std::process::{Command, ExitCode};
 
 /// Import prefix identifying files this repository owns.
-const OWNED: &str = "episteme/";
+const OWNED: &str = "telividb/";
 
 /// The api-linter version CI runs, kept in step with `.github/workflows/api-lint.yml`.
 ///
@@ -59,7 +59,7 @@ pub fn run() -> ExitCode {
         return ExitCode::FAILURE;
     }
 
-    let export = std::env::temp_dir().join("episteme-proto-lint");
+    let export = std::env::temp_dir().join("telividb-proto-lint");
     let _ = std::fs::remove_dir_all(&export);
     if let Err(e) = std::fs::create_dir_all(&export) {
         eprintln!("lint-proto: cannot create {}: {e}", export.display());

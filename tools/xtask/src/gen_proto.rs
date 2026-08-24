@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::process::{Command, ExitCode};
 
 /// Where `buf generate` writes, and what `--check` compares.
-const GENERATED: &str = "crates/episteme-proto/src/generated";
+const GENERATED: &str = "crates/platform/telividb-proto/src/generated";
 
 /// Run `buf` to regenerate, or verify the committed output is current.
 pub fn run(check_only: bool) -> ExitCode {

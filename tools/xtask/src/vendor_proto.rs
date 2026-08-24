@@ -48,7 +48,7 @@ pub fn run() -> ExitCode {
     }
 
     // Drop our own files; only the dependencies are wanted here.
-    let _ = std::fs::remove_dir_all(deps.join("episteme"));
+    let _ = std::fs::remove_dir_all(deps.join("telividb"));
 
     let mut count = 0usize;
     count_protos(&deps, &mut count);

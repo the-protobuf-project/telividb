@@ -1,0 +1,25 @@
+[package]
+name = "telividb-telemetry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# The ecosystem's telemetry stack: structured logging, OpenTelemetry traces and
+# metrics, and MCAP recording behind one builder. CLAUDE.md rule 41 makes this
+# the pipeline — there is no second one, and no facade in front of it.
+#
+# Pinned to a tag rather than a branch, so a push upstream cannot change this
+# build.
+telemetry.workspace = true
+serde = { version = "1", features = ["derive"] }
+thiserror.workspace = true
+
+[dev-dependencies]
+telividb-core.workspace = true
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tempfile = "3"
+# MCAP message payloads are zstd-compressed, so a substring search over the
+# raw file only ever sees schema metadata. Reading the recording properly is
+# what stops the leak assertions passing vacuously.
+mcap = "0.24"

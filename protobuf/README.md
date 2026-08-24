@@ -6,6 +6,6 @@ One package per resource, each in its own versioned directory. Files within a pa
 
 | Module | Package | Services | Messages | Enums |
 | --- | --- | ---: | ---: | ---: |
-| [Collection](episteme/collection/README.md) | `episteme.collection.v1` | 1 | 7 | 3 |
-| [Point](episteme/point/README.md) | `episteme.point.v1` | 1 | 20 | 0 |
+| [Collection](telividb/collection/README.md) | `telividb.collection.v1` | 1 | 7 | 3 |
+| [Point](telividb/point/README.md) | `telividb.point.v1` | 1 | 20 | 0 |
 

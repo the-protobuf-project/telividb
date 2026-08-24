@@ -10,20 +10,38 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-**episteme** — a single-node, embedded-or-served **vector database** written in Rust, with a
-gRPC API as the primary interface. Two things distinguish it from the field:
+**telividb** — a single-node, embedded-or-served **vector database** written in Rust, with a
+gRPC API as the primary interface. Three things distinguish it from the field:
 
-1. **Bring your own embedding model.** Models load from **GGUF** files, described by a config
-   file. Inference runs on whatever hardware is present — Metal, CUDA, Jetson, Intel, plain CPU —
-   without recompiling the database.
-2. **Bring your own search algorithm.** ANN indexes are pluggable behind a trait. Flat, HNSW and
-   IVF-PQ ship in-tree; a user-supplied index is a first-class citizen.
+1. **Bring your own embedding model — GGUF via `candle`, and nothing else.** Models load from
+   **GGUF** files, described by a config file. Inference runs on whatever hardware is present —
+   Metal, CUDA, plain CPU SIMD — without recompiling the database. There is deliberately no
+   second inference runtime: ONNX Runtime (`ort`) was evaluated and rejected for this project.
+   Where candle genuinely has no path for a model (voice speaker embedding is the current
+   example), the answer is "not yet," routed through the narrow `RemoteEmbedder` escape hatch —
+   never a second local backend.
+2. **Bring your own search algorithm.** ANN indexes are pluggable behind a trait. Flat, HNSW
+   (`instant-distance`) and IVF-PQ ship in-tree, pure Rust, no C FFI on the hot path; a
+   user-supplied index is a first-class citizen.
+3. **Every embedding call, every plugin's compute step, and every query-time encode goes through
+   one inference server.** It is core, not an adapter a plugin can route around — see invariants
+   42–45.
 
 Plan A is the vector store. Plan A1.1 layers a property graph over the same storage so the
 system becomes a **graph + embedding database** for GraphRAG-style retrieval.
 
-MCP access already exists on the user's side. **Do not build, scaffold, or "helpfully add" an
-MCP server here** unless explicitly asked. gRPC is the contract; MCP consumes it.
+**Policy enforcement is not deferred.** `regorus` runs for real from the first vertical slice —
+both at the query planner (rule 15) and at the inference-server boundary (rule 44). The first two
+reference plugins built against this codebase are a voice-transcription slice and an OCEAN
+personality-inference slice; the second exists specifically to force permission enforcement to be
+real rather than assumed, since its output fields are sensitive-category data from the moment
+they're written.
+
+MCP has two directions in this project, and neither is a casual addition. **Emitting** an MCP
+surface is generated from the descriptor set (`protoc-gen-mcp`) — never hand-built. **Consuming**
+an external MCP server is an ordinary `SourceReader`-backed source plugin, same as any other
+connector. **Do not hand-roll a bespoke MCP bridge outside those two paths** unless explicitly
+asked — that is the thing this rule has always forbidden, not either generated/standard path.
 
 ---
 
@@ -31,10 +49,11 @@ MCP server here** unless explicitly asked. gRPC is the contract; MCP consumes it
 
 Violating any of these is a bug, not a style preference.
 
-1. **The database is 100% Rust.** No C or C++ in `episteme-core`, `-storage`, `-index`,
+1. **The database is 100% Rust.** No C or C++ in `telividb-core`, `-storage`, `-index`,
    `-distance`, `-query`, `-graph`, `-server`. The *only* sanctioned FFI is the optional
-   llama.cpp embedding backend, quarantined in its own crate behind a non-default feature.
-   No CMake, no CUDA SDK.
+   llama.cpp transcription backend (`whisper.cpp`, quarantined for the voice slice) and the
+   optional FAISS index backend (rule 46) — both behind non-default features. No CMake, no CUDA
+   SDK beyond what `candle-cuda` itself requires.
 
    **One carve-out, recorded rather than hidden:** the mandated telemetry stack depends on MCAP,
    which depends on lz4, which builds with `cc`. MCAP is not optional there, so a C compiler is
@@ -71,12 +90,13 @@ Violating any of these is a bug, not a style preference.
 12. **Each named vector field is bound to one embedding model identity.** Name, GGUF hash, dim,
     pooling, normalization, prefix scheme, and the query-side encoder. Ingesting vectors from a
     different model into a field is rejected unless explicitly overridden. Mixed provenance
-    degrades recall silently, which is the worst failure mode available.
+    degrades recall silently, which is the worst failure mode available. A model identity is
+    always a GGUF hash under this codebase — there is no `format` alternative to check.
 13. **No file exceeds 200 lines.** Including doc comments. Enforced by `cargo xtask check-len` in
     CI, not by good intentions. See *Code structure* below for how tests stay near the code.
 14. **Ports point inward; adapters plug in from outside.** Domain logic never names a concrete
     adapter. Every extension point is a trait in an inner crate, implemented in an outer one, and
-    wired exactly once in `episteme-server`.
+    wired exactly once in `telividb-server`.
 15. **Authorization is a mandatory filter, never a post-filter.** A principal's visibility
     predicate is ANDed into the query *before* the index runs. Searching first and discarding
     afterwards leaks the existence, count and ranking of rows the caller cannot see. Fail closed:
@@ -92,38 +112,41 @@ Violating any of these is a bug, not a style preference.
     returns plausible garbage rather than an error.
 19. **The database stores content references, not media.** URI + range + hash. Blobs stay outside;
     media decoding (ffmpeg, resampling, frame extraction) never enters the core crates.
-20. **Never embed what must stay secret.** Sensitive spans are redacted *before* the embedder, not
-    after. A vector computed from secret text leaks that text no matter what guards the payload,
-    and no cryptography available to this project undoes that. Redaction is the control; see
-    AGENT_START.md §10.2.
+20. **Never embed what must stay secret.** Sensitive spans are redacted *before* they reach the
+    inference server, not after. A vector computed from secret text leaks that text no matter what
+    guards the payload, and no cryptography available to this project undoes that. Redaction is
+    the control; see AGENT_START.md §10.2.
 21. **Plugins never bypass policy.** A plugin runs as a principal with grants like any other caller.
     There is no plugin-privileged path, and a connector never receives `read_vector` by default.
 22. **Index and distance extensions are compile-time, permanently.** A WASM boundary crossing per
     distance computation would dominate every query. "Bring your own search algorithm" is served by
-    publishing episteme as a **crate** — depend on it, implement `VectorIndex`, build your binary.
+    publishing telividb as a **crate** — depend on it, implement `VectorIndex`, build your binary.
 23. **A source plugin is a `SourceReader`, not a parallel ingest path.** It emits the same record
     stream bulk import already consumes, inheriting jobs, checkpoints, resume and rejects. If plugin
-    ingest needs new failure machinery, the design has drifted.
+    ingest needs new failure machinery, the design has drifted. This applies identically whether the
+    source is a bespoke API, a filesystem, or an external MCP server (see "What this is").
 24. **Plugins compute; apps compose.** The app layer is declarative — a manifest and a DAG, never
     arbitrary code. The moment an app can execute logic, it is a plugin and the layer is pointless.
 25. **"Vault" names a cryptographic guarantee, never an ACL.** A collection with an owner predicate
     is a *private collection*. Only a key-wrapped collection is a vault, and only a client-held key
-    makes it *sealed*. Never let product language outrun the actual guarantee (ARCHITECTURE §7.1).
+    makes it *sealed*. Never let product language outrun the actual guarantee (ARCHITECTURE §8.1).
 26. **Auto-vault classification is monotonic.** A classifier may only move content *into* a vault,
     never out. That direction is fail-secure, which is the only reason a probabilistic model is
-    permitted anywhere near this boundary.
+    permitted anywhere near this boundary. Any newly declared sensitive-category field (e.g. an
+    inferred personality/trait score) defaults to vault-eligible at schema-authoring time, not
+    after the fact.
 27. **A locked vault is reported, not silently skipped.** It sets `complete = false` and names the
     locked vault. A user must be able to tell "no results" from "no results you can currently see".
 28. **Telemetry never emits a vector, a payload, or a vault name.** Logs land in systems with
     weaker access control than the database and are read by people granted nothing. A query vector
     in a log is `read_vector` for anyone with log access — and it can be inverted toward its source
     text. Emit shape (`dim=768`), never values. Enforced by
-    `crates/episteme-index/tests/telemetry_leaks.rs`.
+    `crates/telividb-index/tests/telemetry_leaks.rs`.
 29. **Metric labels are bounded; spans carry the rest.** Segment ids, generations, job ids,
     principals and resource names are span fields, never metric labels — as labels they multiply
     time series without limit and take the monitoring system down. `fields::LABEL_SAFE` is the
     allowlist, and a test enforces it.
-30. **Field and metric names are constants from `episteme-telemetry`.** A span keyed `collection`
+30. **Field and metric names are constants from `telividb-telemetry`.** A span keyed `collection`
     in one crate and `collection_name` in another cannot be joined, and nothing surfaces the
     mistake until someone tries to query the data.
 31. **Library crates get facades only.** `tracing` and `metrics` compile to near-nothing with no
@@ -144,13 +167,16 @@ Violating any of these is a bug, not a style preference.
     nobody can reconstruct from the code.
 33. **A probabilistic classifier never gates a security boundary.** Regex, NER and schema-declared
     sensitivity are the enforcement layer. An LLM may *propose* labels for approval, never
-    authorize on its own — a 98%-accurate detector leaks 2% silently and forever.
+    authorize on its own — a 98%-accurate detector leaks 2% silently and forever. This applies to
+    the OCEAN reference plugin's output exactly as it applies to redaction: the model proposes
+    trait scores, it never grants itself a permission scope.
 34. **One visibility predicate, every access path.** A row reached by graph traversal is checked by
     the same predicate as a row reached by top-k. Never write a second authorization path for the
     graph; two systems that must agree are how leaks happen.
 35. **`PolicyEngine` returns a predicate, not a boolean.** `Decision { effect, row_predicate,
     field_mask }`. A boolean-returning port cannot express row-level visibility and cannot be
-    retrofitted cheaply. This holds no matter which engine backs it — built-in, OPA/Rego, Cedar.
+    retrofitted cheaply. The shipped adapter is `regorus`; this holds regardless of which engine
+    backs the trait.
 36. **Policy is resolved once per query, never per row.** The engine produces a `VisibilityContext`
     that compiles to a bitmap, cached on `(principal, collection, policy_version)`. Calling a
     policy engine inside a traversal or scan loop is a correctness-of-design failure, not a
@@ -200,11 +226,11 @@ Violating any of these is a bug, not a style preference.
 
     This is safe in a library crate because emission is a no-op until a composition root builds
     the pipeline: `logger::` checks a `OnceLock` and returns, and a `Meter` defaults to disabled.
-    `episteme-storage` and `episteme-index` stay synchronous, benchable and embeddable.
+    `telividb-storage` and `telividb-index` stay synchronous, benchable and embeddable.
 
     **Metrics need a handle.** `telemetry::Metrics` records through `&mut self` and the stack
-    exposes no global for it. Since every episteme call site that records sits behind `&self`,
-    the recorder is shared as an `episteme_telemetry::Meter` — construct one from the pipeline in
+    exposes no global for it. Since every telividb call site that records sits behind `&self`,
+    the recorder is shared as an `telividb_telemetry::Meter` — construct one from the pipeline in
     the composition root and pass it in (`with_meter`). A default `Meter` records nothing, which
     is what every test and benchmark uses. Note the stack's metrics take **no attributes**: a
     dimension like index kind travels on the log record, not as a metric label.
@@ -230,37 +256,152 @@ Violating any of these is a bug, not a style preference.
     clean shutdown must not treat that as fatal; and the stack installs a *global* logger, so a
     test binary gets exactly one `install` and must share its result rather than installing per
     test.
+42. **Inference is GGUF-via-candle only — no second runtime, ever.** `telividb-embed` has exactly
+    one model-execution adapter: `candle-core`/`candle-nn` dispatched to `candle-metal` or
+    `candle-cuda`. Do not add an `ort`/ONNX adapter, a TensorRT path, or an OpenVINO path to this
+    crate under any justification ("just for this one model," "just as a fallback") — that
+    reintroduces a second C++ dependency tree and a second hardware-backend surface this project
+    explicitly rejected. If a model has no candle path, it is out of scope for local inference;
+    the only sanctioned exception is `RemoteEmbedder`, a declared network call with the same
+    provenance tracking as a local model (rule 12), never a second in-process runtime.
+43. **No plugin loads a model file directly.** A `transform`/`rerank`/`embedder`-kind plugin
+    manifest declares a pinned GGUF reference (`[model]` block: path, sha256) and calls the
+    inference server with it; the plugin process itself never opens a `.gguf` file or touches a
+    GPU handle. This is what makes plugin sandboxing (rule 21) actually hold for compute
+    plugins — a plugin that has no model-loading code cannot exceed its declared reference no
+    matter what it's compromised into doing. `kind = "source"` plugins are exempt: they move
+    records, they do not compute, so they carry no `[model]` block.
+44. **The inference server checks policy before it runs a model, not only before results return.**
+    A call into the inference server that would process data behind a `vector.<field>` permission
+    scope is evaluated by `regorus` first (same `PolicyEngine` port as rule 35, a second call
+    site). This is a stronger guarantee than the query-planner check alone: it stops a plugin from
+    ever producing a vector or a score for data it wasn't granted, rather than only hiding the
+    output afterward.
+45. **The inference server holds multiple GGUF models resident at once; nothing swaps per call.**
+    Do not write a code path that assumes "load model, run, unload" — that defeats the batching
+    that makes GPU inference worth having in-process, and the OCEAN reference plugin alone needs
+    an embedder and a scoring model live simultaneously. VRAM budgeting across resident models is
+    an open design question (AGENT_START.md / ARCHITECTURE §15 Gap 22) — flag it, don't silently
+    assume unlimited headroom.
+46. **The default vector index is pure Rust; a C++-backed index is opt-in and never default.**
+    `instant-distance` (HNSW) plus a hand-rolled flat/IVF-PQ path are the shipped defaults. FAISS,
+    if it is ever wired in, lives behind a non-default `faiss-index` feature — it is not a
+    fallback that silently activates, and it is never the crate a fresh `cargo build --workspace`
+    pulls in. The index is the highest-frequency call in the system (rule 22); a C++ FFI boundary
+    there is the single worst place to introduce one.
+47. **The in-memory graph is rehydrated, not its own persisted format.** `telividb-graph` wraps
+    `petgraph`, built in memory from `telividb-storage`'s edge records on collection load. This is
+    a stated v1 capacity ceiling — very large, dense-edge collections become RAM-bound before the
+    vector side does — not an oversight to "just fix" with a quick patch. If a workload needs
+    more, that is a persisted-CSR design conversation (propose, get agreement, then implement —
+    see *Working style*), not a silent local optimization.
+48. **A point's time-to-live expires through the same tombstone-then-compaction path as an
+    explicit delete, never a second mechanism.** TTL (`telividb.v1.ttl`) is a trigger, not new
+    machinery: on expiry, tombstone immediately (so the query planner excludes it right away) and
+    let the existing forced-compaction purge path (rule 9's neighbor, hard delete) physically
+    remove it later.
+49. **A locked vault, a policy denial, and an inference-server refusal are all reported, never
+    silently absorbed into "no results."** Rule 27 already covers the locked-vault case; the same
+    posture extends to the inference-server's pre-check in rule 44 — a caller whose request was
+    refused by policy at the inference boundary gets a distinguishable error, not a quietly empty
+    result.
+50. **`protobuf/annotations/` never contains a business resource; `protobuf/schemas/` never
+    defines a facet option.** The `telividb.v1` vocabulary (`point`, `vector`, `edge`, `span`,
+    `content_ref`, `redact`, `ttl`) lives exclusively under `protobuf/annotations/telividb/v1/`.
+    Every collection schema — voice, OCEAN, any plugin's own `.proto` — lives under
+    `protobuf/schemas/` (or the plugin's own repo) and *imports* the annotations, never the other
+    way. A message that is both a `google.api.resource` and a facet-option definition in the same
+    file is a sign the split has been violated; split the file instead of arguing the exception.
+51. **A crate under `crates/domain/` or `crates/adapters/` must build and pass its tests with only
+    its declared `Cargo.toml` dependencies — never an implicit path back into `telividb-server` or
+    a sibling crate's private internals.** `cargo xtask check-layers` enforces this in CI. This is
+    what makes "publish `telividb-storage` on its own" a real option rather than an aspiration —
+    the crate groupings in *Workspace layout* exist specifically so this boundary has an obvious
+    place to be checked.
 
 ---
 
 ## Workspace layout
 
 ```
-episteme/
+telividb/
 ├─ Cargo.toml                 # workspace root
-├─ protobuf/                  # .proto files — the API source of truth
+├─ protobuf/
+│  ├─ annotations/            # the FACET VOCABULARY ONLY — telividb.v1 — never a business schema.
+│  │  └─ telividb/v1/         # point.proto, vector.proto, edge.proto, span.proto,
+│  │                          # content_ref.proto, redact.proto, ttl.proto (ARCHITECTURE §2.2, §18)
+│  ├─ schemas/                # collection schemas that USE the annotations — one package per domain
+│  │  ├─ voice/v1/            # voice.proto — the voice reference slice (ARCHITECTURE §16.2)
+│  │  └─ ocean/v1/            # ocean.proto — the OCEAN reference slice (ARCHITECTURE §16b)
+│  ├─ buf.yaml
+│  └─ buf.gen.yaml
 ├─ xtask/                     # dev tooling; owns the file-length + layering checks
 ├─ crates/
-│  ├─ episteme-core/          # ontology: ids, domain types, errors, config schema
-│  ├─ episteme-distance/      # SIMD distance kernels + runtime dispatch
-│  ├─ episteme-storage/       # segments, WAL, manifest, mmap, quantization codecs
-│  ├─ episteme-index/         # VectorIndex port; flat, hnsw, ivfpq adapters
-│  ├─ episteme-query/         # filter evaluation, query planner
-│  ├─ episteme-telemetry/     # span/metric vocabulary, redaction, subscriber wiring
-│  ├─ episteme-policy/        # authz: principals, roles, grants, policy evaluation
-│  ├─ episteme-io/            # bulk import/export: archive format, jobs, readers, rejects
-│  ├─ episteme-embed/         # Embedder port, GGUF loader, candle adapter
-│  ├─ episteme-embed-llama/   # OPTIONAL FFI adapter (feature = "llama")
-│  ├─ episteme-graph/         # Plan A1.1 — property graph + traversal
-│  ├─ episteme-proto/         # buf-generated, committed; no build script
-│  ├─ episteme-ui/            # embedded web assets (rust-embed) + HTTP handlers
-│  ├─ episteme-server/        # binary: composition root, gRPC services, observability
-│  └─ episteme-client/        # Rust SDK
+│  ├─ domain/                 # pure business logic. No I/O, no tokio, no file handles, no adapters.
+│  │  ├─ telividb-core/       # ontology: ids, domain types, errors, config schema
+│  │  ├─ telividb-query/      # filter evaluation, query planner
+│  │  └─ telividb-graph/      # Plan A1.1 — petgraph-backed property graph + traversal (rule 47)
+│  ├─ adapters/                # replaceable implementations of a domain port. I/O-shaped, boring.
+│  │  ├─ telividb-storage/    # segments, WAL, manifest, mmap, redb metadata, quantization codecs
+│  │  ├─ telividb-index/      # flat + instant-distance HNSW + ivfpq
+│  │  │                       # (FAISS, if wired at all, behind a non-default feature — rule 46)
+│  │  ├─ telividb-distance/   # SIMD distance kernels + runtime dispatch
+│  │  ├─ telividb-embed/      # inference server: Inferencer port, GGUF loader, ONE adapter (candle)
+│  │  │                       # GPU-resident, multi-model, batched — the sole call path for
+│  │  │                       # ingest embedding, query_encoder, and every plugin's compute step
+│  │  ├─ telividb-embed-llama/# OPTIONAL FFI adapter for whisper.cpp transcription (feature="llama")
+│  │  ├─ telividb-policy/     # authz: principals, roles, grants, regorus-backed evaluation
+│  │  └─ telividb-io/         # bulk import/export: archive format, jobs, readers, rejects
+│  ├─ platform/                # cross-cutting concerns no single domain/adapter crate owns
+│  │  ├─ telividb-telemetry/  # span/metric vocabulary, redaction, subscriber wiring
+│  │  ├─ telividb-proto/      # buf-generated from protobuf/, committed; no build script
+│  │  └─ telividb-ui/         # embedded web assets (axum + rust-embed) + declarative panel handlers
+│  └─ bin/                     # composition roots — the only place adapters get chosen and wired
+│     ├─ telividb-server/     # binary: gRPC services, observability
+│     └─ telividb-client/     # Rust SDK
 ├─ sdk/{python,typescript}/   # generated clients
-├─ ui/                        # UI source; built assets baked into episteme-ui
+├─ ui/                        # UI source; built assets baked into telividb-ui
 ├─ benches/                   # criterion/divan benchmarks + recall harness
 └─ docs/
 ```
+
+**Plugins live in a separate repo, `telividb-plugins`, not under this tree.** That repo is its own
+small Cargo workspace — `voice/` and `ocean/` today, any future first-party plugin alongside them
+— and it depends on this repo only through what's actually public: the published
+`protobuf/annotations/telividb/v1` module and the `SourceReader`/manifest contract (ARCHITECTURE
+§10.2, §10.5), never a path back into `crates/`. That boundary is the point: a plugin author with
+no access to this repo at all must be able to build the same thing `telividb-plugin-ocean` is,
+using only what's published. If a change to a plugin ever requires touching a crate under
+`crates/`, the plugin/core boundary has leaked and the fix belongs in the annotation vocabulary or
+the `SourceReader` port, not in a special case for that plugin.
+
+**Annotations are never mixed with business schemas.** `protobuf/annotations/telividb/v1/` holds
+only the facet vocabulary itself (the `point`, `vector`, `edge`, `span`, `content_ref`, `redact`,
+and `ttl` options referenced throughout ARCHITECTURE.md §2.2) — it defines *how* to annotate a
+schema, and it must never contain a message that is itself a collection resource. Every actual
+domain schema — the voice slice, the OCEAN slice, and any future plugin's `.proto` — lives under
+`protobuf/schemas/<domain>/v1/`, imports the annotations package, and never the reverse. This
+answers ARCHITECTURE §18's open question ("where does `telividb.v1` live, exactly?") for this
+codebase: in this repo, under `protobuf/annotations/`, published to buf from there, kept
+importable by a plugin's own out-of-tree `.proto` without pulling in any business schema.
+
+**The `crates/` grouping mirrors the domain/ports/adapters split (see *Code structure* below) one
+level up.** `domain/` crates depend on nothing outward and contain the logic that would still be
+correct on a whiteboard with no database attached; `adapters/` crates are the replaceable,
+I/O-shaped implementations of the ports `domain/` defines; `platform/` is the handful of
+cross-cutting concerns (telemetry, generated proto code, the embedded UI) that don't belong to one
+domain concept; `bin/` is where everything gets wired together and nowhere else. This is not
+cosmetic directory tidiness — it is what makes the crates under `domain/` and `adapters/`
+independently publishable.
+
+**Every crate under `domain/` and `adapters/` is designed to be published standalone**, under the
+`telividb` GitHub org, for reuse outside this server binary — `telividb-storage` or
+`telividb-policy` should be usable by a project that wants a segment-based mmap store or a
+`regorus`-backed row-visibility engine and nothing else from this codebase. This is why the
+ports-and-adapters discipline (rule 14, and *Code structure* below) is enforced rather than
+aspirational: a crate that quietly depends on `telividb-server` internals cannot be published
+alone, so that dependency direction is checked in CI (`cargo xtask check-layers`), not just
+documented.
 
 Dependencies point **inward, toward `core`**. `core` depends on nothing in the workspace and
 knows about no I/O. `server` is the composition root — the only place adapters are chosen and
@@ -278,7 +419,7 @@ new capability later means adding a file, not editing ten.
 **Three layers per crate:**
 
 ```
-crates/episteme-index/src/
+crates/telividb-index/src/
 ├─ lib.rs                 # re-exports only, ~20 lines
 ├─ domain/                # pure types + logic. No I/O, no tokio, no file handles.
 │  ├─ mod.rs
@@ -289,7 +430,7 @@ crates/episteme-index/src/
 │  └─ vector_index.rs
 └─ adapters/              # implementations, one per directory
    ├─ flat/
-   ├─ hnsw/
+   ├─ hnsw/                # instant-distance
    └─ ivfpq/
 ```
 
@@ -297,8 +438,11 @@ crates/episteme-index/src/
 `adapters` are replaceable and, ideally, boring.
 
 **The ports.** These are the extension points; treat them as the system's real API:
-`VectorStore`, `VectorIndex`, `BlockReader`, `Embedder`, `SourceReader`, `ArchiveWriter`,
+`VectorStore`, `VectorIndex`, `BlockReader`, `Inferencer`, `SourceReader`, `ArchiveWriter`,
 `JobStore`, `PolicyEngine`, `GraphStore`. Adding an adapter must never require touching `core`.
+Note `Inferencer` replaced the older `Embedder` naming to make clear it is one port serving
+ingest, query-time encoding, and plugin compute alike (rules 42–45) — it is not "the embedding
+crate's trait," it is the single compute boundary for the whole system.
 
 ### The 200-line rule
 
@@ -321,7 +465,7 @@ Every `.rs` file stays under 200 lines, doc comments included. Consequences wort
   each holding one function, where the reader can no longer follow a thought. If a file is over
   the limit and there is no meaningful seam, that is a signal the abstraction is wrong — fix the
   design rather than slicing the file at line 200.
-- Generated code (`episteme-proto`) and vendored fixtures are exempt; the checker skips
+- Generated code (`telividb-proto`) and vendored fixtures are exempt; the checker skips
   `OUT_DIR` and anything marked `@generated`.
 
 ---
@@ -332,16 +476,18 @@ The workspace does not exist yet; these are the intended shapes. Keep them worki
 
 ```bash
 cargo build --workspace                 # must succeed with zero external toolchains
+                                         # except the recorded MCAP/lz4 carve-out (invariant 1)
 cargo test  --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all
 
-cargo run -p episteme-server -- --config episteme.toml
+cargo run -p telividb-server -- --config telividb.toml
 
-cargo bench -p episteme-index           # latency
-cargo run -p episteme-index --bin recall -- --dataset sift-1m   # recall@k vs flat
+cargo bench -p telividb-index           # latency
+cargo run -p telividb-index --bin recall -- --dataset sift-1m   # recall@k vs flat
 
-cargo build -p episteme-embed-llama --features llama            # opt-in FFI path
+cargo build -p telividb-embed-llama --features llama            # opt-in FFI: whisper.cpp only
+cargo build -p telividb-index --features faiss-index             # opt-in FFI: FAISS, never default
 buf format --diff --exit-code            # buf lint is never used — see rule 37
 
 cargo xtask check-len                   # fails on any .rs over 200 lines
@@ -353,19 +499,21 @@ cargo xtask check-protodoc              # fails if the committed protobuf docs a
 cargo xtask check-layers                # fails on an outward crate/module dependency
 ```
 
-Run a single test: `cargo test -p episteme-storage segment::tests::seal_is_atomic`
+Run a single test: `cargo test -p telividb-storage segment::tests::seal_is_atomic`
 
 ---
 
 ## Conventions
 
 **Errors.** `thiserror` for library crates, one error enum per crate. `anyhow` only in
-`episteme-server` binaries and tests. Errors that cross gRPC map to explicit `tonic::Status`
+`telividb-server` binaries and tests. Errors that cross gRPC map to explicit `tonic::Status`
 codes in one place — never `.unwrap()` into a 500.
 
-**Unsafe.** Allowed only in `episteme-distance` (SIMD intrinsics), `episteme-storage`
-(mmap casts), and `episteme-embed-llama`. Every `unsafe` block carries a `// SAFETY:` comment
-naming the invariant it relies on. Every other crate carries `#![forbid(unsafe_code)]`.
+**Unsafe.** Allowed only in `telividb-distance` (SIMD intrinsics), `telividb-storage`
+(mmap casts), `telividb-embed-llama`, and, if the optional FAISS feature is built,
+`telividb-index`'s FAISS adapter module specifically. Every `unsafe` block carries a
+`// SAFETY:` comment naming the invariant it relies on. Every other crate carries
+`#![forbid(unsafe_code)]`.
 
 **Proto changes.** Additive only once a version ships. Never renumber a field, never reuse a tag.
 `buf breaking` runs in CI. SDKs regenerate from proto — never hand-edit generated code.
@@ -380,11 +528,18 @@ edges) guard this; keep a golden archive fixture in CI.
 - `proptest` for anything that round-trips through bytes: codecs, segment serialization, WAL framing.
 - Crash-consistency tests for the WAL and manifest — simulate a truncated write, assert recovery.
 - Recall tests for indexes, with a committed ground-truth fixture.
+- Policy tests exercise **both** enforcement call sites (query planner and inference server) with
+  the same `(principal, collection, policy_version)` fixtures, so the two checkpoints can't
+  silently drift apart.
 
 **Async.** `tokio` in the server only. Storage and index crates are synchronous and
-runtime-agnostic; that keeps them benchable and embeddable.
+runtime-agnostic; that keeps them benchable and embeddable. The inference server's scheduler is
+the one exception worth naming explicitly: batching across concurrent callers needs an async
+runtime, so `telividb-embed`'s scheduler lives behind the same `subscriber`-style feature-gating
+pattern as telemetry (rule 41) — synchronous and directly callable when embedded, async-scheduled
+under `telividb-server`.
 
-**Config.** One `episteme.toml`, deserialized via `serde` into typed structs in `episteme-core`.
+**Config.** One `telividb.toml`, deserialized via `serde` into typed structs in `telividb-core`.
 Every field documented and defaulted. No stringly-typed config lookups scattered through the code.
 
 ---
@@ -399,8 +554,15 @@ Every field documented and defaulted. No stringly-typed config lookups scattered
   compaction; do not attempt in-place graph deletion.
 - **Filtered search is not "search then filter."** A selective filter with post-filtering returns
   too few results. This needs a planner — see `AGENT_START.md` §Filtering.
-- **GGUF is not universal.** It covers the model architectures the loader implements, not every
-  model on HuggingFace. Scope is encoder-style embedding models (bge, e5, gte, nomic, jina).
+- **GGUF is not universal.** It covers the model architectures the `candle` loader implements, not
+  every model on HuggingFace. Scope is encoder-style embedding models (bge, e5, gte, nomic, jina)
+  plus whatever generative/scoring models candle supports for plugin compute (rule 43). A model
+  that only ships in ONNX or safetensors-for-a-different-runtime is out of scope — see invariant
+  42 before reaching for a workaround.
+- **Multi-model VRAM pressure is real and currently undesigned.** Loading an embedder, a rerank
+  model, and the OCEAN scoring model simultaneously (rule 45) can exceed available memory on
+  smaller GPUs well before it exceeds anything on a datacenter card. There is no eviction policy
+  yet — don't assume one exists; surface the gap if you hit it.
 - **Jetson is CUDA-on-aarch64.** It is a cross-compilation and driver-version problem, not a code
   problem. Do not claim support without having run it on the device.
 - **macOS gets no GPU inside a container.** Not Docker, not Apple's `container` — Apple GPUs have
@@ -412,6 +574,9 @@ Every field documented and defaulted. No stringly-typed config lookups scattered
   ID map consulted across segments — each silently breaks scatter-gather and forecloses clustering
   (AGENT_START.md §14.3). IVF centroids are per-segment or replicated read-only, never mutable and
   shared. This costs nothing today and is expensive to unwind later.
+- **The graph is in-memory, full stop.** `petgraph` (rule 47) does not spill to disk. A collection
+  with an enormous edge count is a RAM problem before it's a search-quality problem — this is a
+  known v1 ceiling, not a bug to quietly patch around with, say, an unbounded cache.
 - **Vectors never cross the wire as `repeated float`.** Protobuf encodes each element separately —
   768 varint ops per message on the hot path. Use `bytes` with raw little-endian f32 and cast.
 - **`SearchResponse` carries `complete` / `shards_answered` / `shards_total` from day one.**
@@ -432,15 +597,21 @@ Every field documented and defaulted. No stringly-typed config lookups scattered
   order-preserving encryption is broken; a secret orthogonal transform is obfuscation, not
   encryption, and must never be described as the latter. Encryption at rest is the sanctioned use
   of cryptography here.
+- **The OCEAN plugin is not a vetted psychometric instrument.** There is currently no widely
+  validated GGUF-native model for trait scoring; the reference plugin likely starts as a
+  general-purpose instruction model prompted for structured output. Document it as a pipeline
+  proof, not a clinical claim, anywhere it's user-facing.
 
 ---
 
 ## Working style for this repo
 
 - The user is architecting alongside you. For anything touching the on-disk format, the index
-  trait, or the proto contract: **propose, get agreement, then implement.** These are expensive to
-  reverse.
+  trait, the inference-server scheduling model, or the proto contract: **propose, get agreement,
+  then implement.** These are expensive to reverse.
 - Prefer landing a narrow vertical slice that runs end-to-end over a wide layer that runs nowhere.
+  The voice and OCEAN reference plugins (in the sibling `telividb-plugins` repo) exist to be
+  exactly this — build the engine against what they actually need before generalizing a port.
 - Benchmark before optimizing. This codebase will attract premature SIMD; resist it until a
   profile justifies it.
 - When a phase from `AGENT_START.md` completes, update the status markers there in the same change.

@@ -1,9 +1,0 @@
-[package]
-name = "episteme-core"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-
-[dependencies]
-thiserror.workspace = true
-sha2 = { version = "0.10", default-features = false, features = ["std"] }
