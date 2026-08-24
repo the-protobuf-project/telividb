@@ -15,6 +15,8 @@
 
 #[cfg(feature = "parallel")]
 mod batched;
+#[cfg(feature = "parallel")]
+mod batched_insert;
 mod build;
 mod cursor;
 mod graph;
