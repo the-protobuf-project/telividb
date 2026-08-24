@@ -23,12 +23,37 @@ fn a_bare_wire_point_converts_and_back() {
 }
 
 #[test]
-fn named_vectors_are_refused_not_dropped() {
+fn named_vectors_are_carried_through() {
+    // Inverted in stage 2: vectors now have a durable home, so converting them
+    // is the correct behaviour rather than a silent loss.
     let wire = WirePoint {
         name: String::new(),
         vectors: vec![NamedVector {
             field_id: "text_bge".to_owned(),
-            vector: None,
+            vector: Some(WireVector {
+                data: vec![0u8; 8].into(),
+                dimensions: 2,
+            }),
+        }],
+        span: None,
+        content_ref: None,
+    };
+    let point = to_domain(name(), wire).unwrap();
+    assert_eq!(point.vectors.get("text_bge"), Some(&vec![0.0f32, 0.0]));
+}
+
+#[test]
+fn a_vector_without_a_field_id_is_refused() {
+    // Each field has its own model and metric, so a vector with no field named
+    // cannot be stored anywhere meaningful.
+    let wire = WirePoint {
+        name: String::new(),
+        vectors: vec![NamedVector {
+            field_id: String::new(),
+            vector: Some(WireVector {
+                data: vec![0u8; 8].into(),
+                dimensions: 2,
+            }),
         }],
         span: None,
         content_ref: None,

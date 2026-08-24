@@ -142,25 +142,39 @@ async fn creating_the_same_point_twice_is_refused() {
 }
 
 #[tokio::test]
-async fn named_vectors_are_refused_rather_than_silently_dropped() {
+async fn a_point_carrying_vectors_is_accepted_and_echoes_them_back() {
+    // Inverted deliberately in stage 2: this asserted a refusal while vectors
+    // had nowhere to go. They now persist through the field's WAL, so the
+    // refusal would be the bug.
     let addr = start().await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
 
-    let err = client
+    let data: Vec<u8> = [1.0f32, 0.0, 0.0, 0.0]
+        .iter()
+        .flat_map(|v| v.to_le_bytes())
+        .collect();
+
+    let created = client
         .create_point(CreatePointRequest {
             parent: "collections/media".to_owned(),
-            point_id: "doc-1".to_owned(),
+            point_id: "with-vectors".to_owned(),
             point: Some(Point {
                 vectors: vec![telividb_proto::point::v1::NamedVector {
                     field_id: "text_bge".to_owned(),
-                    vector: None,
+                    vector: Some(telividb_proto::point::v1::Vector {
+                        data: data.into(),
+                        dimensions: 4,
+                    }),
                 }],
                 ..Default::default()
             }),
         })
         .await
-        .expect_err("a point carrying vectors must be refused, not silently accepted");
-    assert_eq!(err.code(), tonic::Code::Unimplemented);
+        .expect("a point carrying vectors must be accepted")
+        .into_inner();
+
+    assert_eq!(created.vectors.len(), 1);
+    assert_eq!(created.vectors[0].field_id, "text_bge");
 }
