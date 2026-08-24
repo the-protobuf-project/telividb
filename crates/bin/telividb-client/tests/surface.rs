@@ -48,7 +48,10 @@ async fn a_field_the_collection_never_declared_is_refused() {
 
     match docs.insert("doc-1", "not-declared", &[1.0, 0.0]).await {
         Err(telividb_client::Error::InvalidArgument { message }) => {
-            assert!(message.contains("declares no vector field"), "got {message}");
+            assert!(
+                message.contains("declares no vector field"),
+                "got {message}"
+            );
         }
         other => panic!("expected an undeclared-field refusal, got {other:?}"),
     }

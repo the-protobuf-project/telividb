@@ -11,16 +11,23 @@ use telividb_proto::collection::v1::{Collection, CreateCollectionRequest, ListCo
 use telividb_server::{ServerConfig, serve};
 
 /// Start a server on an ephemeral port and wait for it to accept connections.
-async fn start() -> SocketAddr {
+async fn start() -> (SocketAddr, tempfile::TempDir) {
+    // Its own directory per server. The catalogue is a `redb` file and redb
+    // takes an exclusive lock, so servers sharing a data dir — which every
+    // test in this binary would, under the default `./data` — collide.
+    let dir = tempfile::tempdir().expect("temp dir");
+
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("ephemeral port");
     let addr = listener.local_addr().expect("bound address");
     drop(listener);
 
+    let data_dir = dir.path().to_path_buf();
     tokio::spawn(async move {
         let outcome = serve(ServerConfig {
             // Telemetry installs globally and only once per process, so tests
             // sharing a binary must not each try to install it.
             environment: telividb_telemetry::Environment::Production,
+            data_dir,
             ..ServerConfig::at(addr)
         })
         .await;
@@ -31,7 +38,7 @@ async fn start() -> SocketAddr {
 
     for _ in 0..100 {
         if std::net::TcpStream::connect(addr).is_ok() {
-            return addr;
+            return (addr, dir);
         }
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
@@ -40,7 +47,7 @@ async fn start() -> SocketAddr {
 
 #[tokio::test]
 async fn the_server_accepts_grpc() {
-    let addr = start().await;
+    let (addr, _dir) = start().await;
     let mut client = CollectionsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
@@ -57,7 +64,7 @@ async fn the_server_accepts_grpc() {
 
 #[tokio::test]
 async fn arguments_are_validated_before_anything_else() {
-    let addr = start().await;
+    let (addr, _dir) = start().await;
     let mut client = CollectionsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
@@ -79,7 +86,7 @@ async fn arguments_are_validated_before_anything_else() {
 async fn a_missing_descriptor_set_is_refused_with_a_useful_message() {
     // The engine never parses `.proto`; it consumes a compiled descriptor set.
     // A caller who does not know that should learn it from the error.
-    let addr = start().await;
+    let (addr, _dir) = start().await;
     let mut client = CollectionsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");

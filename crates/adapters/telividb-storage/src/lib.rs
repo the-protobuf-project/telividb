@@ -33,9 +33,8 @@ pub use field::{DEFAULT_SEAL_BYTES, VectorField};
 pub use format::{Codec, DType, FieldHeader, SegmentHeader};
 pub use manifest::Manifest;
 pub use meta::{
-    RedbCollectionStore,
-    GraphStoreConfig, PointStoreConfig, RedbGraphStore, RedbPointStore, open_graph_store,
-    open_point_store,
+    GraphStoreConfig, PointStoreConfig, RedbCollectionStore, RedbGraphStore, RedbPointStore,
+    open_graph_store, open_point_store,
 };
 pub use segment::{SegmentReader, SegmentWriter, field_dir, open_tier};
 pub use tier::{BinaryTier, F16Tier, Int8Tier, PqTier};

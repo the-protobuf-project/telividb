@@ -6,8 +6,9 @@
 //! collection declaring the wrong widths — which is exactly the failure the
 //! declaration exists to prevent.
 
-use telividb_core::{Collection, Dim, Error, Fingerprint, Metric, Result, VectorFieldSpec};
-use telividb_core::{IndexKind, ResourceName};
+use super::record_cursor::Cursor;
+use telividb_core::{Collection, Dim, Error, Fingerprint, IndexKind, Metric, Result};
+use telividb_core::{ResourceName, VectorFieldSpec};
 
 /// Record version. Bump when the layout below changes.
 const VERSION: u8 = 1;
@@ -29,8 +30,14 @@ pub(super) fn encode(collection: &Collection, descriptor_set: &[u8]) -> Vec<u8> 
         out.push(index_byte(field.index));
         push_bytes(&mut out, field.model.as_bytes());
         out.extend_from_slice(field.model_fingerprint.as_bytes());
-        push_bytes(&mut out, field.query_encoder.as_deref().unwrap_or("").as_bytes());
-        push_bytes(&mut out, field.permission.as_deref().unwrap_or("").as_bytes());
+        push_bytes(
+            &mut out,
+            field.query_encoder.as_deref().unwrap_or("").as_bytes(),
+        );
+        push_bytes(
+            &mut out,
+            field.permission.as_deref().unwrap_or("").as_bytes(),
+        );
     }
     out
 }
@@ -93,7 +100,11 @@ fn none_if_empty(value: String) -> Option<String> {
     }
 }
 
-/// Length-prefixed bytes.
+/// Write a length prefix, then the bytes.
+///
+/// Prefixed rather than delimited because a descriptor set and a field name
+/// are arbitrary bytes — any delimiter would eventually occur inside one and
+/// split a record in the wrong place.
 fn push_bytes(out: &mut Vec<u8>, value: &[u8]) {
     out.extend_from_slice(&(value.len() as u32).to_le_bytes());
     out.extend_from_slice(value);
@@ -140,59 +151,5 @@ fn index_from(value: u8) -> Result<IndexKind> {
         other => Err(Error::PointStore {
             reason: format!("unknown index discriminant {other}"),
         }),
-    }
-}
-
-/// A bounds-checked reader over the record.
-///
-/// Every read is checked because these bytes come from disk, where a truncated
-/// write is a real outcome — an unchecked slice would panic inside a request
-/// handler rather than report a corrupt record.
-struct Cursor<'a> {
-    bytes: &'a [u8],
-    offset: usize,
-}
-
-impl Cursor<'_> {
-    fn take(&mut self, n: usize) -> Result<&[u8]> {
-        let end = self.offset.checked_add(n).ok_or_else(|| truncated(n))?;
-        let slice = self.bytes.get(self.offset..end).ok_or_else(|| truncated(n))?;
-        self.offset = end;
-        Ok(slice)
-    }
-
-    fn byte(&mut self) -> Result<u8> {
-        Ok(self.take(1)?[0])
-    }
-
-    fn u32(&mut self) -> Result<u32> {
-        let raw = self.take(4)?;
-        Ok(u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]))
-    }
-
-    fn array32(&mut self) -> Result<[u8; 32]> {
-        let raw = self.take(32)?;
-        let mut out = [0u8; 32];
-        out.copy_from_slice(raw);
-        Ok(out)
-    }
-
-    fn bytes(&mut self) -> Result<&[u8]> {
-        let len = self.u32()? as usize;
-        self.take(len)
-    }
-
-    fn string(&mut self) -> Result<String> {
-        let raw = self.bytes()?;
-        String::from_utf8(raw.to_vec()).map_err(|e| Error::PointStore {
-            reason: format!("collection record holds invalid utf-8: {e}"),
-        })
-    }
-}
-
-/// The "ran off the end" error, shared by every read.
-fn truncated(needed: usize) -> Error {
-    Error::PointStore {
-        reason: format!("collection record is truncated: needed {needed} more bytes"),
     }
 }

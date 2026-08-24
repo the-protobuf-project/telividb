@@ -1,32 +1,43 @@
-//! The same semantic search, over gRPC, with no model on the client.
+//! Semantic search over gRPC, step by step — then left running for Postman.
 //!
 //! ```text
 //! examples/models/download.sh
 //! cargo run --release -p telividb-examples --bin semantic_search_grpc
 //! ```
 //!
-//! The companion to `semantic_search`, which does everything in-process. This
-//! one starts a real server, then talks to it through the SDK exactly as a
-//! separate process would — so the client here holds no model, no index and no
-//! storage. It sends sentences and gets ranked sentences back.
+//! Walks the flow a real caller follows, in order and announced:
 //!
-//! That split is the point. A field's vectors are bound to one model identity
-//! (rule 12), and keeping inference on the server is what makes that hold no
-//! matter how many clients write to it.
+//! 1. start a server holding the embedding model
+//! 2. **create a collection**, declaring the field its points will carry
+//! 3. add documents as *text* — the server embeds them
+//! 4. ask questions, also as text
+//! 5. stay running, so the same data can be queried from Postman or grpcurl
 //!
-//! The server is started in-process only so the example is one command. In a
-//! deployment it is a separate `telividb-server --model <path>`, and the
-//! client code below is unchanged.
+//! Step 2 is not a formality. A field's width, metric and model are bound at
+//! declaration; left to be inferred from the first write they become whatever
+//! that writer happened to send, and a later one either collides or is quietly
+//! merged in. The server refuses a point whose collection does not exist.
+//!
+//! **Idempotent.** Data lives under `./data/example` and is reused, so running
+//! this twice does not fail on what already exists.
 
-use telividb_client::Client;
-use telividb_examples::{corpus, model};
+mod postman;
+mod steps;
+
+use telividb_examples::model;
 use telividb_server::{ServerConfig, serve};
 
-/// Field the corpus is stored under.
-const FIELD: &str = "text";
+/// Fixed rather than ephemeral, so the address in the Postman notes is the
+/// address that is actually listening.
+const ADDR: &str = "127.0.0.1:7700";
 
-/// How long to wait for the server to load its model and bind.
-const STARTUP_ATTEMPTS: usize = 600;
+/// The collection this example seeds.
+const COLLECTION: &str = "documents";
+
+/// Field name, and the width nomic-embed-text-v1.5 produces.
+const FIELD: &str = "text";
+/// Vector width of the model this example loads.
+const DIM: usize = 768;
 
 #[tokio::main]
 async fn main() {
@@ -38,21 +49,17 @@ async fn main() {
         }
     };
 
-    let data = tempfile::tempdir().expect("temp dir");
-    let addr = {
-        // Bind to find a free port, then release it for the server to take.
-        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("port");
-        let addr = listener.local_addr().expect("addr");
-        drop(listener);
-        addr
-    };
+    let addr = ADDR.parse().expect("literal is a valid address");
+    let data_dir = std::path::PathBuf::from("./data/example");
 
-    println!("starting a server with {}...", model_path.display());
-    let data_dir = data.path().to_path_buf();
+    println!("[1/5] starting a server on {ADDR}");
+    println!("      model    : {}", model_path.display());
+    println!("      data dir : {}", data_dir.display());
+    let serving_dir = data_dir.clone();
     tokio::spawn(async move {
         let outcome = serve(ServerConfig {
             environment: telividb_telemetry::Environment::Production,
-            data_dir,
+            data_dir: serving_dir,
             model_path: Some(model_path),
             model_name: "nomic-embed-text-v1.5".to_owned(),
             ..ServerConfig::at(addr)
@@ -63,62 +70,20 @@ async fn main() {
         }
     });
 
-    let client = connect(addr).await;
-    println!("connected to {addr}\n");
+    let mut client = steps::connect(addr).await;
+    println!("      connected.\n");
 
-    // ---- Everything below is ordinary SDK use. ----
-    let mut docs = client.collection("documents");
+    steps::create_collection(&mut client, COLLECTION, FIELD, DIM).await;
+    let stored = steps::add_documents(&mut client, COLLECTION, FIELD).await;
+    steps::run_queries(&mut client, COLLECTION, FIELD).await;
 
-    let entries: Vec<(String, String)> = corpus::DOCUMENTS
-        .iter()
-        .enumerate()
-        .map(|(i, text)| (format!("doc-{i}"), (*text).to_owned()))
-        .collect();
+    postman::print_notes(ADDR, COLLECTION, FIELD, stored);
 
-    // Text in. The server embeds it; this process has no model.
-    docs.add_texts(FIELD, &entries)
-        .await
-        .expect("store the corpus");
-    println!("stored {} documents.\n", entries.len());
-
-    for question in corpus::QUERIES {
-        let found = docs.search_text(FIELD, question, 3).await.expect("search");
-
-        println!("? {question}");
-        for (rank, hit) in found.hits().iter().enumerate() {
-            println!(
-                "  {}. {:.4}  {}",
-                rank + 1,
-                hit.score,
-                hit.text.as_deref().unwrap_or(&hit.name)
-            );
-        }
-
-        // Reported rather than assumed: a partial answer must not read as a
-        // complete one (rules 27 and 49).
-        if !found.is_complete() {
-            println!("  (incomplete — locked: {:?})", found.locked_vaults());
-        }
-        println!();
+    // Left running deliberately: the point of the fixed address above is that
+    // the data seeded here can be queried from something else.
+    println!("\nServing on {ADDR}. Press Ctrl-C to stop.");
+    if let Err(e) = tokio::signal::ctrl_c().await {
+        eprintln!("could not wait for Ctrl-C: {e}");
     }
-
-    println!("The client never loaded a model. Every vector here was computed");
-    println!("by the server, which is what keeps one field bound to one model");
-    println!("however many clients write to it.");
-}
-
-/// Connect once the server is accepting, or give up with a clear message.
-async fn connect(addr: std::net::SocketAddr) -> Client {
-    for _ in 0..STARTUP_ATTEMPTS {
-        // The port accepting is necessary but not sufficient: the server binds
-        // after loading its model, and a connect can still race the router.
-        if std::net::TcpStream::connect(addr).is_ok()
-            && let Ok(client) = Client::connect(format!("http://{addr}")).await
-        {
-            return client;
-        }
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
-    }
-    eprintln!("the server did not start on {addr}");
-    std::process::exit(1);
+    println!("stopped.");
 }

@@ -38,7 +38,9 @@ impl RedbCollectionStore {
         }
         write.commit().map_err(redb::Error::from)?;
 
-        let bytes = std::fs::metadata(path).map(|m| m.len() as usize).unwrap_or(0);
+        let bytes = std::fs::metadata(path)
+            .map(|m| m.len() as usize)
+            .unwrap_or(0);
         let _resident = telividb_telemetry::residency::register(
             telividb_telemetry::residency::ResidentKind::PointStore,
             telividb_telemetry::residency::Location::Host,
@@ -98,7 +100,10 @@ impl RedbCollectionStore {
     pub fn exists(&self, name: &ResourceName) -> Result<bool> {
         let read = self.db.begin_read().map_err(redb::Error::from)?;
         let table = read.open_table(COLLECTIONS).map_err(redb::Error::from)?;
-        Ok(table.get(name.as_str()).map_err(redb::Error::from)?.is_some())
+        Ok(table
+            .get(name.as_str())
+            .map_err(redb::Error::from)?
+            .is_some())
     }
 
     /// Every collection, name-ordered.

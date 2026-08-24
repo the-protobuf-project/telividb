@@ -5,6 +5,7 @@ mod collection_record;
 mod factory;
 mod point_read;
 mod point_record;
+mod record_cursor;
 mod redb_collection_store;
 mod redb_graph_store;
 mod redb_point_store;

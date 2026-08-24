@@ -1,3 +1,4 @@
 //! Shared fixtures for the server's integration tests.
 
+pub mod collections;
 pub mod vectors;

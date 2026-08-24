@@ -64,11 +64,7 @@ pub async fn connected() -> (Client, tempfile::TempDir) {
 ///
 /// Points cannot be written to a collection that does not exist, so every test
 /// starts here — which is the flow a real caller follows too.
-pub async fn collection(
-    client: &mut Client,
-    id: &str,
-    dim: usize,
-) -> telividb_client::Collection {
+pub async fn collection(client: &mut Client, id: &str, dim: usize) -> telividb_client::Collection {
     client
         .create_collection(NewCollection::new(id, descriptor_set()).text_field("text", dim))
         .await
@@ -90,8 +86,8 @@ pub fn descriptor_set() -> Vec<u8> {
 /// Looked up rather than required: the file is 80 MiB and not committed, so a
 /// fresh clone has none and those tests skip instead of failing.
 pub fn model_path() -> Option<std::path::PathBuf> {
-    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../examples/models/gguf/text");
+    let dir =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../examples/models/gguf/text");
     std::fs::read_dir(dir)
         .ok()?
         .flatten()

@@ -33,7 +33,7 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
     // One catalogue, shared: the collection service owns it and the point
     // service consults it, so the two cannot disagree about what exists.
     let collections = CollectionSvc::open(config.data_dir.clone())
-        .map_err(|e| Error::Model(format!("catalogue: {e}")))?;
+        .map_err(|e| Error::Catalogue(e.to_string()))?;
     let points = build_points(&config)?.with_catalogue(collections.catalogue());
 
     // Health reports SERVING once the router is up. A load balancer needs this

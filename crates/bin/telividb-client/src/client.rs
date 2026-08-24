@@ -2,8 +2,8 @@
 
 use crate::collection::Collection;
 use crate::error::Result;
-use crate::new_collection::NewCollection;
 use crate::names;
+use crate::new_collection::NewCollection;
 use telividb_proto::collection::v1 as wire;
 use telividb_proto::collection::v1::collections_client::CollectionsClient;
 use telividb_proto::point::v1::points_client::PointsClient;

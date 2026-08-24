@@ -69,10 +69,7 @@ impl PointsSvc {
     }
 
     /// Consult `catalogue` before accepting a write.
-    pub fn with_catalogue(
-        mut self,
-        catalogue: Arc<telividb_storage::RedbCollectionStore>,
-    ) -> Self {
+    pub fn with_catalogue(mut self, catalogue: Arc<telividb_storage::RedbCollectionStore>) -> Self {
         self.catalogue = Some(catalogue);
         self
     }

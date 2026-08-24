@@ -3000,6 +3000,7 @@ dependencies = [
  "telividb-core",
  "telividb-embed",
  "telividb-index",
+ "telividb-proto",
  "telividb-server",
  "telividb-storage",
  "telividb-telemetry",

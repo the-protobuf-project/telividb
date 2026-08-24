@@ -1,6 +1,8 @@
 //! Converting between the wire `Collection` and the domain one.
 
-use telividb_core::{Collection, Dim, Fingerprint, IndexKind, Metric, ResourceName, VectorFieldSpec};
+use telividb_core::{
+    Collection, Dim, Fingerprint, IndexKind, Metric, ResourceName, VectorFieldSpec,
+};
 use telividb_proto::collection::v1 as wire;
 use tonic::Status;
 

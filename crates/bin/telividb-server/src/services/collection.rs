@@ -88,7 +88,9 @@ impl Collections for CollectionSvc {
         let descriptor_set = payload.descriptor_set.to_vec();
         let stored = descriptor_set.clone();
         let created = tokio::task::spawn_blocking(move || {
-            catalogue.create(&collection, &descriptor_set).map(|ok| (ok, collection))
+            catalogue
+                .create(&collection, &descriptor_set)
+                .map(|ok| (ok, collection))
         })
         .await
         .map_err(|e| Status::internal(format!("catalogue task failed: {e}")))?
