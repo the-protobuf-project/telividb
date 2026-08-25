@@ -33,6 +33,13 @@ pub fn datasets_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("datasets"))
 }
 
+/// Every dataset the benchmark runs, smallest corpus first.
+///
+/// Ordered by size deliberately: the throughput column only means something
+/// as a curve, and a run that dies on the largest one has already produced
+/// three useful rows.
+pub const ALL: &[&str] = &["nfcorpus", "scifact", "arguana", "fiqa"];
+
 /// Load a dataset's corpus and its judged test queries.
 ///
 /// Returns `Err` with the command to run rather than panicking: a missing

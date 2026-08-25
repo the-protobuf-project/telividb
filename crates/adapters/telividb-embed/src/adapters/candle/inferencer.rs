@@ -1,14 +1,10 @@
 //! The registry of resident models, and the [`Inferencer`] built over it.
 
-use super::batch;
 use super::model::ResidentModel;
-use crate::domain::{ModelId, Pooling, Task};
+use crate::domain::{ModelId, Pooling};
 use crate::error::{Error, Result};
-use crate::ports::Inferencer;
-use candle_core::Tensor;
 use std::collections::HashMap;
 use std::path::Path;
-use telividb_core::Dim;
 
 /// Holds every model the process can run, all of them loaded.
 ///
@@ -24,7 +20,11 @@ use telividb_core::Dim;
 /// different weights than the ones a field is bound to.
 #[derive(Default)]
 pub struct CandleInferencer {
-    models: HashMap<String, ResidentModel>,
+    pub(super) models: HashMap<String, ResidentModel>,
+    /// Cap on sequence length, at or below each model's own context.
+    ///
+    /// `None` uses whatever the model covers.
+    pub(super) max_tokens: Option<usize>,
 }
 
 impl CandleInferencer {
@@ -60,6 +60,23 @@ impl CandleInferencer {
         Ok(self)
     }
 
+    /// Truncate every sequence at `max_tokens`, below the model's context.
+    ///
+    /// **This trades accuracy for speed, and the trade is usually good.**
+    /// Attention is quadratic in sequence length, so halving the cap quarters
+    /// the attention work — while the tail being dropped is, for most corpora,
+    /// the part of a document that contributed least. BEIR's own evaluations
+    /// cap BERT-family models at 512 for exactly this reason.
+    ///
+    /// It is *not* free: a corpus of genuinely long documents whose meaning
+    /// lives past the cap will lose recall, silently. Measure before setting
+    /// it, and prefer the model's full context when documents are short enough
+    /// that the cap never binds.
+    pub fn with_max_tokens(mut self, max_tokens: usize) -> Self {
+        self.max_tokens = Some(max_tokens);
+        self
+    }
+
     /// How many models are resident.
     pub fn len(&self) -> usize {
         self.models.len()
@@ -91,7 +108,7 @@ impl CandleInferencer {
     }
 
     /// Look up a model, verifying the caller's digest against what is loaded.
-    fn resolve(&self, id: &ModelId) -> Result<&ResidentModel> {
+    pub(super) fn resolve(&self, id: &ModelId) -> Result<&ResidentModel> {
         let model = self
             .models
             .get(&id.name)
@@ -110,54 +127,6 @@ impl CandleInferencer {
         }
         Ok(model)
     }
-}
-
-impl Inferencer for CandleInferencer {
-    fn embed(&self, model: &ModelId, task: Task, texts: &[String]) -> Result<Vec<Vec<f32>>> {
-        let model = self.resolve(model)?;
-        if texts.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let encoder = model.encoder();
-        let batch = batch::encode(
-            model.tokenizer(),
-            texts,
-            task,
-            encoder.context(),
-            encoder.device(),
-        )?;
-        let pooled = encoder.forward(&batch.ids, &batch.attention, model.pooling)?;
-        Ok(normalize(&pooled)?.to_vec2()?)
-    }
-
-    fn dim(&self, model: &ModelId) -> Result<Dim> {
-        self.resolve(model)?.dim()
-    }
-
-    fn is_resident(&self, model: &ModelId) -> bool {
-        self.resolve(model).is_ok()
-    }
-}
-
-/// Scale each row to unit length.
-///
-/// Done here, once, rather than left to the caller. The storage layer's cosine
-/// path is dot-product over pre-normalized vectors (see CLAUDE.md's cosine
-/// note), so an un-normalized vector reaching it does not error — it ranks by
-/// magnitude as much as by direction, which looks like a quality problem
-/// rather than a bug.
-///
-/// The clamp guards a genuinely zero row, which a text that tokenizes to
-/// nothing can produce: dividing by its zero norm yields `NaN`, and a `NaN`
-/// vector silently poisons every comparison it takes part in.
-fn normalize(xs: &Tensor) -> candle_core::Result<Tensor> {
-    let norm = xs
-        .sqr()?
-        .sum_keepdim(candle_core::D::Minus1)?
-        .sqrt()?
-        .clamp(1e-12, f64::INFINITY)?;
-    xs.broadcast_div(&norm)
 }
 
 #[cfg(test)]
