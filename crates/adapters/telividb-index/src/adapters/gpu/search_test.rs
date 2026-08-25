@@ -1,7 +1,8 @@
 use super::*;
 use crate::adapters::MemoryStore;
+use crate::adapters::gpu::gguf::write_corpus;
+use crate::adapters::gpu::load::load_corpus;
 use crate::ports::VectorIndex;
-use crate::adapters::gpu::gguf::{load_corpus, write_corpus};
 use candle_core::Device;
 use telividb_core::Dim;
 
@@ -128,7 +129,11 @@ fn l2_scores_are_squared_distances_not_merely_an_ordering() {
     let found = search(&corpus, &query(), 2, None).unwrap();
     // query is [1,0,0,0]: distance² to itself is 0, to [0,1,0,0] is 2.
     assert!(found[0].score.abs() < 1e-4, "got {}", found[0].score);
-    assert!((found[1].score - 2.0).abs() < 1e-4, "got {}", found[1].score);
+    assert!(
+        (found[1].score - 2.0).abs() < 1e-4,
+        "got {}",
+        found[1].score
+    );
 }
 
 #[test]
@@ -139,7 +144,9 @@ fn l2_agrees_with_the_cpu_flat_index() {
     let mut store = MemoryStore::new(Dim::new(DIM).unwrap(), Metric::L2);
     for i in 0..64u32 {
         let f = i as f32;
-        store.push(&[f * 0.1, 1.0 - f * 0.01, f * 0.02, 0.5]).unwrap();
+        store
+            .push(&[f * 0.1, 1.0 - f * 0.01, f * 0.02, 0.5])
+            .unwrap();
     }
     let corpus = corpus_of(&store);
 

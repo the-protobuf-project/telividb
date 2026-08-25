@@ -23,14 +23,16 @@ pub fn datasets_dir() -> PathBuf {
 pub struct Dataset {
     /// The corpus to index.
     pub base: Vec<Vec<f32>>,
-    /// Query vectors.
+    /// Vectors to search with. Every configuration answers these same
+    /// queries, or the comparison between them means nothing.
     pub queries: Vec<Vec<f32>>,
     /// For each query, the true nearest neighbours by row, nearest first.
     ///
     /// Computed exhaustively by the dataset's authors, so recall measured
     /// against it is exact rather than relative to another approximation.
     pub truth: Vec<Vec<u32>>,
-    /// Vector width.
+    /// Width every vector shares. Read from the first record, since the
+    /// format repeats it per vector rather than carrying a header.
     pub dim: usize,
 }
 
@@ -136,8 +138,10 @@ fn read_records<T>(path: &Path, decode: fn(&[u8]) -> T) -> Result<Vec<Vec<T>>, S
 
         out.push(
             raw[offset..end]
-                .chunks_exact(4)
-                .map(decode)
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|chunk| decode(chunk))
                 .collect::<Vec<T>>(),
         );
         offset = end;

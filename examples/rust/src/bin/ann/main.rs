@@ -33,9 +33,8 @@ mod sweep;
 mod vecs;
 
 use std::time::Instant;
-use telividb_index::adapters::{FlatIndex, HnswIndex, HnswParams};
-use telividb_index::VectorIndex;
 use sweep::Point;
+use telividb_index::adapters::{FlatIndex, HnswIndex, HnswParams};
 
 /// Search breadths to sweep.
 ///
@@ -47,7 +46,9 @@ use sweep::Point;
 const EF_SWEEP: &[usize] = &[10, 16, 32, 64, 128, 256];
 
 fn main() {
-    let name = std::env::args().nth(1).unwrap_or_else(|| "siftsmall".to_owned());
+    let name = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "siftsmall".to_owned());
 
     let dataset = match vecs::load(&name) {
         Ok(dataset) => dataset,
@@ -95,7 +96,14 @@ fn main() {
 
     for ef in EF_SWEEP {
         hnsw = hnsw.with_ef_search(*ef);
-        match sweep::measure(&format!("hnsw ef={ef}"), "hnsw", &dataset, &store, &hnsw, build) {
+        match sweep::measure(
+            &format!("hnsw ef={ef}"),
+            "hnsw",
+            &dataset,
+            &store,
+            &hnsw,
+            build,
+        ) {
             Ok(point) => points.push(point),
             Err(e) => eprintln!("  hnsw ef={ef} failed: {e}"),
         }
@@ -108,7 +116,11 @@ fn main() {
 
 /// Measure the GPU exhaustive index, when it is compiled in.
 #[cfg(feature = "gpu")]
-fn measure_gpu(dataset: &vecs::Dataset, store: &telividb_index::adapters::MemoryStore, points: &mut Vec<Point>) {
+fn measure_gpu(
+    dataset: &vecs::Dataset,
+    store: &telividb_index::adapters::MemoryStore,
+    points: &mut Vec<Point>,
+) {
     use telividb_index::adapters::GpuFlatIndex;
 
     println!("  measuring gpu-flat (exhaustive)...");

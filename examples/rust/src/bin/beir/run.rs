@@ -22,11 +22,12 @@ const TOP_K: usize = 100;
 
 /// What one dataset's run measured.
 pub struct Outcome {
-    /// Dataset name.
+    /// Which dataset this row is for, so a table can label it.
     pub name: String,
     /// Averaged retrieval metrics.
     pub report: Report,
-    /// Corpus size.
+    /// Documents embedded, which is the denominator of the throughput
+    /// column.
     pub documents: usize,
     /// Where search ran: `metal`, `cuda` or `cpu`.
     pub device: &'static str,
@@ -34,8 +35,6 @@ pub struct Outcome {
     pub embed_time: Duration,
     /// Time spent embedding and searching every query.
     pub search_time: Duration,
-    /// Device memory before this dataset ran.
-    pub before: Sample,
     /// Device memory after it finished and its index was dropped.
     pub after: Sample,
 }
@@ -61,8 +60,6 @@ pub fn evaluate(
     documents: &[Document],
     queries: &[Query],
 ) -> Result<Outcome, Box<dyn std::error::Error>> {
-    let before = gpu::sample();
-
     // ---- Embed the corpus. ----
     let started = Instant::now();
     let mut store = MemoryStore::new(dim, Metric::Dot);
@@ -130,7 +127,6 @@ pub fn evaluate(
         device,
         embed_time,
         search_time,
-        before,
         after,
     })
 }

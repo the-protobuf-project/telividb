@@ -8,7 +8,10 @@ use std::path::Path;
 pub fn print_header(model: &Path, dim: usize, baseline: &Sample) {
     println!("model      : {}", model.display());
     println!("dimensions : {dim}");
-    print!("device mem : {:.1} MiB reserved", gpu::mib(baseline.reserved));
+    print!(
+        "device mem : {:.1} MiB reserved",
+        gpu::mib(baseline.reserved)
+    );
     match baseline.allocated {
         Some(bytes) => println!(", {:.1} MiB allocated (metal)", gpu::mib(bytes)),
         None => println!(" (no device figure — CPU or CUDA)"),

@@ -20,7 +20,8 @@ pub struct Sample {
     /// `None` off Metal — CUDA exposes no equivalent through candle, and a CPU
     /// fallback has no device memory to report.
     pub allocated: Option<usize>,
-    /// Resident models.
+    /// Models resident. More than one after a single-model run means a
+    /// handle outlived its owner.
     pub models: usize,
     /// Resident vector indexes.
     pub indexes: usize,

@@ -45,3 +45,18 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+
+    ignore:
+      # Its refs are Rust releases, not action versions.
+      #
+      # `dtolnay/rust-toolchain@1.98.0` installs Rust 1.98.0; there is no
+      # semantic-versioning relationship between one ref and the next, and
+      # "newer" is not "better" — it is a different compiler. Dependabot
+      # bumped it to `@1.100.0`, which does not exist, and auto-merge landed
+      # that on main.
+      #
+      # The toolchain is pinned in `rust-toolchain.toml` and a compiler
+      # upgrade is a reviewed commit, never a dependency bump — the same rule
+      # the cargo section above applies to `rust`. No workflow should name a
+      # Rust version at all now, so this is a guard against one creeping back.
+      - dependency-name: "dtolnay/rust-toolchain"

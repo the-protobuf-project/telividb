@@ -25,8 +25,16 @@ fn similar_lengths_end_up_together() {
     let batches = plan(&lengths, 4096, 64);
 
     let batch_of = |i: usize| batches.iter().position(|b| b.contains(&i)).unwrap();
-    assert_ne!(batch_of(0), batch_of(1), "a 3-token text batched with a 2000-token one");
-    assert_eq!(batch_of(1), batch_of(3), "1900 and 2000 should share a batch");
+    assert_ne!(
+        batch_of(0),
+        batch_of(1),
+        "a 3-token text batched with a 2000-token one"
+    );
+    assert_eq!(
+        batch_of(1),
+        batch_of(3),
+        "1900 and 2000 should share a batch"
+    );
 }
 
 #[test]
