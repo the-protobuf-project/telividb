@@ -73,6 +73,22 @@ pub fn to_status(error: &telividb_core::Error) -> tonic::Status {
             tonic::Status::invalid_argument(error.to_string())
         }
         E::InvalidResourceName { .. } => tonic::Status::invalid_argument(error.to_string()),
+
+        // A codebook that cannot describe the field it was asked to compress,
+        // or one trained on too little data to distinguish anything. Both are
+        // *configuration* problems an operator can act on — the shape or the
+        // corpus is wrong — so the message is passed through rather than
+        // hidden behind an opaque internal error.
+        E::InvalidPqShape { .. } | E::PqTrainingTooSmall { .. } => {
+            tonic::Status::failed_precondition(error.to_string())
+        }
+
+        // A code run that does not match its codebook means the index and the
+        // data disagree, which a caller cannot cause and cannot fix.
+        E::PqDimMismatch { .. } => {
+            telividb_telemetry::logger::error!("pq mismatch: {error}");
+            tonic::Status::internal("index could not be read")
+        }
         // Deliberately opaque: a malformed index is an operator problem, and its
         // detail belongs in the log rather than in a response.
         E::MalformedIndex { .. } => {

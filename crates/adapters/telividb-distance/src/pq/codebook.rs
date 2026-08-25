@@ -15,8 +15,8 @@
 //! meaningless without exactly the codebook that produced it — which is why the
 //! codebook lives in the segment beside the codes and never in shared state.
 
-use super::kmeans;
-use crate::error::{Error, Result};
+use crate::cluster as kmeans;
+use telividb_core::{Error, Result};
 
 /// Entries per subspace codebook. One byte per code, so 256.
 pub const CENTROIDS: usize = 256;
@@ -111,6 +111,30 @@ impl PqCodebook {
         })
     }
 
+    /// Every centroid, laid out contiguously as `m * CENTROIDS * sub_dim`.
+    ///
+    /// Exposed for serialization, which lives in `telividb-storage` because a
+    /// codebook's *bytes* carry magic and a format version (rule 4) while its
+    /// arithmetic does not.
+    pub fn centroids(&self) -> &[f32] {
+        &self.centroids
+    }
+
+    /// Rebuild a codebook from bytes a reader has already validated.
+    ///
+    /// `sub_dim` is derived rather than taken: it is `dim / m` by definition,
+    /// and accepting a third number would allow a caller to pass one that
+    /// disagrees — which would slice every centroid at the wrong stride.
+    pub fn from_parts(dim: usize, m: usize, centroids: Vec<f32>) -> Result<Self> {
+        check_shape(dim, m)?;
+        Ok(Self {
+            sub_dim: dim / m,
+            dim,
+            m,
+            centroids,
+        })
+    }
+
     /// Full vector width this codebook was trained for.
     pub fn dim(&self) -> usize {
         self.dim
@@ -119,39 +143,6 @@ impl PqCodebook {
     /// Subspaces, and therefore bytes per encoded row.
     pub fn m(&self) -> usize {
         self.m
-    }
-
-    /// Encode one vector to `m` bytes.
-    pub fn encode(&self, vector: &[f32]) -> Result<Vec<u8>> {
-        if vector.len() != self.dim {
-            return Err(Error::PqDimMismatch {
-                expected: self.dim,
-                actual: vector.len(),
-            });
-        }
-        Ok((0..self.m)
-            .map(|sub| {
-                let start = sub * self.sub_dim;
-                let point = &vector[start..start + self.sub_dim];
-                kmeans::nearest_centroid(point, self.subspace(sub), self.sub_dim) as u8
-            })
-            .collect())
-    }
-
-    /// Reconstruct an approximate vector from its codes.
-    pub fn decode(&self, codes: &[u8]) -> Result<Vec<f32>> {
-        if codes.len() != self.m {
-            return Err(Error::PqDimMismatch {
-                expected: self.m,
-                actual: codes.len(),
-            });
-        }
-        let mut out = Vec::with_capacity(self.dim);
-        for (sub, &code) in codes.iter().enumerate() {
-            let start = code as usize * self.sub_dim;
-            out.extend_from_slice(&self.subspace(sub)[start..start + self.sub_dim]);
-        }
-        Ok(out)
     }
 
     /// One centroid of one subspace.
@@ -164,7 +155,7 @@ impl PqCodebook {
     }
 
     /// Centroids belonging to one subspace.
-    fn subspace(&self, sub: usize) -> &[f32] {
+    pub(super) fn subspace(&self, sub: usize) -> &[f32] {
         let span = CENTROIDS * self.sub_dim;
         &self.centroids[sub * span..(sub + 1) * span]
     }
@@ -173,3 +164,14 @@ impl PqCodebook {
 #[cfg(test)]
 #[path = "codebook_test.rs"]
 mod tests;
+
+/// Refuse a subspace count that cannot divide the vector evenly.
+///
+/// Padding the final subspace instead would make part of it meaningless, and
+/// the resulting recall loss is very hard to attribute back to here.
+fn check_shape(dim: usize, m: usize) -> Result<()> {
+    match m == 0 || !dim.is_multiple_of(m) {
+        true => Err(Error::InvalidPqShape { dim, m }),
+        false => Ok(()),
+    }
+}

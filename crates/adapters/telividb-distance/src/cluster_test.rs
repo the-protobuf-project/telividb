@@ -1,4 +1,5 @@
 use super::*;
+use crate::l2_squared;
 
 /// Three well-separated blobs in 2D.
 fn blobs() -> Vec<Vec<f32>> {
@@ -24,7 +25,7 @@ fn recovers_well_separated_clusters() {
     // Every point should sit near the centroid it was assigned to.
     for point in &points {
         let c = nearest_centroid(point, &centroids, 2);
-        let distance = l2(point, &centroids[c * 2..(c + 1) * 2]);
+        let distance = l2_squared(point, &centroids[c * 2..(c + 1) * 2]);
         assert!(
             distance < 1.0,
             "point {point:?} is {distance} from its centroid"
@@ -48,7 +49,7 @@ fn a_different_seed_may_differ_but_still_converges() {
     let centroids = train(&as_refs(&points), 2, 3, 25, 99);
     for point in &points {
         let c = nearest_centroid(point, &centroids, 2);
-        assert!(l2(point, &centroids[c * 2..(c + 1) * 2]) < 1.0);
+        assert!(l2_squared(point, &centroids[c * 2..(c + 1) * 2]) < 1.0);
     }
 }
 

@@ -26,4 +26,4 @@ mod pq;
 pub use binary::{BinaryCodes, hamming};
 pub use f16::F16Row;
 pub use int8::Int8Row;
-pub use pq::{CENTROIDS, PqCodebook, PqParams};
+pub use pq::{CENTROIDS, PqCodebook, PqParams, decode_codebook, encode_codebook, encoded_len};

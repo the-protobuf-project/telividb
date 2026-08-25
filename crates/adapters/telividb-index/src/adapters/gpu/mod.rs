@@ -20,9 +20,11 @@
 mod budget;
 mod detect;
 mod device;
+mod direct;
 mod gguf;
 mod load;
 mod norms;
+mod persist;
 mod search;
 
 pub use budget::{
@@ -71,39 +73,29 @@ impl std::fmt::Debug for GpuFlatIndex {
 }
 
 impl GpuFlatIndex {
-    /// Serialize `store` as GGUF bytes, ready to persist as
-    /// `vectors/<field>/index.gguf`.
-    ///
-    /// Separate from opening so the index crate never touches a file — it
-    /// hands bytes to storage, exactly as HNSW's `encode` does (invariant 6).
-    pub fn encode(store: &dyn VectorStore) -> Result<Vec<u8>> {
-        let mut buffer = std::io::Cursor::new(Vec::new());
-        gguf::write_corpus(store, &mut buffer)?;
-        Ok(buffer.into_inner())
-    }
-
     /// Build directly from a store, choosing the best available device.
     ///
     /// Convenience over `encode` + `decode` for the common case; the bytes are
     /// still what gets persisted.
     pub fn build(store: &dyn VectorStore) -> Result<Self> {
-        Self::decode(&Self::encode(store)?, &best_device())
+        Self::build_on(store, &best_device())
     }
 
-    /// Open a corpus written by [`GpuFlatIndex::encode`], onto `device`.
-    pub fn decode(bytes: &[u8], device: &Device) -> Result<Self> {
+    /// Build directly from a store onto a chosen device.
+    ///
+    /// Straight from the store's rows — no GGUF bytes are produced. Persisting
+    /// still goes through [`GpuFlatIndex::encode`], so the on-disk format is
+    /// unaffected and remains the only thing [`GpuFlatIndex::decode`] reads.
+    pub fn build_on(store: &dyn VectorStore, device: &Device) -> Result<Self> {
         let started = Instant::now();
-        let mut reader = std::io::Cursor::new(bytes);
 
-        // Reserve *before* loading. An over-large upload does not fail
-        // gracefully on Metal — it aborts the process — so this check is the
-        // only point at which the failure is still recoverable.
-        let reservation = budget::reserve("gpu-flat", bytes.len())?;
-
-        let corpus = load::load_corpus(&mut reader, device)?;
+        // Reserved *before* the upload: an over-large one aborts the process on
+        // Metal rather than failing, so this is the last recoverable point.
+        let reservation = budget::reserve("gpu-flat", direct::device_bytes(store))?;
+        let corpus = direct::corpus_from_store(store, device)?;
         let name = device_name(device);
 
-        logger::info!("gpu index loaded").with_data(&serde_json::json!({
+        logger::info!("gpu index built").with_data(&serde_json::json!({
             fields::INDEX_KIND: "gpu-flat",
             fields::DEVICE: name,
             fields::ROWS: corpus.present.len(),
@@ -114,8 +106,8 @@ impl GpuFlatIndex {
 
         Ok(Self {
             corpus,
-            _reservation: reservation,
             device: name,
+            _reservation: reservation,
             meter: Meter::disabled(),
         })
     }

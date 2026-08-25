@@ -1,4 +1,6 @@
 use super::*;
+use crate::cluster as kmeans;
+use crate::l2_squared;
 
 /// Clustered training data — the shape PQ is designed for. Uniform noise has no
 /// structure for a codebook to capture, so it would understate the codec badly.
@@ -66,7 +68,7 @@ fn reconstruction_is_close_for_clustered_data() {
     let mut worst = 0f32;
     for v in data.iter().take(50) {
         let back = book.decode(&book.encode(v).unwrap()).unwrap();
-        let error = kmeans::l2(v, &back).sqrt() / (v.len() as f32).sqrt();
+        let error = l2_squared(v, &back).sqrt() / (v.len() as f32).sqrt();
         worst = worst.max(error);
     }
     assert!(worst < 0.5, "per-component error {worst} is too large");
@@ -91,7 +93,7 @@ fn more_subspaces_reconstruct_more_accurately() {
         .unwrap();
         data.iter()
             .take(50)
-            .map(|v| kmeans::l2(v, &book.decode(&book.encode(v).unwrap()).unwrap()))
+            .map(|v| l2_squared(v, &book.decode(&book.encode(v).unwrap()).unwrap()))
             .sum::<f32>()
     };
 

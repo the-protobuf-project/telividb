@@ -14,8 +14,8 @@ use crate::sweep::Point;
 /// Up and to the right is better — high recall at high throughput. A point
 /// that is high on one and low on the other is the trade every ANN index
 /// makes, and the curve is how you see the shape of it.
-pub fn recall_vs_qps(dataset: &str, points: &[Point]) -> String {
-    let frontier = pareto_frontier(points);
+pub fn recall_vs_qps(dataset: &str, points: &[Point], family: &str) -> String {
+    let frontier = pareto_frontier(points, family);
     if frontier.is_empty() {
         return String::new();
     }
@@ -29,7 +29,7 @@ pub fn recall_vs_qps(dataset: &str, points: &[Point]) -> String {
 
     format!(
         "xychart-beta\n    \
-         title \"{dataset} — recall@10 versus throughput (Pareto frontier)\"\n    \
+         title \"{dataset} — {family} recall@10 versus throughput\"\n    \
          x-axis \"recall@10\" [{}]\n    \
          y-axis \"queries per second\" 0 --> {ceiling:.0}\n    \
          line [{}]\n",
@@ -49,9 +49,9 @@ pub fn recall_vs_qps(dataset: &str, points: &[Point]) -> String {
 /// Rounded to three decimals before grouping, because that is the precision
 /// the chart shows; two configurations differing in the fourth decimal are the
 /// same point to a reader.
-fn pareto_frontier(points: &[Point]) -> Vec<&Point> {
+fn pareto_frontier<'a>(points: &'a [Point], family: &str) -> Vec<&'a Point> {
     let mut best: Vec<&Point> = Vec::new();
-    for point in points.iter().filter(|p| p.family == "hnsw") {
+    for point in points.iter().filter(|p| p.family == family) {
         let key = (point.recall * 1000.0).round() as i64;
         match best
             .iter_mut()

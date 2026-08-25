@@ -6,7 +6,9 @@
 
 use crate::error::Result;
 use crate::format::Codec;
-use crate::format::quantize::{BinaryCodes, F16Row, Int8Row, PqCodebook, PqParams};
+use crate::format::quantize::{
+    BinaryCodes, F16Row, Int8Row, PqCodebook, PqParams, encode_codebook, encoded_len,
+};
 use std::path::Path;
 use telividb_core::VectorStore;
 
@@ -65,8 +67,8 @@ pub(super) fn write_codes(dir: &Path, store: &dyn VectorStore, codec: Codec) -> 
     super::durable::write_synced(dir.join("codes.bin"), &out)?;
 
     if let Some(book) = codebook {
-        let mut bytes = Vec::with_capacity(book.encoded_len());
-        book.write_to(&mut bytes);
+        let mut bytes = Vec::with_capacity(encoded_len(&book));
+        encode_codebook(&book, &mut bytes);
         // Synced like every other file in the segment: a code is meaningless
         // without exactly the codebook that produced it, so publishing one
         // without the other is worse than publishing neither.

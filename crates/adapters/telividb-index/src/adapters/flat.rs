@@ -5,7 +5,7 @@
 //! agreement with this implementation, so it must stay obviously correct in
 //! preference to being fast. See CLAUDE.md invariant 8.
 
-use crate::domain::Candidate;
+use crate::domain::{Candidate, TopK};
 use crate::ports::{VectorIndex, VectorStore};
 use std::time::Instant;
 use telividb_core::{Ordinal, Result};
@@ -65,7 +65,10 @@ impl VectorIndex for FlatIndex {
         let started = Instant::now();
 
         let metric = store.metric();
-        let mut scored: Vec<Candidate> = Vec::new();
+        // Bounded rather than collect-then-sort: the scan visits every row, so
+        // holding all of them costs an allocation proportional to the corpus
+        // in order to discard all but `k`.
+        let mut best = TopK::new(k, metric.higher_is_nearer());
         let mut visited = 0u64;
 
         for row in 0..store.len() {
@@ -87,12 +90,11 @@ impl VectorIndex for FlatIndex {
             };
 
             let score = telividb_distance::score(metric, query, candidate);
-            scored.push(Candidate::new(ordinal, score));
+            best.offer(Candidate::new(ordinal, score));
             visited += 1;
         }
 
-        sort_best_first(&mut scored, k, metric.higher_is_nearer());
-        scored.truncate(k);
+        let scored = best.into_sorted();
 
         let elapsed = started.elapsed().as_secs_f64();
         // The stack's metrics take no attributes, so the index kind travels on
@@ -119,29 +121,6 @@ impl VectorIndex for FlatIndex {
             fields::DURATION_SECONDS: elapsed,
         }));
         Ok(scored)
-    }
-}
-
-/// Partition so the best `k` are in front, then order just those.
-///
-/// `select_nth_unstable_by` keeps this O(n) rather than O(n log n); only the
-/// retained prefix is sorted.
-pub(crate) fn sort_best_first(scored: &mut [Candidate], k: usize, higher_is_nearer: bool) {
-    let better = |a: &Candidate, b: &Candidate| {
-        // NaN scores would make this ordering inconsistent; they are rejected at
-        // ingest, so `total_cmp` here is a defensive tie-break, not a policy.
-        if higher_is_nearer {
-            b.score.total_cmp(&a.score)
-        } else {
-            a.score.total_cmp(&b.score)
-        }
-    };
-
-    if k < scored.len() {
-        scored.select_nth_unstable_by(k, better);
-        scored[..k].sort_unstable_by(better);
-    } else {
-        scored.sort_unstable_by(better);
     }
 }
 

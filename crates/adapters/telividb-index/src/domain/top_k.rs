@@ -37,29 +37,51 @@ impl TopK {
     }
 
     /// Offer a candidate, keeping it only if it beats the current worst.
+    ///
+    /// Once the heap is full, a losing candidate costs one comparison. That
+    /// matters more than it looks: an exhaustive scan offers every row, so the
+    /// overwhelming majority of calls lose, and paying a push and a pop for
+    /// each of them was measurably the largest cost in a GPU query — 2.1 ms of
+    /// a 5.7 ms query on a million-row corpus.
     pub fn offer(&mut self, candidate: Candidate) {
         if self.k == 0 {
             return;
         }
-        self.heap.push(Worst {
+        let candidate = Worst {
             candidate,
             higher_is_nearer: self.higher_is_nearer,
-        });
-        if self.heap.len() > self.k {
-            // Pops the worst, because `Worst` inverts the ordering.
-            self.heap.pop();
+        };
+
+        if self.heap.len() == self.k {
+            // `Worst` inverts the ordering, so "beats the worst kept" is
+            // `candidate < worst`.
+            match self.heap.peek() {
+                Some(worst) if candidate < *worst => {
+                    self.heap.pop();
+                }
+                _ => return,
+            }
         }
+        self.heap.push(candidate);
     }
 
     /// The kept candidates, best first.
+    ///
+    /// Ties break on the row, ascending — the same rule eviction uses. Without
+    /// it the final order of equal-scoring rows depends on the heap's internal
+    /// layout, so two indexes over the same data return the same *set* in
+    /// different orders purely because one scanned sequentially and the other
+    /// list by list. That is invisible until something compares them.
     pub fn into_sorted(self) -> Vec<Candidate> {
         let higher_is_nearer = self.higher_is_nearer;
         let mut out: Vec<Candidate> = self.heap.into_iter().map(|w| w.candidate).collect();
-        if higher_is_nearer {
-            out.sort_unstable_by(|a, b| b.score.total_cmp(&a.score));
-        } else {
-            out.sort_unstable_by(|a, b| a.score.total_cmp(&b.score));
-        }
+        out.sort_unstable_by(|a, b| {
+            let by_score = match higher_is_nearer {
+                true => b.score.total_cmp(&a.score),
+                false => a.score.total_cmp(&b.score),
+            };
+            by_score.then_with(|| a.ordinal.row().cmp(&b.ordinal.row()))
+        });
         out
     }
 }

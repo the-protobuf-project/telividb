@@ -9,6 +9,9 @@
 
 mod scalar;
 
+pub mod cluster;
+pub mod pq;
+
 pub use scalar::{dot, l2_squared, normalize};
 
 use telividb_core::Metric;

@@ -5,7 +5,7 @@
 //! cannot produce one at all.
 
 use super::{PqCodebook, PqParams};
-use crate::error::Error;
+use telividb_core::Error;
 
 #[test]
 fn training_on_nothing_is_refused() {

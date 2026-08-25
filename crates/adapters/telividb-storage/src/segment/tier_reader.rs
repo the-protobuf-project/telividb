@@ -6,7 +6,8 @@
 //! lose a codec without any index changing.
 
 use crate::error::{Error, Result};
-use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader, quantize::PqCodebook};
+use crate::format::quantize::decode_codebook;
+use crate::format::{Codec, FIELD_HEADER_BYTES, FieldHeader};
 use crate::ports::{BlockReader, FileBlockReader};
 use crate::segment::layout::field_dir;
 use crate::tier::{BinaryTier, F16Tier, Int8Tier, PqTier};
@@ -73,7 +74,7 @@ pub fn open_tier(segment: &Path, field: &str) -> Result<Option<Box<dyn ScanTier>
         Codec::Int8 => Box::new(Int8Tier::from_codes(&codes, dim, rows, &is_present)?),
         Codec::Binary => Box::new(BinaryTier::from_codes(&codes, dim, rows, &is_present)?),
         Codec::Pq { .. } => {
-            let book = PqCodebook::read_from(&std::fs::read(dir.join("codebook.pq"))?)?;
+            let book = decode_codebook(&std::fs::read(dir.join("codebook.pq"))?)?;
             Box::new(PqTier::from_codes(&codes, book, rows, &is_present)?)
         }
     };

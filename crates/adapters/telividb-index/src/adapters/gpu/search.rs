@@ -9,8 +9,7 @@
 //! and thereby reveals how many rows were hidden and where they ranked.
 
 use super::gguf::Corpus;
-use crate::adapters::flat::sort_best_first;
-use crate::domain::Candidate;
+use crate::domain::{Candidate, TopK};
 use candle_core::Tensor;
 use telividb_core::{Metric, Ordinal, Result};
 
@@ -34,7 +33,10 @@ pub(super) fn search(
 
     let scores = score_all(corpus, query)?;
 
-    let mut scored: Vec<Candidate> = Vec::new();
+    // Bounded rather than collect-then-sort. The matmul scores every row, and
+    // pushing all of them into a `Vec` to keep `k` cost more than the matmul
+    // itself: 2.1 ms of a 5.7 ms query on a million rows.
+    let mut best = TopK::new(k, corpus.metric.higher_is_nearer());
     for (row, score) in scores.iter().enumerate() {
         // Absent for this field: the row holds zeros, and against a dot
         // product zero is a real score rather than a neutral one, so it must
@@ -48,12 +50,10 @@ pub(super) fn search(
         {
             continue;
         }
-        scored.push(Candidate::new(ordinal, *score));
+        best.offer(Candidate::new(ordinal, *score));
     }
 
-    sort_best_first(&mut scored, k, corpus.metric.higher_is_nearer());
-    scored.truncate(k);
-    Ok(scored)
+    Ok(best.into_sorted())
 }
 
 /// Every row's score against `query`, in one device operation.

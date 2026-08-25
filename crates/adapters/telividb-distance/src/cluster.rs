@@ -1,11 +1,20 @@
-//! Lloyd's algorithm, for training one subspace codebook.
+//! Lloyd's algorithm, shared by everything that clusters vectors.
 //!
-//! Deliberately small and deterministic rather than general: it clusters a few
-//! thousand short subvectors into 256 centroids, seeded so the same training
-//! set always yields the same codebook. That reproducibility matters more than
-//! it might seem — a codebook is baked into every vector encoded against it, so
-//! a nondeterministic trainer means two builds of the same data produce
-//! mutually unreadable codes.
+//! **Why it lives here.** Two callers need it and neither may depend on the
+//! other: product quantization in `telividb-storage` clusters *subspaces* into
+//! codebook centroids, and the IVF coarse quantizer in `telividb-index`
+//! clusters *whole vectors* into inverted lists. `telividb-distance` is the one
+//! crate both already depend on, and clustering is distance-driven — this
+//! module's inner loop is precisely the kernel the crate exists to provide.
+//!
+//! It also removes a duplicate: the k-means here used to carry its own squared
+//! Euclidean function alongside the crate's [`l2_squared`].
+//!
+//! Deliberately small and deterministic rather than general. Seeding means the
+//! same training set always yields the same centroids, and that reproducibility
+//! matters more than it might seem — a codebook is baked into every vector
+//! encoded against it, so a nondeterministic trainer means two builds of the
+//! same data produce mutually unreadable codes.
 
 /// Deterministic generator, so training reproduces exactly.
 pub struct Rng(
@@ -33,14 +42,16 @@ impl Rng {
     }
 }
 
-/// Squared Euclidean distance.
+/// Squared Euclidean distance, as training always measures it.
 ///
-/// Always L2 during training regardless of the collection's metric: the
-/// codebook approximates the *vectors*, and reconstruction error is a
-/// Euclidean notion. Which metric scores the reconstruction is a separate
-/// question, answered at query time.
-pub fn l2(a: &[f32], b: &[f32]) -> f32 {
-    a.iter().zip(b).map(|(x, y)| (x - y) * (x - y)).sum()
+/// Always L2 regardless of the collection's metric: clustering approximates the
+/// *vectors*, and reconstruction error is a Euclidean notion. Which metric
+/// scores the result is a separate question, answered at query time.
+///
+/// Delegates to the crate's own kernel so there is one implementation to
+/// optimise rather than two that must agree.
+fn l2(a: &[f32], b: &[f32]) -> f32 {
+    crate::l2_squared(a, b)
 }
 
 /// Cluster `points` into `k` centroids.
@@ -118,9 +129,10 @@ fn seed_centroids(points: &[&[f32]], dim: usize, k: usize, rng: &mut Rng) -> Vec
 /// cannot change which centroid wins, and this runs once per point per
 /// iteration of training.
 ///
-/// Returns zero when `centroids` is empty, which callers must not rely on —
-/// [`super::codebook::PqCodebook::train`] rejects an empty training set
-/// before anything reaches here.
+/// Returns zero when `centroids` is empty, which callers must not rely on:
+/// every caller rejects an empty training set before reaching here, because a
+/// degenerate codebook assigns every vector the same code and then ranks
+/// nothing — silently.
 pub fn nearest_centroid(point: &[f32], centroids: &[f32], dim: usize) -> usize {
     let mut best = 0usize;
     let mut best_distance = f32::INFINITY;
@@ -178,5 +190,5 @@ fn update(
 }
 
 #[cfg(test)]
-#[path = "kmeans_test.rs"]
+#[path = "cluster_test.rs"]
 mod tests;
