@@ -114,3 +114,7 @@ fn rescore_exactly(
 #[cfg(test)]
 #[path = "pq_search_test.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "pq_dials_test.rs"]
+mod dial_tests;

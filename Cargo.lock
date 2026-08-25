@@ -2999,6 +2999,7 @@ dependencies = [
  "serde_json",
  "telividb-client",
  "telividb-core",
+ "telividb-distance",
  "telividb-embed",
  "telividb-index",
  "telividb-proto",

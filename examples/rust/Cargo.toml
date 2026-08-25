@@ -19,6 +19,7 @@ publish = false
 [dependencies]
 telividb-core.workspace = true
 telividb-embed.workspace = true
+telividb-distance.workspace = true
 telividb-index.workspace = true
 telividb-storage.workspace = true
 telividb-telemetry.workspace = true
