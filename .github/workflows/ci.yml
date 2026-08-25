@@ -288,7 +288,7 @@ jobs:
     name: gpu index · cpu fallback
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug
