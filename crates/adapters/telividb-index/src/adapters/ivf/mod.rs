@@ -24,6 +24,7 @@ use crate::domain::{Candidate, TopK};
 use crate::ports::VectorIndex;
 use std::time::Instant;
 use telividb_core::{Ordinal, Result, VectorStore};
+use telividb_distance::Scorer;
 use telividb_telemetry::{Meter, fields, logger, metrics_names};
 
 /// An IVF index with exact scoring inside each probed list.
@@ -149,10 +150,7 @@ impl VectorIndex for IvfFlatIndex {
                     continue;
                 };
 
-                best.offer(Candidate::new(
-                    ordinal,
-                    telividb_distance::score(metric, query, candidate),
-                ));
+                best.offer(Candidate::new(ordinal, metric.score(query, candidate)));
                 visited += 1;
             }
         }

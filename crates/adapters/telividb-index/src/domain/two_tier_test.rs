@@ -1,6 +1,7 @@
 use super::*;
 use crate::adapters::MemoryStore;
 use telividb_core::{Dim, Metric, PreparedQuery, PreparedState};
+use telividb_distance::Scorer;
 
 /// A scan tier that scores exactly, so tests can isolate the composition from
 /// any particular codec's error.
@@ -31,7 +32,7 @@ impl ScanTier for ExactTier {
         let PreparedState::Vector(q) = &prepared.state else {
             return None;
         };
-        Some(telividb_distance::score(prepared.metric, q, row))
+        Some(prepared.metric.score(q, row))
     }
 }
 

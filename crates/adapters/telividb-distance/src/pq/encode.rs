@@ -4,8 +4,8 @@
 //! and this is about using one. Reconstruction lives here too: it is the
 //! inverse of encoding, and the only way to see what quantization cost.
 
-use super::codebook::PqCodebook;
-use crate::cluster as kmeans;
+use super::codebook::{CENTROIDS, PqCodebook};
+use crate::kmeans;
 use telividb_core::{Error, Result};
 
 impl PqCodebook {
@@ -21,7 +21,7 @@ impl PqCodebook {
             .map(|sub| {
                 let start = sub * self.sub_dim;
                 let point = &vector[start..start + self.sub_dim];
-                kmeans::nearest_centroid(point, self.subspace(sub), self.sub_dim) as u8
+                kmeans::KMeans::new(self.sub_dim, CENTROIDS).assign(point, self.subspace(sub)) as u8
             })
             .collect())
     }

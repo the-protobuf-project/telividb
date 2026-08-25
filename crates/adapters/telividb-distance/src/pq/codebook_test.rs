@@ -1,11 +1,11 @@
 use super::*;
-use crate::cluster as kmeans;
-use crate::l2_squared;
+use crate::ops::VectorOps;
+use crate::rng::Rng;
 
 /// Clustered training data — the shape PQ is designed for. Uniform noise has no
 /// structure for a codebook to capture, so it would understate the codec badly.
 fn training(count: usize, dim: usize, seed: u64) -> Vec<Vec<f32>> {
-    let mut rng = kmeans::Rng(seed);
+    let mut rng = Rng(seed);
     let centres: Vec<Vec<f32>> = (0..16)
         .map(|_| {
             (0..dim)
@@ -68,7 +68,7 @@ fn reconstruction_is_close_for_clustered_data() {
     let mut worst = 0f32;
     for v in data.iter().take(50) {
         let back = book.decode(&book.encode(v).unwrap()).unwrap();
-        let error = l2_squared(v, &back).sqrt() / (v.len() as f32).sqrt();
+        let error = v.l2_squared(&back).sqrt() / (v.len() as f32).sqrt();
         worst = worst.max(error);
     }
     assert!(worst < 0.5, "per-component error {worst} is too large");
@@ -93,7 +93,7 @@ fn more_subspaces_reconstruct_more_accurately() {
         .unwrap();
         data.iter()
             .take(50)
-            .map(|v| l2_squared(v, &book.decode(&book.encode(v).unwrap()).unwrap()))
+            .map(|v| v.l2_squared(&book.decode(&book.encode(v).unwrap()).unwrap()))
             .sum::<f32>()
     };
 

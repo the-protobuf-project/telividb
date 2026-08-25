@@ -36,17 +36,26 @@ use modules::check_modules;
 /// that is precisely the edge invariant 6 exists to forbid.
 const ALLOWED: &[(&str, &[&str])] = &[
     ("telividb-core", &[]),
+    // Layer one. Depends only on the ontology — it must not know what an index
+    // or a model is, or the layers above could not be swapped independently.
+    ("telividb-compute", &["telividb-core"]),
     ("telividb-proto", &[]),
     ("telividb-telemetry", &[]),
     ("telividb-graph", &["telividb-core", "telividb-telemetry"]),
-    ("telividb-distance", &["telividb-core"]),
+    // Layer two may reach layer one for dense scoring, and nothing else.
+    ("telividb-distance", &["telividb-core", "telividb-compute"]),
     (
         "telividb-storage",
         &["telividb-core", "telividb-distance", "telividb-telemetry"],
     ),
     (
         "telividb-index",
-        &["telividb-core", "telividb-distance", "telividb-telemetry"],
+        &[
+            "telividb-compute",
+            "telividb-core",
+            "telividb-distance",
+            "telividb-telemetry",
+        ],
     ),
     // Note what is absent: `telividb-index`. The inference server and the GPU
     // index both sit on candle, but neither may reach into the other — a

@@ -4,6 +4,7 @@ use crate::adapters::{FlatIndex, MemoryStore};
 use crate::ports::VectorIndex;
 use telividb_core::Dim;
 use telividb_core::Metric;
+use telividb_distance::Scorer;
 use telividb_distance::pq::PqParams;
 
 /// A corpus with real cluster structure, so quantization has something to
@@ -76,7 +77,7 @@ fn rescored_scores_are_exact_not_approximate() {
     let found = index.search(&store, &query(16), 3, None).unwrap();
     for candidate in &found {
         let vector = store.get(candidate.ordinal).unwrap();
-        let exact = telividb_distance::score(Metric::L2, &query(16), vector);
+        let exact = Metric::L2.score(&query(16), vector);
         assert!(
             (candidate.score - exact).abs() < 1e-3,
             "score {} is not the true distance {exact}",

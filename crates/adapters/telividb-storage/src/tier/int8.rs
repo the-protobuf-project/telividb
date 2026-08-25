@@ -7,6 +7,7 @@
 
 use crate::format::quantize::Int8Row;
 use telividb_core::{Dim, Metric, Ordinal, PreparedQuery, PreparedState, Result, ScanTier};
+use telividb_distance::Scorer;
 
 /// Int8-quantized rows for one field.
 #[derive(Debug)]
@@ -99,7 +100,7 @@ impl ScanTier for Int8Tier {
         };
         let mut decoded = vec![0f32; self.dim.get()];
         row.decode_into(&mut decoded);
-        Some(telividb_distance::score(prepared.metric, query, &decoded))
+        Some(prepared.metric.score(query, &decoded))
     }
 }
 

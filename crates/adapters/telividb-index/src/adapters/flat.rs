@@ -9,6 +9,7 @@ use crate::domain::{Candidate, TopK};
 use crate::ports::{VectorIndex, VectorStore};
 use std::time::Instant;
 use telividb_core::{Ordinal, Result};
+use telividb_distance::Scorer;
 use telividb_telemetry::{Meter, fields, logger, metrics_names, redact};
 
 /// Brute-force scan over every row in the store.
@@ -89,7 +90,7 @@ impl VectorIndex for FlatIndex {
                 continue;
             };
 
-            let score = telividb_distance::score(metric, query, candidate);
+            let score = metric.score(query, candidate);
             best.offer(Candidate::new(ordinal, score));
             visited += 1;
         }

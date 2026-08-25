@@ -41,6 +41,7 @@ repository = "https://github.com/oh-tarnished/telividb"
 
 [workspace.dependencies]
 telividb-client     = { path = "crates/sdk/telividb-client" }
+telividb-compute    = { path = "crates/platform/telividb-compute" }
 telividb-core       = { path = "crates/domain/telividb-core" }
 telividb-graph      = { path = "crates/domain/telividb-graph" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }

@@ -12,6 +12,7 @@
 
 use crate::domain::Candidate;
 use telividb_core::{Metric, Ordinal, VectorStore};
+use telividb_distance::Scorer;
 
 /// How many candidates to pull from the quantized scan for a request of `k`.
 ///
@@ -83,7 +84,7 @@ pub fn rerank(
         .iter()
         .filter_map(|c| {
             raw.get(c.ordinal)
-                .map(|v| Candidate::new(c.ordinal, telividb_distance::score(metric, query, v)))
+                .map(|v| Candidate::new(c.ordinal, metric.score(query, v)))
         })
         .collect();
 

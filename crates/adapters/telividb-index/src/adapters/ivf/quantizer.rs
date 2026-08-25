@@ -8,7 +8,8 @@
 
 use super::params::IvfParams;
 use telividb_core::{Metric, Ordinal, Result, VectorStore};
-use telividb_distance::cluster;
+use telividb_distance::Scorer;
+use telividb_distance::kmeans::KMeans;
 
 /// Trained centroids, laid out contiguously as `nlist * dim` floats.
 #[derive(Debug, Clone)]
@@ -55,7 +56,10 @@ impl Coarse {
         let borrowed: Vec<&[f32]> = owned.iter().map(Vec::as_slice).collect();
 
         Ok(Self {
-            centroids: cluster::train(&borrowed, dim, nlist, params.iterations, params.seed),
+            centroids: KMeans::new(dim, nlist)
+                .iterations(params.iterations)
+                .seed(params.seed)
+                .train(&borrowed),
             dim,
         })
     }
@@ -79,7 +83,7 @@ impl Coarse {
     /// training must agree: clustering under one measure and assigning under
     /// another puts rows in lists whose centroid does not describe them.
     pub fn assign(&self, vector: &[f32]) -> usize {
-        cluster::nearest_centroid(vector, &self.centroids, self.dim)
+        KMeans::new(self.dim, self.len()).assign(vector, &self.centroids)
     }
 
     /// The `nprobe` lists nearest `query`, best first.
@@ -93,7 +97,7 @@ impl Coarse {
             .centroids
             .chunks(self.dim.max(1))
             .enumerate()
-            .map(|(list, centroid)| (list, telividb_distance::score(metric, query, centroid)))
+            .map(|(list, centroid)| (list, metric.score(query, centroid)))
             .collect();
 
         let better = |a: &(usize, f32), b: &(usize, f32)| match metric.higher_is_nearer() {

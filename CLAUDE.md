@@ -13,19 +13,44 @@ Guidance for Claude Code when working in this repository.
 **telividb** — a single-node, embedded-or-served **vector database** written in Rust, with a
 gRPC API as the primary interface. Three things distinguish it from the field:
 
-1. **Bring your own embedding model — GGUF via `candle`, and nothing else.** Models load from
-   **GGUF** files, described by a config file. Inference runs on whatever hardware is present —
-   Metal, CUDA, plain CPU SIMD — without recompiling the database. There is deliberately no
-   second inference runtime: ONNX Runtime (`ort`) was evaluated and rejected for this project.
-   Where candle genuinely has no path for a model (voice speaker embedding is the current
-   example), the answer is "not yet," routed through the narrow `RemoteEmbedder` escape hatch —
-   never a second local backend.
+1. **Bring your own embedding model.** Models load from **GGUF** files, described by a config
+   file. Inference runs on whatever hardware is present without recompiling the database.
+   `candle` backs this today; ggml or ONNX may join it, because a model runtime sits *above* the
+   engine and is swappable per field behind the `Inferencer` port (rule 42). Where no local
+   runtime has a path for a model, the answer is "not yet," routed through the narrow
+   `RemoteEmbedder` escape hatch.
 2. **Bring your own search algorithm.** ANN indexes are pluggable behind a trait. Flat, HNSW
-   (`instant-distance`) and IVF-PQ ship in-tree, pure Rust, no C FFI on the hot path; a
-   user-supplied index is a first-class citizen.
+   (`instant-distance`) and IVF/IVF-PQ ship in-tree; their selection, partitioning and traversal
+   logic is pure Rust over `&[f32]` and knows nothing about hardware. Only dense scoring reaches
+   the tensor runtime, which is why an index survives a runtime change untouched (rule 46).
 3. **Every embedding call, every plugin's compute step, and every query-time encode goes through
    one inference server.** It is core, not an adapter a plugin can route around — see invariants
    42–45.
+
+---
+
+## The five layers
+
+The shape everything else hangs off. Each layer may use the one below it and must not reach
+past it; a layer names an abstraction, never a backend.
+
+| # | layer | what lives there | crates |
+|---|---|---|---|
+| 1 | **compute** | the tensor runtime and every `unsafe` line that talks to it | `telividb-compute` |
+| 2 | **algorithms** | distance kernels, k-means, PQ codebooks, bounded selection | `telividb-distance` |
+| 3 | **indexing** | flat, IVF, IVF-PQ, HNSW — composing layers 1 and 2 | `telividb-index` |
+| 4 | **models** | embedding and scoring models; several runtimes allowed | `telividb-embed` |
+| 5 | **apps** | the server, the SDK, plugins, examples | `telividb-server`, `telividb-client` |
+
+**Layers 2, 3 and 5 must survive a layer-1 change untouched.** They operate on `&[f32]` and
+plain Rust types; if an algorithm names a device, a backend or a tensor, it is in the wrong
+layer. That property is what made replacing the compute runtime a contained change rather than
+a rewrite, and it is worth protecting.
+
+**Layers 2 and 3 reach layer 1 through a factory and an abstraction, never a raw handle.**
+`Device::best()` picks hardware; a backend is obtained from it. No index calls a runtime
+function directly.
+
 
 Plan A is the vector store. Plan A1.1 layers a property graph over the same storage so the
 system becomes a **graph + embedding database** for GraphRAG-style retrieval.
@@ -49,28 +74,32 @@ asked — that is the thing this rule has always forbidden, not either generated
 
 Violating any of these is a bug, not a style preference.
 
-1. **The database is 100% Rust.** No C or C++ in `telividb-core`, `-storage`, `-index`,
-   `-distance`, `-query`, `-graph`, `-server`. The *only* sanctioned FFI is the optional
-   llama.cpp transcription backend (`whisper.cpp`, quarantined for the voice slice) and the
-   optional FAISS index backend (rule 46) — both behind non-default features. No CMake, no CUDA
-   SDK beyond what `candle-cuda` itself requires.
+1. **Everything is Rust except the tensor runtime.** ggml is C/C++ and is built with CMake;
+   every other line in this workspace is Rust. That is a change from an earlier "100% Rust"
+   promise, and it was made deliberately — the reasoning is in rule 42 and it is about hardware
+   coverage, not convenience.
 
-   **Two carve-outs, recorded rather than hidden.**
+   **All FFI lives in one crate.** `telividb-compute` owns the ggml bindings, the build script
+   and every `unsafe` block that talks to it. Every other crate keeps `#![forbid(unsafe_code)]`
+   and sees a safe Rust API with methods on types — never a raw pointer, never a backend handle.
+   That containment is what makes the trade acceptable: the FFI surface is one crate wide rather
+   than workspace wide, and a reviewer knows exactly where to look.
 
-   *One:* the mandated telemetry stack depends on MCAP, which depends on lz4, which builds with
-   `cc`. MCAP is not optional there, so a C compiler is needed to build the workspace.
+   The other sanctioned native paths, unchanged: the optional `whisper.cpp` transcription
+   backend (quarantined for the voice slice) and, if it is ever wired in, the optional FAISS
+   index behind a non-default feature (rule 46).
 
-   *Two:* `candle-core` (rule 42, and rule 46's GPU index) has a **non-optional** dependency on
-   `tokenizers`, which pulls Oniguruma (`onig_sys`) and so `cc`. This is unrelated to anything
-   this project uses candle for — we want tensors and GGUF, not tokenization — and it cannot be
-   switched off, because Cargo unifies features as a union: a `default-features = false` on our
-   side cannot undo what candle asks for. candle 0.9 predates the dependency and is clean, but
-   pinning three minor versions back to dodge a transitive regex library is the worse trade;
-   **take the latest candle and record the cost here.**
+   **Two incidental C paths, recorded rather than hidden.** The mandated telemetry stack depends
+   on MCAP, which depends on lz4, which builds with `cc`. And `candle-core` — still the model
+   runtime, rule 42 — has a non-optional dependency on `tokenizers`, which pulls Oniguruma
+   (`onig_sys`). Neither can be switched off from our side, because Cargo unifies features as a
+   union.
 
-   The `no C toolchain` job allows exactly those two paths and still fails on any other native
-   dependency — the promise narrowed twice, it did not disappear. Adding a third is a decision
-   to record here, never a quiet addition to the CI allowlist.
+   The `no C toolchain` CI job's original premise is gone. What replaces it is narrower and still
+   worth enforcing: **no *unexpected* native dependency.** ggml, CMake, the MCAP chain and the
+   candle chain are expected; anything else fails the build and is a decision to record here,
+   never a quiet addition to the allowlist.
+
 2. **Sealed segments are immutable.** Once a segment is sealed, its `vectors.bin`, `ids.bin` and
    `index.*` files are never written again. Mutation happens by writing a new segment plus a
    tombstone bitmap. This is what makes lock-free concurrent reads and `mmap` safe — do not
@@ -268,23 +297,33 @@ Violating any of these is a bug, not a style preference.
     clean shutdown must not treat that as fatal; and the stack installs a *global* logger, so a
     test binary gets exactly one `install` and must share its result rather than installing per
     test.
-42. **candle is the only tensor runtime, for inference *and* for GPU search — no second one,
-    ever.** `telividb-embed` has exactly one model-execution adapter: `candle-core`/`candle-nn`
-    dispatched to `candle-metal` or `candle-cuda`. Do not add an `ort`/ONNX adapter, a TensorRT
-    path, or an OpenVINO path to this crate under any justification ("just for this one model,"
-    "just as a fallback") — that reintroduces a second C++ dependency tree and a second
-    hardware-backend surface this project explicitly rejected. If a model has no candle path, it
-    is out of scope for local inference; the only sanctioned exception is `RemoteEmbedder`, a
-    declared network call with the same provenance tracking as a local model (rule 12), never a
-    second in-process runtime.
+42. **One tensor runtime under the engine; several are fine above it.** The distinction is the
+    rule, and it replaces an earlier one that named candle as the only runtime and forbade ggml
+    by name.
 
-    **The same runtime backs the GPU index** (`telividb-index`'s `gpu` feature, rule 46): a
-    corpus is written as a GGUF tensor and scored with one `candle` matmul on the device. That
-    is deliberate rather than incidental — one tensor library serving both means one set of
-    hardware backends to reason about, one place GPU memory is allocated, and no second
-    C-dependency tree. GGUF is written and read by `candle` itself
-    (`candle_core::quantized::gguf_file`), so **ggml is not a dependency of this project** and
-    adding it would be the second runtime this rule forbids.
+    **Layer one — compute — is ggml, and only ggml.** `telividb-compute` is the single crate that
+    binds a runtime, and everything that scores vectors goes through it. The reason is hardware
+    coverage and it is checkable rather than aesthetic: candle's `Device` enum has exactly three
+    variants — `Cpu`, `Cuda`, `Metal` — so Intel and AMD GPUs are unreachable from it at any
+    effort, and its `mkl` feature is Intel's *CPU* math library, not Intel GPU. ggml carries
+    CUDA, Metal, Vulkan, HIP, SYCL, OpenCL and more behind one backend interface. The earlier
+    rule's actual principle — *one runtime, one set of hardware backends to reason about* — is
+    preserved; what changed is which runtime satisfies it.
+
+    ggml is **graph-based, not eager**. Tensors are declared into a context, wired into a graph,
+    and computed in one call, so there is no free-floating `a.matmul(b)` returning a value. The
+    API above it therefore expresses **whole jobs** — "score this batch against this corpus" —
+    not individual operations. That is also the only shape that keeps a device busy, so the
+    constraint and the performance advice point the same way.
+
+    **Layer four — models — may have several runtimes, and that is deliberate.** candle backs the
+    embedding path today; ggml or ONNX may join it. A model runtime is swappable per field and
+    already sits behind the `Inferencer` port, so a second one costs an adapter rather than a
+    second hardware-backend surface. The constraint that mattered belongs to layer one, not here.
+
+    The `RemoteEmbedder` escape hatch stands unchanged: a declared network call with the same
+    provenance tracking as a local model (rule 12), for hardware no in-process runtime reaches.
+
 43. **No plugin loads a model file directly.** A `transform`/`rerank`/`embedder`-kind plugin
     manifest declares a pinned GGUF reference (`[model]` block: path, sha256) and calls the
     inference server with it; the plugin process itself never opens a `.gguf` file or touches a
@@ -304,34 +343,57 @@ Violating any of these is a bug, not a style preference.
     an embedder and a scoring model live simultaneously. VRAM budgeting across resident models is
     an open design question (AGENT_START.md / ARCHITECTURE §15 Gap 22) — flag it, don't silently
     assume unlimited headroom.
-46. **The default vector index is pure Rust; a C++-backed index is opt-in and never default.**
-    `instant-distance` (HNSW) plus a hand-rolled flat/IVF-PQ path are the shipped defaults. FAISS,
-    if it is ever wired in, lives behind a non-default `faiss-index` feature — it is not a
-    fallback that silently activates, and it is never the crate a fresh `cargo build --workspace`
-    pulls in. The index is the highest-frequency call in the system (rule 22); a C++ FFI boundary
-    there is the single worst place to introduce one.
+46. **The device scores; the host decides.** Which operations run where is settled by
+    measurement, not preference, and the measurements are on an M3 Max over SIFT-1M:
 
-    **The GPU index is on by default, and falls back rather than failing.** `telividb-index`'s
-    `gpu` feature (`GpuFlatIndex`) is `candle`-backed and therefore pure Rust, so it is nothing
-    like the FAISS carve-out above. It ships enabled because `best_device` degrades safely:
-    Metal, then CUDA, then CPU, with identical results on every one — only the speed differs.
-    **Metal is compiled in automatically on macOS** through a `cfg(target_os = "macos")` target
-    dependency rather than a default feature, because `candle-core/metal` does not build
-    elsewhere and a default that broke every Linux build is not a default. **CUDA stays opt-in**
-    (`--features cuda`): it needs the CUDA SDK at build time, which most machines lack.
+    | operation | runs on | why |
+    |---|---|---|
+    | exhaustive scoring | **device** | one contiguous matmul — 2.17 ms against 47 ms on the host |
+    | batched scoring | **device** | the corpus is read once for the whole batch — 5.5x per query at 32 |
+    | top-k selection | **host** | a bounded heap at 0.27 ms; a device sort cannot address a million columns |
+    | ADC code lookup | **host** | a scattered gather with almost no arithmetic — 25x slower on a device |
+    | graph traversal | **host** | each hop depends on the last |
 
-    The cost is build weight — candle is large and brings the `onig_sys` C path recorded in
-    rule 1 — so `--no-default-features --features parallel` stays a supported configuration and
-    CI builds it, keeping the no-candle path from quietly rotting.
+    The governing quantity is **arithmetic intensity crossed with independence**. A device wins
+    when the same bytes feed many independent operations; the host wins when work is dependent,
+    branchy, or a low-arithmetic scattered gather. Every row above follows from that, and so does
+    the counter-intuitive result below.
 
-    **GPU search is exhaustive, and that is the whole design.** It scores every row with one
-    matmul, so results are exact and it needs no build step and never degrades under deletes.
-    **HNSW is not ported to the GPU and should not be**: traversal is sequential
-    pointer-chasing where each hop depends on the last, which is the access pattern a GPU is
-    worst at — FAISS ships no GPU HNSW for the same reason. The two are complementary, not
-    alternatives. An index that has quietly fallen back to CPU passes every correctness test
-    while delivering none of the speed, so the selected device is emitted on every build and
-    search (`fields::DEVICE`) rather than left to be inferred.
+    **Do not partition on the device.** IVF on the GPU measured *slower than not partitioning* —
+    2.27 ms at 1.6% probed against 2.17 ms for scanning everything — because gathering a subset
+    costs more than scoring the whole corpus. IVF and PQ exist to avoid work a device does not
+    find expensive. They stay on the host, where they are also what a corpus too large for device
+    memory needs.
+
+    **HNSW is not ported to a device and should not be.** Traversal is sequential pointer-chasing,
+    the access pattern a GPU is worst at; FAISS ships no GPU HNSW for the same reason.
+
+    **A device that quietly fell back to the host passes every correctness test while delivering
+    none of the speed**, so the selected backend is emitted on every build and search
+    (`fields::DEVICE`) rather than left to be inferred. Results must be identical on every
+    backend — only the speed may differ.
+
+    **The device corpus is rebuilt on load, never persisted.** It is exactly derivable from the
+    store, and rebuilding a million rows measures at 0.14 s against the 512 MB a serialized copy
+    would occupy — so a file would trade real disk for no recovery time. Nothing under
+    `adapters/gpu/` writes one, and rule 4 has nothing to version there because there is no
+    on-disk structure. This is a decision, not an omission: an earlier revision *did* carry a
+    GGUF read/write path for it, reached only by its own tests, and removing it is what made the
+    ggml migration a smaller change than the candle version it replaced. HNSW is the opposite
+    case and still persists — its graph costs 697 s to build.
+
+    **A `ggml` backend is not `Sync`, and the wrapper does not pretend otherwise.** One backend
+    holds one command queue, so concurrent compute submissions race. `telividb-compute` marks its
+    types `Send` and not `Sync`, and the index holds its corpus behind a mutex taken for the
+    device call alone — released before selection, so the host-bound half of a search still runs
+    concurrently. This costs nothing real: a GPU executes submitted work serially anyway, and
+    candle held an equivalent internal mutex for the same reason. Do not "fix" this with an
+    `unsafe impl Sync`.
+
+    A C++-backed *index* remains opt-in and never default: FAISS, if ever wired in, lives behind
+    a non-default `faiss-index` feature. That is separate from ggml, which is the compute runtime
+    beneath every index rather than an index of its own.
+
 47. **The in-memory graph is rehydrated, not its own persisted format.** `telividb-graph` wraps
     `petgraph`, built in memory from `telividb-storage`'s edge records on collection load. This is
     a stated v1 capacity ceiling — very large, dense-edge collections become RAM-bound before the
@@ -396,6 +458,9 @@ telividb/
 │  │  ├─ telividb-policy/     # authz: principals, roles, grants, regorus-backed evaluation
 │  │  └─ telividb-io/         # bulk import/export: archive format, jobs, readers, rejects
 │  ├─ platform/                # cross-cutting concerns no single domain/adapter crate owns
+│  │  ├─ telividb-compute/    # LAYER 1: ggml, vendored as a submodule and built here.
+│  │  │                       # The only crate with FFI. Everything else sees a safe,
+│  │  │                       # method-based API and keeps forbid(unsafe_code).
 │  │  ├─ telividb-telemetry/  # span/metric vocabulary, redaction, subscriber wiring
 │  │  ├─ telividb-proto/      # buf-generated from protobuf/, committed; no build script
 │  │  └─ telividb-ui/         # embedded web assets (axum + rust-embed) + declarative panel handlers
@@ -527,8 +592,9 @@ Every `.rs` file stays under 200 lines, doc comments included. Consequences wort
 The workspace does not exist yet; these are the intended shapes. Keep them working as it lands.
 
 ```bash
-cargo build --workspace                 # must succeed with zero external toolchains
-                                         # except the recorded MCAP/lz4 carve-out (invariant 1)
+git submodule update --init --recursive   # ggml lives in telividb-compute/vendor
+cargo build --workspace                 # needs CMake for ggml (invariant 1); the
+                                         # submodule above must be initialised first
 cargo test  --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all
@@ -537,6 +603,13 @@ cargo run -p telividb-server -- --config telividb.toml
 
 cargo bench -p telividb-index           # latency
 cargo run -p telividb-index --bin recall -- --dataset sift-1m   # recall@k vs flat
+
+# Compute backends. Metal is automatic on macOS; the rest are opt-in because
+# each needs its own SDK at build time.
+cargo build -p telividb-compute --features cuda                 # NVIDIA
+cargo build -p telividb-compute --features hip                  # AMD
+cargo build -p telividb-compute --features vulkan               # cross-vendor
+cargo build -p telividb-compute --features sycl                 # Intel GPU
 
 cargo build -p telividb-embed-llama --features llama            # opt-in FFI: whisper.cpp only
 cargo build -p telividb-index --features faiss-index             # opt-in FFI: FAISS, never default
@@ -561,11 +634,33 @@ Run a single test: `cargo test -p telividb-storage segment::tests::seal_is_atomi
 `telividb-server` binaries and tests. Errors that cross gRPC map to explicit `tonic::Status`
 codes in one place — never `.unwrap()` into a 500.
 
-**Unsafe.** Allowed only in `telividb-distance` (SIMD intrinsics), `telividb-storage`
-(mmap casts), `telividb-embed-llama`, and, if the optional FAISS feature is built,
-`telividb-index`'s FAISS adapter module specifically. Every `unsafe` block carries a
-`// SAFETY:` comment naming the invariant it relies on. Every other crate carries
-`#![forbid(unsafe_code)]`.
+**Unsafe.** Allowed in `telividb-compute` (the ggml FFI — this is where it is expected to
+live), `telividb-distance` (SIMD intrinsics), `telividb-storage` (mmap casts),
+`telividb-embed-llama`, and, if the optional FAISS feature is built, `telividb-index`'s FAISS
+adapter module specifically. Every `unsafe` block carries a `// SAFETY:` comment naming the
+invariant it relies on. **Every other crate carries `#![forbid(unsafe_code)]`**, and that is the
+containment rule 1 depends on — an `unsafe` block appearing outside this list is a design
+failure, not a local exception.
+
+**Methods, not free functions.** Behaviour hangs off a type: `impl` blocks with receiver
+methods, so a reader finds an operation by looking at what it operates on. `Device::best()`,
+`backend.name()`, `codebook.encode(v)` — not `best_device()`, `backend_name(b)`,
+`encode(book, v)`.
+
+Rust imposes one constraint Go does not: the **orphan rule** forbids an inherent `impl` outside
+the type's defining crate. Where behaviour must attach to a type from another crate, define a
+**trait** and implement it — that keeps the receiver form:
+
+```rust
+pub trait CodebookBytes {
+    fn encoded_len(&self) -> usize;
+    fn encode_to(&self, out: &mut Vec<u8>);
+}
+impl CodebookBytes for PqCodebook { /* ... */ }   // book.encode_to(&mut bytes)
+```
+
+A free function is right only where there is genuinely no receiver — a private helper inside one
+operation, or a constructor-like entry point that belongs to no value yet.
 
 **Proto changes.** Additive only once a version ships. Never renumber a field, never reuse a tag.
 `buf breaking` runs in CI. SDKs regenerate from proto — never hand-edit generated code.
@@ -606,11 +701,16 @@ Every field documented and defaulted. No stringly-typed config lookups scattered
   compaction; do not attempt in-place graph deletion.
 - **Filtered search is not "search then filter."** A selective filter with post-filtering returns
   too few results. This needs a planner — see `AGENT_START.md` §Filtering.
-- **GGUF is not universal.** It covers the model architectures the `candle` loader implements, not
-  every model on HuggingFace. Scope is encoder-style embedding models (bge, e5, gte, nomic, jina)
-  plus whatever generative/scoring models candle supports for plugin compute (rule 43). A model
-  that only ships in ONNX or safetensors-for-a-different-runtime is out of scope — see invariant
-  42 before reaching for a workaround.
+- **GGUF is not universal.** It covers the model architectures a loader implements, not every
+  model on HuggingFace. Scope is encoder-style embedding models (bge, e5, gte, nomic, jina) plus
+  whatever generative or scoring models the model runtime supports for plugin compute (rule 43).
+  Which architectures are in reach now depends on *which* model runtime a field uses — rule 42
+  permits several above the engine — so check the runtime bound to that field before concluding
+  a model is out of scope.
+- **A ggml graph is not an eager tensor.** Declaring a tensor does not compute anything; a graph
+  is built and dispatched in one call. Writing `a.matmul(b)` and expecting a value back is the
+  most natural mistake to make here, and the API deliberately offers whole jobs instead — see
+  rule 42.
 - **Multi-model VRAM pressure is real and currently undesigned.** Loading an embedder, a rerank
   model, and the OCEAN scoring model simultaneously (rule 45) can exceed available memory on
   smaller GPUs well before it exceeds anything on a datacenter card. There is no eviction policy

@@ -5,6 +5,7 @@
 //! and the reason product quantization is fast rather than merely small.
 
 use super::codebook::{CENTROIDS, PqCodebook};
+use crate::ops::VectorOps;
 use telividb_core::{Error, Metric, Result};
 
 impl PqCodebook {
@@ -46,6 +47,6 @@ impl PqCodebook {
 fn partial(metric: Metric, query: &[f32], centroid: &[f32]) -> f32 {
     match metric {
         Metric::Dot | Metric::Cosine => query.iter().zip(centroid).map(|(a, b)| a * b).sum(),
-        Metric::L2 => crate::l2_squared(query, centroid),
+        Metric::L2 => query.l2_squared(centroid),
     }
 }

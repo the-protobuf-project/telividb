@@ -16,31 +16,8 @@
 //! encoded against it, so a nondeterministic trainer means two builds of the
 //! same data produce mutually unreadable codes.
 
-/// Deterministic generator, so training reproduces exactly.
-pub struct Rng(
-    /// Current state. Seeded so training reproduces exactly.
-    pub u64,
-);
-
-impl Rng {
-    /// Next value in the sequence.
-    pub fn next_u64(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.0;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-
-    /// A value in `[0, bound)`, or zero when `bound` is zero.
-    pub fn below(&mut self, bound: usize) -> usize {
-        if bound == 0 {
-            0
-        } else {
-            (self.next_u64() % bound as u64) as usize
-        }
-    }
-}
+use crate::ops::VectorOps;
+use crate::rng::Rng;
 
 /// Squared Euclidean distance, as training always measures it.
 ///
@@ -51,13 +28,19 @@ impl Rng {
 /// Delegates to the crate's own kernel so there is one implementation to
 /// optimise rather than two that must agree.
 fn l2(a: &[f32], b: &[f32]) -> f32 {
-    crate::l2_squared(a, b)
+    a.l2_squared(b)
 }
 
 /// Cluster `points` into `k` centroids.
 ///
 /// Returns centroids laid out contiguously, `k * dim` floats.
-pub fn train(points: &[&[f32]], dim: usize, k: usize, iterations: usize, seed: u64) -> Vec<f32> {
+pub(crate) fn train_impl(
+    points: &[&[f32]],
+    dim: usize,
+    k: usize,
+    iterations: usize,
+    seed: u64,
+) -> Vec<f32> {
     let mut rng = Rng(seed);
     let mut centroids = seed_centroids(points, dim, k, &mut rng);
     let mut assignment = vec![0usize; points.len()];

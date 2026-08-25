@@ -9,6 +9,7 @@ use crate::domain::{Candidate, TopK};
 use crate::ports::VectorIndex;
 use std::time::Instant;
 use telividb_core::{Metric, Ordinal, Result, VectorStore};
+use telividb_distance::Scorer;
 use telividb_distance::pq::CENTROIDS;
 use telividb_telemetry::{fields, logger, metrics_names};
 
@@ -103,7 +104,7 @@ fn rescore_exactly(
     let mut best = TopK::new(k, metric.higher_is_nearer());
     for candidate in candidates {
         let score = match store.get(candidate.ordinal) {
-            Some(vector) => telividb_distance::score(metric, query, vector),
+            Some(vector) => metric.score(query, vector),
             None => candidate.score,
         };
         best.offer(Candidate::new(candidate.ordinal, score));

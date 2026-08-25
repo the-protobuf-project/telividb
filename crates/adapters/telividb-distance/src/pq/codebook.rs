@@ -15,7 +15,7 @@
 //! meaningless without exactly the codebook that produced it — which is why the
 //! codebook lives in the segment beside the codes and never in shared state.
 
-use crate::cluster as kmeans;
+use crate::kmeans;
 use telividb_core::{Error, Result};
 
 /// Entries per subspace codebook. One byte per code, so 256.
@@ -94,13 +94,12 @@ impl PqCodebook {
             // Each subspace gets its own seed, or every codebook would be
             // seeded identically and the first pick would correlate across
             // subspaces.
-            centroids.extend(kmeans::train(
-                &slices,
-                sub_dim,
-                CENTROIDS,
-                params.iterations,
-                params.seed.wrapping_add(sub as u64),
-            ));
+            centroids.extend(
+                kmeans::KMeans::new(sub_dim, CENTROIDS)
+                    .iterations(params.iterations)
+                    .seed(params.seed.wrapping_add(sub as u64))
+                    .train(&slices),
+            );
         }
 
         Ok(Self {

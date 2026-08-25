@@ -1,13 +1,13 @@
 use super::*;
 use crate::error::Error;
 use crate::format::quantize::PqParams;
-use telividb_distance::cluster as kmeans;
 use telividb_distance::pq::PqCodebook;
+use telividb_distance::rng::Rng;
 
 /// Clustered training data — the shape PQ is designed for. Uniform noise has no
 /// structure for a codebook to capture, so it would understate the codec badly.
 fn training(count: usize, dim: usize, seed: u64) -> Vec<Vec<f32>> {
-    let mut rng = kmeans::Rng(seed);
+    let mut rng = Rng(seed);
     let centres: Vec<Vec<f32>> = (0..16)
         .map(|_| {
             (0..dim)

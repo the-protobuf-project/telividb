@@ -52,8 +52,7 @@ pub(crate) fn announce(config: &ServerConfig) {
 /// that visible before anyone benchmarks and wonders.
 #[cfg(feature = "gpu")]
 pub(crate) fn announce_device() {
-    let device = telividb_index::adapters::best_device();
-    let name = telividb_index::adapters::device_name(&device);
+    let name = telividb_index::adapters::Device::best().kind().as_str();
     match name {
         "cpu" => {
             logger::info!(
