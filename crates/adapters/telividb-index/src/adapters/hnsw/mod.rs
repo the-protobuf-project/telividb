@@ -89,6 +89,22 @@ impl HnswIndex {
         self
     }
 
+    /// Search with a different breadth, without rebuilding.
+    ///
+    /// `ef_search` is a **query-time** dial — it bounds how many candidates a
+    /// single query keeps in flight — where `ef_construction` shapes the graph
+    /// and is fixed once built. Changing this therefore needs no rebuild, and
+    /// rebuilding to change it would measure the builder rather than the
+    /// search.
+    ///
+    /// This is the axis a recall-versus-throughput curve sweeps: raising it
+    /// finds more true neighbours and costs more time, and where a workload
+    /// wants to sit on that trade is not something the index can decide.
+    pub fn with_ef_search(mut self, ef_search: usize) -> Self {
+        self.params.ef_search = ef_search;
+        self
+    }
+
     /// The parameters this index was built and searches with.
     pub fn params(&self) -> HnswParams {
         self.params

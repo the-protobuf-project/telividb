@@ -1,5 +1,7 @@
 use super::*;
 use crate::adapters::candle::fixture::{TinyModel, write_tiny_gguf};
+use crate::domain::Task;
+use crate::ports::Inferencer;
 use telividb_core::Fingerprint;
 
 /// A registered fixture model, plus the id it is resident under.

@@ -5,13 +5,18 @@
 //! the embedded path cannot bypass it.
 
 mod collection;
+mod collection_convert;
+mod embed;
 mod point;
 mod point_batch;
 mod point_convert;
 mod point_create;
+mod point_declare;
 mod point_search;
+mod point_store;
 mod vector_search;
 mod vectors;
 
 pub use collection::CollectionSvc;
+pub use embed::Embeddings;
 pub use point::PointsSvc;

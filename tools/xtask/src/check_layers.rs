@@ -53,6 +53,10 @@ const ALLOWED: &[(&str, &[&str])] = &[
     // shared device helper would put one adapter behind the other's optional
     // feature, which is the outward dependency rule 14 forbids.
     ("telividb-embed", &["telividb-core", "telividb-telemetry"]),
+    // The SDK speaks the wire protocol and nothing else: no storage, no index,
+    // no model. That is what keeps one server behaviour rather than one per
+    // client, and it is why this list is as short as it is.
+    ("telividb-client", &["telividb-proto"]),
     (
         "telividb-server",
         &[

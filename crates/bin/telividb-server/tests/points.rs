@@ -15,6 +15,8 @@ use telividb_server::{ServerConfig, serve};
 
 /// Start a server on an ephemeral port, with a fresh data directory, and wait
 /// for it to accept connections.
+mod support;
+
 async fn start() -> SocketAddr {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("ephemeral port");
     let addr = listener.local_addr().expect("bound address");
@@ -48,6 +50,7 @@ async fn start() -> SocketAddr {
 #[tokio::test]
 async fn create_get_list_delete_round_trip_over_grpc() {
     let addr = start().await;
+    support::collections::declare(addr, "media", "text_bge", 4).await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
@@ -120,6 +123,7 @@ async fn create_get_list_delete_round_trip_over_grpc() {
 #[tokio::test]
 async fn creating_the_same_point_twice_is_refused() {
     let addr = start().await;
+    support::collections::declare(addr, "media", "text_bge", 4).await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
@@ -147,6 +151,7 @@ async fn a_point_carrying_vectors_is_accepted_and_echoes_them_back() {
     // had nowhere to go. They now persist through the field's WAL, so the
     // refusal would be the bug.
     let addr = start().await;
+    support::collections::declare(addr, "media", "text_bge", 4).await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await
         .expect("connect");
@@ -162,6 +167,7 @@ async fn a_point_carrying_vectors_is_accepted_and_echoes_them_back() {
             point_id: "with-vectors".to_owned(),
             point: Some(Point {
                 vectors: vec![telividb_proto::point::v1::NamedVector {
+                    text: String::new(),
                     field_id: "text_bge".to_owned(),
                     vector: Some(telividb_proto::point::v1::Vector {
                         data: data.into(),

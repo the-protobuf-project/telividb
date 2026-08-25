@@ -1,5 +1,7 @@
 use super::*;
 use crate::adapters::MemoryStore;
+use crate::adapters::gpu::load::{load_corpus, metric_of};
+use telividb_core::VectorStore;
 
 const DIM: u32 = 4;
 

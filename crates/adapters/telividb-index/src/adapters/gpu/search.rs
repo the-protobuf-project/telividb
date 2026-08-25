@@ -60,31 +60,56 @@ pub(super) fn search(
 ///
 /// Cosine is stored normalised and scored as dot (the CLAUDE.md gotcha), so a
 /// single `(1, dim) × (dim, rows)` product *is* the scoring function for both.
-/// L2 would need the `‖a‖² − 2a·b + ‖b‖²` expansion with precomputed row
-/// norms; until that exists it is refused rather than scored as a dot product,
-/// which would return confidently wrong neighbours.
+/// L2 reuses that same product through the expansion below.
 fn score_all(corpus: &Corpus, query: &[f32]) -> Result<Vec<f32>> {
-    if corpus.metric == Metric::L2 {
-        return Err(telividb_core::Error::GpuIndex {
-            reason: "L2 is not yet implemented on the GPU index; \
-                     use dot or cosine, or the CPU flat index"
-                .to_owned(),
-        });
-    }
-
     let device = corpus.tensor.device();
     let query = Tensor::from_slice(query, (1, corpus.dim.get()), device).map_err(candle_err)?;
 
     // (1, dim) x (dim, rows) -> (1, rows)
-    let scores = query
+    let dots = query
         .matmul(&corpus.tensor.t().map_err(candle_err)?)
         .map_err(candle_err)?;
+
+    let scores = match corpus.metric {
+        Metric::L2 => l2_from_dots(corpus, &query, &dots)?,
+        // Dot and cosine are the product itself.
+        _ => dots,
+    };
 
     scores
         .flatten_all()
         .map_err(candle_err)?
         .to_vec1()
         .map_err(candle_err)
+}
+
+/// Squared Euclidean distance, from the dot products already computed.
+///
+/// `‖a − b‖² = ‖a‖² − 2a·b + ‖b‖²`. The matmul supplies `a·b`, the row norms
+/// `‖b‖²` are precomputed once per corpus, and `‖a‖²` is one reduction over
+/// the query.
+///
+/// **Squared, not the square root.** Ranking is identical either way since
+/// the root is monotonic, and skipping it saves a pass over every row — which
+/// is why `Metric::L2` is documented as squared Euclidean throughout.
+///
+/// `‖a‖²` is constant across rows and so cannot change the ordering, but it is
+/// included anyway: the scores are returned to the caller, and a distance that
+/// ranks correctly while being numerically wrong is exactly the kind of thing
+/// that is trusted until it is used for a threshold.
+fn l2_from_dots(corpus: &Corpus, query: &Tensor, dots: &Tensor) -> Result<Tensor> {
+    let query_norm = query
+        .sqr()
+        .map_err(candle_err)?
+        .sum_keepdim(candle_core::D::Minus1)
+        .map_err(candle_err)?;
+
+    // ‖b‖² − 2a·b, then + ‖a‖² broadcast across rows.
+    let scaled = (dots * -2.0).map_err(candle_err)?;
+    let with_rows = scaled
+        .broadcast_add(corpus.row_norms()?)
+        .map_err(candle_err)?;
+    with_rows.broadcast_add(&query_norm).map_err(candle_err)
 }
 
 fn candle_err(e: candle_core::Error) -> telividb_core::Error {

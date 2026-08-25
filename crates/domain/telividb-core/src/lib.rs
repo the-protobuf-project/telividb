@@ -8,8 +8,8 @@ pub mod ports;
 pub mod schema;
 
 pub use domain::{
-    ContentRef, Dim, Edge, ExternalId, Fingerprint, Metric, Ordinal, Point, ResourceName, Span,
-    Template,
+    Collection, ContentRef, Dim, Edge, ExternalId, Fingerprint, Metric, Ordinal, Point,
+    ResourceName, Span, Template,
 };
 pub use error::{Error, Result};
 pub use ports::{

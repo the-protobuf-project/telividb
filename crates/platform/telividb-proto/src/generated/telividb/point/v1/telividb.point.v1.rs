@@ -62,14 +62,37 @@ pub struct ContentRef {
     pub inline_text: ::prost::alloc::string::String,
 }
 /// One vector, keyed by the field it belongs to.
+///
+/// Carries either a vector the caller computed or the text to compute one from.
+/// Exactly one of `vector` and `text` must be set; both or neither is rejected.
+///
+/// They are separate fields rather than a `oneof` because `vector` already
+/// shipped outside one, and moving a field into a oneof is a breaking change to
+/// the message's shape even though the bytes on the wire are unchanged.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NamedVector {
     /// Identifier of the vector field this belongs to.
     #[prost(string, tag="1")]
     pub field_id: ::prost::alloc::string::String,
-    /// The vector itself.
+    /// A vector the caller computed.
+    ///
+    /// Optional only because `text` is the alternative — a request setting
+    /// neither is refused.
     #[prost(message, optional, tag="2")]
     pub vector: ::core::option::Option<Vector>,
+    /// Text for the server to embed into this field.
+    ///
+    /// Embedding server-side rather than in the client is the point: one
+    /// inference server serves ingest, query encoding and plugin compute alike,
+    /// so the model that produced a field's vectors is a property of the server
+    /// rather than of whichever client happened to write them. A client with its
+    /// own model would be a second, unpoliced path to the same field — and mixed
+    /// provenance inside one index degrades recall with nothing reporting it.
+    ///
+    /// The field must be bound to a model the server holds resident; if it is
+    /// not, the request is refused rather than served by whatever is loaded.
+    #[prost(string, tag="3")]
+    pub text: ::prost::alloc::string::String,
 }
 /// A single indexed item within a collection.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -272,8 +295,22 @@ pub struct SearchPointsRequest {
     #[prost(string, tag="2")]
     pub field_id: ::prost::alloc::string::String,
     /// The query vector.
+    /// The query vector.
+    ///
+    /// Optional only because `query_text` is the alternative — a request setting
+    /// neither is refused. Exactly one of the two must be set.
     #[prost(message, optional, tag="3")]
     pub query: ::core::option::Option<Vector>,
+    /// Query text for the server to embed.
+    ///
+    /// Routed to the field's declared query encoder, which for a joint model is
+    /// not the same tower that produced the stored vectors: searching an image
+    /// field with text must encode through the text tower. Getting that wrong
+    /// returns plausible garbage rather than an error, so the field declares it
+    /// and the server honours it — a client cannot express the choice and should
+    /// not have to.
+    #[prost(string, tag="8")]
+    pub query_text: ::prost::alloc::string::String,
     /// Maximum number of results to return.
     ///
     /// This is the `k` of a nearest-neighbour search, not merely a display limit:

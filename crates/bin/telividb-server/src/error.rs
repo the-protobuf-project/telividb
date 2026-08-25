@@ -3,6 +3,30 @@
 /// Failures starting or running the server.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    /// The collection catalogue could not be opened.
+    ///
+    /// Fatal: without it the server cannot tell which collections exist, and
+    /// every write would have to either refuse or invent one.
+    ///
+    /// `redb` takes an **exclusive file lock**, so the usual cause is a second
+    /// server pointed at the same `--data-dir` as one already running.
+    #[error("could not open the collection catalogue: {0}")]
+    Catalogue(
+        /// The underlying storage failure.
+        String,
+    ),
+
+    /// A configured embedding model could not be loaded.
+    ///
+    /// Fatal rather than degrading to vector-only: an operator who passed
+    /// `--model` expects text to work, and a server that quietly dropped the
+    /// capability would refuse every text request while reporting healthy.
+    #[error("could not load the embedding model {0}")]
+    Model(
+        /// Path and the underlying failure.
+        String,
+    ),
+
     /// The listen address could not be bound.
     #[error("bind {addr}: {source}")]
     Bind {

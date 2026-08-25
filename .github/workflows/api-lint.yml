@@ -134,7 +134,19 @@ jobs:
         with:
           version: 1.72.0
           setup_only: true
-      - uses: dtolnay/rust-toolchain@1.100.0
+      # No toolchain action here. `rust-toolchain.toml` is authoritative and
+      # rustup honours it, exactly as every job in ci.yml does.
+      #
+      # It used to be `dtolnay/rust-toolchain@1.98.0`, and that is precisely
+      # the problem: for that action the ref names a *Rust release*, not an
+      # action version. Dependabot cannot tell the difference, so it bumped it
+      # to `@1.100.0` — a compiler that does not exist — and auto-merge landed
+      # it on main. Every pull request then failed, because a `pull_request`
+      # workflow runs from the merge of head into base, so a broken base
+      # breaks branches that never touched it.
+      #
+      # Naming the version twice was the underlying fault. Now it is named
+      # once.
       - uses: Swatinem/rust-cache@v2
       # `cargo install` compiles both plugins from source, which is minutes of
       # runner time on every run and the single slowest step here. They change

@@ -1,6 +1,8 @@
 use super::*;
 use crate::adapters::MemoryStore;
-use crate::adapters::gpu::gguf::{load_corpus, write_corpus};
+use crate::adapters::gpu::gguf::write_corpus;
+use crate::adapters::gpu::load::load_corpus;
+use crate::ports::VectorIndex;
 use candle_core::Device;
 use telividb_core::Dim;
 
@@ -98,16 +100,62 @@ fn searching_an_empty_corpus_returns_nothing_rather_than_aborting() {
 }
 
 #[test]
-fn l2_is_refused_rather_than_scored_as_a_dot_product() {
-    // Scoring L2 with a bare matmul returns confidently wrong neighbours,
-    // which is worse than an error: nothing surfaces the mistake.
+fn l2_ranks_by_distance_with_the_nearest_first() {
+    // The expansion `‖a‖² − 2a·b + ‖b‖²` must rank *lower* as nearer, which
+    // is the opposite of dot. Getting the sign wrong returns the farthest
+    // vectors confidently labelled as the nearest.
     let mut store = MemoryStore::new(Dim::new(DIM).unwrap(), Metric::L2);
-    store.push(&[1.0, 0.0, 0.0, 0.0]).unwrap();
+    store.push(&[1.0, 0.0, 0.0, 0.0]).unwrap(); // distance 0 from the query
+    store.push(&[0.0, 1.0, 0.0, 0.0]).unwrap(); // distance 2
+    store.push(&[5.0, 0.0, 0.0, 0.0]).unwrap(); // distance 16
     let corpus = corpus_of(&store);
 
-    let err = search(&corpus, &query(), 1, None).unwrap_err();
+    let found = search(&corpus, &query(), 3, None).unwrap();
+    assert_eq!(found[0].ordinal.row(), 0, "got {found:?}");
+    assert_eq!(found[1].ordinal.row(), 1, "got {found:?}");
+    assert_eq!(found[2].ordinal.row(), 2, "got {found:?}");
+}
+
+#[test]
+fn l2_scores_are_squared_distances_not_merely_an_ordering() {
+    // The scores are handed to the caller, so a value that ranks correctly
+    // while being numerically wrong is the kind of thing that is trusted
+    // until someone thresholds on it.
+    let mut store = MemoryStore::new(Dim::new(DIM).unwrap(), Metric::L2);
+    store.push(&[1.0, 0.0, 0.0, 0.0]).unwrap();
+    store.push(&[0.0, 1.0, 0.0, 0.0]).unwrap();
+    let corpus = corpus_of(&store);
+
+    let found = search(&corpus, &query(), 2, None).unwrap();
+    // query is [1,0,0,0]: distance² to itself is 0, to [0,1,0,0] is 2.
+    assert!(found[0].score.abs() < 1e-4, "got {}", found[0].score);
     assert!(
-        err.to_string().contains("L2"),
-        "the error should name what is unsupported: {err}"
+        (found[1].score - 2.0).abs() < 1e-4,
+        "got {}",
+        found[1].score
     );
+}
+
+#[test]
+fn l2_agrees_with_the_cpu_flat_index() {
+    // The GPU index's correctness standard is equality with exhaustive CPU
+    // search, not a recall threshold — so a divergence here is a bug rather
+    // than an acceptable approximation.
+    let mut store = MemoryStore::new(Dim::new(DIM).unwrap(), Metric::L2);
+    for i in 0..64u32 {
+        let f = i as f32;
+        store
+            .push(&[f * 0.1, 1.0 - f * 0.01, f * 0.02, 0.5])
+            .unwrap();
+    }
+    let corpus = corpus_of(&store);
+
+    let gpu = search(&corpus, &query(), 8, None).unwrap();
+    let cpu = crate::adapters::FlatIndex::new()
+        .search(&store, &query(), 8, None)
+        .unwrap();
+
+    let gpu_rows: Vec<u32> = gpu.iter().map(|c| c.ordinal.row()).collect();
+    let cpu_rows: Vec<u32> = cpu.iter().map(|c| c.ordinal.row()).collect();
+    assert_eq!(gpu_rows, cpu_rows, "gpu {gpu_rows:?} vs cpu {cpu_rows:?}");
 }

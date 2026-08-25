@@ -21,6 +21,8 @@ mod budget;
 mod detect;
 mod device;
 mod gguf;
+mod load;
+mod norms;
 mod search;
 
 pub use budget::{
@@ -98,7 +100,7 @@ impl GpuFlatIndex {
         // only point at which the failure is still recoverable.
         let reservation = budget::reserve("gpu-flat", bytes.len())?;
 
-        let corpus = gguf::load_corpus(&mut reader, device)?;
+        let corpus = load::load_corpus(&mut reader, device)?;
         let name = device_name(device);
 
         logger::info!("gpu index loaded").with_data(&serde_json::json!({

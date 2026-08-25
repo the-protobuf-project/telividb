@@ -22,6 +22,26 @@ const DEFAULT_K: usize = 10;
 /// it unbounded lets one request ask the server to do arbitrary work.
 const MAX_K: usize = 1_000;
 
+/// Resolve the request's query to a vector, embedding text if that is what it
+/// carries.
+///
+/// Exactly one of `query` and `query_text` must be set. Both is ambiguous and
+/// neither is not a query — refusing beats silently preferring one, which
+/// would search for something the caller did not ask for.
+async fn resolve_query(svc: &PointsSvc, req: &SearchPointsRequest) -> Result<Vec<f32>, Status> {
+    match (req.query.as_ref(), req.query_text.is_empty()) {
+        (Some(_), false) => Err(Status::invalid_argument(
+            "set exactly one of query and query_text; there is no correct way \
+             to choose between them",
+        )),
+        (Some(vector), true) => vector_to_domain(vector),
+        (None, false) => svc.embeddings.embed_query(&req.query_text).await,
+        (None, true) => Err(Status::invalid_argument(
+            "a query is required: send either query (a vector) or query_text",
+        )),
+    }
+}
+
 /// Nearest-neighbour search over one named vector field.
 pub(super) async fn search_points(
     svc: &PointsSvc,
@@ -35,11 +55,7 @@ pub(super) async fn search_points(
              metric, so a query is meaningful only against one of them",
         ));
     }
-    let query = req
-        .query
-        .as_ref()
-        .ok_or_else(|| Status::invalid_argument("query vector is required"))?;
-    let query = vector_to_domain(query)?;
+    let query = resolve_query(svc, &req).await?;
     // Clamped: `k` sizes the work the index does and the buffer it fills, so
     // an unbounded page_size is a request to allocate arbitrarily.
     let k = if req.page_size <= 0 {

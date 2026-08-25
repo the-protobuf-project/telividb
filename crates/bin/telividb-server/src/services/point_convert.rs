@@ -75,7 +75,7 @@ pub(super) fn vector_to_domain(wire: &WireVector) -> Result<Vec<f32>, Status> {
 }
 
 /// The reverse of [`vector_to_domain`].
-fn vector_to_wire(vector: &[f32]) -> WireVector {
+pub(super) fn vector_to_wire(vector: &[f32]) -> WireVector {
     let mut data = Vec::with_capacity(vector.len() * 4);
     for value in vector {
         data.extend_from_slice(&value.to_le_bytes());
@@ -94,6 +94,10 @@ pub(super) fn to_wire(point: telividb_core::Point) -> WirePoint {
             .vectors
             .iter()
             .map(|(field, vector)| NamedVector {
+                // Always empty on the way out: a stored point holds a vector,
+                // and echoing the text back as though it were still pending
+                // would invite a reader to embed it a second time.
+                text: String::new(),
                 field_id: field.clone(),
                 vector: Some(vector_to_wire(vector)),
             })

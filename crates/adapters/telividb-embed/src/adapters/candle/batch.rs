@@ -1,11 +1,16 @@
-//! Turning texts into a padded tensor pair.
+//! Turning texts into padded tensor pairs.
+//!
+//! Tokenizing and tensor-building are separate steps because the scheduler
+//! between them needs to know how long each text is before deciding what to
+//! batch with what — see [`super::schedule`]. Tokenizing inside the tensor
+//! step would mean doing it twice, or batching blind.
 
 use crate::domain::Task;
 use crate::error::{Error, Result};
 use candle_core::{DType, Device, Tensor};
 use tokenizers::Tokenizer;
 
-/// Token ids and their attention mask, both `[batch, seq]`.
+/// Token ids and their attention mask, both `[rows, seq]`.
 pub struct Batch {
     /// Token ids, padded to the batch's longest sequence.
     pub ids: Tensor,
@@ -13,46 +18,50 @@ pub struct Batch {
     pub attention: Tensor,
 }
 
-/// Tokenize `texts` and pad them into one batch.
+/// Tokenize every text, truncated to what the model's positions cover.
 ///
-/// Padded to the longest sequence *in this batch* rather than to the model's
-/// context: a batch of short texts padded to 8192 would do three orders of
-/// magnitude more attention work than it needs, and attention is quadratic in
-/// sequence length.
-pub fn encode(
+/// Truncated rather than refused: the position embeddings simply do not reach
+/// past `context`, and an out-of-range index is a hard tensor error where a
+/// truncated tail is a degraded but usable vector.
+pub fn tokenize(
     tokenizer: &Tokenizer,
     texts: &[String],
     task: Task,
     context: usize,
-    device: &Device,
-) -> Result<Batch> {
+) -> Result<Vec<Vec<u32>>> {
     let prefixed: Vec<String> = texts.iter().map(|t| prefix(task, t)).collect();
     let encoded = tokenizer
         .encode_batch(prefixed, true)
         .map_err(|e| Error::Tokenizer(e.to_string()))?;
 
-    // Truncated rather than refused: the position embeddings simply do not
-    // reach past `context`, and an out-of-range index is a hard tensor error
-    // where a truncated tail is a degraded but usable vector.
-    let width = encoded
+    Ok(encoded
         .iter()
-        .map(|e| e.get_ids().len())
-        .max()
-        .unwrap_or(0)
-        .min(context)
-        .max(1);
+        .map(|item| {
+            let ids = item.get_ids();
+            ids[..ids.len().min(context)].to_vec()
+        })
+        .collect())
+}
 
-    let mut ids = Vec::with_capacity(encoded.len() * width);
-    let mut attention = Vec::with_capacity(encoded.len() * width);
-    for item in &encoded {
-        let row = &item.get_ids()[..item.get_ids().len().min(width)];
+/// Build the tensors for one batch of already-tokenized rows.
+///
+/// Padded to the longest row *in this batch*, which is what the scheduler
+/// works to keep small.
+pub fn to_tensors(rows: &[&[u32]], device: &Device) -> Result<Batch> {
+    // At least one column: a zero-width tensor is a shape error several layers
+    // deeper, pointing at the wrong place.
+    let width = rows.iter().map(|r| r.len()).max().unwrap_or(0).max(1);
+
+    let mut ids = Vec::with_capacity(rows.len() * width);
+    let mut attention = Vec::with_capacity(rows.len() * width);
+    for row in rows {
         ids.extend_from_slice(row);
         ids.extend(std::iter::repeat_n(0u32, width - row.len()));
         attention.extend(std::iter::repeat_n(1u32, row.len()));
         attention.extend(std::iter::repeat_n(0u32, width - row.len()));
     }
 
-    let shape = (encoded.len(), width);
+    let shape = (rows.len(), width);
     Ok(Batch {
         ids: Tensor::from_vec(ids, shape, device)?.to_dtype(DType::U32)?,
         attention: Tensor::from_vec(attention, shape, device)?.to_dtype(DType::U32)?,

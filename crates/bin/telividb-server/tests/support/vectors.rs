@@ -73,6 +73,10 @@ pub async fn started(data_dir: PathBuf) -> (SocketAddr, Running) {
 
     for _ in 0..100 {
         if std::net::TcpStream::connect(addr).is_ok() {
+            // Declared here rather than in each test: a point cannot be
+            // written to a collection that does not exist, so every vector
+            // test needs this before it can say anything interesting.
+            super::collections::declare(addr, "media", FIELD, DIM as i32).await;
             return (addr, Running { stop, joined });
         }
         tokio::time::sleep(Duration::from_millis(20)).await;
@@ -94,6 +98,7 @@ pub fn wire_vector(values: &[f32]) -> Vector {
 pub fn point_with(values: &[f32]) -> Point {
     Point {
         vectors: vec![NamedVector {
+            text: String::new(),
             field_id: FIELD.to_owned(),
             vector: Some(wire_vector(values)),
         }],

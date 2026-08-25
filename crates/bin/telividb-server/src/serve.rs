@@ -3,11 +3,11 @@
 use crate::announce::{announce, announce_residency};
 use crate::config::ServerConfig;
 use crate::error::{Error, Result};
-use crate::services::{CollectionSvc, PointsSvc};
+use crate::services::{CollectionSvc, Embeddings, PointsSvc};
 use telividb_proto::FILE_DESCRIPTOR_SET;
 use telividb_proto::collection::v1::collections_server::CollectionsServer;
 use telividb_proto::point::v1::points_server::PointsServer;
-use telividb_telemetry::{Telemetry, TelemetryConfig, logger};
+use telividb_telemetry::{Telemetry, TelemetryConfig, fields, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
 ///
@@ -30,6 +30,12 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
     })
     .map_err(|e| Error::Telemetry(e.to_string()))?;
 
+    // One catalogue, shared: the collection service owns it and the point
+    // service consults it, so the two cannot disagree about what exists.
+    let collections = CollectionSvc::open(config.data_dir.clone())
+        .map_err(|e| Error::Catalogue(e.to_string()))?;
+    let points = build_points(&config)?.with_catalogue(collections.catalogue());
+
     // Health reports SERVING once the router is up. A load balancer needs this
     // to distinguish "starting" from "broken", and it costs one service.
     let (health_reporter, health_service) = tonic_health::server::health_reporter();
@@ -42,8 +48,8 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
 
     let mut router = tonic::service::Routes::default()
         .add_service(health_service)
-        .add_service(CollectionsServer::new(CollectionSvc::default()))
-        .add_service(PointsServer::new(PointsSvc::new(config.data_dir.clone())));
+        .add_service(CollectionsServer::new(collections))
+        .add_service(PointsServer::new(points));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()
@@ -137,4 +143,26 @@ async fn ctrl_c() {
             std::future::pending::<()>().await;
         }
     }
+}
+
+/// Build the point service, loading an embedding model if one was configured.
+///
+/// Loaded here, at startup, rather than on first use: rule 45 holds models
+/// resident, and a first request that blocks for several seconds on a load is
+/// indistinguishable from one that has hung. A failure to load is fatal for
+/// the same reason — a server that started without the model it was told to
+/// serve would refuse every text request while looking healthy.
+fn build_points(config: &ServerConfig) -> Result<PointsSvc> {
+    let svc = PointsSvc::new(config.data_dir.clone());
+
+    let Some(path) = &config.model_path else {
+        logger::info!("no embedding model configured").with_data(&serde_json::json!({
+            fields::STRATEGY: "vectors-only",
+        }));
+        return Ok(svc);
+    };
+
+    let embeddings = Embeddings::load(path, &config.model_name)
+        .map_err(|e| Error::Model(format!("{}: {e}", path.display())))?;
+    Ok(svc.with_embeddings(embeddings))
 }

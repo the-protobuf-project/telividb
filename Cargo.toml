@@ -5,6 +5,7 @@ members = [
     "crates/adapters/*",
     "crates/platform/*",
     "crates/bin/*",
+    "crates/sdk/*",
     "tools/*",
     "examples/rust",
 ]
@@ -39,6 +40,7 @@ license = "AGPL-3.0-or-later"
 repository = "https://github.com/oh-tarnished/telividb"
 
 [workspace.dependencies]
+telividb-client     = { path = "crates/sdk/telividb-client" }
 telividb-core       = { path = "crates/domain/telividb-core" }
 telividb-graph      = { path = "crates/domain/telividb-graph" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }
@@ -47,6 +49,7 @@ telividb-index      = { path = "crates/adapters/telividb-index" }
 telividb-storage    = { path = "crates/adapters/telividb-storage" }
 telividb-telemetry  = { path = "crates/platform/telividb-telemetry" }
 telividb-proto      = { path = "crates/platform/telividb-proto" }
+telividb-server     = { path = "crates/bin/telividb-server" }
 
 # The observability stack for the whole workspace. Pinned to a tag so a push
 # upstream cannot change this build; declared once here so every crate that

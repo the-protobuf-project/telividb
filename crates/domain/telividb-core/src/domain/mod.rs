@@ -1,5 +1,6 @@
 //! Domain types. Declarations and re-exports only.
 
+mod collection;
 mod content_ref;
 mod edge;
 mod fingerprint;
@@ -9,6 +10,7 @@ mod point;
 pub mod resource;
 mod span;
 
+pub use collection::Collection;
 pub use content_ref::ContentRef;
 pub use edge::Edge;
 pub use fingerprint::Fingerprint;

@@ -1,0 +1,30 @@
+[package]
+name = "telividb-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# The Rust SDK: a gRPC client for `telividb-server`.
+#
+# Deliberately thin. It owns no storage, no index and no model — it speaks the
+# same wire protocol any other language's client does, so there is one server
+# behaviour rather than one per client. What it adds is the part every caller
+# would otherwise rewrite: resource-name construction, the `bytes`-encoded
+# vector representation, pagination, and turning a `tonic::Status` into
+# something a caller can match on.
+
+[dependencies]
+telividb-proto.workspace = true
+thiserror.workspace = true
+tonic = { version = "0.14", features = ["transport"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+# The SDK's tests run against a real server rather than a mock: the whole
+# surface here is wire-format agreement, and a mock would agree with whatever
+# the client already does. Dev-only, so it does not invert the dependency
+# direction for anyone consuming the SDK.
+telividb-server.workspace = true
+telividb-telemetry.workspace = true
+telividb-proto.workspace = true
+tempfile = "3"

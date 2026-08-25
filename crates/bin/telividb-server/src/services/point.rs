@@ -25,7 +25,7 @@ use tonic::{Request, Response, Status};
 /// Handles point create, get, list and delete, backed by one `redb` file per
 /// collection under `data_dir`.
 pub struct PointsSvc {
-    data_dir: PathBuf,
+    pub(super) data_dir: PathBuf,
     /// One open `redb` handle per collection.
     ///
     /// redb takes an **exclusive file lock**, so two concurrent requests
@@ -33,48 +33,52 @@ pub struct PointsSvc {
     /// fails with "Database already open". Caching makes concurrent access
     /// reuse one handle, and keeps a store open across requests rather than
     /// paying an open per call.
-    stores: Mutex<HashMap<String, Arc<RedbPointStore>>>,
+    pub(super) stores: Mutex<HashMap<String, Arc<RedbPointStore>>>,
     /// Vector fields, held across requests.
     ///
     /// Unlike every other store here, these cannot be opened per request: a
     /// field's unsealed buffer *is* its newest data, and dropping it between
     /// calls would discard every write since the last seal.
     pub(super) vectors: Arc<VectorFields>,
+    /// The inference server, for requests that send text instead of vectors.
+    ///
+    /// Default-constructed means no model: such a request is refused with a
+    /// message naming the flag that would enable it, rather than accepted and
+    /// silently storing nothing.
+    pub(super) embeddings: super::embed::Embeddings,
+    /// The collection catalogue, shared with the collection service.
+    ///
+    /// `None` only in tests that exercise the point path directly. In a served
+    /// process it is always present, and a write to an undeclared collection
+    /// is refused rather than creating one as a side effect.
+    pub(super) catalogue: Option<Arc<telividb_storage::RedbCollectionStore>>,
 }
 
 impl PointsSvc {
     /// Serve points from underneath `data_dir`, opened lazily per request.
+    ///
+    /// Accepts no text until [`Self::with_embeddings`] supplies a model.
     pub fn new(data_dir: PathBuf) -> Self {
         Self {
             vectors: Arc::new(VectorFields::new(data_dir.clone())),
             stores: Mutex::new(HashMap::new()),
             data_dir,
+            embeddings: super::embed::Embeddings::default(),
+            catalogue: None,
         }
     }
 
-    /// Path to the `redb` file for `collection`, e.g. `media` from
-    /// `collections/media`.
-    pub(super) fn store_path(&self, collection: &ResourceName) -> PathBuf {
-        self.data_dir.join(collection.leaf()).join("points.redb")
+    /// Consult `catalogue` before accepting a write.
+    pub fn with_catalogue(mut self, catalogue: Arc<telividb_storage::RedbCollectionStore>) -> Self {
+        self.catalogue = Some(catalogue);
+        self
     }
 
-    /// The cached handle for `collection`, opening it on first use.
-    pub(super) fn store(&self, collection: &ResourceName) -> Result<Arc<RedbPointStore>, Status> {
-        let key = collection.as_str().to_owned();
-        let mut stores = self.stores.lock().unwrap_or_else(|e| e.into_inner());
-        if let Some(store) = stores.get(&key) {
-            return Ok(Arc::clone(store));
-        }
-        let opened = Arc::new(
-            RedbPointStore::open(&self.store_path(collection)).map_err(|e| storage_status(&e))?,
-        );
-        stores.insert(key, Arc::clone(&opened));
-        Ok(opened)
+    /// Serve text-to-vector requests with `embeddings`.
+    pub fn with_embeddings(mut self, embeddings: super::embed::Embeddings) -> Self {
+        self.embeddings = embeddings;
+        self
     }
-}
-
-pub(super) fn parse_name(raw: &str) -> Result<ResourceName, Status> {
-    ResourceName::parse(raw).map_err(|e| Status::invalid_argument(e.to_string()))
 }
 
 #[tonic::async_trait]
@@ -185,4 +189,8 @@ impl Points for PointsSvc {
 fn parent_collection(name: &ResourceName) -> Result<ResourceName, Status> {
     name.parent()
         .ok_or_else(|| Status::invalid_argument(format!("{name} has no parent collection")))
+}
+
+pub(super) fn parse_name(raw: &str) -> Result<ResourceName, Status> {
+    ResourceName::parse(raw).map_err(|e| Status::invalid_argument(e.to_string()))
 }

@@ -10,6 +10,8 @@ mod device;
 mod fixture;
 mod inferencer;
 mod model;
+mod pipeline;
+mod schedule;
 mod tokenize;
 mod weights;
 
