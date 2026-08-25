@@ -29,6 +29,31 @@ fn a_text_longer_than_the_context_is_truncated_rather_than_erroring() {
 }
 
 #[test]
+fn a_truncated_text_still_ends_with_the_terminator() {
+    // Every encoding is wrapped `[CLS] ... [SEP]` by the post-processor, and
+    // slicing from the right would drop the `[SEP]`. A sequence ending
+    // mid-content is a shape the model never saw in training — nothing errors,
+    // the vector is just drawn from a distribution the weights do not describe.
+    let tokenizer = tokenizer();
+    let short = tokenize(&tokenizer, &["the cat".to_owned()], Task::Document, 4096).unwrap();
+    let terminator = *short[0].last().unwrap();
+    let opener = short[0][0];
+
+    let long = vec!["the cat sat ".repeat(200)];
+    let truncated = tokenize(&tokenizer, &long, Task::Document, 16).unwrap();
+
+    assert_eq!(
+        truncated[0].last(),
+        Some(&terminator),
+        "a truncated sequence must keep the terminator the tokenizer emitted"
+    );
+    assert_eq!(
+        truncated[0][0], opener,
+        "and must still open with the same special token"
+    );
+}
+
+#[test]
 fn tensors_are_padded_to_the_batch_not_to_the_context() {
     // Attention is quadratic in the padded width, so padding a batch of short
     // rows out to the model's full context does orders of magnitude more work

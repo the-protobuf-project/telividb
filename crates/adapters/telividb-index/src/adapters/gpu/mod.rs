@@ -28,6 +28,8 @@ mod corpus;
 mod error;
 mod host;
 mod metric;
+mod scan;
+mod scored;
 mod search;
 mod select;
 
@@ -45,7 +47,7 @@ use error::OnDevice;
 use std::time::Instant;
 use telividb_compute::{Backend, DeviceKind};
 use telividb_core::Result;
-use telividb_telemetry::{Meter, fields, logger};
+use telividb_telemetry::{Meter, fields, logger, metrics_names};
 
 /// A device-resident corpus, searched exhaustively.
 pub struct GpuFlatIndex {
@@ -130,6 +132,46 @@ impl GpuFlatIndex {
     /// Which device this corpus is resident on: `metal`, `cuda`, `cpu`, …
     pub fn device(&self) -> &'static str {
         self.device
+    }
+
+    /// How the host half of a batched search is executed: `parallel` or
+    /// `serial`.
+    ///
+    /// Reported for the same reason the device is (rule 46): selection is the
+    /// larger half of a batched query, so a build that quietly lost the
+    /// `parallel` feature answers every query correctly at roughly half the
+    /// throughput — and nothing else would surface that.
+    pub fn selection() -> &'static str {
+        match cfg!(feature = "parallel") {
+            true => "parallel",
+            false => "serial",
+        }
+    }
+
+    /// Report where a batch spent its time, device against host.
+    ///
+    /// Recorded for the batch rather than per query because that is the unit
+    /// the device call actually covers — attributing one matmul across 32
+    /// queries would invent a per-query number the hardware never produced.
+    fn record_split(&self, on_device: f64, on_host: f64, queries: usize, k: usize, filtered: bool) {
+        self.meter
+            .histogram(metrics_names::SEARCH_DURATION, on_device + on_host);
+        self.meter
+            .histogram(metrics_names::SEARCH_SCORE_DURATION, on_device);
+        self.meter
+            .histogram(metrics_names::SEARCH_SELECT_DURATION, on_host);
+
+        logger::debug!("batch search complete").with_data(&serde_json::json!({
+            fields::INDEX_KIND: "gpu-flat",
+            fields::DEVICE: self.device,
+            fields::K: k,
+            fields::DIM: self.corpus.dim.get(),
+            fields::FILTERED: filtered,
+            fields::QUERIES: queries,
+            fields::DURATION_SECONDS: on_device + on_host,
+            fields::SCORE_SECONDS: on_device,
+            fields::SELECT_SECONDS: on_host,
+        }));
     }
 
     /// Reject a query whose width is not the corpus's.

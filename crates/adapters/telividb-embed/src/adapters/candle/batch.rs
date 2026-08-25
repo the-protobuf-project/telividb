@@ -23,6 +23,13 @@ pub struct Batch {
 /// Truncated rather than refused: the position embeddings simply do not reach
 /// past `context`, and an out-of-range index is a hard tensor error where a
 /// truncated tail is a degraded but usable vector.
+///
+/// **A truncated sequence keeps its terminator.** The post-processor wraps every
+/// encoding as `[CLS] … [SEP]`, and slicing from the right would drop the
+/// `[SEP]` — leaving a sequence that ends mid-content, which is a shape the
+/// model never saw in training. Nothing errors; the vector is simply drawn from
+/// a distribution the weights do not describe, and only long documents are
+/// affected, so the degradation is invisible unless it is looked for.
 pub fn tokenize(
     tokenizer: &Tokenizer,
     texts: &[String],
@@ -38,7 +45,21 @@ pub fn tokenize(
         .iter()
         .map(|item| {
             let ids = item.get_ids();
-            ids[..ids.len().min(context)].to_vec()
+            if ids.len() <= context {
+                return ids.to_vec();
+            }
+
+            // Content is dropped from the right and the terminator moved onto
+            // the last slot, so the result is `[CLS] <content> [SEP]` at exactly
+            // `context` tokens. Taken from the encoding rather than looked up:
+            // whatever the post-processor put last *is* this model's
+            // terminator, which stays correct for a model that does not spell
+            // it `[SEP]`.
+            let mut truncated = ids[..context].to_vec();
+            if let (Some(terminator), Some(slot)) = (ids.last(), truncated.last_mut()) {
+                *slot = *terminator;
+            }
+            truncated
         })
         .collect())
 }

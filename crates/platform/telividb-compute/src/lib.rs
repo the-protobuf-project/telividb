@@ -38,6 +38,7 @@ mod device;
 mod error;
 mod graph;
 mod score;
+mod staged;
 mod sys;
 
 pub use backend::{Backend, Memory};
@@ -45,3 +46,4 @@ pub use corpus::Corpus;
 pub use device::{Device, DeviceKind};
 pub use error::{Error, Result};
 pub use score::Scores;
+pub use staged::Staged;

@@ -43,6 +43,11 @@ impl TopK {
     /// overwhelming majority of calls lose, and paying a push and a pop for
     /// each of them was measurably the largest cost in a GPU query — 2.1 ms of
     /// a 5.7 ms query on a million-row corpus.
+    ///
+    /// A cached-threshold fast path was tried here and **measured as noise** on
+    /// a million rows, so it was removed rather than kept on the theory that it
+    /// ought to help: `BinaryHeap::peek` is already cheap and the branch
+    /// predicts perfectly. Recorded so the next person does not re-derive it.
     pub fn offer(&mut self, candidate: Candidate) {
         if self.k == 0 {
             return;

@@ -12,10 +12,17 @@
 //! keeps it out of selection.
 
 use super::error::OnDevice;
-use super::metric::ScoreFromDot;
+use super::scored::Scored;
 use std::sync::Mutex;
 use telividb_compute::{Backend, Corpus};
 use telividb_core::{Dim, Metric, Ordinal, Result, VectorStore};
+
+/// Rows staged in host memory at once, bounding the copy that upload needs.
+///
+/// 64k rows is 32 MB at 128 dimensions — large enough that per-write overhead
+/// is irrelevant, small enough to stay in cache-friendly territory and to be
+/// independent of corpus size, which is the whole point.
+const CHUNK_ROWS: usize = 65_536;
 
 /// Vectors resident on a device, with what is needed to score them.
 pub(super) struct DeviceCorpus {
@@ -65,7 +72,20 @@ impl DeviceCorpus {
         let metric = store.metric();
         let width = dim.get();
 
-        let mut flat = vec![0f32; rows * width];
+        // Staged in bounded pieces rather than materialized whole. A full host
+        // mirror is a second copy of the entire corpus — 512 MB at a million
+        // 128-dimension rows — allocated and zeroed before the first useful
+        // byte is written. Measured, that made build time superlinear in rows:
+        // 0.168 s at 500k against 1.681 s at 4M, and 14.8 s under a harness
+        // holding the source dataset alongside.
+        // `None` for an empty field, which is entirely ordinary — a collection
+        // with no points yet, or a field none of them populate. `ggml` has no
+        // zero-element tensor, and there is nothing to score against anyway.
+        let mut staged = match rows {
+            0 => None,
+            _ => Some(Corpus::staged(backend, rows, width).on_device()?),
+        };
+        let mut chunk: Vec<f32> = Vec::with_capacity(CHUNK_ROWS * width);
         let mut present = Vec::with_capacity(rows);
         let mut row_norms = match metric {
             Metric::L2 => Vec::with_capacity(rows),
@@ -74,10 +94,21 @@ impl DeviceCorpus {
 
         for row in 0..rows {
             let vector = store.get(Ordinal::from_row(row as u32));
-            if let Some(vector) = vector {
-                flat[row * width..(row + 1) * width].copy_from_slice(vector);
+            match vector {
+                Some(vector) => chunk.extend_from_slice(vector),
+                // An absent row is uploaded as zeros: the corpus is a dense
+                // matrix and must stay one. The presence bitmap is what keeps
+                // it out of selection.
+                None => chunk.extend(std::iter::repeat_n(0.0, width)),
             }
             present.push(vector.is_some());
+
+            if chunk.len() == chunk.capacity()
+                && let Some(staged) = staged.as_mut()
+            {
+                staged.push_rows(&chunk).on_device()?;
+                chunk.clear();
+            }
 
             // While the row is in hand: recovering this later means reading the
             // corpus a second time, on the device, to compute what a single
@@ -87,11 +118,14 @@ impl DeviceCorpus {
             }
         }
 
-        let inner = match rows {
-            0 => None,
-            _ => Some(Mutex::new(
-                Corpus::upload(backend, &flat, rows, width).on_device()?,
-            )),
+        let inner = match staged {
+            None => None,
+            Some(mut staged) => {
+                if !chunk.is_empty() {
+                    staged.push_rows(&chunk).on_device()?;
+                }
+                Some(Mutex::new(staged.finish().on_device()?))
+            }
         };
 
         Ok(Self {
@@ -153,37 +187,6 @@ impl DeviceCorpus {
                     .collect(),
                 _ => Vec::new(),
             },
-        })
-    }
-}
-
-/// Device-computed inner products, plus what turns them into metric scores.
-pub(super) struct Scored {
-    /// One row of inner products per query.
-    scores: telividb_compute::Scores,
-    /// `‖query‖²`, for the L2 expansion. Empty for other metrics.
-    query_norms: Vec<f32>,
-}
-
-impl Scored {
-    /// Query `q`'s score for every row, in the metric's own terms.
-    ///
-    /// Applying the metric here rather than on the device is deliberate: for
-    /// L2 it is one multiply-add per row, and the caller is about to walk every
-    /// row anyway to select the best `k`. Fused into that walk it is free,
-    /// where a device-side expansion is a second kernel over the whole score
-    /// matrix and a second pass over memory.
-    pub(super) fn row<'a>(
-        &'a self,
-        corpus: &'a DeviceCorpus,
-        q: usize,
-    ) -> impl Iterator<Item = f32> + 'a {
-        let dots = self.scores.row(q).unwrap_or(&[]);
-        let query_norm = self.query_norms.get(q).copied().unwrap_or(0.0);
-        let metric = corpus.metric;
-        dots.iter().enumerate().map(move |(row, dot)| {
-            let row_norm = corpus.row_norms.get(row).copied().unwrap_or(0.0);
-            metric.score_of(*dot, row_norm, query_norm)
         })
     }
 }

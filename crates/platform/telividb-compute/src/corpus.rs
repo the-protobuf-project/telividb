@@ -34,18 +34,28 @@ unsafe impl Send for Corpus {}
 impl Corpus {
     /// Copy `vectors` onto the device behind `backend`.
     ///
-    /// `vectors` is `rows * dim` floats, each vector contiguous.
+    /// `vectors` is `rows * dim` floats, each vector contiguous. The caller
+    /// therefore holds the whole corpus in host memory for the duration; see
+    /// [`Corpus::staged`] where that second copy is the expensive part.
     pub fn upload(backend: Backend, vectors: &[f32], rows: usize, dim: usize) -> Result<Self> {
-        if rows == 0 || dim == 0 {
-            return Err(Error::ShapeMismatch {
-                expected: "a non-empty corpus".to_owned(),
-                actual: format!("{rows} x {dim}"),
-            });
-        }
         if vectors.len() != rows * dim {
             return Err(Error::ShapeMismatch {
                 expected: format!("{} floats", rows * dim),
                 actual: format!("{}", vectors.len()),
+            });
+        }
+
+        let mut staged = Self::staged(backend, rows, dim)?;
+        staged.push_rows(vectors)?;
+        staged.finish()
+    }
+
+    /// Device memory for `rows * dim` floats, with nothing written to it yet.
+    pub(crate) fn empty(backend: Backend, rows: usize, dim: usize) -> Result<Self> {
+        if rows == 0 || dim == 0 {
+            return Err(Error::ShapeMismatch {
+                expected: "a non-empty corpus".to_owned(),
+                actual: format!("{rows} x {dim}"),
             });
         }
 
@@ -67,7 +77,7 @@ impl Corpus {
 
         // From here every early return must free `ctx`, so the work is done in
         // a closure and the context released once at the end.
-        let built = Self::allocate(&backend, ctx, vectors, rows, dim);
+        let built = Self::allocate(&backend, ctx, rows, dim);
         match built {
             Ok((buffer, tensor)) => Ok(Self {
                 backend,
@@ -89,7 +99,6 @@ impl Corpus {
     fn allocate(
         backend: &Backend,
         ctx: *mut sys::ggml_context,
-        vectors: &[f32],
         rows: usize,
         dim: usize,
     ) -> Result<(sys::ggml_backend_buffer_t, *mut sys::ggml_tensor)> {
@@ -113,17 +122,6 @@ impl Corpus {
                 bytes: rows * dim * 4,
             });
         }
-
-        // SAFETY: `tensor` is backed by `buffer` and the write is exactly the
-        // tensor's size, which equals `vectors`' size by the check in `upload`.
-        unsafe {
-            sys::ggml_backend_tensor_set(
-                tensor,
-                vectors.as_ptr().cast(),
-                0,
-                std::mem::size_of_val(vectors),
-            )
-        };
 
         Ok((buffer, tensor))
     }

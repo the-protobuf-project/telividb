@@ -46,13 +46,22 @@ impl VectorIndex for GpuFlatIndex {
         // chunk rather than once per query, which is where the speed-up comes
         // from — 2.232 ms per query answered singly, 0.409 ms at a batch of 32.
         let mut out = Vec::with_capacity(queries.len());
+        let mut on_device = 0.0;
+        let mut on_host = 0.0;
+
         for chunk in queries.chunks(MAX_BATCH) {
             let flat: Vec<f32> = chunk.iter().flat_map(|q| q.iter().copied()).collect();
+
+            let scoring = Instant::now();
             let scored = self.corpus.score(&flat, chunk.len())?;
-            for q in 0..chunk.len() {
-                out.push(scored.best(&self.corpus, q, k, allowed));
-            }
+            on_device += scoring.elapsed().as_secs_f64();
+
+            let selecting = Instant::now();
+            out.extend(scored.best_of_each(&self.corpus, chunk.len(), k, allowed));
+            on_host += selecting.elapsed().as_secs_f64();
         }
+
+        self.record_split(on_device, on_host, queries.len(), k, allowed.is_some());
         Ok(out)
     }
 
@@ -72,13 +81,21 @@ impl VectorIndex for GpuFlatIndex {
             return Ok(Vec::new());
         }
 
-        let started = Instant::now();
+        let scoring = Instant::now();
         let scored = self.corpus.score(query, 1)?;
+        let on_device = scoring.elapsed().as_secs_f64();
+
+        let selecting = Instant::now();
         let hits = scored.best(&self.corpus, 0, k, allowed);
-        let elapsed = started.elapsed().as_secs_f64();
+        let on_host = selecting.elapsed().as_secs_f64();
+        let elapsed = on_device + on_host;
 
         self.meter
             .histogram(metrics_names::SEARCH_DURATION, elapsed);
+        self.meter
+            .histogram(metrics_names::SEARCH_SCORE_DURATION, on_device);
+        self.meter
+            .histogram(metrics_names::SEARCH_SELECT_DURATION, on_host);
         self.meter
             .histogram(metrics_names::SEARCH_RESULTS, hits.len() as f64);
 
@@ -94,6 +111,10 @@ impl VectorIndex for GpuFlatIndex {
             fields::QUERY: redact::vector_shape(query),
             fields::RESULTS_RETURNED: hits.len(),
             fields::DURATION_SECONDS: elapsed,
+            // The two halves, side by side. A single number cannot show that a
+            // query spent its time on the wrong side of the split.
+            fields::SCORE_SECONDS: on_device,
+            fields::SELECT_SECONDS: on_host,
         }));
         Ok(hits)
     }
