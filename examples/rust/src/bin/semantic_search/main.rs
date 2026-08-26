@@ -22,7 +22,7 @@
 mod search;
 
 use telividb_core::{Fingerprint, Metric};
-use telividb_embed::{CandleInferencer, Inferencer, ModelId, Task};
+use telividb_embed::{GgmlInferencer, Inferencer, ModelId, Task};
 use telividb_examples::{corpus, model, report};
 
 fn main() {
@@ -40,7 +40,7 @@ fn main() {
     // (rule 12). Passing `Fingerprint::unset()` means "whatever this file is";
     // a real deployment pins the digest its vector field was built with, so a
     // swapped file is refused rather than silently mixed in.
-    let mut server = CandleInferencer::new();
+    let mut server = GgmlInferencer::new();
     let id = ModelId::new("nomic-embed-text-v1.5", Fingerprint::unset());
 
     println!("loading {}...", path.display());

@@ -95,3 +95,59 @@ fn a_wrong_element_count_is_refused_rather_than_read_past() {
     let ctx = Context::new(&backend, 64).unwrap();
     assert!(ctx.input_f32(&[1.0, 2.0], [4, 1]).is_err());
 }
+
+#[test]
+fn a_masked_position_gets_no_weight() {
+    let backend = cpu();
+    let ctx = Context::new(&backend, 64).unwrap();
+
+    // Three equal scores; the middle one masked out. If the mask lands before
+    // the softmax, the surviving two split the weight evenly and the masked one
+    // gets nothing.
+    let scores = ctx.input_f32(&[1.0, 1.0, 1.0], [3, 1]).unwrap();
+    let mask = ctx.input_f32(&[0.0, -1e9, 0.0], [3, 1]).unwrap();
+
+    let got = ctx
+        .compute(&scores.masked_softmax(Some(&mask), 1.0).unwrap())
+        .unwrap();
+
+    assert!(
+        got[1].abs() < 1e-6,
+        "masked position kept weight {}",
+        got[1]
+    );
+    assert!((got[0] - 0.5).abs() < 1e-5, "got {got:?}");
+    assert!((got[2] - 0.5).abs() < 1e-5, "got {got:?}");
+}
+
+#[test]
+fn the_mask_broadcasts_over_the_batch_axis() {
+    let backend = cpu();
+    let ctx = Context::new(&backend, 64).unwrap();
+
+    // Two rows of two queries over three keys: (3, 2, 1, 2). The mask is
+    // (3, 2, 1, 2) too — a different key blocked in each row, which is what an
+    // encoder batch with differing padding actually needs.
+    let scores = ctx
+        .input_f32(&[1.0; 12], [3, 4])
+        .unwrap()
+        .reshape_4d(3, 2, 1, 2)
+        .unwrap();
+    let mask = ctx
+        .input_f32(
+            &[
+                0.0, -1e9, 0.0, 0.0, -1e9, 0.0, 0.0, 0.0, -1e9, 0.0, 0.0, -1e9,
+            ],
+            [3, 4],
+        )
+        .unwrap()
+        .reshape_4d(3, 2, 1, 2)
+        .unwrap();
+
+    let got = ctx
+        .compute(&scores.masked_softmax(Some(&mask), 1.0).unwrap())
+        .unwrap();
+
+    assert!(got[1].abs() < 1e-6, "row 0 key 1 kept weight: {got:?}");
+    assert!(got[11].abs() < 1e-6, "row 1 key 2 kept weight: {got:?}");
+}

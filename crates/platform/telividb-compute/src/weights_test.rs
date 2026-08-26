@@ -53,6 +53,7 @@ fn architecture_parameters_are_read_from_the_file() {
     // Read, never assumed: a wrong layer count produces finite, correctly
     // shaped, wrong vectors — the failure mode with no symptom.
     let blocks = weights
+        .header()
         .u32_meta("nomic-bert.block_count")
         .expect("block_count is absent — check the architecture prefix");
     assert!(

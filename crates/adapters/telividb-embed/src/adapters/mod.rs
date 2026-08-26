@@ -1,11 +1,20 @@
 //! Implementations of the inference boundary.
 //!
-//! Exactly one, permanently (rule 42). A second local runtime — ONNX,
-//! TensorRT, OpenVINO — is not a fallback to be added later; it is a second
-//! C++ dependency tree and a second hardware-backend surface, both of which
-//! this project rejected. A model with no candle path is out of scope for
-//! local inference.
+//! One today, and the port is what keeps that a fact rather than a ceiling.
+//! `ggml` backs every model because layer one already binds it: a second
+//! *tensor runtime* here would mean two GGUF loaders, two quantization
+//! implementations and two hardware-backend surfaces for the same model family
+//! (rule 42).
+//!
+//! A second **model runtime** above the engine is a different matter and is
+//! explicitly permitted — ONNX through `ort` is the provision, for
+//! architectures no GGUF loader reaches. It would be a sibling of `ggml` here,
+//! implementing the same [`Inferencer`] port, and it would not touch any layer
+//! below. Nothing in this module's shape needs to change to admit it, which is
+//! the point of having a port at all.
+//!
+//! [`Inferencer`]: crate::ports::Inferencer
 
-pub mod candle;
+pub mod ggml;
 
-pub use candle::CandleInferencer;
+pub use ggml::GgmlInferencer;

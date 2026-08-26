@@ -35,6 +35,28 @@ impl Tensor<'_, '_> {
         })
     }
 
+    /// View this tensor as four dimensions, fastest-varying first.
+    ///
+    /// The fourth axis is what keeps a batch's rows independent: attention over
+    /// `(head_dim, heads, width, rows)` computes each row's scores separately,
+    /// where a flattened `(hidden, rows * width)` would let one row attend to
+    /// another unless a `tokens x tokens` mask forbade it — quadratic in the
+    /// whole batch rather than in one row.
+    pub fn reshape_4d(&self, ne0: usize, ne1: usize, ne2: usize, ne3: usize) -> Result<Self> {
+        // SAFETY: `raw` is a live node; ggml validates that the requested
+        // extents multiply to the existing element count.
+        self.wrap("reshape_4d", unsafe {
+            sys::ggml_reshape_4d(
+                self.ctx().raw,
+                self.raw(),
+                ne0 as i64,
+                ne1 as i64,
+                ne2 as i64,
+                ne3 as i64,
+            )
+        })
+    }
+
     /// Reorder axes, producing a **non-contiguous view**.
     ///
     /// Each argument says where the corresponding source axis lands, so
@@ -59,6 +81,36 @@ impl Tensor<'_, '_> {
         // SAFETY: `raw` is a live node in this context.
         self.wrap("transpose", unsafe {
             sys::ggml_transpose(self.ctx().raw, self.raw())
+        })
+    }
+
+    /// One of `n` equal slices along `ne[0]`, as a view.
+    ///
+    /// The fused-QKV case: a projection writes `(3 * hidden, tokens)` in one
+    /// matmul, and query, key and value are `chunk(0, hidden)`, `chunk(1, ..)`
+    /// and `chunk(2, ..)`. Copies nothing — it records an offset and a stride,
+    /// which is why the fused projection is worth doing at all.
+    ///
+    /// The result is a **view**: contiguous within each column but strided
+    /// between them, so follow with [`Tensor::cont`] before anything that reads
+    /// memory in order.
+    pub fn chunk(&self, index: usize, width: usize) -> Result<Self> {
+        let rows = self.dim(1);
+        // SAFETY: `raw` is a live node; `nb[1]` is its column stride in bytes
+        // and `element_size` its scalar width, both maintained by ggml. The
+        // offset stays inside the tensor because `index * width` is bounded by
+        // `ne[0]`, which ggml itself validates when it builds the view.
+        self.wrap("view_2d", unsafe {
+            let stride = (*self.raw()).nb[1];
+            let offset = index * width * sys::ggml_element_size(self.raw());
+            sys::ggml_view_2d(
+                self.ctx().raw,
+                self.raw(),
+                width as i64,
+                rows as i64,
+                stride,
+                offset,
+            )
         })
     }
 

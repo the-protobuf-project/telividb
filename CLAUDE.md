@@ -89,11 +89,14 @@ Violating any of these is a bug, not a style preference.
    backend (quarantined for the voice slice) and, if it is ever wired in, the optional FAISS
    index behind a non-default feature (rule 46).
 
-   **Two incidental C paths, recorded rather than hidden.** The mandated telemetry stack depends
-   on MCAP, which depends on lz4, which builds with `cc`. And `candle-core` — still the model
-   runtime, rule 42 — has a non-optional dependency on `tokenizers`, which pulls Oniguruma
-   (`onig_sys`). Neither can be switched off from our side, because Cargo unifies features as a
-   union.
+   **One incidental C path, recorded rather than hidden.** The mandated telemetry stack depends
+   on MCAP, which depends on lz4, which builds with `cc`. It cannot be switched off from our
+   side, because Cargo unifies features as a union.
+
+   There used to be a second: `candle-core` pulled `tokenizers`, which pulled Oniguruma
+   (`onig_sys`). Removing candle put that choice back in reach — `tokenizers` now takes
+   `fancy-regex`, which is pure Rust — so the carve-out was **deleted rather than kept**. The
+   workspace's native surface is smaller than it was before ggml arrived, not larger.
 
    The `no C toolchain` CI job's original premise is gone. What replaces it is narrower and still
    worth enforcing: **no *unexpected* native dependency.** ggml, CMake, the MCAP chain and the
@@ -339,10 +342,21 @@ Violating any of these is a bug, not a style preference.
     not individual operations. That is also the only shape that keeps a device busy, so the
     constraint and the performance advice point the same way.
 
-    **Layer four — models — may have several runtimes, and that is deliberate.** candle backs the
-    embedding path today; ggml or ONNX may join it. A model runtime is swappable per field and
-    already sits behind the `Inferencer` port, so a second one costs an adapter rather than a
-    second hardware-backend surface. The constraint that mattered belongs to layer one, not here.
+    **Layer four — models — may have several runtimes, and that is deliberate.** ggml backs the
+    embedding path today, and it is the only one: the encoder is built from `telividb-compute`
+    graph operations, so a GGUF model runs on the same runtime the index scores on, with one
+    quantization implementation and one loader rather than two.
+
+    ONNX through `ort` is the standing provision, for architectures no GGUF loader reaches. It
+    would be a sibling adapter behind the same `Inferencer` port and would touch no layer below.
+    The constraint that mattered belongs to layer one, not here.
+
+    **candle was removed, not deprecated.** It was layer four's runtime while it was also layer
+    one's; once layer one moved to ggml, keeping it meant two tensor runtimes resident, two GGUF
+    loaders and two quantization paths for one model family. The ggml encoder reproduces the
+    candle one's output on the same model to a cosine of 1.000000 — recorded as a committed
+    fixture in `telividb-embed/tests/fixtures/`, so the guarantee outlived the implementation it
+    was checked against.
 
     The `RemoteEmbedder` escape hatch stands unchanged: a declared network call with the same
     provenance tracking as a local model (rule 12), for hardware no in-process runtime reaches.

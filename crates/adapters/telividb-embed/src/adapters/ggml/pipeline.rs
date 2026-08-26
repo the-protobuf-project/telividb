@@ -6,12 +6,11 @@
 //! reasons.
 
 use super::batch;
-use super::inferencer::CandleInferencer;
+use super::inferencer::GgmlInferencer;
 use super::schedule;
 use crate::domain::{ModelId, Task};
 use crate::error::Result;
 use crate::ports::Inferencer;
-use candle_core::Tensor;
 use telividb_core::Dim;
 
 /// Tokens per batch, counting padding.
@@ -28,19 +27,18 @@ const TOKEN_BUDGET: usize = 16_384;
 /// overhead starts to dominate before it is reached.
 const MAX_ROWS: usize = 64;
 
-impl Inferencer for CandleInferencer {
+impl Inferencer for GgmlInferencer {
     fn embed(&self, model: &ModelId, task: Task, texts: &[String]) -> Result<Vec<Vec<f32>>> {
         let model = self.resolve(model)?;
         if texts.is_empty() {
             return Ok(Vec::new());
         }
 
-        let encoder = model.encoder();
         // The model's context is a hard ceiling — its position embeddings do
         // not reach further — and the cap, when set, lowers it further.
         let context = match self.max_tokens {
-            Some(cap) => cap.min(encoder.context()),
-            None => encoder.context(),
+            Some(cap) => cap.min(model.context()?),
+            None => model.context()?,
         };
         let rows = batch::tokenize(model.tokenizer(), texts, task, context)?;
 
@@ -55,10 +53,11 @@ impl Inferencer for CandleInferencer {
         let mut out: Vec<Vec<f32>> = vec![Vec::new(); texts.len()];
         for group in plan {
             let slices: Vec<&[u32]> = group.iter().map(|i| rows[*i].as_slice()).collect();
-            let batch = batch::to_tensors(&slices, encoder.device())?;
-            let pooled = encoder.forward(&batch.ids, &batch.attention, model.pooling)?;
+            let batch = batch::to_rows(&slices);
+            let pooled = model.forward(&batch.ids, &batch.attention, slices.len())?;
 
-            for (index, vector) in group.into_iter().zip(normalize(&pooled)?.to_vec2()?) {
+            for (index, mut vector) in group.into_iter().zip(pooled) {
+                normalize(&mut vector);
                 out[index] = vector;
             }
         }
@@ -74,22 +73,22 @@ impl Inferencer for CandleInferencer {
     }
 }
 
-/// Scale each row to unit length.
+/// Scale a vector to unit length.
 ///
 /// Done here, once, rather than left to the caller. The storage layer's cosine
-/// path is dot-product over pre-normalized vectors (see CLAUDE.md's cosine
+/// path is a dot product over pre-normalized vectors (the CLAUDE.md cosine
 /// note), so an un-normalized vector reaching it does not error — it ranks by
-/// magnitude as much as by direction, which looks like a quality problem
-/// rather than a bug.
+/// magnitude as much as by direction, which reads as a quality problem rather
+/// than a bug.
 ///
-/// The clamp guards a genuinely zero row, which a text that tokenizes to
-/// nothing can produce: dividing by its zero norm yields `NaN`, and a `NaN`
-/// vector silently poisons every comparison it takes part in.
-fn normalize(xs: &Tensor) -> candle_core::Result<Tensor> {
-    let norm = xs
-        .sqr()?
-        .sum_keepdim(candle_core::D::Minus1)?
-        .sqrt()?
-        .clamp(1e-12, f64::INFINITY)?;
-    xs.broadcast_div(&norm)
+/// A zero vector is left alone rather than divided by its norm: it should not
+/// occur, and turning it into NaN would take a quiet oddity and poison every
+/// query that touches the index.
+fn normalize(v: &mut [f32]) {
+    let norm = v.iter().map(|x| x * x).sum::<f32>().sqrt();
+    if norm > 0.0 {
+        for x in v.iter_mut() {
+            *x /= norm;
+        }
+    }
 }

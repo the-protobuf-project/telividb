@@ -8,14 +8,19 @@ use crate::error::Result;
 use crate::sys;
 use crate::tensor::Tensor;
 
-/// ggml's rotary mode for a plain, non-interleaved (GPT-NeoX / "normal")
-/// rotation — the half-split convention.
+/// ggml's GPT-NeoX rotary mode: the head is split in half and the halves are
+/// rotated against each other.
 ///
-/// Named rather than passed as a bare `0` because the alternative convention
-/// pairs *adjacent* elements instead, and choosing wrong leaves every vector
-/// well-formed while scrambling the positional signal completely. That failure
-/// has already been paid for once in this codebase.
-const ROPE_MODE_NORMAL: i32 = 0;
+/// **Not `GGML_ROPE_TYPE_NORMAL`, which is 0.** ggml's "normal" mode is the
+/// interleaved (GPT-J) convention, pairing *adjacent* elements — and the
+/// BERT-family rotary models this encoder targets are trained split-half.
+/// Choosing wrong leaves every vector finite, correctly shaped and positionally
+/// scrambled: measured against the reference implementation, mode 0 gave a
+/// cosine of 0.751 where agreement should be near 1.
+///
+/// The name is worth the line precisely because the wrong value is the
+/// plausible-looking one.
+const ROPE_MODE_NEOX: i32 = 2;
 
 impl<'c, 'b> Tensor<'c, 'b> {
     /// Scaled, masked softmax over `ne[0]` — the attention weights.
@@ -60,7 +65,7 @@ impl<'c, 'b> Tensor<'c, 'b> {
                 positions.raw(),
                 std::ptr::null_mut(),
                 n_dims as i32,
-                ROPE_MODE_NORMAL,
+                ROPE_MODE_NEOX,
                 0,
                 base,
                 1.0,

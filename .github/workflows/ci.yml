@@ -162,8 +162,11 @@ jobs:
 
           # Native builders reach the tree through these sanctioned paths:
           #   telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
-          #   candle-core -> tokenizers -> onig -> onig_sys
           #   telividb-compute -> {cmake, bindgen}   (ggml — rules 1 and 42)
+          #
+          # The candle -> tokenizers -> onig_sys path is *gone*: removing
+          # candle let `tokenizers` take `fancy-regex` (pure Rust) instead of
+          # Oniguruma, so that carve-out was deleted rather than kept.
           #
           # None is optional. MCAP recording is part of the telemetry stack
           # mandated by rule 41; `tokenizers` is a hard dependency of
@@ -181,7 +184,7 @@ jobs:
           # the builder are listed below, which is a small and stable set.
           case_allowed() {
             case "$1" in
-              cc)      echo 'cc|cmake|lz4-sys|onig_sys|zstd-sys' ;;
+              cc)      echo 'cc|cmake|lz4-sys|zstd-sys' ;;
               cmake)   echo 'cmake|telividb-compute' ;;
               bindgen) echo 'bindgen|telividb-compute' ;;
               *)       echo '' ;;
@@ -214,11 +217,10 @@ jobs:
           done
 
           if [ "$status" -ne 0 ]; then
-            echo "Rule 1 sanctions exactly three native paths: the MCAP chain"
-            echo "under the telemetry stack, tokenizers/onig_sys under"
-            echo "candle-core, and ggml under telividb-compute. Anything else"
-            echo "needs a decision recorded in CLAUDE.md, not an addition to"
-            echo "this list."
+            echo "Rule 1 sanctions two native paths: the MCAP chain under the"
+            echo "telemetry stack, and ggml under telividb-compute. Anything"
+            echo "else needs a decision recorded in CLAUDE.md, not an addition"
+            echo "to this list."
             exit 1
           fi
           echo "no unexpected native build dependencies"
@@ -235,7 +237,7 @@ jobs:
 
           if cargo tree --workspace --edges normal,build --invert cc --depth 1 \
              --prefix none 2>/dev/null | awk 'NF { print $1 }' | sort -u \
-             | grep -Eqv '^(cc|cmake|lz4-sys|onig_sys|zstd-sys)$'; then
+             | grep -Eqv '^(cc|cmake|lz4-sys|zstd-sys)$'; then
             echo "guard correctly detects a new native path"
           else
             echo "::error::the no-C-toolchain guard did not detect an added cc dependency"

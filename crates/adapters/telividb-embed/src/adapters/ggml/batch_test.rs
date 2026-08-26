@@ -1,20 +1,30 @@
 use super::*;
-use crate::adapters::candle::fixture::{TinyModel, write_tiny_gguf};
-use crate::adapters::candle::tokenize as tok;
-use candle_core::quantized::gguf_file::Content;
+use crate::adapters::ggml::vocab;
 
-fn tokenizer() -> Tokenizer {
-    let dir = tempfile::tempdir().unwrap();
-    let path = dir.path().join("tiny.gguf");
-    write_tiny_gguf(&path, &TinyModel::default()).unwrap();
-    let mut file = std::fs::File::open(&path).unwrap();
-    tok::from_gguf(&Content::read(&mut file).unwrap()).unwrap()
+/// The downloaded model, if present.
+///
+/// Against the real vocabulary rather than a synthetic one, because what these
+/// tests exercise — the `▁`/`##` convention, where the specials sit, whether
+/// the post-processor terminates a sequence — is exactly what a hand-made
+/// fixture would get right by construction and a real converter output might
+/// not. Reading it costs a header parse, not a model load.
+fn tokenizer() -> Option<Tokenizer> {
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../examples/models/gguf/text/nomic-embed-text-v1.5.Q4_K_M.gguf");
+    match path.exists() {
+        true => Some(vocab::from_gguf(&path).unwrap()),
+        false => {
+            eprintln!("SKIPPED: run examples/models/download.sh to exercise this");
+            None
+        }
+    }
 }
 
 #[test]
 fn tokenizing_returns_one_row_per_text() {
     let texts = vec!["the cat".to_owned(), "the dog sat".to_owned()];
-    let rows = tokenize(&tokenizer(), &texts, Task::Document, 4096).unwrap();
+    let Some(tk) = tokenizer() else { return };
+    let rows = tokenize(&tk, &texts, Task::Document, 4096).unwrap();
     assert_eq!(rows.len(), 2);
     assert!(rows.iter().all(|r| !r.is_empty()));
 }
@@ -24,7 +34,8 @@ fn a_text_longer_than_the_context_is_truncated_rather_than_erroring() {
     // The position embeddings do not reach past the context. An out-of-range
     // index is a hard tensor failure; a truncated tail is degraded but usable.
     let long = vec!["the cat sat ".repeat(200)];
-    let rows = tokenize(&tokenizer(), &long, Task::Document, 16).unwrap();
+    let Some(tk) = tokenizer() else { return };
+    let rows = tokenize(&tk, &long, Task::Document, 16).unwrap();
     assert_eq!(rows[0].len(), 16);
 }
 
@@ -34,7 +45,7 @@ fn a_truncated_text_still_ends_with_the_terminator() {
     // slicing from the right would drop the `[SEP]`. A sequence ending
     // mid-content is a shape the model never saw in training — nothing errors,
     // the vector is just drawn from a distribution the weights do not describe.
-    let tokenizer = tokenizer();
+    let Some(tokenizer) = tokenizer() else { return };
     let short = tokenize(&tokenizer, &["the cat".to_owned()], Task::Document, 4096).unwrap();
     let terminator = *short[0].last().unwrap();
     let opener = short[0][0];
@@ -61,8 +72,10 @@ fn tensors_are_padded_to_the_batch_not_to_the_context() {
     let rows: Vec<Vec<u32>> = vec![vec![4, 5, 6], vec![7]];
     let refs: Vec<&[u32]> = rows.iter().map(|r| r.as_slice()).collect();
 
-    let batch = to_tensors(&refs, &Device::Cpu).unwrap();
-    assert_eq!(batch.ids.dims2().unwrap(), (2, 3));
+    let batch = to_rows(&refs);
+    // Two rows padded to the longest member's three, not to the model context.
+    assert_eq!(batch.ids.len(), 2 * 3);
+    assert_eq!(batch.ids, vec![4, 5, 6, 7, 0, 0]);
 }
 
 #[test]
@@ -70,20 +83,16 @@ fn padding_is_masked_out_and_real_tokens_are_kept() {
     let rows: Vec<Vec<u32>> = vec![vec![4, 5, 6], vec![7]];
     let refs: Vec<&[u32]> = rows.iter().map(|r| r.as_slice()).collect();
 
-    let mask = to_tensors(&refs, &Device::Cpu)
-        .unwrap()
-        .attention
-        .to_vec2::<u32>()
-        .unwrap();
-    assert_eq!(mask[0], vec![1, 1, 1]);
-    assert_eq!(mask[1], vec![1, 0, 0]);
+    let mask = to_rows(&refs).attention;
+    assert_eq!(&mask[..3], &[1, 1, 1], "every real token kept");
+    assert_eq!(&mask[3..], &[1, 0, 0], "the short row's padding masked");
 }
 
 #[test]
 fn an_empty_row_still_produces_a_usable_width() {
     let refs: Vec<&[u32]> = vec![&[]];
-    let batch = to_tensors(&refs, &Device::Cpu).unwrap();
-    let (_, width) = batch.ids.dims2().unwrap();
+    let batch = to_rows(&refs);
+    let width = batch.ids.len();
     assert!(width >= 1);
 }
 

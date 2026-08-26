@@ -33,7 +33,7 @@ pub struct Weights {
     /// The device allocation backing all of them.
     buffer: sys::ggml_backend_buffer_t,
     /// The parsed header, kept for metadata lookups.
-    gguf: *mut sys::gguf_context,
+    header: crate::header::Header,
     /// Tensor by name, so a model finds `blk.0.attn_q.weight` without a scan.
     by_name: HashMap<String, *mut sys::ggml_tensor>,
 }
@@ -81,7 +81,7 @@ impl Weights {
                 Ok(Self {
                     ctx,
                     buffer,
-                    gguf,
+                    header: crate::header::Header::from_raw(gguf),
                     by_name,
                 })
             }
@@ -106,9 +106,21 @@ impl Weights {
         self.by_name.is_empty()
     }
 
-    /// The parsed header, for the metadata accessors.
-    pub(crate) fn gguf(&self) -> *mut sys::gguf_context {
-        self.gguf
+    /// Every tensor name the file carried, unordered.
+    ///
+    /// For diagnosing a silent fallback: a loader that looks for
+    /// `blk.0.ffn_gate.weight`, does not find it, and quietly takes the
+    /// ungated path produces a well-formed wrong answer.
+    pub fn names(&self) -> impl Iterator<Item = &str> {
+        self.by_name.keys().map(String::as_str)
+    }
+
+    /// This model's metadata, for every key/value question.
+    ///
+    /// Delegated rather than duplicated: the same accessors serve a header
+    /// opened on its own, so there is one answer to "what does this key say".
+    pub fn header(&self) -> &crate::header::Header {
+        &self.header
     }
 
     /// The device tensor named `name`, for operations in this crate.
@@ -124,7 +136,6 @@ impl Drop for Weights {
         unsafe {
             sys::ggml_backend_buffer_free(self.buffer);
             sys::ggml_free(self.ctx);
-            sys::gguf_free(self.gguf);
         }
     }
 }

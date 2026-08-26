@@ -6,7 +6,7 @@ use crate::metrics::Report;
 use std::io::Write;
 use std::time::{Duration, Instant};
 use telividb_core::{Dim, Metric};
-use telividb_embed::{CandleInferencer, Inferencer, ModelId, Task};
+use telividb_embed::{GgmlInferencer, Inferencer, ModelId, Task};
 use telividb_index::VectorIndex;
 use telividb_index::adapters::{GpuFlatIndex, MemoryStore};
 
@@ -53,7 +53,7 @@ impl Outcome {
 
 /// Run one dataset end to end.
 pub fn evaluate(
-    server: &CandleInferencer,
+    server: &GgmlInferencer,
     id: &ModelId,
     dim: Dim,
     name: &str,

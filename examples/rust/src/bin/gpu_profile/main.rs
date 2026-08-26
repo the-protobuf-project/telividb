@@ -42,6 +42,9 @@
 //! lives in `ann`, against real datasets and real ground truth.
 #![forbid(unsafe_code)]
 
+mod baseline;
+
+use baseline::flat_baseline;
 use std::time::Instant;
 use telividb_core::{Dim, Metric, VectorStore};
 use telividb_index::adapters::MemoryStore;
@@ -51,7 +54,7 @@ use telividb_index::ports::VectorIndex;
 const BATCHES: &[usize] = &[1, 8, 32, 64];
 
 /// Queries answered per batch size. Enough to average out a cold first call.
-const REPEATS: usize = 20;
+pub(crate) const REPEATS: usize = 20;
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -163,37 +166,8 @@ fn profile(store: &MemoryStore, dim: usize, pinned: Option<&str>) {
     );
 }
 
-/// The scalar-Rust reference, for comparison against ggml's CPU kernels.
-///
-/// `FlatIndex` is pure Rust over `&[f32]` with no SIMD and no dispatch — the
-/// correctness reference every recall number is measured against, and the
-/// baseline any optimization has to beat to justify itself.
-fn flat_baseline(store: &MemoryStore, dim: usize) {
-    use telividb_index::adapters::FlatIndex;
-
-    let index = FlatIndex::new();
-    let queries = queries_of(1, dim);
-    let query = queries[0].as_slice();
-
-    // One untimed call so the first page-in is not charged to the measurement.
-    let _ = index.search(store, query, 10, None);
-
-    let started = Instant::now();
-    for _ in 0..REPEATS {
-        if index.search(store, query, 10, None).is_err() {
-            return;
-        }
-    }
-    let per = started.elapsed().as_secs_f64() / REPEATS as f64;
-    println!(
-        "flat (scalar rust) : {:.3}ms/query   {:.0} q/s",
-        per * 1000.0,
-        1.0 / per
-    );
-}
-
 /// Distinct query vectors, unrelated to the corpus so nothing scores trivially.
-fn queries_of(count: usize, dim: usize) -> Vec<Vec<f32>> {
+pub(crate) fn queries_of(count: usize, dim: usize) -> Vec<Vec<f32>> {
     (0..count)
         .map(|q| {
             (0..dim)

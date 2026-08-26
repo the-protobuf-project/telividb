@@ -1,10 +1,11 @@
 //! The registry of resident models, and the [`Inferencer`] built over it.
 
-use super::model::ResidentModel;
+use super::resident::ResidentModel;
 use crate::domain::{ModelId, Pooling};
 use crate::error::{Error, Result};
 use std::collections::HashMap;
 use std::path::Path;
+use telividb_compute::Backend;
 
 /// Holds every model the process can run, all of them loaded.
 ///
@@ -19,7 +20,7 @@ use std::path::Path;
 /// against what is resident, so the convenience never becomes a way to get
 /// different weights than the ones a field is bound to.
 #[derive(Default)]
-pub struct CandleInferencer {
+pub struct GgmlInferencer {
     pub(super) models: HashMap<String, ResidentModel>,
     /// Cap on sequence length, at or below each model's own context.
     ///
@@ -27,7 +28,7 @@ pub struct CandleInferencer {
     pub(super) max_tokens: Option<usize>,
 }
 
-impl CandleInferencer {
+impl GgmlInferencer {
     /// An inference server with nothing resident yet.
     pub fn new() -> Self {
         Self::default()
@@ -55,7 +56,8 @@ impl CandleInferencer {
         path: &Path,
         pooling: Option<Pooling>,
     ) -> Result<&mut Self> {
-        let model = ResidentModel::load(id, path, pooling)?;
+        let backend = Backend::best().map_err(|e| crate::error::Error::Compute(e.to_string()))?;
+        let model = ResidentModel::load(id, path, backend, pooling)?;
         self.models.insert(id.name.clone(), model);
         Ok(self)
     }

@@ -32,6 +32,7 @@
 //! decides.**
 #![deny(missing_docs)]
 
+mod arrays;
 mod attention;
 mod backend;
 mod context;
@@ -39,6 +40,7 @@ mod corpus;
 mod device;
 mod error;
 mod graph;
+mod header;
 mod input;
 mod metadata;
 mod score;
@@ -54,6 +56,7 @@ pub use context::Context;
 pub use corpus::Corpus;
 pub use device::{Device, DeviceKind};
 pub use error::{Error, Result};
+pub use header::Header;
 pub use score::Scores;
 pub use staged::Staged;
 pub use tensor::Tensor;

@@ -7,15 +7,17 @@
 
 use crate::domain::Task;
 use crate::error::{Error, Result};
-use candle_core::{DType, Device, Tensor};
 use tokenizers::Tokenizer;
 
 /// Token ids and their attention mask, both `[rows, seq]`.
 pub struct Batch {
-    /// Token ids, padded to the batch's longest sequence.
-    pub ids: Tensor,
-    /// 1 for a real token, 0 for padding.
-    pub attention: Tensor,
+    /// Token ids, `rows * width`, padded to the batch's longest sequence.
+    ///
+    /// Flat rather than nested: the encoder uploads this straight to the device
+    /// as one tensor, and a `Vec<Vec<u32>>` would have to be flattened first.
+    pub ids: Vec<u32>,
+    /// 1 for a real token, 0 for padding — the same shape as `ids`.
+    pub attention: Vec<u32>,
 }
 
 /// Tokenize every text, truncated to what the model's positions cover.
@@ -64,11 +66,11 @@ pub fn tokenize(
         .collect())
 }
 
-/// Build the tensors for one batch of already-tokenized rows.
+/// Build the flat id and mask arrays for one batch of already-tokenized rows.
 ///
 /// Padded to the longest row *in this batch*, which is what the scheduler
 /// works to keep small.
-pub fn to_tensors(rows: &[&[u32]], device: &Device) -> Result<Batch> {
+pub fn to_rows(rows: &[&[u32]]) -> Batch {
     // At least one column: a zero-width tensor is a shape error several layers
     // deeper, pointing at the wrong place.
     let width = rows.iter().map(|r| r.len()).max().unwrap_or(0).max(1);
@@ -82,11 +84,7 @@ pub fn to_tensors(rows: &[&[u32]], device: &Device) -> Result<Batch> {
         attention.extend(std::iter::repeat_n(0u32, width - row.len()));
     }
 
-    let shape = (rows.len(), width);
-    Ok(Batch {
-        ids: Tensor::from_vec(ids, shape, device)?.to_dtype(DType::U32)?,
-        attention: Tensor::from_vec(attention, shape, device)?.to_dtype(DType::U32)?,
-    })
+    Batch { ids, attention }
 }
 
 /// Apply the model's task prefix.
