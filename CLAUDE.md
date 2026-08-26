@@ -114,8 +114,31 @@ Violating any of these is a bug, not a style preference.
 6. **The index never touches files.** Indexes talk to a `VectorStore` trait. Storage layout and
    search algorithm evolve independently — that separation is the whole point of "bring your own
    search algorithm."
-7. **Distance kernels are runtime-dispatched.** Detect AVX2 / AVX-512 / NEON at startup. A scalar
-   fallback must always exist and must be correct. `target-cpu=native` is never required to run.
+7. **Vectorized scoring belongs to layer one, not to `telividb-distance`.** This replaces an
+   earlier rule that asked for hand-written AVX2/AVX-512/NEON kernels with runtime dispatch in
+   the distance crate. The reason is measured, on an M3 Max over a million 128-dimension rows:
+
+   | path | per query | vs scalar |
+   |---|---|---|
+   | `FlatIndex` — scalar Rust | 42.403 ms | — |
+   | ggml CPU backend, one query | 6.693 ms | **6.3x** |
+   | ggml CPU backend, batch of 32 | 2.982 ms | **14.2x** |
+
+   ggml's CPU backend already carries tuned kernels for exactly this operation, so a hand-written
+   set would be reimplementing them worse — and it would put hardware knowledge in a layer whose
+   whole purpose is not having any (rule 46). Bulk scoring on the host is
+   `GpuFlatIndex::build_on(store, DeviceKind::Cpu)`, which is layer one on the CPU backend, not a
+   different code path.
+
+   **`telividb-distance` keeps its scalar kernels, and they stay scalar.** They are the
+   correctness reference every recall number is measured against (rule 8), and a reference that
+   is itself optimized is no longer a reference. What the crate owns beyond them is the branchy,
+   scattered work rule 46 keeps on the host anyway: k-means, PQ codebook training, ADC tables.
+
+   **`target-cpu=native` is still never required to run**, and that now has to be enforced rather
+   than assumed: ggml's own default compiles with `-march=native`, which faults with SIGILL on
+   any older CPU. `telividb-compute` states the choice explicitly and exposes a `portable`
+   feature for anything shipped to a machine that did not compile it.
 8. **Correctness is measured against brute force.** Any ANN index change must report recall@k
    versus the flat index on a fixed dataset. "It's faster" without a recall number is not a
    result.

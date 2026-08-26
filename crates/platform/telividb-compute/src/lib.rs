@@ -32,18 +32,29 @@
 //! decides.**
 #![deny(missing_docs)]
 
+mod attention;
 mod backend;
+mod context;
 mod corpus;
 mod device;
 mod error;
 mod graph;
+mod input;
+mod metadata;
 mod score;
+mod shape;
 mod staged;
 mod sys;
+mod tensor;
+mod upload;
+mod weights;
 
 pub use backend::{Backend, Memory};
+pub use context::Context;
 pub use corpus::Corpus;
 pub use device::{Device, DeviceKind};
 pub use error::{Error, Result};
 pub use score::Scores;
 pub use staged::Staged;
+pub use tensor::Tensor;
+pub use weights::Weights;

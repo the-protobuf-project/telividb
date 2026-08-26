@@ -27,6 +27,13 @@ bindgen = "0.72"
 cmake = "0.1"
 
 [features]
+# Build ggml for the architecture baseline instead of the build machine.
+#
+# Off by default because everything here is built from source today, where
+# `-march=native` is strictly better. Turn it on for anything shipped to a
+# machine that did not compile it — a binary built with AVX-512 faults on a CPU
+# without it, and the failure is a SIGILL at first use, not a clear error.
+portable = []
 # Metal is compiled in automatically on macOS through the target section below,
 # for the same reason `telividb-index` does it: `default-features` cannot be
 # platform-conditional, and a default that broke every Linux build is not a

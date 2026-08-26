@@ -4,7 +4,14 @@
 //! cargo run --release -p telividb-examples --bin gpu_profile
 //! cargo run --release -p telividb-examples --bin gpu_profile -- 1000000 128
 //! cargo run --release -p telividb-examples --bin gpu_profile -- 1000000 128 l2
+//! cargo run --release -p telividb-examples --bin gpu_profile -- 1000000 128 dot cpu
 //! ```
+//!
+//! The fourth argument pins the backend. `cpu` is the interesting one: it runs
+//! the *same* index through ggml's CPU kernels, which dispatch AVX2/AVX-512 or
+//! NEON internally. Against the scalar `FlatIndex` baseline printed alongside,
+//! the two together answer whether this workspace needs hand-written SIMD at
+//! all — which invariant 7 asks for and nothing has yet measured.
 //!
 //! The metric is an argument because it is not merely a scoring detail: L2
 //! carries a per-row norm the other metrics do not, computed once at build
@@ -58,6 +65,7 @@ fn main() {
         Some("cosine") => Metric::Cosine,
         _ => Metric::Dot,
     };
+    let pinned = args.next();
 
     println!("corpus: {rows} rows x {dim} dims, metric={metric:?}");
     let filling = Instant::now();
@@ -67,8 +75,10 @@ fn main() {
         filling.elapsed().as_secs_f64()
     );
 
+    flat_baseline(&store, dim);
+
     #[cfg(feature = "gpu")]
-    profile(&store, dim);
+    profile(&store, dim, pinned.as_deref());
 
     #[cfg(not(feature = "gpu"))]
     {
@@ -96,11 +106,19 @@ fn fill(rows: usize, dim: usize, metric: Metric) -> MemoryStore {
 }
 
 #[cfg(feature = "gpu")]
-fn profile(store: &MemoryStore, dim: usize) {
-    use telividb_index::adapters::GpuFlatIndex;
+fn profile(store: &MemoryStore, dim: usize, pinned: Option<&str>) {
+    use telividb_index::adapters::{DeviceKind, GpuFlatIndex};
 
     let building = Instant::now();
-    let index = match GpuFlatIndex::build(store) {
+    let built = match pinned {
+        // Named rather than best: a caller pinning a backend is measuring that
+        // backend, and a silent fallback would make the number meaningless.
+        Some("cpu") => GpuFlatIndex::build_on(store, DeviceKind::Cpu),
+        Some("metal") => GpuFlatIndex::build_on(store, DeviceKind::Metal),
+        Some("cuda") => GpuFlatIndex::build_on(store, DeviceKind::Cuda),
+        _ => GpuFlatIndex::build(store),
+    };
+    let index = match built {
         Ok(index) => index,
         Err(e) => {
             eprintln!("could not build the device index: {e}");
@@ -145,8 +163,36 @@ fn profile(store: &MemoryStore, dim: usize) {
     );
 }
 
+/// The scalar-Rust reference, for comparison against ggml's CPU kernels.
+///
+/// `FlatIndex` is pure Rust over `&[f32]` with no SIMD and no dispatch — the
+/// correctness reference every recall number is measured against, and the
+/// baseline any optimization has to beat to justify itself.
+fn flat_baseline(store: &MemoryStore, dim: usize) {
+    use telividb_index::adapters::FlatIndex;
+
+    let index = FlatIndex::new();
+    let queries = queries_of(1, dim);
+    let query = queries[0].as_slice();
+
+    // One untimed call so the first page-in is not charged to the measurement.
+    let _ = index.search(store, query, 10, None);
+
+    let started = Instant::now();
+    for _ in 0..REPEATS {
+        if index.search(store, query, 10, None).is_err() {
+            return;
+        }
+    }
+    let per = started.elapsed().as_secs_f64() / REPEATS as f64;
+    println!(
+        "flat (scalar rust) : {:.3}ms/query   {:.0} q/s",
+        per * 1000.0,
+        1.0 / per
+    );
+}
+
 /// Distinct query vectors, unrelated to the corpus so nothing scores trivially.
-#[cfg(feature = "gpu")]
 fn queries_of(count: usize, dim: usize) -> Vec<Vec<f32>> {
     (0..count)
         .map(|q| {

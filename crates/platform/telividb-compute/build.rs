@@ -42,6 +42,31 @@ fn build_ggml(vendor: &PathBuf) -> PathBuf {
         .define("BUILD_SHARED_LIBS", "OFF")
         .profile("Release");
 
+    // **Instruction-set targeting, stated rather than inherited.**
+    //
+    // ggml's own default for `GGML_NATIVE` is ON, which compiles with
+    // `-march=native`: fastest on the machine that built it, and liable to
+    // fault with SIGILL on any older CPU. That is right for a local build and
+    // wrong for a distributed binary, and the difference is invisible until
+    // someone runs a Homebrew bottle on a machine without AVX-512.
+    //
+    // Set here so the choice is a decision with a name on it. `portable`
+    // targets the architecture baseline instead — measurably slower on x86,
+    // and free on aarch64 where NEON *is* the baseline.
+    //
+    // True per-machine dispatch (`GGML_CPU_ALL_VARIANTS`) is not reachable from
+    // here: it requires `GGML_BACKEND_DL`, which needs shared libraries, and
+    // this build is static so a deployed binary carries ggml rather than
+    // needing it installed alongside. Revisit together, or not at all.
+    cfg.define(
+        "GGML_NATIVE",
+        if cfg!(feature = "portable") {
+            "OFF"
+        } else {
+            "ON"
+        },
+    );
+
     // Metal is on wherever it exists rather than behind a feature: it is the
     // only GPU on macOS, and `default-features` cannot be made conditional on
     // the target.

@@ -1,8 +1,27 @@
 # telividb — Architecture
 
 A single-node-first, embeddable **multimodal vector and graph database** written in Rust, with a
-gRPC interface, embedding models loaded from GGUF and run **only** through `candle`, and pluggable
-search algorithms — whose **schema is a `.proto` file**.
+gRPC interface, embedding models loaded from GGUF, and pluggable search algorithms — whose
+**schema is a `.proto` file**.
+
+> **⚠ This document predates part of the implementation.** Its design intent — the schema layer,
+> storage, the security model, plugins, the app layer — still holds and is what the code follows.
+> Its *concrete names* have drifted, in one place materially:
+>
+> **The tensor runtime beneath the engine is `ggml`, not `candle`.** Every statement below that
+> calls candle the single runtime describes a decision that was deliberately reversed, for hardware
+> coverage: candle's `Device` enum has exactly three variants — `Cpu`, `Cuda`, `Metal` — so Intel
+> and AMD GPUs are unreachable from it at any effort, while ggml carries CUDA, Metal, Vulkan, HIP,
+> SYCL and OpenCL behind one backend interface. The rule is now *one runtime under the engine
+> (`telividb-compute`, ggml only); several are permitted above it, where candle still backs the
+> embedding path.* See CLAUDE.md rules 42 and 46, which carry the measurements.
+>
+> Consequently §20's "no C FFI on the hot path" no longer holds and is not meant to:
+> `telividb-compute` is C FFI on the hot path, quarantined to that one crate so every other crate
+> keeps `forbid(unsafe_code)`.
+>
+> **Where this document and CLAUDE.md disagree, CLAUDE.md is authoritative** — it has tracked the
+> implementation, this has not. `docs/STATUS.md` says how much of each phase exists.
 
 telividb is a member of [The Protobuf Project](https://the-protobuf-project.org) ecosystem. It is
 the vector-and-graph projection of the same annotated `.proto` that already yields the Postgres
@@ -1596,8 +1615,9 @@ above.
 | Transport | `tonic`, `prost`, `prost-reflect` | gRPC + descriptor reflection for runtime schemas |
 | Metadata / small mutable KV | `redb` | Pure-Rust ACID KV; schema, resource-name dict, ID map, edges |
 | In-memory graph | `petgraph` | Rehydrated from `redb` on load; see Gap 21 for capacity ceiling |
-| Vector index | `instant-distance` (default HNSW), hand-rolled flat/IVF-PQ | Pure Rust, zero-copy, no C FFI on the hot path. FAISS, if ever added, is an optional quarantined feature — never default. |
-| Inference | `candle-core`, `candle-nn`, `candle-metal`, `candle-cuda` | GGUF only, one runtime — see §1, §3a, §5.5 |
+| Vector index | `instant-distance` (default HNSW), hand-rolled flat/IVF/IVF-PQ, device-resident flat | Selection, partitioning and traversal are pure Rust over `&[f32]`. Only dense scoring reaches the runtime below. FAISS, if ever added, is an optional quarantined feature — never default. |
+| **Compute (layer 1)** | **`ggml`**, vendored and built with CMake in `telividb-compute` | **The only crate with FFI**; every other keeps `forbid(unsafe_code)`. Chosen over candle for hardware coverage — rules 42, 46. Supersedes the "no C FFI" line this table used to carry. |
+| Inference (layer 4) | `candle-core`, `candle-nn` | GGUF only. Several runtimes are permitted *above* the engine; ggml or ONNX may join candle here — rule 42 |
 | Policy | `regorus` | In-process OPA/Rego; enforced at query planner (§7) and inference server (§3a) |
 | Columnar payload | `arrow-rs`, `parquet` | `payload.arrow`, structured/Document field storage |
 | Embedded UI + control plane | `axum`, `rust-embed` | Shares hyper/tower stack with `tonic`; declarative panels only (§11.4) |
