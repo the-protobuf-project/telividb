@@ -53,7 +53,14 @@ jobs:
             os: macos-latest
             target: aarch64-apple-darwin
     steps:
+      # `submodules: recursive` because `telividb-compute` vendors ggml and
+      # builds it with CMake. Without it the vendor directory is empty, CMake
+      # fails, and every job that compiles the workspace fails with it — the
+      # default feature set reaches `telividb-compute` through
+      # `telividb-index`'s `gpu`, so this is not an opt-in path.
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       # No toolchain version here — rust-toolchain.toml is authoritative and
       # rustup honours it. Stated twice, the two would eventually disagree.
       - run: rustup target add ${{ matrix.target }}
@@ -93,7 +100,14 @@ jobs:
     name: fmt · clippy
     runs-on: ubuntu-latest
     steps:
+      # `submodules: recursive` because `telividb-compute` vendors ggml and
+      # builds it with CMake. Without it the vendor directory is empty, CMake
+      # fails, and every job that compiles the workspace fails with it — the
+      # default feature set reaches `telividb-compute` through
+      # `telividb-index`'s `gpu`, so this is not an opt-in path.
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug
@@ -121,14 +135,23 @@ jobs:
       - run: cargo xtask check-layers
 
 
-  # The default build must stay free of C dependencies. `cargo tree` is the
-  # check: a `cc` or `cmake` build-dependency appearing here means the
-  # toolchain-free promise has quietly been broken.
+  # No *unexpected* native build dependency. The original "no C toolchain at
+  # all" promise is gone — `telividb-compute` vendors ggml and builds it with
+  # CMake, deliberately, for hardware coverage (CLAUDE.md rule 42). What is
+  # still worth enforcing, and what this checks, is that no *new* native path
+  # appears without being a recorded decision.
   no-native-deps:
     name: no C toolchain
     runs-on: ubuntu-latest
     steps:
+      # `submodules: recursive` because `telividb-compute` vendors ggml and
+      # builds it with CMake. Without it the vendor directory is empty, CMake
+      # fails, and every job that compiles the workspace fails with it — the
+      # default feature set reaches `telividb-compute` through
+      # `telividb-index`'s `gpu`, so this is not an opt-in path.
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug
@@ -137,30 +160,41 @@ jobs:
         run: |
           set -euo pipefail
 
-          # `cc` reaches the tree through exactly two sanctioned paths:
-          #   telividb-* -> telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
-          #   telividb-index[gpu] -> candle-core -> tokenizers -> onig -> onig_sys
+          # Native builders reach the tree through these sanctioned paths:
+          #   telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
+          #   candle-core -> tokenizers -> onig -> onig_sys
+          #   telividb-compute -> {cmake, bindgen}   (ggml — rules 1 and 42)
           #
-          # MCAP recording is not optional in the telemetry stack, and that
-          # stack is mandated by CLAUDE.md rule 41. The candle path is not
-          # optional either: `tokenizers` is a hard dependency of candle-core,
-          # and Cargo's feature union means it cannot be switched off from
-          # here. Both carve-outs are recorded in CLAUDE.md rule 1 rather than
-          # the check being deleted, so a *third* native dependency still
-          # fails the build.
+          # None is optional. MCAP recording is part of the telemetry stack
+          # mandated by rule 41; `tokenizers` is a hard dependency of
+          # candle-core and Cargo's feature union means it cannot be switched
+          # off from here; ggml is the deliberate choice of rule 42. Each is
+          # recorded in CLAUDE.md rule 1 rather than the check being deleted,
+          # so a *further* native dependency still fails the build.
           #
-          # The check works by inversion: everything that pulls in a native
-          # builder must already be named below. Anything else is a new path.
-          # An earlier version compared against evidence of the *expected*
-          # chain, which is permanently present — so its condition never fired
-          # and any new native dependency passed green.
-          allowed='cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask|candle-core|tokenizers|onig|onig_sys'
+          # **Direct dependents, not the whole inverted tree.** The transitive
+          # closure of `cc` contains nearly every crate in the workspace,
+          # because the telemetry stack reaches all of them — so an allowlist
+          # covering it had to permit `telividb-[a-z]+` wholesale, and a new
+          # native dependency introduced through one of our own crates then
+          # passed silently. Only the packages whose own build script invokes
+          # the builder are listed below, which is a small and stable set.
+          case_allowed() {
+            case "$1" in
+              cc)      echo 'cc|cmake|lz4-sys|onig_sys|zstd-sys' ;;
+              cmake)   echo 'cmake|telividb-compute' ;;
+              bindgen) echo 'bindgen|telividb-compute' ;;
+              *)       echo '' ;;
+            esac
+          }
 
           status=0
           for pkg in cc cmake bindgen; do
+            allowed=$(case_allowed "$pkg")
+
             # Empty output means the package is not in the tree at all.
             tree=$(cargo tree --workspace --edges normal,build --invert "$pkg" \
-              --prefix none 2>/dev/null || true)
+              --depth 1 --prefix none 2>/dev/null || true)
             [ -n "$tree" ] || continue
 
             # First field of each line is the package name; `(*)` marks a
@@ -171,19 +205,20 @@ jobs:
               | grep -Ev "^($allowed)$" || true)
 
             if [ -n "$unexpected" ]; then
-              echo "::error::$pkg is reached through an unsanctioned path by:"
+              echo "::error::$pkg is invoked directly by an unsanctioned package:"
               printf '%s\n' "$unexpected"
-              echo "--- full inverted tree for $pkg ---"
+              echo "--- direct dependents of $pkg ---"
               printf '%s\n' "$tree"
               status=1
             fi
           done
 
           if [ "$status" -ne 0 ]; then
-            echo "Invariant 1 allows exactly two C-compiled paths: the MCAP"
-            echo "chain under the telemetry stack, and tokenizers/onig_sys"
-            echo "under candle-core. Anything else needs a decision recorded"
-            echo "in CLAUDE.md, not an addition to this list."
+            echo "Rule 1 sanctions exactly three native paths: the MCAP chain"
+            echo "under the telemetry stack, tokenizers/onig_sys under"
+            echo "candle-core, and ggml under telividb-compute. Anything else"
+            echo "needs a decision recorded in CLAUDE.md, not an addition to"
+            echo "this list."
             exit 1
           fi
           echo "no unexpected native build dependencies"
@@ -198,9 +233,9 @@ jobs:
           # `ring` builds with `cc` and has nothing to do with MCAP.
           printf '\nring = "0.17"\n' >> crates/domain/telividb-core/Cargo.toml
 
-          if cargo tree --workspace --edges normal,build --invert cc --prefix none \
-             2>/dev/null | awk 'NF { print $1 }' | sort -u \
-             | grep -Eqv '^(cc|lz4|lz4-sys|mcap|telemetry|zstd|zstd-safe|zstd-sys|telividb-[a-z]+|xtask|candle-core|tokenizers|onig|onig_sys)$'; then
+          if cargo tree --workspace --edges normal,build --invert cc --depth 1 \
+             --prefix none 2>/dev/null | awk 'NF { print $1 }' | sort -u \
+             | grep -Eqv '^(cc|cmake|lz4-sys|onig_sys|zstd-sys)$'; then
             echo "guard correctly detects a new native path"
           else
             echo "::error::the no-C-toolchain guard did not detect an added cc dependency"
@@ -213,7 +248,14 @@ jobs:
     name: toolchain is pinned
     runs-on: ubuntu-latest
     steps:
+      # `submodules: recursive` because `telividb-compute` vendors ggml and
+      # builds it with CMake. Without it the vendor directory is empty, CMake
+      # fails, and every job that compiles the workspace fails with it — the
+      # default feature set reaches `telividb-compute` through
+      # `telividb-index`'s `gpu`, so this is not an opt-in path.
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - name: Verify the running compiler matches the pin
         run: |
           pinned=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' rust-toolchain.toml | tr -d '"')
@@ -241,7 +283,14 @@ jobs:
     name: crash consistency · telemetry leaks
     runs-on: ubuntu-latest
     steps:
+      # `submodules: recursive` because `telividb-compute` vendors ggml and
+      # builds it with CMake. Without it the vendor directory is empty, CMake
+      # fails, and every job that compiles the workspace fails with it — the
+      # default feature set reaches `telividb-compute` through
+      # `telividb-index`'s `gpu`, so this is not an opt-in path.
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug
@@ -259,7 +308,11 @@ jobs:
     name: hnsw recall
     runs-on: ubuntu-latest
     steps:
+      # See the `test` job: without the ggml submodule, CMake has nothing to
+      # build and every workspace compile fails.
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: Swatinem/rust-cache@v2
         with:
           # Release artifacts live in a different directory from debug ones, so
@@ -288,7 +341,11 @@ jobs:
     name: gpu index · cpu fallback
     runs-on: ubuntu-latest
     steps:
+      # See the `test` job: without the ggml submodule, CMake has nothing to
+      # build and every workspace compile fails.
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: debug

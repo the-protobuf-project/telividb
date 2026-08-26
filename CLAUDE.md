@@ -428,6 +428,11 @@ Violating any of these is a bug, not a style preference.
 
 ## Workspace layout
 
+**Crates marked `PLANNED` do not exist yet.** This is the intended shape, not a
+description of the tree — five of the sixteen below are unbuilt. `telividb-policy`
+is the one that matters most: six invariants describe authorization that nothing
+can currently enforce.
+
 ```
 telividb/
 ├─ Cargo.toml                 # workspace root
@@ -444,7 +449,7 @@ telividb/
 ├─ crates/
 │  ├─ domain/                 # pure business logic. No I/O, no tokio, no file handles, no adapters.
 │  │  ├─ telividb-core/       # ontology: ids, domain types, errors, config schema
-│  │  ├─ telividb-query/      # filter evaluation, query planner
+│  │  ├─ telividb-query/      # PLANNED — filter evaluation, query planner
 │  │  └─ telividb-graph/      # Plan A1.1 — petgraph-backed property graph + traversal (rule 47)
 │  ├─ adapters/                # replaceable implementations of a domain port. I/O-shaped, boring.
 │  │  ├─ telividb-storage/    # segments, WAL, manifest, mmap, redb metadata, quantization codecs
@@ -454,16 +459,17 @@ telividb/
 │  │  ├─ telividb-embed/      # inference server: Inferencer port, GGUF loader, ONE adapter (candle)
 │  │  │                       # GPU-resident, multi-model, batched — the sole call path for
 │  │  │                       # ingest embedding, query_encoder, and every plugin's compute step
-│  │  ├─ telividb-embed-llama/# OPTIONAL FFI adapter for whisper.cpp transcription (feature="llama")
-│  │  ├─ telividb-policy/     # authz: principals, roles, grants, regorus-backed evaluation
-│  │  └─ telividb-io/         # bulk import/export: archive format, jobs, readers, rejects
+│  │  ├─ telividb-embed-llama/# PLANNED — optional FFI adapter for whisper.cpp (feature="llama")
+│  │  ├─ telividb-policy/     # PLANNED — authz: principals, roles, grants, regorus
+│  │  │                       # NOTHING ENFORCES RULES 15/21/34/35/36/44 UNTIL THIS EXISTS
+│  │  └─ telividb-io/         # PLANNED — bulk import/export: archives, jobs, rejects
 │  ├─ platform/                # cross-cutting concerns no single domain/adapter crate owns
 │  │  ├─ telividb-compute/    # LAYER 1: ggml, vendored as a submodule and built here.
 │  │  │                       # The only crate with FFI. Everything else sees a safe,
 │  │  │                       # method-based API and keeps forbid(unsafe_code).
 │  │  ├─ telividb-telemetry/  # span/metric vocabulary, redaction, subscriber wiring
 │  │  ├─ telividb-proto/      # buf-generated from protobuf/, committed; no build script
-│  │  └─ telividb-ui/         # embedded web assets (axum + rust-embed) + declarative panel handlers
+│  │  └─ telividb-ui/         # PLANNED — embedded web assets + declarative panel handlers
 │  ├─ sdk/                     # client libraries. No engine, no storage — the wire protocol only.
 │  │  └─ telividb-client/     # Rust SDK: a gRPC client for telividb-server
 │  └─ bin/                     # composition roots — the only place adapters get chosen and wired
