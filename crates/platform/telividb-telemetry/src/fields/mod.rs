@@ -12,7 +12,7 @@ mod model;
 mod timing;
 
 pub use model::{MODEL, MODEL_FINGERPRINT, POOLING, TASK};
-pub use timing::{DURATION_SECONDS, QUERIES, SCORE_SECONDS, SELECT_SECONDS};
+pub use timing::{DURATION_SECONDS, EXPANDED, QUERIES, SCORE_SECONDS, SELECT_SECONDS};
 
 /// Collection the operation targets. **Label-safe** — bounded by how many
 /// collections exist.

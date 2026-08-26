@@ -11,12 +11,12 @@ telemetry.workspace = true
 thiserror.workspace = true
 serde_json = "1"
 
-# The only tensor runtime in this project (rule 42). Note what is *not* here:
-# `candle-nn` and `candle-transformers`. Everything the encoder needs —
-# `QTensor`, `QMatMul`, `gguf_file`, and the tensor ops that layer norm, GELU
-# and softmax are built from — lives in `candle-core` alone, so neither of the
-# larger crates (and neither one's model zoo) enters the build.
-# Layer one. The ggml encoder is built against this; candle is on its way out.
+# Layer one, and the only tensor runtime in this project (rule 42).
+#
+# The encoder is built from these graph operations rather than from a model
+# library: `matmul`, `layer_norm`, `masked_softmax`, `rope`, `rows`. That is
+# why there is no model-zoo dependency here and no second GGUF loader — a
+# quantized weight is multiplied where it sits.
 telividb-compute = { path = "../../platform/telividb-compute" }
 
 # WordPiece tokenization, built from the vocabulary the GGUF already carries.

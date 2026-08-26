@@ -10,6 +10,13 @@
 /// what a dashboard reads, and this is what someone reading one operation's
 /// log line needs in order to see why it was slow.
 pub const DURATION_SECONDS: &str = "telividb.duration_seconds";
+/// Results a graph expansion contributed, apart from the seeds.
+///
+/// The ratio to the total is the diagnostic: a join answering mostly from
+/// expansion is one where the vector search found little and the graph is
+/// carrying the result, which the total alone reports as success.
+pub const EXPANDED: &str = "telividb.expanded";
+
 /// How many queries one batched operation covered.
 ///
 /// The denominator for [`SCORE_SECONDS`] and [`SELECT_SECONDS`], which are

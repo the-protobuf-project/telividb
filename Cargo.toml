@@ -44,6 +44,7 @@ telividb-client     = { path = "crates/sdk/telividb-client" }
 telividb-compute    = { path = "crates/platform/telividb-compute" }
 telividb-core       = { path = "crates/domain/telividb-core" }
 telividb-graph      = { path = "crates/domain/telividb-graph" }
+telividb-query      = { path = "crates/domain/telividb-query" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }
 telividb-embed      = { path = "crates/adapters/telividb-embed" }
 telividb-index      = { path = "crates/adapters/telividb-index" }

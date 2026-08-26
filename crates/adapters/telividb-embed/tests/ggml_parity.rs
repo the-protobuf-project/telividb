@@ -1,11 +1,14 @@
-//! The ggml encoder against the candle one, on the same model and the same text.
+//! The encoder against a recorded reference, on the same model and text.
 //!
-//! **This is the gate on removing candle.** A rewritten encoder that runs, loads
-//! and returns finite vectors of the right width can still be wrong in every
-//! way that matters — a wrong RoPE convention, a transposed QKV split, a mask
-//! applied after the softmax — and none of those fail a smoke test. The only
-//! check that means anything is agreement with the implementation whose recall
-//! was measured against a published benchmark.
+//! **This was the gate on removing candle, and it outlived it.** An encoder
+//! that runs, loads and returns finite vectors of the right width can still be
+//! wrong in every way that matters — a wrong RoPE convention, a transposed QKV
+//! split, a mask applied after the softmax — and none of those fail a smoke
+//! test. It caught all three during the migration.
+//!
+//! The reference is now a committed fixture rather than a live comparison,
+//! because the implementation it came from has been removed. A guarantee that
+//! disappears along with the thing it was checking is not a guarantee.
 //!
 //! Skipped when the model is absent (80 MiB, not committed). A skip says so
 //! out loud rather than passing quietly.
@@ -71,8 +74,10 @@ fn the_encoder_reproduces_the_recorded_reference_vector() {
     use telividb_compute::Backend;
     use telividb_embed::adapters::ggml::Encoder;
 
-    // The *same* backend candle picks, so the comparison isolates the
-    // implementation rather than conflating it with cross-backend numerics.
+    // The same backend the reference was recorded on. Comparing across
+    // backends conflates the implementation with numerics: measured during the
+    // migration, an otherwise-correct encoder scored 0.980 against a reference
+    // taken on a different backend, and 1.000000 on a matching one.
     let backend = Backend::best().expect("a backend");
     let encoder = Encoder::load(&path, backend).expect("ggml encoder loads");
 

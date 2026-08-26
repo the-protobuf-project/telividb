@@ -28,66 +28,7 @@ use std::process::ExitCode;
 mod modules;
 use modules::check_modules;
 
-/// What each crate is allowed to depend on, inside the workspace.
-///
-/// Listed rather than derived from a rank, because the interesting constraint
-/// is not "lower number" but *which* boundary a crate is allowed to see. A rank
-/// would silently permit `telividb-storage` to depend on `telividb-index`, and
-/// that is precisely the edge invariant 6 exists to forbid.
-const ALLOWED: &[(&str, &[&str])] = &[
-    ("telividb-core", &[]),
-    // Layer one. Depends only on the ontology — it must not know what an index
-    // or a model is, or the layers above could not be swapped independently.
-    ("telividb-compute", &["telividb-core"]),
-    ("telividb-proto", &[]),
-    ("telividb-telemetry", &[]),
-    ("telividb-graph", &["telividb-core", "telividb-telemetry"]),
-    // Layer two may reach layer one for dense scoring, and nothing else.
-    ("telividb-distance", &["telividb-core", "telividb-compute"]),
-    (
-        "telividb-storage",
-        &["telividb-core", "telividb-distance", "telividb-telemetry"],
-    ),
-    (
-        "telividb-index",
-        &[
-            "telividb-compute",
-            "telividb-core",
-            "telividb-distance",
-            "telividb-telemetry",
-        ],
-    ),
-    // Layer four reaches layer one, for the same reason layer two does: the
-    // encoder builds its forward pass out of `telividb-compute` graph
-    // operations, and a model runtime that could not name the tensor runtime
-    // would have to carry its own.
-    //
-    // Note what is still absent: `telividb-index`. The inference server and
-    // the device index both sit on `telividb-compute`, but neither may reach
-    // into the other — a shared device helper would put one adapter behind the
-    // other's optional feature, which is the outward dependency rule 14
-    // forbids.
-    (
-        "telividb-embed",
-        &["telividb-compute", "telividb-core", "telividb-telemetry"],
-    ),
-    // The SDK speaks the wire protocol and nothing else: no storage, no index,
-    // no model. That is what keeps one server behaviour rather than one per
-    // client, and it is why this list is as short as it is.
-    ("telividb-client", &["telividb-proto"]),
-    (
-        "telividb-server",
-        &[
-            "telividb-core",
-            "telividb-distance",
-            "telividb-embed",
-            "telividb-index",
-            "telividb-proto",
-            "telividb-storage",
-            "telividb-telemetry",
-        ],
-    ),
-];
+use crate::allowed::ALLOWED;
 
 /// Every crate directory two levels under `crates/` —
 /// `crates/<domain|adapters|platform|bin>/<crate>/`.

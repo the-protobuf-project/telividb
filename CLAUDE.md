@@ -466,7 +466,7 @@ Violating any of these is a bug, not a style preference.
 ## Workspace layout
 
 **Crates marked `PLANNED` do not exist yet.** This is the intended shape, not a
-description of the tree — five of the sixteen below are unbuilt. `telividb-policy`
+description of the tree — four of the sixteen below are unbuilt. `telividb-policy`
 is the one that matters most: six invariants describe authorization that nothing
 can currently enforce.
 
@@ -486,7 +486,8 @@ telividb/
 ├─ crates/
 │  ├─ domain/                 # pure business logic. No I/O, no tokio, no file handles, no adapters.
 │  │  ├─ telividb-core/       # ontology: ids, domain types, errors, config schema
-│  │  ├─ telividb-query/      # PLANNED — filter evaluation, query planner
+│  │  ├─ telividb-query/      # query planner: the seed→expand graph join.
+│  │  │                       # Filter evaluation still to come.
 │  │  └─ telividb-graph/      # Plan A1.1 — petgraph-backed property graph + traversal (rule 47)
 │  ├─ adapters/                # replaceable implementations of a domain port. I/O-shaped, boring.
 │  │  ├─ telividb-storage/    # segments, WAL, manifest, mmap, redb metadata, quantization codecs

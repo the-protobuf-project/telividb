@@ -2,6 +2,7 @@
 //!
 //! Usage: `cargo xtask check-len`
 
+mod allowed;
 mod check_docs;
 mod check_layers;
 mod check_len;
