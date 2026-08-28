@@ -46,11 +46,20 @@ mod baseline;
 
 use baseline::flat_baseline;
 use std::time::Instant;
-use telividb_core::{Dim, Metric, VectorStore};
+use telividb_core::{Dim, Metric};
 use telividb_index::adapters::MemoryStore;
+
+// Everything below is reached only from the device path. Without the feature
+// this binary still builds and still reports the host baseline, so the items
+// are gated rather than deleted — a `--no-default-features` build is a
+// supported configuration, and one that only compiles is not enough.
+#[cfg(feature = "gpu")]
+use telividb_core::VectorStore;
+#[cfg(feature = "gpu")]
 use telividb_index::ports::VectorIndex;
 
 /// Batch sizes to report, spanning one query to past the internal chunk size.
+#[cfg(feature = "gpu")]
 const BATCHES: &[usize] = &[1, 8, 32, 64];
 
 /// Queries answered per batch size. Enough to average out a cold first call.
@@ -68,6 +77,9 @@ fn main() {
         Some("cosine") => Metric::Cosine,
         _ => Metric::Dot,
     };
+    // Read either way so the argument list is positionally identical with and
+    // without the feature; only the device path has anything to do with it.
+    #[cfg_attr(not(feature = "gpu"), allow(unused_variables))]
     let pinned = args.next();
 
     println!("corpus: {rows} rows x {dim} dims, metric={metric:?}");

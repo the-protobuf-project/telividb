@@ -98,6 +98,20 @@ pub struct Message {
     /// A message may have several children: regenerating or editing branches the
     /// conversation rather than replacing what was there. Discarded branches are
     /// retained, because an abandoned attempt is evidence about what was tried.
+    ///
+    /// Holds a message resource name, but deliberately carries no
+    /// `resource_reference`. That annotation describes an edge in the graph of
+    /// resource *types*, and a self-edge is a cycle there — which AIP-121 refuses,
+    /// because a cycle between resource types has no consistent creation order.
+    ///
+    /// The refusal is right about types and wrong about instances: these form a
+    /// tree, and a parent always exists before its child. Annotating it anyway
+    /// would be asserting something false about the type graph to describe
+    /// something true about the data, so the field is a plain name instead. The
+    /// same shape Google's own tree-structured resources use.
+    ///
+    /// Set once, when the message is appended, and never rewritten — branching
+    /// adds a sibling rather than reparenting anything.
     #[prost(string, tag = "3")]
     pub parent: ::prost::alloc::string::String,
     /// Textual content of the turn.
