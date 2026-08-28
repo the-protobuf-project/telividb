@@ -52,14 +52,21 @@ pub fn from_header(weights: &Header) -> Result<Tokenizer> {
     // as a single "word" — which matches nothing and collapses to one `[UNK]`.
     // Every text then embeds identically, and nothing errors: the vectors are
     // the right width, finite, and completely uninformative.
-    tokenizer.with_normalizer(Some(BertNormalizer::new(
-        true,
-        true,
-        // `None` defers to `lowercase`, which is what an uncased model wants
-        // and is harmless for a cased one that never sees an accent stripped.
-        None,
-        super::vocab_rules::is_lowercase(&raw, types.as_deref()),
-    )));
+    // `with_normalizer` and `add_special_tokens` became fallible in `tokenizers`
+    // 0.23; the other two still return `&mut Self`. Their errors are propagated
+    // rather than dropped, because a normalizer that failed to attach is the
+    // silent failure described above — every text collapsing to one `[UNK]`,
+    // producing vectors that are the right width and completely uninformative.
+    tokenizer
+        .with_normalizer(Some(BertNormalizer::new(
+            true,
+            true,
+            // `None` defers to `lowercase`, which is what an uncased model wants
+            // and is harmless for a cased one that never sees an accent stripped.
+            None,
+            super::vocab_rules::is_lowercase(&raw, types.as_deref()),
+        )))
+        .map_err(|e| Error::Tokenizer(e.to_string()))?;
     tokenizer.with_pre_tokenizer(Some(BertPreTokenizer));
 
     let cls = special(&raw, weights, "tokenizer.ggml.bos_token_id");
@@ -68,10 +75,15 @@ pub fn from_header(weights: &Header) -> Result<Tokenizer> {
         // Registered as special so they survive normalization and are never
         // split into subwords — a `[CLS]` tokenized as `[`, `cls`, `]` would
         // put three wrong ids where the model expects one.
-        tokenizer.add_special_tokens(&[
-            AddedToken::from(cls.clone(), true),
-            AddedToken::from(sep.clone(), true),
-        ]);
+        // `tokenizers` 0.23 takes an iterator of owned tokens here; 0.22 took
+        // a slice. Passing the array by value satisfies both readings without
+        // an extra allocation.
+        tokenizer
+            .add_special_tokens([
+                AddedToken::from(cls.clone(), true),
+                AddedToken::from(sep.clone(), true),
+            ])
+            .map_err(|e| Error::Tokenizer(e.to_string()))?;
         tokenizer.with_post_processor(Some(BertProcessing::new((sep, sep_id), (cls, cls_id))));
     }
     Ok(tokenizer)

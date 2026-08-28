@@ -28,9 +28,14 @@ telividb-compute = { path = "../../platform/telividb-compute" }
 # reach, so this crate now contributes **no native dependency at all**, which
 # is one fewer carve-out against rule 1 than the workspace carried yesterday.
 #
-# `esaxx_fast` stays off: it enables `esaxx-rs/cpp`, which is C++, and it is
-# only used for Unigram training — something a loader never does.
-tokenizers = { version = "0.22", default-features = false, features = ["fancy-regex"] }
+# `default-features = false` is load-bearing, not tidiness. The defaults are
+# `progressbar`, `onig` and `esaxx_fast`. The last enables `esaxx-rs/cpp`, which
+# is C++ and would be a native carve-out against rule 1; it is only used for
+# Unigram *training*, which a loader never does.
+#
+# `fancy-regex` replaces `onig` — pure Rust, and the reason rule 1's second
+# carve-out could be deleted rather than kept once candle left the tree.
+tokenizers = { version = "0.23", default-features = false, features = ["fancy-regex"] }
 
 [features]
 default = []

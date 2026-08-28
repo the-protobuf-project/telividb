@@ -202,7 +202,7 @@ jobs:
     steps:
       # See the `test` job: without the ggml submodule, CMake has nothing to
       # build and every workspace compile fails.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2
@@ -236,7 +236,7 @@ jobs:
     steps:
       # See the `test` job: without the ggml submodule, CMake has nothing to
       # build and every workspace compile fails.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
       - uses: Swatinem/rust-cache@v2

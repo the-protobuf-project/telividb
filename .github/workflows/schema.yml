@@ -30,7 +30,7 @@ jobs:
     name: google-api-linter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: the-protobuf-project/setup-google-api-linter@v1.0.0
         with:
           # Run from the module root, not the repository root.
@@ -73,7 +73,7 @@ jobs:
     name: buf format · breaking
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -133,7 +133,7 @@ jobs:
     name: generated code · docs are current
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: bufbuild/buf-action@v1
         with:
           version: 1.72.0
@@ -148,7 +148,7 @@ jobs:
       # Both plugins compile from source, which is the slowest step here. They
       # change only when the pinned versions do, so cache the binaries.
       - id: plugins
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/protoc-gen-prost

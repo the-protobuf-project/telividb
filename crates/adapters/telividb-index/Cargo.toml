@@ -52,4 +52,4 @@ tempfile = "3"
 # MCAP message payloads are zstd-compressed, so a substring search over the
 # raw file only ever sees schema metadata. Reading the recording properly is
 # what stops the leak assertions passing vacuously.
-mcap = "0.24"
+mcap = "0.25"
