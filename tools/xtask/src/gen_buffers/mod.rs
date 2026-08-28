@@ -12,9 +12,9 @@ mod tree;
 use crate::proc::which;
 use facade::lib_rs;
 use preamble::PREAMBLE;
-use tree::discover;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
+use tree::discover;
 
 /// Where the generated Rust is committed.
 const GENERATED: &str = "crates/platform/telividb-buffers/src/generated";
@@ -42,7 +42,9 @@ pub fn run(check_only: bool) -> ExitCode {
             eprintln!("It is a development tool, not a build dependency — the");
             eprintln!("committed output compiles without it. Install it only to");
             eprintln!("change the schema:");
-            eprintln!("  go install github.com/the-protobuf-project/buffers/plugin/cmd/{tool}@latest");
+            eprintln!(
+                "  go install github.com/the-protobuf-project/buffers/plugin/cmd/{tool}@latest"
+            );
             return ExitCode::FAILURE;
         }
     }
@@ -62,8 +64,11 @@ pub fn run(check_only: bool) -> ExitCode {
     // above clears the tree it writes into. All three renderings come from one
     // schema, so they are produced by one command — a protobuf view regenerated
     // separately is a protobuf view that can drift from the flat ones.
-    if !run_tool(&root, "buf", &["build", "-o", DESCRIPTORS, "--as-file-descriptor-set"])
-        || !run_tool(&root, "buf", &["generate"])
+    if !run_tool(
+        &root,
+        "buf",
+        &["build", "-o", DESCRIPTORS, "--as-file-descriptor-set"],
+    ) || !run_tool(&root, "buf", &["generate"])
         || !run_tool(
             &root,
             "buf",
@@ -83,6 +88,18 @@ pub fn run(check_only: bool) -> ExitCode {
     };
     if let Err(e) = std::fs::write(root.join(LIB_RS), lib_rs(PREAMBLE, &modules)) {
         eprintln!("gen-buffers: writing lib.rs: {e}");
+        return ExitCode::FAILURE;
+    }
+
+    // Format what was just written.
+    //
+    // Not tidiness: `cargo fmt --check` runs over the whole workspace, and
+    // `capnpc-rust` does not format its output. Leaving it unformatted puts two
+    // gates in permanent disagreement — the formatter rewrites the generated
+    // files, the generator rewrites them back, and whichever ran last decides
+    // whether CI is green. Formatting here settles it, and rustfmt is
+    // deterministic so the result stays stable across runs.
+    if !format_generated(&root) {
         return ExitCode::FAILURE;
     }
 
@@ -132,6 +149,38 @@ fn run_tool(root: &Path, tool: &str, args: &[&str]) -> bool {
         }
         Err(e) => {
             eprintln!("gen-buffers: running `{tool}`: {e}");
+            false
+        }
+    }
+}
+
+/// Run rustfmt over the generated tree and the crate root it declares.
+///
+/// Scoped to those files rather than the workspace: this task has no business
+/// reformatting hand-written code, and a developer running it should not find
+/// unrelated files in their diff.
+fn format_generated(root: &Path) -> bool {
+    let mut files = vec![root.join(LIB_RS)];
+    if tree::collect(&root.join(GENERATED), ".rs", &mut files).is_err() {
+        eprintln!("gen-buffers: could not enumerate the generated tree");
+        return false;
+    }
+    // The edition is passed explicitly because rustfmt is invoked directly
+    // rather than through cargo, so it cannot read it from the manifest.
+    match Command::new("rustfmt")
+        .arg("--edition")
+        .arg("2024")
+        .args(&files)
+        .current_dir(root)
+        .status()
+    {
+        Ok(status) if status.success() => true,
+        Ok(status) => {
+            eprintln!("gen-buffers: rustfmt failed: {status}");
+            false
+        }
+        Err(e) => {
+            eprintln!("gen-buffers: running rustfmt: {e}");
             false
         }
     }

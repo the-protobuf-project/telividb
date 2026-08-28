@@ -332,9 +332,9 @@ pub mod traversal_generated;
 pub mod wellknown_generated;
 
 /// Protobuf views and the gRPC service stubs, the wire protocol the
-         /// server speaks. Nested directly: `prost` addresses siblings
-         /// relatively, so unlike the flat formats these need no root layer.
-         #[cfg(feature = "protobuf")]
+/// server speaks. Nested directly: `prost` addresses siblings
+/// relatively, so unlike the flat formats these need no root layer.
+#[cfg(feature = "protobuf")]
 pub mod protobuf {
     /// `collection`.
     pub mod collection {
@@ -357,7 +357,9 @@ pub mod protobuf {
         /// `v1`.
         pub mod v1 {
             include!("generated/protobuf/telividb/conversation/v1/telividb.conversation.v1.rs");
-            include!("generated/protobuf/telividb/conversation/v1/telividb.conversation.v1.tonic.rs");
+            include!(
+                "generated/protobuf/telividb/conversation/v1/telividb.conversation.v1.tonic.rs"
+            );
         }
     }
     /// `graph`.
@@ -425,11 +427,10 @@ pub mod protobuf {
         }
     }
     /// Serialized `FileDescriptorSet` for every service here.
-         ///
-         /// Served over gRPC reflection so generic clients can introspect the
-         /// API without being shipped the protos first.
-         pub const FILE_DESCRIPTOR_SET: &[u8] =
-                 include_bytes!("generated/protobuf/descriptor.bin");
+    ///
+    /// Served over gRPC reflection so generic clients can introspect the
+    /// API without being shipped the protos first.
+    pub const FILE_DESCRIPTOR_SET: &[u8] = include_bytes!("generated/protobuf/descriptor.bin");
 }
 
 // The documented surface: one module per format, nested by package.
@@ -439,18 +440,14 @@ pub mod protobuf {
 pub mod capnp {
     /// `buffers` schemas.
     pub mod buffers {
-        pub use crate::{
-            wellknown_capnp,
-        };
+        pub use crate::wellknown_capnp;
     }
     /// `collection` schemas.
     pub mod collection {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{
-                collection_capnp,
-                collection_messages_capnp,
-                collection_service_capnp,
+                collection_capnp, collection_messages_capnp, collection_service_capnp,
             };
         }
     }
@@ -458,10 +455,7 @@ pub mod capnp {
     pub mod context {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                context_service_capnp,
-                context_template_capnp,
-            };
+            pub use crate::{context_service_capnp, context_template_capnp};
         }
     }
     /// `conversation` schemas.
@@ -469,12 +463,8 @@ pub mod capnp {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{
-                conversation_capnp,
-                conversation_messages_capnp,
-                conversation_service_capnp,
-                message_capnp,
-                summary_capnp,
-                tool_invocation_capnp,
+                conversation_capnp, conversation_messages_capnp, conversation_service_capnp,
+                message_capnp, summary_capnp, tool_invocation_capnp,
             };
         }
     }
@@ -483,10 +473,7 @@ pub mod capnp {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{
-                edge_capnp,
-                graph_messages_capnp,
-                graph_service_capnp,
-                traversal_capnp,
+                edge_capnp, graph_messages_capnp, graph_service_capnp, traversal_capnp,
             };
         }
     }
@@ -494,30 +481,21 @@ pub mod capnp {
     pub mod identity {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                identity_service_capnp,
-                principal_capnp,
-            };
+            pub use crate::{identity_service_capnp, principal_capnp};
         }
     }
     /// `inference` schemas.
     pub mod inference {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                inference_service_capnp,
-                model_capnp,
-            };
+            pub use crate::{inference_service_capnp, model_capnp};
         }
     }
     /// `mcp` schemas.
     pub mod mcp {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                mcp_server_capnp,
-                mcp_service_capnp,
-            };
+            pub use crate::{mcp_server_capnp, mcp_service_capnp};
         }
     }
     /// `point` schemas.
@@ -525,10 +503,7 @@ pub mod capnp {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{
-                point_capnp,
-                point_messages_capnp,
-                point_search_capnp,
-                point_service_capnp,
+                point_capnp, point_messages_capnp, point_search_capnp, point_service_capnp,
             };
         }
     }
@@ -536,20 +511,14 @@ pub mod capnp {
     pub mod policy {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                policy_service_capnp,
-                policy_set_capnp,
-            };
+            pub use crate::{policy_service_capnp, policy_set_capnp};
         }
     }
     /// `system` schemas.
     pub mod system {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                system_capnp,
-                system_service_capnp,
-            };
+            pub use crate::{system_capnp, system_service_capnp};
         }
     }
     /// `tenancy` schemas.
@@ -557,12 +526,8 @@ pub mod capnp {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{
-                organization_capnp,
-                project_capnp,
-                session_capnp,
-                space_capnp,
-                tenancy_messages_capnp,
-                tenancy_service_capnp,
+                organization_capnp, project_capnp, session_capnp, space_capnp,
+                tenancy_messages_capnp, tenancy_service_capnp,
             };
         }
     }
@@ -573,28 +538,20 @@ pub mod capnp {
 pub mod flatbuffers {
     /// `buffers` schemas.
     pub mod buffers {
-        pub use crate::{
-            wellknown_generated,
-        };
+        pub use crate::wellknown_generated;
     }
     /// `collection` schemas.
     pub mod collection {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                collection_generated,
-                collection_messages_generated,
-            };
+            pub use crate::{collection_generated, collection_messages_generated};
         }
     }
     /// `context` schemas.
     pub mod context {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                context_service_generated,
-                context_template_generated,
-            };
+            pub use crate::{context_service_generated, context_template_generated};
         }
     }
     /// `conversation` schemas.
@@ -602,11 +559,8 @@ pub mod flatbuffers {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{
-                conversation_generated,
-                conversation_messages_generated,
-                message_generated,
-                summary_generated,
-                tool_invocation_generated,
+                conversation_generated, conversation_messages_generated, message_generated,
+                summary_generated, tool_invocation_generated,
             };
         }
     }
@@ -614,72 +568,49 @@ pub mod flatbuffers {
     pub mod graph {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                edge_generated,
-                graph_messages_generated,
-                traversal_generated,
-            };
+            pub use crate::{edge_generated, graph_messages_generated, traversal_generated};
         }
     }
     /// `identity` schemas.
     pub mod identity {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                identity_service_generated,
-                principal_generated,
-            };
+            pub use crate::{identity_service_generated, principal_generated};
         }
     }
     /// `inference` schemas.
     pub mod inference {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                inference_service_generated,
-                model_generated,
-            };
+            pub use crate::{inference_service_generated, model_generated};
         }
     }
     /// `mcp` schemas.
     pub mod mcp {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                mcp_server_generated,
-                mcp_service_generated,
-            };
+            pub use crate::{mcp_server_generated, mcp_service_generated};
         }
     }
     /// `point` schemas.
     pub mod point {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                point_generated,
-                point_messages_generated,
-                point_search_generated,
-            };
+            pub use crate::{point_generated, point_messages_generated, point_search_generated};
         }
     }
     /// `policy` schemas.
     pub mod policy {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                policy_service_generated,
-                policy_set_generated,
-            };
+            pub use crate::{policy_service_generated, policy_set_generated};
         }
     }
     /// `system` schemas.
     pub mod system {
         /// `v1` schemas.
         pub mod v1 {
-            pub use crate::{
-                system_generated,
-                system_service_generated,
-            };
+            pub use crate::{system_generated, system_service_generated};
         }
     }
     /// `tenancy` schemas.
@@ -687,13 +618,9 @@ pub mod flatbuffers {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{
-                organization_generated,
-                project_generated,
-                session_generated,
-                space_generated,
+                organization_generated, project_generated, session_generated, space_generated,
                 tenancy_messages_generated,
             };
         }
     }
 }
-

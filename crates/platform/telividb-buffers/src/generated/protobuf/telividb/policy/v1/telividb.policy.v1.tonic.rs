@@ -6,10 +6,10 @@ pub mod policy_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct PolicyClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod policy_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             PolicyClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -94,39 +93,29 @@ pub mod policy_client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreatePolicySetRequest>,
         ) -> std::result::Result<tonic::Response<super::PolicySet>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.policy.v1.Policy/CreatePolicySet",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.policy.v1.Policy/CreatePolicySet");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.policy.v1.Policy", "CreatePolicySet"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.policy.v1.Policy",
+                "CreatePolicySet",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_policy_set(
             &mut self,
             request: impl tonic::IntoRequest<super::GetPolicySetRequest>,
         ) -> std::result::Result<tonic::Response<super::PolicySet>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.policy.v1.Policy/GetPolicySet",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.policy.v1.Policy/GetPolicySet");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.policy.v1.Policy", "GetPolicySet"));
@@ -135,70 +124,54 @@ pub mod policy_client {
         pub async fn list_policy_sets(
             &mut self,
             request: impl tonic::IntoRequest<super::ListPolicySetsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListPolicySetsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListPolicySetsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.policy.v1.Policy/ListPolicySets",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.policy.v1.Policy/ListPolicySets");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.policy.v1.Policy", "ListPolicySets"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.policy.v1.Policy",
+                "ListPolicySets",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn delete_policy_set(
             &mut self,
             request: impl tonic::IntoRequest<super::DeletePolicySetRequest>,
         ) -> std::result::Result<tonic::Response<super::PolicySet>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.policy.v1.Policy/DeletePolicySet",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.policy.v1.Policy/DeletePolicySet");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.policy.v1.Policy", "DeletePolicySet"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.policy.v1.Policy",
+                "DeletePolicySet",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn evaluate_policy(
             &mut self,
             request: impl tonic::IntoRequest<super::EvaluatePolicyRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::EvaluatePolicyResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::EvaluatePolicyResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.policy.v1.Policy/EvaluatePolicy",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.policy.v1.Policy/EvaluatePolicy");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.policy.v1.Policy", "EvaluatePolicy"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.policy.v1.Policy",
+                "EvaluatePolicy",
+            ));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -210,7 +183,7 @@ pub mod policy_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with PolicyServer.
@@ -227,10 +200,7 @@ pub mod policy_server {
         async fn list_policy_sets(
             &self,
             request: tonic::Request<super::ListPolicySetsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListPolicySetsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListPolicySetsResponse>, tonic::Status>;
         async fn delete_policy_set(
             &self,
             request: tonic::Request<super::DeletePolicySetRequest>,
@@ -238,10 +208,7 @@ pub mod policy_server {
         async fn evaluate_policy(
             &self,
             request: tonic::Request<super::EvaluatePolicyRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::EvaluatePolicyResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::EvaluatePolicyResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct PolicyServer<T> {
@@ -264,10 +231,7 @@ pub mod policy_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -322,15 +286,11 @@ pub mod policy_server {
                 "/telividb.policy.v1.Policy/CreatePolicySet" => {
                     #[allow(non_camel_case_types)]
                     struct CreatePolicySetSvc<T: Policy>(pub Arc<T>);
-                    impl<
-                        T: Policy,
-                    > tonic::server::UnaryService<super::CreatePolicySetRequest>
-                    for CreatePolicySetSvc<T> {
+                    impl<T: Policy> tonic::server::UnaryService<super::CreatePolicySetRequest>
+                        for CreatePolicySetSvc<T>
+                    {
                         type Response = super::PolicySet;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreatePolicySetRequest>,
@@ -367,23 +327,16 @@ pub mod policy_server {
                 "/telividb.policy.v1.Policy/GetPolicySet" => {
                     #[allow(non_camel_case_types)]
                     struct GetPolicySetSvc<T: Policy>(pub Arc<T>);
-                    impl<
-                        T: Policy,
-                    > tonic::server::UnaryService<super::GetPolicySetRequest>
-                    for GetPolicySetSvc<T> {
+                    impl<T: Policy> tonic::server::UnaryService<super::GetPolicySetRequest> for GetPolicySetSvc<T> {
                         type Response = super::PolicySet;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetPolicySetRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Policy>::get_policy_set(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Policy>::get_policy_set(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -412,15 +365,9 @@ pub mod policy_server {
                 "/telividb.policy.v1.Policy/ListPolicySets" => {
                     #[allow(non_camel_case_types)]
                     struct ListPolicySetsSvc<T: Policy>(pub Arc<T>);
-                    impl<
-                        T: Policy,
-                    > tonic::server::UnaryService<super::ListPolicySetsRequest>
-                    for ListPolicySetsSvc<T> {
+                    impl<T: Policy> tonic::server::UnaryService<super::ListPolicySetsRequest> for ListPolicySetsSvc<T> {
                         type Response = super::ListPolicySetsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListPolicySetsRequest>,
@@ -457,15 +404,11 @@ pub mod policy_server {
                 "/telividb.policy.v1.Policy/DeletePolicySet" => {
                     #[allow(non_camel_case_types)]
                     struct DeletePolicySetSvc<T: Policy>(pub Arc<T>);
-                    impl<
-                        T: Policy,
-                    > tonic::server::UnaryService<super::DeletePolicySetRequest>
-                    for DeletePolicySetSvc<T> {
+                    impl<T: Policy> tonic::server::UnaryService<super::DeletePolicySetRequest>
+                        for DeletePolicySetSvc<T>
+                    {
                         type Response = super::PolicySet;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeletePolicySetRequest>,
@@ -502,15 +445,9 @@ pub mod policy_server {
                 "/telividb.policy.v1.Policy/EvaluatePolicy" => {
                     #[allow(non_camel_case_types)]
                     struct EvaluatePolicySvc<T: Policy>(pub Arc<T>);
-                    impl<
-                        T: Policy,
-                    > tonic::server::UnaryService<super::EvaluatePolicyRequest>
-                    for EvaluatePolicySvc<T> {
+                    impl<T: Policy> tonic::server::UnaryService<super::EvaluatePolicyRequest> for EvaluatePolicySvc<T> {
                         type Response = super::EvaluatePolicyResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::EvaluatePolicyRequest>,
@@ -544,25 +481,19 @@ pub mod policy_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

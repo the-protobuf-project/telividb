@@ -14,16 +14,16 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Edge {
     /// Resource name of the edge.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Resource this edge points from.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub source: ::prost::alloc::string::String,
     /// Resource this edge points to.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub target: ::prost::alloc::string::String,
     /// The type of relationship, such as `FOLLOWS` or `IN_SPACE`.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub edge_type: ::prost::alloc::string::String,
     /// Declared strength of this particular relationship.
     ///
@@ -31,7 +31,7 @@ pub struct Edge {
     /// supplies. Weights multiply along a path rather than adding, so two hops
     /// through weak edges rank below one hop through a strong one — addition would
     /// let a long chain of weak links accumulate into a false strong signal.
-    #[prost(float, tag="5")]
+    #[prost(float, tag = "5")]
     pub weight: f32,
     /// How live this path is, as a time-decayed count of traversals.
     ///
@@ -43,10 +43,10 @@ pub struct Edge {
     /// Accumulated in the resident graph and flushed periodically. The flush is
     /// allowed to lose recent increments: this ranks results, it does not audit
     /// them, and making every read a durable write would serialize the read path.
-    #[prost(float, tag="6")]
+    #[prost(float, tag = "6")]
     pub strength: f32,
     /// When this edge was last traversed.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub last_traverse_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Whether traversal stops here.
     ///
@@ -54,19 +54,19 @@ pub struct Edge {
     /// leads to is retained and its owner can still reach it deliberately; it is
     /// excluded from recall, and its existence remains visible to a caller
     /// assembling context so an agent knows what not to raise.
-    #[prost(bool, tag="8")]
+    #[prost(bool, tag = "8")]
     pub suppressed: bool,
     /// When the edge was created.
-    #[prost(message, optional, tag="9")]
+    #[prost(message, optional, tag = "9")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the edge was soft-deleted, or unset while it is live.
-    #[prost(message, optional, tag="10")]
+    #[prost(message, optional, tag = "10")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When a soft-deleted edge is purged and becomes unrecoverable.
-    #[prost(message, optional, tag="11")]
+    #[prost(message, optional, tag = "11")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="12")]
+    #[prost(string, tag = "12")]
     pub etag: ::prost::alloc::string::String,
 }
 /// A declared kind of relationship, carrying the default weight its edges take.
@@ -76,13 +76,13 @@ pub struct Edge {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EdgeType {
     /// Resource name of the edge type.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Human-readable name.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// Weight edges of this type take unless they override it.
-    #[prost(float, tag="3")]
+    #[prost(float, tag = "3")]
     pub default_weight: f32,
     /// Whether edges of this type express containment rather than meaning.
     ///
@@ -90,74 +90,74 @@ pub struct EdgeType {
     /// space. They are followed when resolving what a principal can see and are
     /// not followed when expanding a retrieval, because membership is not a
     /// semantic relationship and would otherwise pull in every sibling.
-    #[prost(bool, tag="4")]
+    #[prost(bool, tag = "4")]
     pub structural: bool,
     /// When the edge type was created.
-    #[prost(message, optional, tag="5")]
+    #[prost(message, optional, tag = "5")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the edge type was soft-deleted, or unset while it is live.
-    #[prost(message, optional, tag="6")]
+    #[prost(message, optional, tag = "6")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When a soft-deleted edge type is purged and becomes unrecoverable.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="8")]
+    #[prost(string, tag = "8")]
     pub etag: ::prost::alloc::string::String,
 }
 /// Request message for creating an edge.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateEdgeRequest {
     /// Organization the edge belongs to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub edge_id: ::prost::alloc::string::String,
     /// The edge to create.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub edge: ::core::option::Option<Edge>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving an edge.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetEdgeRequest {
     /// Resource name of the edge.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing edges.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListEdgesRequest {
     /// Organization to list edges from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression, such as `source = "..." AND edge_type = "..."`.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// How to order the results.
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
     /// Whether to include soft-deleted edges.
-    #[prost(bool, tag="6")]
+    #[prost(bool, tag = "6")]
     pub show_deleted: bool,
 }
 /// Response message for listing edges.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListEdgesResponse {
     /// The edges on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub edges: ::prost::alloc::vec::Vec<Edge>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for creating several edges at once.
@@ -168,144 +168,144 @@ pub struct ListEdgesResponse {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchCreateEdgesRequest {
     /// Organization the edges belong to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The individual create requests.
-    #[prost(message, repeated, tag="2")]
+    #[prost(message, repeated, tag = "2")]
     pub requests: ::prost::alloc::vec::Vec<CreateEdgeRequest>,
 }
 /// Response message for creating several edges at once.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchCreateEdgesResponse {
     /// The edges that were created.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub edges: ::prost::alloc::vec::Vec<Edge>,
 }
 /// Request message for deleting an edge.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteEdgeRequest {
     /// Resource name of the edge to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
 }
 /// Request message for creating an edge type.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateEdgeTypeRequest {
     /// Organization the edge type belongs to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub edge_type_id: ::prost::alloc::string::String,
     /// The edge type to create.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub edge_type: ::core::option::Option<EdgeType>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving an edge type.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetEdgeTypeRequest {
     /// Resource name of the edge type.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing edge types.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListEdgeTypesRequest {
     /// Organization to list edge types from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression restricting which edge types are returned.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
 }
 /// Response message for listing edge types.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListEdgeTypesResponse {
     /// The edge types on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub edge_types: ::prost::alloc::vec::Vec<EdgeType>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for deleting an edge type.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteEdgeTypeRequest {
     /// Resource name of the edge type to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
     /// Whether to delete the type even though edges still reference it.
-    #[prost(bool, tag="3")]
+    #[prost(bool, tag = "3")]
     pub force: bool,
 }
 /// One step along a traversed path.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TraversalStep {
     /// The edge that was followed.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub edge: ::prost::alloc::string::String,
     /// The resource this step arrived at.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub resource: ::prost::alloc::string::String,
 }
 /// A resource reached by traversal, with the path that reached it.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TraversalResult {
     /// The resource that was reached.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub resource: ::prost::alloc::string::String,
     /// Combined score after applying edge weights and the per-hop decay.
-    #[prost(float, tag="2")]
+    #[prost(float, tag = "2")]
     pub score: f32,
     /// How many hops from the nearest seed. Zero means the seed itself.
-    #[prost(int32, tag="3")]
+    #[prost(int32, tag = "3")]
     pub hop_count: i32,
     /// The path taken, so a result can be cited rather than merely returned.
     ///
     /// Provenance, not diagnostics: an assembled answer that cannot say how it
     /// reached a fact cannot be verified, which for a memory system is most of
     /// what it is worth.
-    #[prost(message, repeated, tag="4")]
+    #[prost(message, repeated, tag = "4")]
     pub path: ::prost::alloc::vec::Vec<TraversalStep>,
 }
 /// Request message for traversing the graph from a set of seeds.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TraverseGraphRequest {
     /// Organization whose graph is traversed.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Resources to start from.
-    #[prost(string, repeated, tag="2")]
+    #[prost(string, repeated, tag = "2")]
     pub seeds: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// How many hops to expand. Zero selects a server-chosen default.
-    #[prost(int32, tag="3")]
+    #[prost(int32, tag = "3")]
     pub max_hop_count: i32,
     /// Edge types to follow. Empty follows every non-structural type.
-    #[prost(string, repeated, tag="4")]
+    #[prost(string, repeated, tag = "4")]
     pub edge_types: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Per-hop score multiplier.
     ///
     /// Without a decay a node with many neighbours contributes all of them at its
     /// own score, and the graph half of a retrieval swamps the similarity half.
-    #[prost(float, tag="5")]
+    #[prost(float, tag = "5")]
     pub decay: f32,
     /// Ceiling on resources returned, so a hub cannot become the whole answer.
-    #[prost(int32, tag="6")]
+    #[prost(int32, tag = "6")]
     pub max_result_count: i32,
     /// Whether learned traversal strength contributes to the score.
     ///
@@ -313,14 +313,14 @@ pub struct TraverseGraphRequest {
     /// When enabled, an untravelled edge still scores at a prior rather than at
     /// zero — otherwise a new edge could never be traversed, so it could never
     /// earn a count, and the trap would close on itself.
-    #[prost(bool, tag="7")]
+    #[prost(bool, tag = "7")]
     pub use_strength: bool,
 }
 /// Response message for traversing the graph.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TraverseGraphResponse {
     /// Resources reached, highest score first.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub results: ::prost::alloc::vec::Vec<TraversalResult>,
     /// Edges skipped because they are suppressed.
     ///
@@ -328,17 +328,17 @@ pub struct TraverseGraphResponse {
     /// that a region was avoided so it can decline to pursue the topic; the person
     /// being protected must not be handed the reminder, which is the harm
     /// suppression was asked for.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub suppressed_edge_count: i32,
     /// Whether every part of the graph could be consulted.
     ///
     /// False when a locked space held part of the path. A caller must be able to
     /// tell "nothing is there" from "something is there that you cannot currently
     /// see".
-    #[prost(bool, tag="3")]
+    #[prost(bool, tag = "3")]
     pub complete: bool,
     /// Spaces skipped because they are locked. Names only, never contents.
-    #[prost(string, repeated, tag="4")]
+    #[prost(string, repeated, tag = "4")]
     pub locked_spaces: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 // @@protoc_insertion_point(module)

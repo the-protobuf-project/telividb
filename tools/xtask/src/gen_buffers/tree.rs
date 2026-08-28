@@ -61,7 +61,11 @@ fn normalise(base: &Path, suffix: &str) -> std::io::Result<Vec<GeneratedModule>>
     // level carries nothing.
     let staged = base.join("rust");
     let mut found = vec![];
-    collect(if staged.is_dir() { &staged } else { base }, suffix, &mut found)?;
+    collect(
+        if staged.is_dir() { &staged } else { base },
+        suffix,
+        &mut found,
+    )?;
 
     let mut modules = vec![];
     for src in found {
@@ -155,7 +159,10 @@ fn protobuf(base: &Path) -> std::io::Result<Vec<ProtoPackage>> {
         let dir = f.parent().expect("file has a parent").to_path_buf();
         let rel = f.strip_prefix(base.parent().expect("generated has a parent"));
         let rel = rel.unwrap_or(&f).to_string_lossy().replace('\\', "/");
-        by_dir.entry(dir).or_default().push(format!("generated/{rel}"));
+        by_dir
+            .entry(dir)
+            .or_default()
+            .push(format!("generated/{rel}"));
     }
     let mut out = vec![];
     for (dir, mut includes) in by_dir {

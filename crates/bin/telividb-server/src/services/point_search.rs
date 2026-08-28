@@ -8,8 +8,10 @@ use super::point::{PointsSvc, parse_name};
 use super::point_convert::{to_wire, vector_to_domain};
 use crate::error::{storage_status, to_status};
 use std::sync::Arc;
+use telividb_buffers::protobuf::point::v1::{
+    SearchPointsRequest, SearchPointsResponse, SearchResult,
+};
 use telividb_core::PointStore;
-use telividb_buffers::protobuf::point::v1::{SearchPointsRequest, SearchPointsResponse, SearchResult};
 use telividb_telemetry::{fields, logger, redact};
 use tonic::{Request, Response, Status};
 

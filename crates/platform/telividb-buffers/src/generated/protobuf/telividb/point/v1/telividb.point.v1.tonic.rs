@@ -6,10 +6,10 @@ pub mod points_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct PointsClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod points_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             PointsClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -94,67 +93,45 @@ pub mod points_client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreatePointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/CreatePoint",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/CreatePoint");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.point.v1.Points", "CreatePoint"));
             self.inner.unary(req, path, codec).await
         }
         /** Retrieves a single point.
-*/
+        */
         pub async fn get_point(
             &mut self,
             request: impl tonic::IntoRequest<super::GetPointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/GetPoint",
-            );
+            let path = http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/GetPoint");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.point.v1.Points", "GetPoint"));
             self.inner.unary(req, path, codec).await
         }
         /** Lists the points of a collection.
-*/
+        */
         pub async fn list_points(
             &mut self,
             request: impl tonic::IntoRequest<super::ListPointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListPointsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListPointsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/ListPoints",
-            );
+            let path = http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/ListPoints");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.point.v1.Points", "ListPoints"));
@@ -162,142 +139,106 @@ pub mod points_client {
         }
         /** Deletes a point.
 
- Returns the tombstoned point rather than an empty message. Deletion here
- is a soft delete by construction — sealed segments are immutable, so the
- point is tombstoned and excluded from queries at once while its bytes
- survive until compaction rewrites the segment. Returning the resource is
- the form AIP-135 defines for exactly that case, it matches what
- `BatchDeletePoints` already does, and it leaves room to add fields later
- that an empty return would have foreclosed.
-*/
+         Returns the tombstoned point rather than an empty message. Deletion here
+         is a soft delete by construction — sealed segments are immutable, so the
+         point is tombstoned and excluded from queries at once while its bytes
+         survive until compaction rewrites the segment. Returning the resource is
+         the form AIP-135 defines for exactly that case, it matches what
+         `BatchDeletePoints` already does, and it leaves room to add fields later
+         that an empty return would have foreclosed.
+        */
         pub async fn delete_point(
             &mut self,
             request: impl tonic::IntoRequest<super::DeletePointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/DeletePoint",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/DeletePoint");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.point.v1.Points", "DeletePoint"));
             self.inner.unary(req, path, codec).await
         }
         /** Creates several points in one request.
-*/
+        */
         pub async fn batch_create_points(
             &mut self,
             request: impl tonic::IntoRequest<super::BatchCreatePointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchCreatePointsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::BatchCreatePointsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/BatchCreatePoints",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/BatchCreatePoints");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.point.v1.Points", "BatchCreatePoints"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.point.v1.Points",
+                "BatchCreatePoints",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /** Retrieves several points in one request.
-*/
+        */
         pub async fn batch_get_points(
             &mut self,
             request: impl tonic::IntoRequest<super::BatchGetPointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchGetPointsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::BatchGetPointsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/BatchGetPoints",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/BatchGetPoints");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.point.v1.Points", "BatchGetPoints"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.point.v1.Points",
+                "BatchGetPoints",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /** Deletes several points in one request.
-*/
+        */
         pub async fn batch_delete_points(
             &mut self,
             request: impl tonic::IntoRequest<super::BatchDeletePointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchDeletePointsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::BatchDeletePointsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/BatchDeletePoints",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/BatchDeletePoints");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.point.v1.Points", "BatchDeletePoints"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.point.v1.Points",
+                "BatchDeletePoints",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /** Searches a collection for the points nearest a query vector.
 
- A method on the points collection rather than a service of its own:
- searching is an operation over points, and modelling it as one keeps the
- resource hierarchy intact.
-*/
+         A method on the points collection rather than a service of its own:
+         searching is an operation over points, and modelling it as one keeps the
+         resource hierarchy intact.
+        */
         pub async fn search_points(
             &mut self,
             request: impl tonic::IntoRequest<super::SearchPointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::SearchPointsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::SearchPointsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.point.v1.Points/SearchPoints",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.point.v1.Points/SearchPoints");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.point.v1.Points", "SearchPoints"));
@@ -312,7 +253,7 @@ pub mod points_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with PointsServer.
@@ -323,74 +264,59 @@ pub mod points_server {
             request: tonic::Request<super::CreatePointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status>;
         /** Retrieves a single point.
-*/
+        */
         async fn get_point(
             &self,
             request: tonic::Request<super::GetPointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status>;
         /** Lists the points of a collection.
-*/
+        */
         async fn list_points(
             &self,
             request: tonic::Request<super::ListPointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListPointsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListPointsResponse>, tonic::Status>;
         /** Deletes a point.
 
- Returns the tombstoned point rather than an empty message. Deletion here
- is a soft delete by construction — sealed segments are immutable, so the
- point is tombstoned and excluded from queries at once while its bytes
- survive until compaction rewrites the segment. Returning the resource is
- the form AIP-135 defines for exactly that case, it matches what
- `BatchDeletePoints` already does, and it leaves room to add fields later
- that an empty return would have foreclosed.
-*/
+         Returns the tombstoned point rather than an empty message. Deletion here
+         is a soft delete by construction — sealed segments are immutable, so the
+         point is tombstoned and excluded from queries at once while its bytes
+         survive until compaction rewrites the segment. Returning the resource is
+         the form AIP-135 defines for exactly that case, it matches what
+         `BatchDeletePoints` already does, and it leaves room to add fields later
+         that an empty return would have foreclosed.
+        */
         async fn delete_point(
             &self,
             request: tonic::Request<super::DeletePointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status>;
         /** Creates several points in one request.
-*/
+        */
         async fn batch_create_points(
             &self,
             request: tonic::Request<super::BatchCreatePointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchCreatePointsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::BatchCreatePointsResponse>, tonic::Status>;
         /** Retrieves several points in one request.
-*/
+        */
         async fn batch_get_points(
             &self,
             request: tonic::Request<super::BatchGetPointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchGetPointsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::BatchGetPointsResponse>, tonic::Status>;
         /** Deletes several points in one request.
-*/
+        */
         async fn batch_delete_points(
             &self,
             request: tonic::Request<super::BatchDeletePointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchDeletePointsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::BatchDeletePointsResponse>, tonic::Status>;
         /** Searches a collection for the points nearest a query vector.
 
- A method on the points collection rather than a service of its own:
- searching is an operation over points, and modelling it as one keeps the
- resource hierarchy intact.
-*/
+         A method on the points collection rather than a service of its own:
+         searching is an operation over points, and modelling it as one keeps the
+         resource hierarchy intact.
+        */
         async fn search_points(
             &self,
             request: tonic::Request<super::SearchPointsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::SearchPointsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::SearchPointsResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct PointsServer<T> {
@@ -413,10 +339,7 @@ pub mod points_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -471,23 +394,16 @@ pub mod points_server {
                 "/telividb.point.v1.Points/CreatePoint" => {
                     #[allow(non_camel_case_types)]
                     struct CreatePointSvc<T: Points>(pub Arc<T>);
-                    impl<
-                        T: Points,
-                    > tonic::server::UnaryService<super::CreatePointRequest>
-                    for CreatePointSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::CreatePointRequest> for CreatePointSvc<T> {
                         type Response = super::Point;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreatePointRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Points>::create_point(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Points>::create_point(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -516,21 +432,16 @@ pub mod points_server {
                 "/telividb.point.v1.Points/GetPoint" => {
                     #[allow(non_camel_case_types)]
                     struct GetPointSvc<T: Points>(pub Arc<T>);
-                    impl<T: Points> tonic::server::UnaryService<super::GetPointRequest>
-                    for GetPointSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::GetPointRequest> for GetPointSvc<T> {
                         type Response = super::Point;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetPointRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Points>::get_point(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Points>::get_point(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -559,21 +470,16 @@ pub mod points_server {
                 "/telividb.point.v1.Points/ListPoints" => {
                     #[allow(non_camel_case_types)]
                     struct ListPointsSvc<T: Points>(pub Arc<T>);
-                    impl<T: Points> tonic::server::UnaryService<super::ListPointsRequest>
-                    for ListPointsSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::ListPointsRequest> for ListPointsSvc<T> {
                         type Response = super::ListPointsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListPointsRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Points>::list_points(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Points>::list_points(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -602,23 +508,16 @@ pub mod points_server {
                 "/telividb.point.v1.Points/DeletePoint" => {
                     #[allow(non_camel_case_types)]
                     struct DeletePointSvc<T: Points>(pub Arc<T>);
-                    impl<
-                        T: Points,
-                    > tonic::server::UnaryService<super::DeletePointRequest>
-                    for DeletePointSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::DeletePointRequest> for DeletePointSvc<T> {
                         type Response = super::Point;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeletePointRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Points>::delete_point(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Points>::delete_point(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -647,15 +546,11 @@ pub mod points_server {
                 "/telividb.point.v1.Points/BatchCreatePoints" => {
                     #[allow(non_camel_case_types)]
                     struct BatchCreatePointsSvc<T: Points>(pub Arc<T>);
-                    impl<
-                        T: Points,
-                    > tonic::server::UnaryService<super::BatchCreatePointsRequest>
-                    for BatchCreatePointsSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::BatchCreatePointsRequest>
+                        for BatchCreatePointsSvc<T>
+                    {
                         type Response = super::BatchCreatePointsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::BatchCreatePointsRequest>,
@@ -692,15 +587,9 @@ pub mod points_server {
                 "/telividb.point.v1.Points/BatchGetPoints" => {
                     #[allow(non_camel_case_types)]
                     struct BatchGetPointsSvc<T: Points>(pub Arc<T>);
-                    impl<
-                        T: Points,
-                    > tonic::server::UnaryService<super::BatchGetPointsRequest>
-                    for BatchGetPointsSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::BatchGetPointsRequest> for BatchGetPointsSvc<T> {
                         type Response = super::BatchGetPointsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::BatchGetPointsRequest>,
@@ -737,15 +626,11 @@ pub mod points_server {
                 "/telividb.point.v1.Points/BatchDeletePoints" => {
                     #[allow(non_camel_case_types)]
                     struct BatchDeletePointsSvc<T: Points>(pub Arc<T>);
-                    impl<
-                        T: Points,
-                    > tonic::server::UnaryService<super::BatchDeletePointsRequest>
-                    for BatchDeletePointsSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::BatchDeletePointsRequest>
+                        for BatchDeletePointsSvc<T>
+                    {
                         type Response = super::BatchDeletePointsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::BatchDeletePointsRequest>,
@@ -782,23 +667,16 @@ pub mod points_server {
                 "/telividb.point.v1.Points/SearchPoints" => {
                     #[allow(non_camel_case_types)]
                     struct SearchPointsSvc<T: Points>(pub Arc<T>);
-                    impl<
-                        T: Points,
-                    > tonic::server::UnaryService<super::SearchPointsRequest>
-                    for SearchPointsSvc<T> {
+                    impl<T: Points> tonic::server::UnaryService<super::SearchPointsRequest> for SearchPointsSvc<T> {
                         type Response = super::SearchPointsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::SearchPointsRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Points>::search_points(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Points>::search_points(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -824,25 +702,19 @@ pub mod points_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

@@ -2,332 +2,424 @@
 // @generated
 extern crate alloc;
 
-
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-#[allow(unused_imports, dead_code)]
-pub mod system {
+    #[allow(unused_imports, dead_code)]
+    pub mod system {
 
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            pub const ENUM_MIN_BUDGET_SOURCE: i32 = 0;
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            pub const ENUM_MAX_BUDGET_SOURCE: i32 = 3;
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            #[allow(non_camel_case_types)]
+            pub const ENUM_VALUES_BUDGET_SOURCE: [BudgetSource; 4] = [
+                BudgetSource::BUDGET_SOURCE_UNSPECIFIED,
+                BudgetSource::BUDGET_SOURCE_MEASURED,
+                BudgetSource::BUDGET_SOURCE_ESTIMATED,
+                BudgetSource::BUDGET_SOURCE_CONFIGURED,
+            ];
 
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_BUDGET_SOURCE: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_BUDGET_SOURCE: i32 = 3;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_BUDGET_SOURCE: [BudgetSource; 4] = [
-  BudgetSource::BUDGET_SOURCE_UNSPECIFIED,
-  BudgetSource::BUDGET_SOURCE_MEASURED,
-  BudgetSource::BUDGET_SOURCE_ESTIMATED,
-  BudgetSource::BUDGET_SOURCE_CONFIGURED,
-];
+            /// How the device memory ceiling was determined.
+            #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+            #[repr(transparent)]
+            pub struct BudgetSource(pub i32);
+            #[allow(non_upper_case_globals)]
+            impl BudgetSource {
+                /// Default value. Never valid in a response.
+                pub const BUDGET_SOURCE_UNSPECIFIED: Self = Self(0);
+                /// Read from the device.
+                pub const BUDGET_SOURCE_MEASURED: Self = Self(1);
+                /// Inferred, because the backend reports no ceiling.
+                pub const BUDGET_SOURCE_ESTIMATED: Self = Self(2);
+                /// Set by configuration, overriding whatever the device reports.
+                pub const BUDGET_SOURCE_CONFIGURED: Self = Self(3);
 
-/// How the device memory ceiling was determined.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct BudgetSource(pub i32);
-#[allow(non_upper_case_globals)]
-impl BudgetSource {
-  /// Default value. Never valid in a response.
-  pub const BUDGET_SOURCE_UNSPECIFIED: Self = Self(0);
-  /// Read from the device.
-  pub const BUDGET_SOURCE_MEASURED: Self = Self(1);
-  /// Inferred, because the backend reports no ceiling.
-  pub const BUDGET_SOURCE_ESTIMATED: Self = Self(2);
-  /// Set by configuration, overriding whatever the device reports.
-  pub const BUDGET_SOURCE_CONFIGURED: Self = Self(3);
+                pub const ENUM_MIN: i32 = 0;
+                pub const ENUM_MAX: i32 = 3;
+                pub const ENUM_VALUES: &'static [Self] = &[
+                    Self::BUDGET_SOURCE_UNSPECIFIED,
+                    Self::BUDGET_SOURCE_MEASURED,
+                    Self::BUDGET_SOURCE_ESTIMATED,
+                    Self::BUDGET_SOURCE_CONFIGURED,
+                ];
+                /// Returns the variant's name or "" if unknown.
+                pub fn variant_name(self) -> Option<&'static str> {
+                    match self {
+                        Self::BUDGET_SOURCE_UNSPECIFIED => Some("BUDGET_SOURCE_UNSPECIFIED"),
+                        Self::BUDGET_SOURCE_MEASURED => Some("BUDGET_SOURCE_MEASURED"),
+                        Self::BUDGET_SOURCE_ESTIMATED => Some("BUDGET_SOURCE_ESTIMATED"),
+                        Self::BUDGET_SOURCE_CONFIGURED => Some("BUDGET_SOURCE_CONFIGURED"),
+                        _ => None,
+                    }
+                }
+            }
+            impl ::core::fmt::Debug for BudgetSource {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                    if let Some(name) = self.variant_name() {
+                        f.write_str(name)
+                    } else {
+                        f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+                    }
+                }
+            }
+            impl<'a> ::flatbuffers::Follow<'a> for BudgetSource {
+                type Inner = Self;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+                    Self(b)
+                }
+            }
 
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 3;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::BUDGET_SOURCE_UNSPECIFIED,
-    Self::BUDGET_SOURCE_MEASURED,
-    Self::BUDGET_SOURCE_ESTIMATED,
-    Self::BUDGET_SOURCE_CONFIGURED,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::BUDGET_SOURCE_UNSPECIFIED => Some("BUDGET_SOURCE_UNSPECIFIED"),
-      Self::BUDGET_SOURCE_MEASURED => Some("BUDGET_SOURCE_MEASURED"),
-      Self::BUDGET_SOURCE_ESTIMATED => Some("BUDGET_SOURCE_ESTIMATED"),
-      Self::BUDGET_SOURCE_CONFIGURED => Some("BUDGET_SOURCE_CONFIGURED"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for BudgetSource {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-impl<'a> ::flatbuffers::Follow<'a> for BudgetSource {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
+            impl ::flatbuffers::Push for BudgetSource {
+                type Output = BudgetSource;
+                #[inline]
+                unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+                    unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
+                }
+            }
 
-impl ::flatbuffers::Push for BudgetSource {
-    type Output = BudgetSource;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
+            impl ::flatbuffers::EndianScalar for BudgetSource {
+                type Scalar = i32;
+                #[inline]
+                fn to_little_endian(self) -> i32 {
+                    self.0.to_le()
+                }
+                #[inline]
+                #[allow(clippy::wrong_self_convention)]
+                fn from_little_endian(v: i32) -> Self {
+                    let b = i32::from_le(v);
+                    Self(b)
+                }
+            }
 
-impl ::flatbuffers::EndianScalar for BudgetSource {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
+            impl<'a> ::flatbuffers::Verifiable for BudgetSource {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    i32::run_verifier(v, pos)
+                }
+            }
 
-impl<'a> ::flatbuffers::Verifiable for BudgetSource {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
+            impl ::flatbuffers::SimpleToVerifyInSlice for BudgetSource {}
+            pub enum SystemOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-impl ::flatbuffers::SimpleToVerifyInSlice for BudgetSource {}
-pub enum SystemOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            /// Runtime facts an orchestrator cannot observe from outside the process.
+            ///
+            /// Deliberately small. Liveness, restarts, CPU and memory limits and GPU
+            /// allocation are all things a scheduler already does better than a database
+            /// can. What remains is what only this process knows — and the most important
+            /// of it is which backend was actually selected, because a build that quietly
+            /// fell back to the CPU passes every correctness test while delivering none of
+            /// the speed. From outside, that failure is invisible: the pod is healthy, the
+            /// GPU is allocated, and nothing is using it.
+            pub struct System<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-/// Runtime facts an orchestrator cannot observe from outside the process.
-///
-/// Deliberately small. Liveness, restarts, CPU and memory limits and GPU
-/// allocation are all things a scheduler already does better than a database
-/// can. What remains is what only this process knows — and the most important
-/// of it is which backend was actually selected, because a build that quietly
-/// fell back to the CPU passes every correctness test while delivering none of
-/// the speed. From outside, that failure is invisible: the pod is healthy, the
-/// GPU is allocated, and nothing is using it.
-pub struct System<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            impl<'a> ::flatbuffers::Follow<'a> for System<'a> {
+                type Inner = System<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for System<'a> {
-  type Inner = System<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> System<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_BACKEND: ::flatbuffers::VOffsetT = 6;
+                pub const VT_DEVICE: ::flatbuffers::VOffsetT = 8;
+                pub const VT_BUDGET_LIMIT_BYTES: ::flatbuffers::VOffsetT = 10;
+                pub const VT_BUDGET_USED_BYTES: ::flatbuffers::VOffsetT = 12;
+                pub const VT_BUDGET_SOURCE: ::flatbuffers::VOffsetT = 14;
+                pub const VT_VERSION: ::flatbuffers::VOffsetT = 16;
 
-impl<'a> System<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_BACKEND: ::flatbuffers::VOffsetT = 6;
-  pub const VT_DEVICE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_BUDGET_LIMIT_BYTES: ::flatbuffers::VOffsetT = 10;
-  pub const VT_BUDGET_USED_BYTES: ::flatbuffers::VOffsetT = 12;
-  pub const VT_BUDGET_SOURCE: ::flatbuffers::VOffsetT = 14;
-  pub const VT_VERSION: ::flatbuffers::VOffsetT = 16;
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    System { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args SystemArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<System<'bldr>> {
+                    let mut builder = SystemBuilder::new(_fbb);
+                    builder.add_budget_used_bytes(args.budget_used_bytes);
+                    builder.add_budget_limit_bytes(args.budget_limit_bytes);
+                    if let Some(x) = args.version {
+                        builder.add_version(x);
+                    }
+                    builder.add_budget_source(args.budget_source);
+                    if let Some(x) = args.device {
+                        builder.add_device(x);
+                    }
+                    if let Some(x) = args.backend {
+                        builder.add_backend(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    System { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args SystemArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<System<'bldr>> {
-    let mut builder = SystemBuilder::new(_fbb);
-    builder.add_budget_used_bytes(args.budget_used_bytes);
-    builder.add_budget_limit_bytes(args.budget_limit_bytes);
-    if let Some(x) = args.version { builder.add_version(x); }
-    builder.add_budget_source(args.budget_source);
-    if let Some(x) = args.device { builder.add_device(x); }
-    if let Some(x) = args.backend { builder.add_backend(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+                /// Resource name of the singleton. Always `system`.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_NAME, None)
+                    }
+                }
+                /// Compute backend actually in use, such as `metal` or `cpu`.
+                #[inline]
+                pub fn backend(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_BACKEND, None)
+                    }
+                }
+                /// Human-readable device description.
+                #[inline]
+                pub fn device(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_DEVICE, None)
+                    }
+                }
+                /// Device memory ceiling this process will use.
+                #[inline]
+                pub fn budget_limit_bytes(&self) -> i64 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i64>(System::VT_BUDGET_LIMIT_BYTES, Some(0))
+                            .unwrap()
+                    }
+                }
+                /// Device memory currently held by resident models and indexes.
+                #[inline]
+                pub fn budget_used_bytes(&self) -> i64 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i64>(System::VT_BUDGET_USED_BYTES, Some(0))
+                            .unwrap()
+                    }
+                }
+                /// Whether the ceiling was measured or estimated.
+                ///
+                /// An estimate on a discrete card overshoots, and an operator sizing a
+                /// deployment has to be able to tell which number they are looking at.
+                #[inline]
+                pub fn budget_source(&self) -> BudgetSource {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<BudgetSource>(
+                                System::VT_BUDGET_SOURCE,
+                                Some(BudgetSource::BUDGET_SOURCE_UNSPECIFIED),
+                            )
+                            .unwrap()
+                    }
+                }
+                /// Version of this build.
+                #[inline]
+                pub fn version(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_VERSION, None)
+                    }
+                }
+            }
 
+            impl ::flatbuffers::Verifiable for System<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "backend",
+                            Self::VT_BACKEND,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "device",
+                            Self::VT_DEVICE,
+                            false,
+                        )?
+                        .visit_field::<i64>(
+                            "budget_limit_bytes",
+                            Self::VT_BUDGET_LIMIT_BYTES,
+                            false,
+                        )?
+                        .visit_field::<i64>("budget_used_bytes", Self::VT_BUDGET_USED_BYTES, false)?
+                        .visit_field::<BudgetSource>(
+                            "budget_source",
+                            Self::VT_BUDGET_SOURCE,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "version",
+                            Self::VT_VERSION,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct SystemArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub backend: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub device: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub budget_limit_bytes: i64,
+                pub budget_used_bytes: i64,
+                pub budget_source: BudgetSource,
+                pub version: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for SystemArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    SystemArgs {
+                        name: None,
+                        backend: None,
+                        device: None,
+                        budget_limit_bytes: 0,
+                        budget_used_bytes: 0,
+                        budget_source: BudgetSource::BUDGET_SOURCE_UNSPECIFIED,
+                        version: None,
+                    }
+                }
+            }
 
-  /// Resource name of the singleton. Always `system`.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_NAME, None)}
-  }
-  /// Compute backend actually in use, such as `metal` or `cpu`.
-  #[inline]
-  pub fn backend(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_BACKEND, None)}
-  }
-  /// Human-readable device description.
-  #[inline]
-  pub fn device(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_DEVICE, None)}
-  }
-  /// Device memory ceiling this process will use.
-  #[inline]
-  pub fn budget_limit_bytes(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(System::VT_BUDGET_LIMIT_BYTES, Some(0)).unwrap()}
-  }
-  /// Device memory currently held by resident models and indexes.
-  #[inline]
-  pub fn budget_used_bytes(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(System::VT_BUDGET_USED_BYTES, Some(0)).unwrap()}
-  }
-  /// Whether the ceiling was measured or estimated.
-  ///
-  /// An estimate on a discrete card overshoots, and an operator sizing a
-  /// deployment has to be able to tell which number they are looking at.
-  #[inline]
-  pub fn budget_source(&self) -> BudgetSource {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<BudgetSource>(System::VT_BUDGET_SOURCE, Some(BudgetSource::BUDGET_SOURCE_UNSPECIFIED)).unwrap()}
-  }
-  /// Version of this build.
-  #[inline]
-  pub fn version(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(System::VT_VERSION, None)}
-  }
-}
+            pub struct SystemBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> SystemBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(System::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_backend(&mut self, backend: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        System::VT_BACKEND,
+                        backend,
+                    );
+                }
+                #[inline]
+                pub fn add_device(&mut self, device: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(System::VT_DEVICE, device);
+                }
+                #[inline]
+                pub fn add_budget_limit_bytes(&mut self, budget_limit_bytes: i64) {
+                    self.fbb_.push_slot::<i64>(
+                        System::VT_BUDGET_LIMIT_BYTES,
+                        budget_limit_bytes,
+                        0,
+                    );
+                }
+                #[inline]
+                pub fn add_budget_used_bytes(&mut self, budget_used_bytes: i64) {
+                    self.fbb_
+                        .push_slot::<i64>(System::VT_BUDGET_USED_BYTES, budget_used_bytes, 0);
+                }
+                #[inline]
+                pub fn add_budget_source(&mut self, budget_source: BudgetSource) {
+                    self.fbb_.push_slot::<BudgetSource>(
+                        System::VT_BUDGET_SOURCE,
+                        budget_source,
+                        BudgetSource::BUDGET_SOURCE_UNSPECIFIED,
+                    );
+                }
+                #[inline]
+                pub fn add_version(&mut self, version: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        System::VT_VERSION,
+                        version,
+                    );
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> SystemBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    SystemBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<System<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-impl ::flatbuffers::Verifiable for System<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("backend", Self::VT_BACKEND, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("device", Self::VT_DEVICE, false)?
-     .visit_field::<i64>("budget_limit_bytes", Self::VT_BUDGET_LIMIT_BYTES, false)?
-     .visit_field::<i64>("budget_used_bytes", Self::VT_BUDGET_USED_BYTES, false)?
-     .visit_field::<BudgetSource>("budget_source", Self::VT_BUDGET_SOURCE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("version", Self::VT_VERSION, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct SystemArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub backend: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub device: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub budget_limit_bytes: i64,
-    pub budget_used_bytes: i64,
-    pub budget_source: BudgetSource,
-    pub version: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for SystemArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    SystemArgs {
-      name: None,
-      backend: None,
-      device: None,
-      budget_limit_bytes: 0,
-      budget_used_bytes: 0,
-      budget_source: BudgetSource::BUDGET_SOURCE_UNSPECIFIED,
-      version: None,
-    }
-  }
-}
-
-pub struct SystemBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> SystemBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(System::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_backend(&mut self, backend: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(System::VT_BACKEND, backend);
-  }
-  #[inline]
-  pub fn add_device(&mut self, device: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(System::VT_DEVICE, device);
-  }
-  #[inline]
-  pub fn add_budget_limit_bytes(&mut self, budget_limit_bytes: i64) {
-    self.fbb_.push_slot::<i64>(System::VT_BUDGET_LIMIT_BYTES, budget_limit_bytes, 0);
-  }
-  #[inline]
-  pub fn add_budget_used_bytes(&mut self, budget_used_bytes: i64) {
-    self.fbb_.push_slot::<i64>(System::VT_BUDGET_USED_BYTES, budget_used_bytes, 0);
-  }
-  #[inline]
-  pub fn add_budget_source(&mut self, budget_source: BudgetSource) {
-    self.fbb_.push_slot::<BudgetSource>(System::VT_BUDGET_SOURCE, budget_source, BudgetSource::BUDGET_SOURCE_UNSPECIFIED);
-  }
-  #[inline]
-  pub fn add_version(&mut self, version: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(System::VT_VERSION, version);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> SystemBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    SystemBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<System<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for System<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("System");
-      ds.field("name", &self.name());
-      ds.field("backend", &self.backend());
-      ds.field("device", &self.device());
-      ds.field("budget_limit_bytes", &self.budget_limit_bytes());
-      ds.field("budget_used_bytes", &self.budget_used_bytes());
-      ds.field("budget_source", &self.budget_source());
-      ds.field("version", &self.version());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod system
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for System<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("System");
+                    ds.field("name", &self.name());
+                    ds.field("backend", &self.backend());
+                    ds.field("device", &self.device());
+                    ds.field("budget_limit_bytes", &self.budget_limit_bytes());
+                    ds.field("budget_used_bytes", &self.budget_used_bytes());
+                    ds.field("budget_source", &self.budget_source());
+                    ds.field("version", &self.version());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod system
+} // pub mod telividb

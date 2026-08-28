@@ -10,13 +10,13 @@
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Conversation {
     /// Resource name of the conversation.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Human-readable name.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// Session this conversation was recorded in.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub session: ::prost::alloc::string::String,
     /// The message currently at the end of the active branch.
     ///
@@ -24,7 +24,7 @@ pub struct Conversation {
     /// reply or editing and resubmitting creates a sibling, so a message may have
     /// several children. This names which leaf the default retrieval path ends
     /// at; other branches remain reachable but are not followed by default.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub head: ::prost::alloc::string::String,
     /// Whether this conversation is excluded from ordinary recall.
     ///
@@ -33,25 +33,25 @@ pub struct Conversation {
     /// context. It is a recall preference over the owner's own memory, never an
     /// access-control mechanism — a principal denied by policy is denied whether
     /// this is set or not.
-    #[prost(bool, tag="5")]
+    #[prost(bool, tag = "5")]
     pub suppressed: bool,
     /// Messages on the active branch.
-    #[prost(int32, tag="6")]
+    #[prost(int32, tag = "6")]
     pub message_count: i32,
     /// When the conversation was created.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the conversation was last modified.
-    #[prost(message, optional, tag="8")]
+    #[prost(message, optional, tag = "8")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the conversation was soft-deleted, or unset while it is live.
-    #[prost(message, optional, tag="9")]
+    #[prost(message, optional, tag = "9")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When a soft-deleted conversation is purged and becomes unrecoverable.
-    #[prost(message, optional, tag="10")]
+    #[prost(message, optional, tag = "10")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="11")]
+    #[prost(string, tag = "11")]
     pub etag: ::prost::alloc::string::String,
 }
 /// A pointer to the bytes a message was derived from.
@@ -61,19 +61,19 @@ pub struct Conversation {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ContentRef {
     /// Location of the source, such as `file://`, `s3://` or `<https://`.>
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub uri: ::prost::alloc::string::String,
     /// SHA-256 digest of the referenced bytes.
     ///
     /// What detects that a source changed and anything derived from it — an
     /// embedding, a summary — is now stale.
-    #[prost(bytes="bytes", tag="2")]
+    #[prost(bytes = "bytes", tag = "2")]
     pub sha256: ::prost::bytes::Bytes,
     /// Source text, inlined when small enough to keep the message re-embeddable.
     ///
     /// Without a reachable source, content is locked to the model that first
     /// encoded it.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub inline_text: ::prost::alloc::string::String,
 }
 /// One turn in a conversation.
@@ -88,43 +88,43 @@ pub struct ContentRef {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Message {
     /// Resource name of the message.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Who produced this turn.
-    #[prost(enumeration="Role", tag="2")]
+    #[prost(enumeration = "Role", tag = "2")]
     pub role: i32,
     /// The message this one replies to.
     ///
     /// A message may have several children: regenerating or editing branches the
     /// conversation rather than replacing what was there. Discarded branches are
     /// retained, because an abandoned attempt is evidence about what was tried.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub parent: ::prost::alloc::string::String,
     /// Textual content of the turn.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub content: ::prost::alloc::string::String,
     /// Reference to the bytes this message was derived from, for content too
     /// large to inline.
-    #[prost(message, optional, tag="5")]
+    #[prost(message, optional, tag = "5")]
     pub content_ref: ::core::option::Option<ContentRef>,
     /// Whether this message contributed vectors to the index.
     ///
     /// Not every turn is embedded. System and developer content is boilerplate
     /// that ranks against real content and degrades retrieval, so it is stored
     /// and searchable by filter without being encoded.
-    #[prost(bool, tag="6")]
+    #[prost(bool, tag = "6")]
     pub embedded: bool,
     /// When the turn occurred.
     ///
     /// Time is a ranking term here rather than only a filter: "what did we
     /// discuss last Tuesday" has a weak semantic signal and a strong temporal one.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub occur_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the message was recorded.
-    #[prost(message, optional, tag="8")]
+    #[prost(message, optional, tag = "8")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="9")]
+    #[prost(string, tag = "9")]
     pub etag: ::prost::alloc::string::String,
 }
 /// Who produced a turn.
@@ -183,7 +183,7 @@ impl Role {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Summary {
     /// Resource name of the summary.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Which layer of the tree this summarizes.
     ///
@@ -191,13 +191,13 @@ pub struct Summary {
     /// level; it does not distinguish a conversation summary from a space one,
     /// and a series that relies on recency to tell them apart cannot answer
     /// "summarize this space" without re-deriving which entries were which.
-    #[prost(enumeration="Level", tag="2")]
+    #[prost(enumeration = "Level", tag = "2")]
     pub level: i32,
     /// The resource this summary is attached to.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub subject: ::prost::alloc::string::String,
     /// The summary text.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub content: ::prost::alloc::string::String,
     /// How far into the subject this summary reached — its watermark.
     ///
@@ -205,20 +205,20 @@ pub struct Summary {
     /// branch changes which messages are on the active path, and a conversation
     /// moving between spaces invalidates summaries on both sides. The watermark
     /// This is what makes staleness detectable rather than silent.
-    #[prost(message, optional, tag="5")]
+    #[prost(message, optional, tag = "5")]
     pub coverage_end_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Whether the subject has changed since this summary was generated.
     ///
     /// A stale summary is still served, marked, with its watermark — an old
     /// summary plus an honest marker is more useful than a gap, and serving one
     /// as current is the failure with no symptom.
-    #[prost(bool, tag="6")]
+    #[prost(bool, tag = "6")]
     pub stale: bool,
     /// Digest of the model that produced this summary.
     ///
     /// The identity, not a label. A summary that turns out to be wrong is traced
     /// to the run that produced it and re-derived.
-    #[prost(string, tag="7")]
+    #[prost(string, tag = "7")]
     pub model_digest: ::prost::alloc::string::String,
     /// Strictest protection among the sources this summary covers.
     ///
@@ -227,10 +227,10 @@ pub struct Summary {
     /// spanning several spaces takes the most restrictive protection of any of
     /// them, never the average and never the destination's — otherwise
     /// summarizing across a boundary would be a declassification channel.
-    #[prost(string, tag="8")]
+    #[prost(string, tag = "8")]
     pub inherited_protection: ::prost::alloc::string::String,
     /// When the summary was generated.
-    #[prost(message, optional, tag="9")]
+    #[prost(message, optional, tag = "9")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Which layer of the tenancy tree a summary condenses.
@@ -285,20 +285,20 @@ impl Level {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ToolInvocation {
     /// Resource name of the invocation.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// The message that triggered this call.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub caller: ::prost::alloc::string::String,
     /// Identifier carried by the originating format, preserved for round-trip.
     ///
     /// Stored so a conversation exported back to an OpenAI-shaped transcript
     /// reproduces the same `tool_call_id` it arrived with. Never used internally
     /// to resolve the relationship — an edge does that.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub call_id: ::prost::alloc::string::String,
     /// The tool that was called.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub tool: ::prost::alloc::string::String,
     /// Arguments the tool was called with, JSON-encoded.
     ///
@@ -311,16 +311,16 @@ pub struct ToolInvocation {
     ///
     /// Never embedded. JSON ranks against real content; the useful operations are
     /// filtering on `tool` and `mcp_server`, not searching arguments by similarity.
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub input: ::prost::alloc::string::String,
     /// What the tool returned.
     ///
     /// Inlined when small; a reference when large, because a result can be
     /// megabytes and blobs stay outside the database.
-    #[prost(message, optional, tag="6")]
+    #[prost(message, optional, tag = "6")]
     pub result: ::core::option::Option<ContentRef>,
     /// Whether the call succeeded.
-    #[prost(enumeration="State", tag="7")]
+    #[prost(enumeration = "State", tag = "7")]
     pub state: i32,
     /// The MCP server that produced this result.
     ///
@@ -329,7 +329,7 @@ pub struct ToolInvocation {
     /// said from something a third-party server said. Without it those rank
     /// equally as memory, and text returned by a server is written by whoever
     /// runs that server.
-    #[prost(string, tag="8")]
+    #[prost(string, tag = "8")]
     pub mcp_server: ::prost::alloc::string::String,
     /// Whether the result contributed vectors to the index.
     ///
@@ -337,10 +337,10 @@ pub struct ToolInvocation {
     /// result that is embedded becomes retrievable memory and can later be
     /// assembled into a context window, so an untrusted one is a persistent
     /// injection surface rather than a one-time one. The default withholds.
-    #[prost(bool, tag="9")]
+    #[prost(bool, tag = "9")]
     pub embedded: bool,
     /// When the call was made.
-    #[prost(message, optional, tag="10")]
+    #[prost(message, optional, tag = "10")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
 }
 /// Lifecycle state of a tool call.
@@ -384,36 +384,36 @@ impl State {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreateConversationRequest {
     /// Organization the conversation belongs to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub conversation_id: ::prost::alloc::string::String,
     /// The conversation to create.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub conversation: ::core::option::Option<Conversation>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a conversation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetConversationRequest {
     /// Resource name of the conversation.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing conversations.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListConversationsRequest {
     /// Organization to list conversations from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression, such as `space = "organizations/o/spaces/finance"`.
     ///
@@ -423,37 +423,37 @@ pub struct ListConversationsRequest {
     /// Suppressed conversations are excluded unless the filter asks for them with
     /// `suppressed = true`. A suppressed conversation is retained and reachable to
     /// its owner deliberately; it is simply not what an unqualified list means.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// How to order the results.
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
 }
 /// Response message for listing conversations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListConversationsResponse {
     /// The conversations on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub conversations: ::prost::alloc::vec::Vec<Conversation>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for moving a conversation between containers.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MoveConversationRequest {
     /// Resource name of the conversation to move.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Session to move it into.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub destination_session: ::prost::alloc::string::String,
 }
 /// Response message for moving a conversation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MoveConversationResponse {
     /// The conversation in its new position. Its name is unchanged.
-    #[prost(message, optional, tag="1")]
+    #[prost(message, optional, tag = "1")]
     pub conversation: ::core::option::Option<Conversation>,
     /// Summaries invalidated by the move, on both sides.
     ///
@@ -461,14 +461,14 @@ pub struct MoveConversationResponse {
     /// contains, so summaries covering either side no longer describe it.
     /// Regeneration is a job, so the caller learns what is now stale instead of
     /// waiting for it.
-    #[prost(string, repeated, tag="2")]
+    #[prost(string, repeated, tag = "2")]
     pub invalidated_summaries: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Request message for suppressing a conversation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct SuppressConversationRequest {
     /// Resource name of the conversation to suppress.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for returning a suppressed conversation to ordinary recall.
@@ -479,53 +479,53 @@ pub struct UnsuppressConversationRequest {
     /// Only the owner may call this. A classifier may propose suppression and may
     /// never lift it — automatic movement is permitted only in the fail-secure
     /// direction.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for deleting a conversation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteConversationRequest {
     /// Resource name of the conversation to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
     /// Whether to delete the conversation even though it still holds messages.
-    #[prost(bool, tag="3")]
+    #[prost(bool, tag = "3")]
     pub force: bool,
 }
 /// Request message for appending a message to a conversation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreateMessageRequest {
     /// Conversation to append to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub message_id: ::prost::alloc::string::String,
     /// The message to append.
     ///
     /// Its `parent` field selects where in the graph it attaches. Leaving it
     /// unset appends to the conversation's current head; setting it to an earlier
     /// message branches from there, which is what regenerating a reply does.
-    #[prost(message, optional, tag="2")]
+    #[prost(message, optional, tag = "2")]
     pub message: ::core::option::Option<Message>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for listing the messages of a conversation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListMessagesRequest {
     /// Conversation to list messages from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression over the messages of this conversation.
     ///
@@ -534,34 +534,34 @@ pub struct ListMessagesRequest {
     /// conversation's head, which is what a transcript means; the default returns
     /// all of them, because a discarded attempt is retained deliberately as
     /// evidence of what was tried.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// How to order the results.
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
 }
 /// Response message for listing messages.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListMessagesResponse {
     /// The messages on this page, oldest first along the requested path.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub messages: ::prost::alloc::vec::Vec<Message>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a message.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetMessageRequest {
     /// Resource name of the message.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a tool invocation.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetToolInvocationRequest {
     /// Resource name of the invocation.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing the tool invocations of a conversation.
@@ -572,49 +572,49 @@ pub struct GetToolInvocationRequest {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListToolInvocationsRequest {
     /// Conversation to list invocations from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression, such as `mcp_server = "mcpServers/finance"`.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// How to order the results.
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
 }
 /// Response message for listing tool invocations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListToolInvocationsResponse {
     /// The invocations on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub tool_invocations: ::prost::alloc::vec::Vec<ToolInvocation>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a summary.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetSummaryRequest {
     /// Resource name of the summary.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing summaries.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListSummariesRequest {
     /// Organization to list summaries from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression selecting which summaries to return.
     ///
@@ -623,20 +623,20 @@ pub struct ListSummariesRequest {
     /// `level = LEVEL_SPACE` to take only that layer. The level is a declared
     /// field rather than something inferred from ordering, so filtering on it is
     /// exact.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// How to order the results. Defaults to newest first within a level.
-    #[prost(string, tag="5")]
+    #[prost(string, tag = "5")]
     pub order_by: ::prost::alloc::string::String,
 }
 /// Response message for listing summaries.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSummariesResponse {
     /// The summaries on this page, newest first within their level.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub summaries: ::prost::alloc::vec::Vec<Summary>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 // @@protoc_insertion_point(module)

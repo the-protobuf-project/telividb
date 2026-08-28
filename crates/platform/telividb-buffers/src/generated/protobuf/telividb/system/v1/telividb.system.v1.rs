@@ -12,28 +12,28 @@
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct System {
     /// Resource name of the singleton. Always `system`.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Compute backend actually in use, such as `metal` or `cpu`.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub backend: ::prost::alloc::string::String,
     /// Human-readable device description.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub device: ::prost::alloc::string::String,
     /// Device memory ceiling this process will use.
-    #[prost(int64, tag="4")]
+    #[prost(int64, tag = "4")]
     pub budget_limit_bytes: i64,
     /// Device memory currently held by resident models and indexes.
-    #[prost(int64, tag="5")]
+    #[prost(int64, tag = "5")]
     pub budget_used_bytes: i64,
     /// Whether the ceiling was measured or estimated.
     ///
     /// An estimate on a discrete card overshoots, and an operator sizing a
     /// deployment has to be able to tell which number they are looking at.
-    #[prost(enumeration="BudgetSource", tag="6")]
+    #[prost(enumeration = "BudgetSource", tag = "6")]
     pub budget_source: i32,
     /// Version of this build.
-    #[prost(string, tag="7")]
+    #[prost(string, tag = "7")]
     pub version: ::prost::alloc::string::String,
 }
 /// How the device memory ceiling was determined.
@@ -77,7 +77,7 @@ impl BudgetSource {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetSystemRequest {
     /// Resource name of the singleton. Always `system`.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 // @@protoc_insertion_point(module)

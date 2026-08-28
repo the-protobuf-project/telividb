@@ -4,7 +4,7 @@
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Model {
     /// Resource name of the model.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Digest of the model file.
     ///
@@ -12,35 +12,35 @@ pub struct Model {
     /// name, because two files called the same thing produce different vectors and
     /// mixing them into one index degrades recall with nothing reporting it.
     /// Computed from the bytes read, never trusted from metadata.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub digest: ::prost::alloc::string::String,
     /// Architecture, read from the file rather than configured.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub architecture: ::prost::alloc::string::String,
     /// Components in the vectors this model produces.
-    #[prost(int32, tag="4")]
+    #[prost(int32, tag = "4")]
     pub dimensions: i32,
     /// Maximum input length in tokens.
-    #[prost(int32, tag="5")]
+    #[prost(int32, tag = "5")]
     pub context_length: i32,
     /// Quantization the file carries, such as `Q4_K_M`.
-    #[prost(string, tag="6")]
+    #[prost(string, tag = "6")]
     pub quantization: ::prost::alloc::string::String,
     /// Whether the model is currently loaded on a device.
     ///
     /// Several models stay resident at once and nothing swaps per call: reloading
     /// between calls would defeat the batching that makes in-process inference
     /// worth having.
-    #[prost(bool, tag="7")]
+    #[prost(bool, tag = "7")]
     pub resident: bool,
     /// Device memory this model occupies while resident.
-    #[prost(int64, tag="8")]
+    #[prost(int64, tag = "8")]
     pub resident_bytes: i64,
     /// When the model was registered.
-    #[prost(message, optional, tag="9")]
+    #[prost(message, optional, tag = "9")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="10")]
+    #[prost(string, tag = "10")]
     pub etag: ::prost::alloc::string::String,
 }
 /// A vector, carried as raw bytes rather than a repeated scalar.
@@ -51,82 +51,82 @@ pub struct Model {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Vector {
     /// Raw little-endian IEEE-754 single-precision components.
-    #[prost(bytes="bytes", tag="1")]
+    #[prost(bytes = "bytes", tag = "1")]
     pub data: ::prost::bytes::Bytes,
     /// Number of components, so a reader can validate before casting.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub dimensions: i32,
 }
 /// Request message for retrieving a model.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetModelRequest {
     /// Resource name of the model.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing models.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListModelsRequest {
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="1")]
+    #[prost(int32, tag = "1")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression, such as `resident = true`.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub filter: ::prost::alloc::string::String,
 }
 /// Response message for listing models.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListModelsResponse {
     /// The models on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub models: ::prost::alloc::vec::Vec<Model>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for computing embeddings.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct EmbedTextRequest {
     /// Model to encode with.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub model: ::prost::alloc::string::String,
     /// Text to encode. One or many; the call is the same either way.
-    #[prost(string, repeated, tag="2")]
+    #[prost(string, repeated, tag = "2")]
     pub input: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Whether this is document-side or query-side encoding.
     ///
     /// Not cosmetic: the two use different prefixes, and for a jointly trained
     /// model a query routes to the other tower entirely. Encoding a query through
     /// the document tower returns plausible garbage rather than an error.
-    #[prost(enumeration="Task", tag="3")]
+    #[prost(enumeration = "Task", tag = "3")]
     pub task: i32,
     /// Whether to truncate input longer than the model's context.
     ///
     /// Defaults to true. The alternative is failing a batch of ten thousand
     /// because one document was long.
-    #[prost(bool, tag="4")]
+    #[prost(bool, tag = "4")]
     pub truncate: bool,
 }
 /// Response message for computing embeddings.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EmbedTextResponse {
     /// The vectors, in the order the inputs were given.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub embeddings: ::prost::alloc::vec::Vec<Vector>,
     /// Digest of the model that produced them — the identity, not the label.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub model_digest: ::prost::alloc::string::String,
     /// Time spent loading the model.
     ///
     /// Near zero is the proof a model stayed resident rather than being reloaded,
     /// which is the difference between batching working and not.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub load_duration: ::core::option::Option<::prost_types::Duration>,
     /// Tokens consumed across the batch.
-    #[prost(int32, tag="4")]
+    #[prost(int32, tag = "4")]
     pub prompt_token_count: i32,
 }
 /// Whether text is being encoded as a document or as a query.

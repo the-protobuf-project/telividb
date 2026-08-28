@@ -7,7 +7,9 @@
 use std::net::SocketAddr;
 use std::time::Duration;
 use telividb_buffers::protobuf::collection::v1::collections_client::CollectionsClient;
-use telividb_buffers::protobuf::collection::v1::{Collection, CreateCollectionRequest, ListCollectionsRequest};
+use telividb_buffers::protobuf::collection::v1::{
+    Collection, CreateCollectionRequest, ListCollectionsRequest,
+};
 use telividb_server::{ServerConfig, serve};
 
 /// Start a server on an ephemeral port and wait for it to accept connections.

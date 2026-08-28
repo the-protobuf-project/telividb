@@ -1,4 +1,9 @@
-name: CI
+name: Invariants
+
+# The project-specific rules that no compiler enforces: which native
+# dependencies are sanctioned, that the toolchain is pinned, that a crash
+# leaves recoverable state, that telemetry never emits a vector, and that
+# recall has not silently regressed.
 
 on:
   push:
@@ -16,130 +21,13 @@ env:
 
 # Cancel a run when a newer commit lands on the same branch.
 #
-# A full matrix build is minutes of runner time, and the result of an
-# already-superseded commit is never looked at. `group` is keyed on the
-# workflow and the ref, so pushes to different branches never cancel each
-# other.
-#
-# `main` is deliberately excluded from cancellation: its runs are the baseline
-# `buf breaking` compares against, and a cancelled one leaves no record.
+# `main` is deliberately excluded: its runs are the baseline `buf breaking`
+# compares against, and a cancelled one leaves no record.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  # The default build must need no C toolchain, no CMake, no CUDA SDK.
-  #
-  # macOS is a first-class target rather than an afterthought: on Apple silicon
-  # the binary runs natively, because containers get no GPU there. Linux ARM64
-  # is here because Jetson is CUDA-on-aarch64 and Graviton is ordinary
-  # deployment — an aarch64 regression must not be discovered on the device.
-  #
-  # Windows is deliberately out of scope.
-  test:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: linux · x86_64
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-          - name: linux · arm64
-            os: ubuntu-24.04-arm
-            target: aarch64-unknown-linux-gnu
-          - name: macos · arm64
-            os: macos-latest
-            target: aarch64-apple-darwin
-    steps:
-      # `submodules: recursive` because `telividb-compute` vendors ggml and
-      # builds it with CMake. Without it the vendor directory is empty, CMake
-      # fails, and every job that compiles the workspace fails with it — the
-      # default feature set reaches `telividb-compute` through
-      # `telividb-index`'s `gpu`, so this is not an opt-in path.
-      - uses: actions/checkout@v7
-        with:
-          submodules: recursive
-      # No toolchain version here — rust-toolchain.toml is authoritative and
-      # rustup honours it. Stated twice, the two would eventually disagree.
-      - run: rustup target add ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
-          # Save the cache even when the job fails. Without this a failing
-          # build discards everything it compiled, so the next attempt starts
-          # cold — which is exactly when a fast rebuild matters most.
-          cache-on-failure: true
-
-      - name: Confirm the architecture under test
-        run: |
-          echo "runner arch : $(uname -m)"
-          echo "rust target : ${{ matrix.target }}"
-          rustc --print cfg | grep -E 'target_arch|target_endian|target_pointer_width'
-
-      - run: cargo build --workspace --all-targets --target ${{ matrix.target }}
-
-      # Both feature sets, because neither is a superset of the other: they
-      # change which `#[cfg(feature = ...)]` code compiles. `telividb-index`
-      # without `parallel` takes the sequential builder, which is the
-      # configuration every embedded caller gets, and without `gpu` it takes
-      # the pure-Rust flat path with no candle in the tree at all (rule 46
-      # keeps that configuration supported, so it has to be *run*, not just
-      # built).
-      #
-      # Deliberately not `--all-features`. The only thing it adds over the
-      # defaults is `cuda`, which pulls `cudarc` and panics in its build script
-      # without `nvcc` on PATH — so on a runner with no CUDA SDK that flag can
-      # only ever fail. CUDA is opt-in by design (rule 46) and is not
-      # CI-verifiable here; it needs a GPU runner to mean anything.
-      - run: cargo test --workspace --target ${{ matrix.target }}
-      - run: cargo test --workspace --no-default-features --target ${{ matrix.target }}
-
-  lint:
-    name: fmt · clippy
-    runs-on: ubuntu-latest
-    steps:
-      # `submodules: recursive` because `telividb-compute` vendors ggml and
-      # builds it with CMake. Without it the vendor directory is empty, CMake
-      # fails, and every job that compiles the workspace fails with it — the
-      # default feature set reaches `telividb-compute` through
-      # `telividb-index`'s `gpu`, so this is not an opt-in path.
-      - uses: actions/checkout@v7
-        with:
-          submodules: recursive
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: debug
-          cache-on-failure: true
-      - run: cargo fmt --all --check
-      # Not `--all-features`: see the test job. `cuda` cannot build without the
-      # CUDA SDK, so linting both real configurations is the useful pair.
-      - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
-
-  # Structural rules from CLAUDE.md, enforced because rules that depend on
-  # discipline decay.
-  structure:
-    name: file length · doc coverage · layering
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: debug
-          cache-on-failure: true
-      - run: cargo xtask check-len
-      - run: cargo xtask check-docs
-      # Invariant 14. Nothing else enforces the dependency direction.
-      - run: cargo xtask check-layers
-
-
-  # No *unexpected* native build dependency. The original "no C toolchain at
-  # all" promise is gone — `telividb-compute` vendors ggml and builds it with
-  # CMake, deliberately, for hardware coverage (CLAUDE.md rule 42). What is
-  # still worth enforcing, and what this checks, is that no *new* native path
-  # appears without being a recorded decision.
   no-native-deps:
     name: no C toolchain
     runs-on: ubuntu-latest
@@ -281,6 +169,7 @@ jobs:
   # Crash-consistency and telemetry-leak suites are slow enough to be worth
   # naming separately, so a failure is legible in the checks list rather than
   # buried in a full run.
+
   invariants:
     name: crash consistency · telemetry leaks
     runs-on: ubuntu-latest
@@ -306,6 +195,7 @@ jobs:
 
   # Recall is the only number that makes an ANN change meaningful. Release mode
   # because a debug-built graph is too slow to measure at a useful size.
+
   recall:
     name: hnsw recall
     runs-on: ubuntu-latest
@@ -339,6 +229,7 @@ jobs:
   # covered by the macOS leg of the `test` matrix, where it is compiled in
   # automatically; CUDA is verified on real hardware by hand, because no runner
   # here has it.
+
   gpu:
     name: gpu index · cpu fallback
     runs-on: ubuntu-latest

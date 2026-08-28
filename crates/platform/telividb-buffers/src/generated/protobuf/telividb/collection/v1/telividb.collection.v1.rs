@@ -12,22 +12,22 @@ pub struct VectorField {
     /// Named `field_id` rather than `name` because a vector field is a component
     /// of a collection, not a resource of its own — it has no resource name and
     /// cannot be addressed directly.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub field_id: ::prost::alloc::string::String,
     /// Number of components in every vector of this field.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub dimensions: i32,
     /// How similarity is measured.
-    #[prost(enumeration="Metric", tag="3")]
+    #[prost(enumeration = "Metric", tag = "3")]
     pub metric: i32,
     /// Which search algorithm indexes this field.
-    #[prost(enumeration="IndexKind", tag="4")]
+    #[prost(enumeration = "IndexKind", tag = "4")]
     pub index_kind: i32,
     /// Compression applied to the coarse scan tier.
-    #[prost(enumeration="Codec", tag="5")]
+    #[prost(enumeration = "Codec", tag = "5")]
     pub codec: i32,
     /// Identifier of the model that produces vectors for this field.
-    #[prost(string, tag="6")]
+    #[prost(string, tag = "6")]
     pub model: ::prost::alloc::string::String,
     /// Encoder that handles queries against this field.
     ///
@@ -35,13 +35,13 @@ pub struct VectorField {
     /// field with text must encode that text with the model's text encoder.
     /// Declared rather than left to convention, because getting it wrong yields
     /// plausible but incorrect results rather than an error.
-    #[prost(string, tag="7")]
+    #[prost(string, tag = "7")]
     pub query_encoder: ::prost::alloc::string::String,
     /// Permission controlling access to raw vectors of this field.
     ///
     /// Per field rather than per collection, because a voiceprint is biometric
     /// data where a transcript is not.
-    #[prost(string, tag="8")]
+    #[prost(string, tag = "8")]
     pub permission: ::prost::alloc::string::String,
 }
 /// A set of points sharing one schema, one identity space and one set of
@@ -49,29 +49,29 @@ pub struct VectorField {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Collection {
     /// Resource name of the collection, such as `collections/media`.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Serialized `FileDescriptorSet` describing this collection's schema.
     ///
     /// The engine never parses `.proto`. A generator produces this and it is
     /// stored verbatim as the schema of record.
-    #[prost(bytes="bytes", tag="2")]
+    #[prost(bytes = "bytes", tag = "2")]
     pub descriptor_set: ::prost::bytes::Bytes,
     /// Digest of the canonicalized descriptor set, mirrored into every segment
     /// written under it.
-    #[prost(bytes="bytes", tag="3")]
+    #[prost(bytes = "bytes", tag = "3")]
     pub schema_fingerprint: ::prost::bytes::Bytes,
     /// Named vector fields this collection holds.
-    #[prost(message, repeated, tag="4")]
+    #[prost(message, repeated, tag = "4")]
     pub vector_fields: ::prost::alloc::vec::Vec<VectorField>,
     /// Points currently visible to readers.
-    #[prost(int64, tag="5")]
+    #[prost(int64, tag = "5")]
     pub live_point_count: i64,
     /// Points deleted but not yet reclaimed by compaction.
-    #[prost(int64, tag="6")]
+    #[prost(int64, tag = "6")]
     pub tombstoned_point_count: i64,
     /// Sealed segments making up this collection.
-    #[prost(int32, tag="7")]
+    #[prost(int32, tag = "7")]
     pub segment_count: i32,
 }
 /// How similarity is measured within a named vector field.
@@ -197,17 +197,17 @@ impl IndexKind {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateCollectionRequest {
     /// Identifier to use for the collection, forming the final path segment.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub collection_id: ::prost::alloc::string::String,
     /// The collection to create.
-    #[prost(message, optional, tag="2")]
+    #[prost(message, optional, tag = "2")]
     pub collection: ::core::option::Option<Collection>,
 }
 /// Request message for retrieving a collection.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetCollectionRequest {
     /// Resource name of the collection to retrieve.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing collections.
@@ -216,27 +216,27 @@ pub struct ListCollectionsRequest {
     /// Maximum number of collections to return.
     ///
     /// The service may return fewer. Zero selects a server-chosen default.
-    #[prost(int32, tag="1")]
+    #[prost(int32, tag = "1")]
     pub page_size: i32,
     /// Page token from a previous call, to retrieve the following page.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
 }
 /// Response message for listing collections.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListCollectionsResponse {
     /// The collections on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub collections: ::prost::alloc::vec::Vec<Collection>,
     /// Token to retrieve the next page, or empty if this is the last page.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for deleting a collection.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteCollectionRequest {
     /// Resource name of the collection to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 // @@protoc_insertion_point(module)

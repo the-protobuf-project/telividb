@@ -7,231 +7,367 @@ use crate::wellknown_generated::*;
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod tenancy {
+    use crate::wellknown_generated::*;
+    #[allow(unused_imports, dead_code)]
+    pub mod tenancy {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        use crate::wellknown_generated::*;
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
-  use crate::wellknown_generated::*;
+            use crate::wellknown_generated::*;
 
-pub enum ProjectOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            pub enum ProjectOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-/// A unit of work within an organization, and the unit at which access is
-/// granted.
-///
-/// A project is a *predicate*, not a collection. At the scale this is designed
-/// for — organizations holding hundreds of projects each — a collection per
-/// project would mean thousands of manifests and thousands of graph indexes,
-/// most over a handful of conversations. Project membership compiles into the
-/// visibility bitmap instead, which is resolved once per query.
-pub struct Project<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            /// A unit of work within an organization, and the unit at which access is
+            /// granted.
+            ///
+            /// A project is a *predicate*, not a collection. At the scale this is designed
+            /// for — organizations holding hundreds of projects each — a collection per
+            /// project would mean thousands of manifests and thousands of graph indexes,
+            /// most over a handful of conversations. Project membership compiles into the
+            /// visibility bitmap instead, which is resolved once per query.
+            pub struct Project<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for Project<'a> {
-  type Inner = Project<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for Project<'a> {
+                type Inner = Project<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> Project<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 8;
-  pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 10;
-  pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 14;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 16;
+            impl<'a> Project<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 8;
+                pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 10;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 12;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 14;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 16;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    Project { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args ProjectArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<Project<'bldr>> {
-    let mut builder = ProjectBuilder::new(_fbb);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.expire_time { builder.add_expire_time(x); }
-    if let Some(x) = args.delete_time { builder.add_delete_time(x); }
-    if let Some(x) = args.update_time { builder.add_update_time(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.display_name { builder.add_display_name(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    Project { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args ProjectArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<Project<'bldr>> {
+                    let mut builder = ProjectBuilder::new(_fbb);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
+                    if let Some(x) = args.update_time {
+                        builder.add_update_time(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.display_name {
+                        builder.add_display_name(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
+                /// Resource name of the project.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Project::VT_NAME, None)
+                    }
+                }
+                /// Human-readable name.
+                #[inline]
+                pub fn display_name(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                Project::VT_DISPLAY_NAME,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+                /// When the project was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Project::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the project was last modified.
+                #[inline]
+                pub fn update_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Project::VT_UPDATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the project was soft-deleted, or unset while it is live.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Project::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted project is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Project::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Project::VT_ETAG, None)
+                    }
+                }
+            }
 
-  /// Resource name of the project.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Project::VT_NAME, None)}
-  }
-  /// Human-readable name.
-  #[inline]
-  pub fn display_name(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Project::VT_DISPLAY_NAME, None).unwrap()}
-  }
-  /// When the project was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Project::VT_CREATE_TIME, None)}
-  }
-  /// When the project was last modified.
-  #[inline]
-  pub fn update_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Project::VT_UPDATE_TIME, None)}
-  }
-  /// When the project was soft-deleted, or unset while it is live.
-  #[inline]
-  pub fn delete_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Project::VT_DELETE_TIME, None)}
-  }
-  /// When a soft-deleted project is purged and becomes unrecoverable.
-  #[inline]
-  pub fn expire_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Project::VT_EXPIRE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Project::VT_ETAG, None)}
-  }
-}
+            impl ::flatbuffers::Verifiable for Project<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "display_name",
+                            Self::VT_DISPLAY_NAME,
+                            true,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "update_time",
+                            Self::VT_UPDATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct ProjectArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for ProjectArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    ProjectArgs {
+                        name: None,
+                        display_name: None, // required field
+                        create_time: None,
+                        update_time: None,
+                        delete_time: None,
+                        expire_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
-impl ::flatbuffers::Verifiable for Project<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("display_name", Self::VT_DISPLAY_NAME, true)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("update_time", Self::VT_UPDATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("delete_time", Self::VT_DELETE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("expire_time", Self::VT_EXPIRE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct ProjectArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for ProjectArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    ProjectArgs {
-      name: None,
-      display_name: None, // required field
-      create_time: None,
-      update_time: None,
-      delete_time: None,
-      expire_time: None,
-      etag: None,
-    }
-  }
-}
+            pub struct ProjectBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> ProjectBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(Project::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_display_name(
+                    &mut self,
+                    display_name: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Project::VT_DISPLAY_NAME,
+                        display_name,
+                    );
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Project::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_update_time(
+                    &mut self,
+                    update_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Project::VT_UPDATE_TIME,
+                            update_time,
+                        );
+                }
+                #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Project::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Project::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(Project::VT_ETAG, etag);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> ProjectBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    ProjectBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<Project<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_
+                        .required(o, Project::VT_DISPLAY_NAME, "display_name");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-pub struct ProjectBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> ProjectBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Project::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_display_name(&mut self, display_name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Project::VT_DISPLAY_NAME, display_name);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Project::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_update_time(&mut self, update_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Project::VT_UPDATE_TIME, update_time);
-  }
-  #[inline]
-  pub fn add_delete_time(&mut self, delete_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Project::VT_DELETE_TIME, delete_time);
-  }
-  #[inline]
-  pub fn add_expire_time(&mut self, expire_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Project::VT_EXPIRE_TIME, expire_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Project::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> ProjectBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    ProjectBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<Project<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, Project::VT_DISPLAY_NAME,"display_name");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for Project<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("Project");
-      ds.field("name", &self.name());
-      ds.field("display_name", &self.display_name());
-      ds.field("create_time", &self.create_time());
-      ds.field("update_time", &self.update_time());
-      ds.field("delete_time", &self.delete_time());
-      ds.field("expire_time", &self.expire_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod tenancy
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for Project<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("Project");
+                    ds.field("name", &self.name());
+                    ds.field("display_name", &self.display_name());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("update_time", &self.update_time());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod tenancy
+} // pub mod telividb

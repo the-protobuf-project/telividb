@@ -7,577 +7,856 @@ use crate::wellknown_generated::*;
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod graph {
+    use crate::wellknown_generated::*;
+    #[allow(unused_imports, dead_code)]
+    pub mod graph {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        use crate::wellknown_generated::*;
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
-  use crate::wellknown_generated::*;
+            use crate::wellknown_generated::*;
 
-pub enum EdgeOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            pub enum EdgeOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-/// A typed relationship between two resources.
-///
-/// Edges relate resources by name, never by internal ordinal: an ordinal is
-/// segment-local and means nothing outside the process that produced it, so an
-/// edge carrying one could not survive an export or a compaction.
-///
-/// This one type carries both kinds of relationship in the model — the semantic
-/// ones a retrieval follows, and the containment ones that place a conversation
-/// in a session or a session in a space. Keeping them in one graph is what lets
-/// a visibility predicate and a traversal be answered by the same structure
-/// rather than by two that must agree.
-pub struct Edge<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            /// A typed relationship between two resources.
+            ///
+            /// Edges relate resources by name, never by internal ordinal: an ordinal is
+            /// segment-local and means nothing outside the process that produced it, so an
+            /// edge carrying one could not survive an export or a compaction.
+            ///
+            /// This one type carries both kinds of relationship in the model — the semantic
+            /// ones a retrieval follows, and the containment ones that place a conversation
+            /// in a session or a session in a space. Keeping them in one graph is what lets
+            /// a visibility predicate and a traversal be answered by the same structure
+            /// rather than by two that must agree.
+            pub struct Edge<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for Edge<'a> {
-  type Inner = Edge<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for Edge<'a> {
+                type Inner = Edge<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> Edge<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_SOURCE: ::flatbuffers::VOffsetT = 6;
-  pub const VT_TARGET: ::flatbuffers::VOffsetT = 8;
-  pub const VT_EDGE_TYPE: ::flatbuffers::VOffsetT = 10;
-  pub const VT_WEIGHT: ::flatbuffers::VOffsetT = 12;
-  pub const VT_STRENGTH: ::flatbuffers::VOffsetT = 14;
-  pub const VT_LAST_TRAVERSE_TIME: ::flatbuffers::VOffsetT = 16;
-  pub const VT_SUPPRESSED: ::flatbuffers::VOffsetT = 18;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 20;
-  pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 22;
-  pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 24;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 26;
+            impl<'a> Edge<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_SOURCE: ::flatbuffers::VOffsetT = 6;
+                pub const VT_TARGET: ::flatbuffers::VOffsetT = 8;
+                pub const VT_EDGE_TYPE: ::flatbuffers::VOffsetT = 10;
+                pub const VT_WEIGHT: ::flatbuffers::VOffsetT = 12;
+                pub const VT_STRENGTH: ::flatbuffers::VOffsetT = 14;
+                pub const VT_LAST_TRAVERSE_TIME: ::flatbuffers::VOffsetT = 16;
+                pub const VT_SUPPRESSED: ::flatbuffers::VOffsetT = 18;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 20;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 22;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 24;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 26;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    Edge { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args EdgeArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<Edge<'bldr>> {
-    let mut builder = EdgeBuilder::new(_fbb);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.expire_time { builder.add_expire_time(x); }
-    if let Some(x) = args.delete_time { builder.add_delete_time(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.last_traverse_time { builder.add_last_traverse_time(x); }
-    builder.add_strength(args.strength);
-    builder.add_weight(args.weight);
-    if let Some(x) = args.edge_type { builder.add_edge_type(x); }
-    if let Some(x) = args.target { builder.add_target(x); }
-    if let Some(x) = args.source { builder.add_source(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.add_suppressed(args.suppressed);
-    builder.finish()
-  }
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    Edge { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args EdgeArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<Edge<'bldr>> {
+                    let mut builder = EdgeBuilder::new(_fbb);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.last_traverse_time {
+                        builder.add_last_traverse_time(x);
+                    }
+                    builder.add_strength(args.strength);
+                    builder.add_weight(args.weight);
+                    if let Some(x) = args.edge_type {
+                        builder.add_edge_type(x);
+                    }
+                    if let Some(x) = args.target {
+                        builder.add_target(x);
+                    }
+                    if let Some(x) = args.source {
+                        builder.add_source(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.add_suppressed(args.suppressed);
+                    builder.finish()
+                }
 
+                /// Resource name of the edge.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_NAME, None)
+                    }
+                }
+                /// Resource this edge points from.
+                #[inline]
+                pub fn source(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_SOURCE, None)
+                            .unwrap()
+                    }
+                }
+                /// Resource this edge points to.
+                #[inline]
+                pub fn target(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_TARGET, None)
+                            .unwrap()
+                    }
+                }
+                /// The type of relationship, such as `FOLLOWS` or `IN_SPACE`.
+                #[inline]
+                pub fn edge_type(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_EDGE_TYPE, None)
+                            .unwrap()
+                    }
+                }
+                /// Declared strength of this particular relationship.
+                ///
+                /// A prior about what this link is worth, overriding the default its type
+                /// supplies. Weights multiply along a path rather than adding, so two hops
+                /// through weak edges rank below one hop through a strong one — addition would
+                /// let a long chain of weak links accumulate into a false strong signal.
+                #[inline]
+                pub fn weight(&self) -> f32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe { self._tab.get::<f32>(Edge::VT_WEIGHT, Some(0.0)).unwrap() }
+                }
+                /// How live this path is, as a time-decayed count of traversals.
+                ///
+                /// Learned evidence, kept separate from `weight` so reinforcement never
+                /// overwrites the declared prior. Decayed rather than raw because a hundred
+                /// traversals a year ago and three yesterday are not the same signal, and a
+                /// separate recency factor over a raw count would double-count age.
+                ///
+                /// Accumulated in the resident graph and flushed periodically. The flush is
+                /// allowed to lose recent increments: this ranks results, it does not audit
+                /// them, and making every read a durable write would serialize the read path.
+                #[inline]
+                pub fn strength(&self) -> f32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe { self._tab.get::<f32>(Edge::VT_STRENGTH, Some(0.0)).unwrap() }
+                }
+                /// When this edge was last traversed.
+                #[inline]
+                pub fn last_traverse_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Edge::VT_LAST_TRAVERSE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Whether traversal stops here.
+                ///
+                /// A suppressed edge is a hard stop rather than a low score. The content it
+                /// leads to is retained and its owner can still reach it deliberately; it is
+                /// excluded from recall, and its existence remains visible to a caller
+                /// assembling context so an agent knows what not to raise.
+                #[inline]
+                pub fn suppressed(&self) -> bool {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<bool>(Edge::VT_SUPPRESSED, Some(false))
+                            .unwrap()
+                    }
+                }
+                /// When the edge was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Edge::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the edge was soft-deleted, or unset while it is live.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Edge::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted edge is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Edge::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_ETAG, None)
+                    }
+                }
+            }
 
-  /// Resource name of the edge.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_NAME, None)}
-  }
-  /// Resource this edge points from.
-  #[inline]
-  pub fn source(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_SOURCE, None).unwrap()}
-  }
-  /// Resource this edge points to.
-  #[inline]
-  pub fn target(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_TARGET, None).unwrap()}
-  }
-  /// The type of relationship, such as `FOLLOWS` or `IN_SPACE`.
-  #[inline]
-  pub fn edge_type(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_EDGE_TYPE, None).unwrap()}
-  }
-  /// Declared strength of this particular relationship.
-  ///
-  /// A prior about what this link is worth, overriding the default its type
-  /// supplies. Weights multiply along a path rather than adding, so two hops
-  /// through weak edges rank below one hop through a strong one — addition would
-  /// let a long chain of weak links accumulate into a false strong signal.
-  #[inline]
-  pub fn weight(&self) -> f32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(Edge::VT_WEIGHT, Some(0.0)).unwrap()}
-  }
-  /// How live this path is, as a time-decayed count of traversals.
-  ///
-  /// Learned evidence, kept separate from `weight` so reinforcement never
-  /// overwrites the declared prior. Decayed rather than raw because a hundred
-  /// traversals a year ago and three yesterday are not the same signal, and a
-  /// separate recency factor over a raw count would double-count age.
-  ///
-  /// Accumulated in the resident graph and flushed periodically. The flush is
-  /// allowed to lose recent increments: this ranks results, it does not audit
-  /// them, and making every read a durable write would serialize the read path.
-  #[inline]
-  pub fn strength(&self) -> f32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(Edge::VT_STRENGTH, Some(0.0)).unwrap()}
-  }
-  /// When this edge was last traversed.
-  #[inline]
-  pub fn last_traverse_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Edge::VT_LAST_TRAVERSE_TIME, None)}
-  }
-  /// Whether traversal stops here.
-  ///
-  /// A suppressed edge is a hard stop rather than a low score. The content it
-  /// leads to is retained and its owner can still reach it deliberately; it is
-  /// excluded from recall, and its existence remains visible to a caller
-  /// assembling context so an agent knows what not to raise.
-  #[inline]
-  pub fn suppressed(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(Edge::VT_SUPPRESSED, Some(false)).unwrap()}
-  }
-  /// When the edge was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Edge::VT_CREATE_TIME, None)}
-  }
-  /// When the edge was soft-deleted, or unset while it is live.
-  #[inline]
-  pub fn delete_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Edge::VT_DELETE_TIME, None)}
-  }
-  /// When a soft-deleted edge is purged and becomes unrecoverable.
-  #[inline]
-  pub fn expire_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Edge::VT_EXPIRE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Edge::VT_ETAG, None)}
-  }
-}
+            impl ::flatbuffers::Verifiable for Edge<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "source",
+                            Self::VT_SOURCE,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "target",
+                            Self::VT_TARGET,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "edge_type",
+                            Self::VT_EDGE_TYPE,
+                            true,
+                        )?
+                        .visit_field::<f32>("weight", Self::VT_WEIGHT, false)?
+                        .visit_field::<f32>("strength", Self::VT_STRENGTH, false)?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "last_traverse_time",
+                            Self::VT_LAST_TRAVERSE_TIME,
+                            false,
+                        )?
+                        .visit_field::<bool>("suppressed", Self::VT_SUPPRESSED, false)?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct EdgeArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub source: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub target: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub edge_type: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub weight: f32,
+                pub strength: f32,
+                pub last_traverse_time:
+                    Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub suppressed: bool,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for EdgeArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    EdgeArgs {
+                        name: None,
+                        source: None,    // required field
+                        target: None,    // required field
+                        edge_type: None, // required field
+                        weight: 0.0,
+                        strength: 0.0,
+                        last_traverse_time: None,
+                        suppressed: false,
+                        create_time: None,
+                        delete_time: None,
+                        expire_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
-impl ::flatbuffers::Verifiable for Edge<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("source", Self::VT_SOURCE, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("target", Self::VT_TARGET, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("edge_type", Self::VT_EDGE_TYPE, true)?
-     .visit_field::<f32>("weight", Self::VT_WEIGHT, false)?
-     .visit_field::<f32>("strength", Self::VT_STRENGTH, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("last_traverse_time", Self::VT_LAST_TRAVERSE_TIME, false)?
-     .visit_field::<bool>("suppressed", Self::VT_SUPPRESSED, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("delete_time", Self::VT_DELETE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("expire_time", Self::VT_EXPIRE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct EdgeArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub source: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub target: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub edge_type: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub weight: f32,
-    pub strength: f32,
-    pub last_traverse_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub suppressed: bool,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for EdgeArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    EdgeArgs {
-      name: None,
-      source: None, // required field
-      target: None, // required field
-      edge_type: None, // required field
-      weight: 0.0,
-      strength: 0.0,
-      last_traverse_time: None,
-      suppressed: false,
-      create_time: None,
-      delete_time: None,
-      expire_time: None,
-      etag: None,
-    }
-  }
-}
+            pub struct EdgeBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> EdgeBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_source(&mut self, source: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_SOURCE, source);
+                }
+                #[inline]
+                pub fn add_target(&mut self, target: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_TARGET, target);
+                }
+                #[inline]
+                pub fn add_edge_type(&mut self, edge_type: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Edge::VT_EDGE_TYPE,
+                        edge_type,
+                    );
+                }
+                #[inline]
+                pub fn add_weight(&mut self, weight: f32) {
+                    self.fbb_.push_slot::<f32>(Edge::VT_WEIGHT, weight, 0.0);
+                }
+                #[inline]
+                pub fn add_strength(&mut self, strength: f32) {
+                    self.fbb_.push_slot::<f32>(Edge::VT_STRENGTH, strength, 0.0);
+                }
+                #[inline]
+                pub fn add_last_traverse_time(
+                    &mut self,
+                    last_traverse_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Edge::VT_LAST_TRAVERSE_TIME,
+                            last_traverse_time,
+                        );
+                }
+                #[inline]
+                pub fn add_suppressed(&mut self, suppressed: bool) {
+                    self.fbb_
+                        .push_slot::<bool>(Edge::VT_SUPPRESSED, suppressed, false);
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Edge::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Edge::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Edge::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_ETAG, etag);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> EdgeBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    EdgeBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<Edge<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_.required(o, Edge::VT_SOURCE, "source");
+                    self.fbb_.required(o, Edge::VT_TARGET, "target");
+                    self.fbb_.required(o, Edge::VT_EDGE_TYPE, "edge_type");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-pub struct EdgeBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> EdgeBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_source(&mut self, source: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_SOURCE, source);
-  }
-  #[inline]
-  pub fn add_target(&mut self, target: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_TARGET, target);
-  }
-  #[inline]
-  pub fn add_edge_type(&mut self, edge_type: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_EDGE_TYPE, edge_type);
-  }
-  #[inline]
-  pub fn add_weight(&mut self, weight: f32) {
-    self.fbb_.push_slot::<f32>(Edge::VT_WEIGHT, weight, 0.0);
-  }
-  #[inline]
-  pub fn add_strength(&mut self, strength: f32) {
-    self.fbb_.push_slot::<f32>(Edge::VT_STRENGTH, strength, 0.0);
-  }
-  #[inline]
-  pub fn add_last_traverse_time(&mut self, last_traverse_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Edge::VT_LAST_TRAVERSE_TIME, last_traverse_time);
-  }
-  #[inline]
-  pub fn add_suppressed(&mut self, suppressed: bool) {
-    self.fbb_.push_slot::<bool>(Edge::VT_SUPPRESSED, suppressed, false);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Edge::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_delete_time(&mut self, delete_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Edge::VT_DELETE_TIME, delete_time);
-  }
-  #[inline]
-  pub fn add_expire_time(&mut self, expire_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Edge::VT_EXPIRE_TIME, expire_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Edge::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> EdgeBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    EdgeBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<Edge<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, Edge::VT_SOURCE,"source");
-    self.fbb_.required(o, Edge::VT_TARGET,"target");
-    self.fbb_.required(o, Edge::VT_EDGE_TYPE,"edge_type");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
+            impl ::core::fmt::Debug for Edge<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("Edge");
+                    ds.field("name", &self.name());
+                    ds.field("source", &self.source());
+                    ds.field("target", &self.target());
+                    ds.field("edge_type", &self.edge_type());
+                    ds.field("weight", &self.weight());
+                    ds.field("strength", &self.strength());
+                    ds.field("last_traverse_time", &self.last_traverse_time());
+                    ds.field("suppressed", &self.suppressed());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+            pub enum EdgeTypeOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-impl ::core::fmt::Debug for Edge<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("Edge");
-      ds.field("name", &self.name());
-      ds.field("source", &self.source());
-      ds.field("target", &self.target());
-      ds.field("edge_type", &self.edge_type());
-      ds.field("weight", &self.weight());
-      ds.field("strength", &self.strength());
-      ds.field("last_traverse_time", &self.last_traverse_time());
-      ds.field("suppressed", &self.suppressed());
-      ds.field("create_time", &self.create_time());
-      ds.field("delete_time", &self.delete_time());
-      ds.field("expire_time", &self.expire_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-pub enum EdgeTypeOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            /// A declared kind of relationship, carrying the default weight its edges take.
+            ///
+            /// Declaring the default once means an edge of a given kind inherits a priority
+            /// instead of every edge carrying its own magic number.
+            pub struct EdgeType<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-/// A declared kind of relationship, carrying the default weight its edges take.
-///
-/// Declaring the default once means an edge of a given kind inherits a priority
-/// instead of every edge carrying its own magic number.
-pub struct EdgeType<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            impl<'a> ::flatbuffers::Follow<'a> for EdgeType<'a> {
+                type Inner = EdgeType<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for EdgeType<'a> {
-  type Inner = EdgeType<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> EdgeType<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
+                pub const VT_DEFAULT_WEIGHT: ::flatbuffers::VOffsetT = 8;
+                pub const VT_STRUCTURAL: ::flatbuffers::VOffsetT = 10;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 14;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 16;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 18;
 
-impl<'a> EdgeType<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_DEFAULT_WEIGHT: ::flatbuffers::VOffsetT = 8;
-  pub const VT_STRUCTURAL: ::flatbuffers::VOffsetT = 10;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 14;
-  pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 16;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 18;
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    EdgeType { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args EdgeTypeArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<EdgeType<'bldr>> {
+                    let mut builder = EdgeTypeBuilder::new(_fbb);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    builder.add_default_weight(args.default_weight);
+                    if let Some(x) = args.display_name {
+                        builder.add_display_name(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.add_structural(args.structural);
+                    builder.finish()
+                }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    EdgeType { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args EdgeTypeArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<EdgeType<'bldr>> {
-    let mut builder = EdgeTypeBuilder::new(_fbb);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.expire_time { builder.add_expire_time(x); }
-    if let Some(x) = args.delete_time { builder.add_delete_time(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    builder.add_default_weight(args.default_weight);
-    if let Some(x) = args.display_name { builder.add_display_name(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.add_structural(args.structural);
-    builder.finish()
-  }
+                /// Resource name of the edge type.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(EdgeType::VT_NAME, None)
+                    }
+                }
+                /// Human-readable name.
+                #[inline]
+                pub fn display_name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            EdgeType::VT_DISPLAY_NAME,
+                            None,
+                        )
+                    }
+                }
+                /// Weight edges of this type take unless they override it.
+                #[inline]
+                pub fn default_weight(&self) -> f32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<f32>(EdgeType::VT_DEFAULT_WEIGHT, Some(0.0))
+                            .unwrap()
+                    }
+                }
+                /// Whether edges of this type express containment rather than meaning.
+                ///
+                /// Containment edges place a conversation in a session or a session in a
+                /// space. They are followed when resolving what a principal can see and are
+                /// not followed when expanding a retrieval, because membership is not a
+                /// semantic relationship and would otherwise pull in every sibling.
+                #[inline]
+                pub fn structural(&self) -> bool {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<bool>(EdgeType::VT_STRUCTURAL, Some(false))
+                            .unwrap()
+                    }
+                }
+                /// When the edge type was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                EdgeType::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the edge type was soft-deleted, or unset while it is live.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                EdgeType::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted edge type is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                EdgeType::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(EdgeType::VT_ETAG, None)
+                    }
+                }
+            }
 
+            impl ::flatbuffers::Verifiable for EdgeType<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "display_name",
+                            Self::VT_DISPLAY_NAME,
+                            false,
+                        )?
+                        .visit_field::<f32>("default_weight", Self::VT_DEFAULT_WEIGHT, false)?
+                        .visit_field::<bool>("structural", Self::VT_STRUCTURAL, false)?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct EdgeTypeArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub default_weight: f32,
+                pub structural: bool,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for EdgeTypeArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    EdgeTypeArgs {
+                        name: None,
+                        display_name: None,
+                        default_weight: 0.0,
+                        structural: false,
+                        create_time: None,
+                        delete_time: None,
+                        expire_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
-  /// Resource name of the edge type.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(EdgeType::VT_NAME, None)}
-  }
-  /// Human-readable name.
-  #[inline]
-  pub fn display_name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(EdgeType::VT_DISPLAY_NAME, None)}
-  }
-  /// Weight edges of this type take unless they override it.
-  #[inline]
-  pub fn default_weight(&self) -> f32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(EdgeType::VT_DEFAULT_WEIGHT, Some(0.0)).unwrap()}
-  }
-  /// Whether edges of this type express containment rather than meaning.
-  ///
-  /// Containment edges place a conversation in a session or a session in a
-  /// space. They are followed when resolving what a principal can see and are
-  /// not followed when expanding a retrieval, because membership is not a
-  /// semantic relationship and would otherwise pull in every sibling.
-  #[inline]
-  pub fn structural(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(EdgeType::VT_STRUCTURAL, Some(false)).unwrap()}
-  }
-  /// When the edge type was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(EdgeType::VT_CREATE_TIME, None)}
-  }
-  /// When the edge type was soft-deleted, or unset while it is live.
-  #[inline]
-  pub fn delete_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(EdgeType::VT_DELETE_TIME, None)}
-  }
-  /// When a soft-deleted edge type is purged and becomes unrecoverable.
-  #[inline]
-  pub fn expire_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(EdgeType::VT_EXPIRE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(EdgeType::VT_ETAG, None)}
-  }
-}
+            pub struct EdgeTypeBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> EdgeTypeBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(EdgeType::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_display_name(
+                    &mut self,
+                    display_name: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        EdgeType::VT_DISPLAY_NAME,
+                        display_name,
+                    );
+                }
+                #[inline]
+                pub fn add_default_weight(&mut self, default_weight: f32) {
+                    self.fbb_
+                        .push_slot::<f32>(EdgeType::VT_DEFAULT_WEIGHT, default_weight, 0.0);
+                }
+                #[inline]
+                pub fn add_structural(&mut self, structural: bool) {
+                    self.fbb_
+                        .push_slot::<bool>(EdgeType::VT_STRUCTURAL, structural, false);
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            EdgeType::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            EdgeType::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            EdgeType::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(EdgeType::VT_ETAG, etag);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> EdgeTypeBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    EdgeTypeBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<EdgeType<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-impl ::flatbuffers::Verifiable for EdgeType<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("display_name", Self::VT_DISPLAY_NAME, false)?
-     .visit_field::<f32>("default_weight", Self::VT_DEFAULT_WEIGHT, false)?
-     .visit_field::<bool>("structural", Self::VT_STRUCTURAL, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("delete_time", Self::VT_DELETE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("expire_time", Self::VT_EXPIRE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct EdgeTypeArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub default_weight: f32,
-    pub structural: bool,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for EdgeTypeArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    EdgeTypeArgs {
-      name: None,
-      display_name: None,
-      default_weight: 0.0,
-      structural: false,
-      create_time: None,
-      delete_time: None,
-      expire_time: None,
-      etag: None,
-    }
-  }
-}
-
-pub struct EdgeTypeBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> EdgeTypeBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(EdgeType::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_display_name(&mut self, display_name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(EdgeType::VT_DISPLAY_NAME, display_name);
-  }
-  #[inline]
-  pub fn add_default_weight(&mut self, default_weight: f32) {
-    self.fbb_.push_slot::<f32>(EdgeType::VT_DEFAULT_WEIGHT, default_weight, 0.0);
-  }
-  #[inline]
-  pub fn add_structural(&mut self, structural: bool) {
-    self.fbb_.push_slot::<bool>(EdgeType::VT_STRUCTURAL, structural, false);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(EdgeType::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_delete_time(&mut self, delete_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(EdgeType::VT_DELETE_TIME, delete_time);
-  }
-  #[inline]
-  pub fn add_expire_time(&mut self, expire_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(EdgeType::VT_EXPIRE_TIME, expire_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(EdgeType::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> EdgeTypeBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    EdgeTypeBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<EdgeType<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for EdgeType<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("EdgeType");
-      ds.field("name", &self.name());
-      ds.field("display_name", &self.display_name());
-      ds.field("default_weight", &self.default_weight());
-      ds.field("structural", &self.structural());
-      ds.field("create_time", &self.create_time());
-      ds.field("delete_time", &self.delete_time());
-      ds.field("expire_time", &self.expire_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod graph
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for EdgeType<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("EdgeType");
+                    ds.field("name", &self.name());
+                    ds.field("display_name", &self.display_name());
+                    ds.field("default_weight", &self.default_weight());
+                    ds.field("structural", &self.structural());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod graph
+} // pub mod telividb

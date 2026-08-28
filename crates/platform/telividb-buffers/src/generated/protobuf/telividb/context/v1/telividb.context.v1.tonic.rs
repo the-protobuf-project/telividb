@@ -6,10 +6,10 @@ pub mod context_templates_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct ContextTemplatesClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod context_templates_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             ContextTemplatesClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -93,146 +92,93 @@ pub mod context_templates_client {
         pub async fn create_context_template(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateContextTemplateRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ContextTemplate>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ContextTemplate>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.context.v1.ContextTemplates/CreateContextTemplate",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.context.v1.ContextTemplates",
-                        "CreateContextTemplate",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.context.v1.ContextTemplates",
+                "CreateContextTemplate",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_context_template(
             &mut self,
             request: impl tonic::IntoRequest<super::GetContextTemplateRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ContextTemplate>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ContextTemplate>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.context.v1.ContextTemplates/GetContextTemplate",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.context.v1.ContextTemplates",
-                        "GetContextTemplate",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.context.v1.ContextTemplates",
+                "GetContextTemplate",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn list_context_templates(
             &mut self,
             request: impl tonic::IntoRequest<super::ListContextTemplatesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListContextTemplatesResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListContextTemplatesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.context.v1.ContextTemplates/ListContextTemplates",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.context.v1.ContextTemplates",
-                        "ListContextTemplates",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.context.v1.ContextTemplates",
+                "ListContextTemplates",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn delete_context_template(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteContextTemplateRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ContextTemplate>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ContextTemplate>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.context.v1.ContextTemplates/DeleteContextTemplate",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.context.v1.ContextTemplates",
-                        "DeleteContextTemplate",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.context.v1.ContextTemplates",
+                "DeleteContextTemplate",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn assemble_context(
             &mut self,
             request: impl tonic::IntoRequest<super::AssembleContextRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::AssembleContextResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::AssembleContextResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.context.v1.ContextTemplates/AssembleContext",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.context.v1.ContextTemplates",
-                        "AssembleContext",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.context.v1.ContextTemplates",
+                "AssembleContext",
+            ));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -244,7 +190,7 @@ pub mod context_templates_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with ContextTemplatesServer.
@@ -261,10 +207,7 @@ pub mod context_templates_server {
         async fn list_context_templates(
             &self,
             request: tonic::Request<super::ListContextTemplatesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListContextTemplatesResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListContextTemplatesResponse>, tonic::Status>;
         async fn delete_context_template(
             &self,
             request: tonic::Request<super::DeleteContextTemplateRequest>,
@@ -272,10 +215,7 @@ pub mod context_templates_server {
         async fn assemble_context(
             &self,
             request: tonic::Request<super::AssembleContextRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::AssembleContextResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::AssembleContextResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct ContextTemplatesServer<T> {
@@ -298,10 +238,7 @@ pub mod context_templates_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -356,25 +293,19 @@ pub mod context_templates_server {
                 "/telividb.context.v1.ContextTemplates/CreateContextTemplate" => {
                     #[allow(non_camel_case_types)]
                     struct CreateContextTemplateSvc<T: ContextTemplates>(pub Arc<T>);
-                    impl<
-                        T: ContextTemplates,
-                    > tonic::server::UnaryService<super::CreateContextTemplateRequest>
-                    for CreateContextTemplateSvc<T> {
+                    impl<T: ContextTemplates>
+                        tonic::server::UnaryService<super::CreateContextTemplateRequest>
+                        for CreateContextTemplateSvc<T>
+                    {
                         type Response = super::ContextTemplate;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateContextTemplateRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ContextTemplates>::create_context_template(
-                                        &inner,
-                                        request,
-                                    )
+                                <T as ContextTemplates>::create_context_template(&inner, request)
                                     .await
                             };
                             Box::pin(fut)
@@ -405,26 +336,19 @@ pub mod context_templates_server {
                 "/telividb.context.v1.ContextTemplates/GetContextTemplate" => {
                     #[allow(non_camel_case_types)]
                     struct GetContextTemplateSvc<T: ContextTemplates>(pub Arc<T>);
-                    impl<
-                        T: ContextTemplates,
-                    > tonic::server::UnaryService<super::GetContextTemplateRequest>
-                    for GetContextTemplateSvc<T> {
+                    impl<T: ContextTemplates>
+                        tonic::server::UnaryService<super::GetContextTemplateRequest>
+                        for GetContextTemplateSvc<T>
+                    {
                         type Response = super::ContextTemplate;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetContextTemplateRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ContextTemplates>::get_context_template(
-                                        &inner,
-                                        request,
-                                    )
-                                    .await
+                                <T as ContextTemplates>::get_context_template(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -454,25 +378,19 @@ pub mod context_templates_server {
                 "/telividb.context.v1.ContextTemplates/ListContextTemplates" => {
                     #[allow(non_camel_case_types)]
                     struct ListContextTemplatesSvc<T: ContextTemplates>(pub Arc<T>);
-                    impl<
-                        T: ContextTemplates,
-                    > tonic::server::UnaryService<super::ListContextTemplatesRequest>
-                    for ListContextTemplatesSvc<T> {
+                    impl<T: ContextTemplates>
+                        tonic::server::UnaryService<super::ListContextTemplatesRequest>
+                        for ListContextTemplatesSvc<T>
+                    {
                         type Response = super::ListContextTemplatesResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListContextTemplatesRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ContextTemplates>::list_context_templates(
-                                        &inner,
-                                        request,
-                                    )
+                                <T as ContextTemplates>::list_context_templates(&inner, request)
                                     .await
                             };
                             Box::pin(fut)
@@ -503,25 +421,19 @@ pub mod context_templates_server {
                 "/telividb.context.v1.ContextTemplates/DeleteContextTemplate" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteContextTemplateSvc<T: ContextTemplates>(pub Arc<T>);
-                    impl<
-                        T: ContextTemplates,
-                    > tonic::server::UnaryService<super::DeleteContextTemplateRequest>
-                    for DeleteContextTemplateSvc<T> {
+                    impl<T: ContextTemplates>
+                        tonic::server::UnaryService<super::DeleteContextTemplateRequest>
+                        for DeleteContextTemplateSvc<T>
+                    {
                         type Response = super::ContextTemplate;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteContextTemplateRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ContextTemplates>::delete_context_template(
-                                        &inner,
-                                        request,
-                                    )
+                                <T as ContextTemplates>::delete_context_template(&inner, request)
                                     .await
                             };
                             Box::pin(fut)
@@ -552,23 +464,19 @@ pub mod context_templates_server {
                 "/telividb.context.v1.ContextTemplates/AssembleContext" => {
                     #[allow(non_camel_case_types)]
                     struct AssembleContextSvc<T: ContextTemplates>(pub Arc<T>);
-                    impl<
-                        T: ContextTemplates,
-                    > tonic::server::UnaryService<super::AssembleContextRequest>
-                    for AssembleContextSvc<T> {
+                    impl<T: ContextTemplates>
+                        tonic::server::UnaryService<super::AssembleContextRequest>
+                        for AssembleContextSvc<T>
+                    {
                         type Response = super::AssembleContextResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::AssembleContextRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as ContextTemplates>::assemble_context(&inner, request)
-                                    .await
+                                <T as ContextTemplates>::assemble_context(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -595,25 +503,19 @@ pub mod context_templates_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

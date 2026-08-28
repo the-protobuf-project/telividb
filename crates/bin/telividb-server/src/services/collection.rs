@@ -9,12 +9,12 @@ use super::collection_convert::{to_domain, to_wire};
 use crate::error::storage_status;
 use std::path::PathBuf;
 use std::sync::Arc;
-use telividb_core::ResourceName;
 use telividb_buffers::protobuf::collection::v1::collections_server::Collections;
 use telividb_buffers::protobuf::collection::v1::{
     Collection, CreateCollectionRequest, DeleteCollectionRequest, GetCollectionRequest,
     ListCollectionsRequest, ListCollectionsResponse,
 };
+use telividb_core::ResourceName;
 use telividb_storage::RedbCollectionStore;
 use telividb_telemetry::{fields, logger, redact};
 use tonic::{Request, Response, Status};

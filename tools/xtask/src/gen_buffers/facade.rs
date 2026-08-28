@@ -25,9 +25,7 @@ struct Node<'a> {
 fn insert<'a>(node: &mut Node<'a>, package: &'a [String], name: &'a str) {
     match package.split_first() {
         None => node.modules.push(name),
-        Some((head, rest)) => {
-            insert(node.children.entry(head.as_str()).or_default(), rest, name)
-        }
+        Some((head, rest)) => insert(node.children.entry(head.as_str()).or_default(), rest, name),
     }
 }
 

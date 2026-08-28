@@ -7,391 +7,535 @@ use crate::wellknown_generated::*;
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod conversation {
+    use crate::wellknown_generated::*;
+    #[allow(unused_imports, dead_code)]
+    pub mod conversation {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        use crate::wellknown_generated::*;
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
-  use crate::wellknown_generated::*;
+            use crate::wellknown_generated::*;
 
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_LEVEL: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_LEVEL: i32 = 4;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_LEVEL: [Level; 5] = [
-  Level::LEVEL_UNSPECIFIED,
-  Level::LEVEL_CONVERSATION,
-  Level::LEVEL_SESSION,
-  Level::LEVEL_SPACE,
-  Level::LEVEL_PROJECT,
-];
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            pub const ENUM_MIN_LEVEL: i32 = 0;
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            pub const ENUM_MAX_LEVEL: i32 = 4;
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            #[allow(non_camel_case_types)]
+            pub const ENUM_VALUES_LEVEL: [Level; 5] = [
+                Level::LEVEL_UNSPECIFIED,
+                Level::LEVEL_CONVERSATION,
+                Level::LEVEL_SESSION,
+                Level::LEVEL_SPACE,
+                Level::LEVEL_PROJECT,
+            ];
 
-/// Which layer of the tenancy tree a summary condenses.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct Level(pub i32);
-#[allow(non_upper_case_globals)]
-impl Level {
-  /// Default value. Never valid in a request.
-  pub const LEVEL_UNSPECIFIED: Self = Self(0);
-  /// Messages along one branch of a conversation.
-  pub const LEVEL_CONVERSATION: Self = Self(1);
-  /// The conversations recorded in one session.
-  pub const LEVEL_SESSION: Self = Self(2);
-  /// The sessions in one space — the rolling series.
-  pub const LEVEL_SPACE: Self = Self(3);
-  /// The spaces in one project.
-  pub const LEVEL_PROJECT: Self = Self(4);
+            /// Which layer of the tenancy tree a summary condenses.
+            #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+            #[repr(transparent)]
+            pub struct Level(pub i32);
+            #[allow(non_upper_case_globals)]
+            impl Level {
+                /// Default value. Never valid in a request.
+                pub const LEVEL_UNSPECIFIED: Self = Self(0);
+                /// Messages along one branch of a conversation.
+                pub const LEVEL_CONVERSATION: Self = Self(1);
+                /// The conversations recorded in one session.
+                pub const LEVEL_SESSION: Self = Self(2);
+                /// The sessions in one space — the rolling series.
+                pub const LEVEL_SPACE: Self = Self(3);
+                /// The spaces in one project.
+                pub const LEVEL_PROJECT: Self = Self(4);
 
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 4;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::LEVEL_UNSPECIFIED,
-    Self::LEVEL_CONVERSATION,
-    Self::LEVEL_SESSION,
-    Self::LEVEL_SPACE,
-    Self::LEVEL_PROJECT,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::LEVEL_UNSPECIFIED => Some("LEVEL_UNSPECIFIED"),
-      Self::LEVEL_CONVERSATION => Some("LEVEL_CONVERSATION"),
-      Self::LEVEL_SESSION => Some("LEVEL_SESSION"),
-      Self::LEVEL_SPACE => Some("LEVEL_SPACE"),
-      Self::LEVEL_PROJECT => Some("LEVEL_PROJECT"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for Level {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-impl<'a> ::flatbuffers::Follow<'a> for Level {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
+                pub const ENUM_MIN: i32 = 0;
+                pub const ENUM_MAX: i32 = 4;
+                pub const ENUM_VALUES: &'static [Self] = &[
+                    Self::LEVEL_UNSPECIFIED,
+                    Self::LEVEL_CONVERSATION,
+                    Self::LEVEL_SESSION,
+                    Self::LEVEL_SPACE,
+                    Self::LEVEL_PROJECT,
+                ];
+                /// Returns the variant's name or "" if unknown.
+                pub fn variant_name(self) -> Option<&'static str> {
+                    match self {
+                        Self::LEVEL_UNSPECIFIED => Some("LEVEL_UNSPECIFIED"),
+                        Self::LEVEL_CONVERSATION => Some("LEVEL_CONVERSATION"),
+                        Self::LEVEL_SESSION => Some("LEVEL_SESSION"),
+                        Self::LEVEL_SPACE => Some("LEVEL_SPACE"),
+                        Self::LEVEL_PROJECT => Some("LEVEL_PROJECT"),
+                        _ => None,
+                    }
+                }
+            }
+            impl ::core::fmt::Debug for Level {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                    if let Some(name) = self.variant_name() {
+                        f.write_str(name)
+                    } else {
+                        f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+                    }
+                }
+            }
+            impl<'a> ::flatbuffers::Follow<'a> for Level {
+                type Inner = Self;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+                    Self(b)
+                }
+            }
 
-impl ::flatbuffers::Push for Level {
-    type Output = Level;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
+            impl ::flatbuffers::Push for Level {
+                type Output = Level;
+                #[inline]
+                unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+                    unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
+                }
+            }
 
-impl ::flatbuffers::EndianScalar for Level {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
+            impl ::flatbuffers::EndianScalar for Level {
+                type Scalar = i32;
+                #[inline]
+                fn to_little_endian(self) -> i32 {
+                    self.0.to_le()
+                }
+                #[inline]
+                #[allow(clippy::wrong_self_convention)]
+                fn from_little_endian(v: i32) -> Self {
+                    let b = i32::from_le(v);
+                    Self(b)
+                }
+            }
 
-impl<'a> ::flatbuffers::Verifiable for Level {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
+            impl<'a> ::flatbuffers::Verifiable for Level {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    i32::run_verifier(v, pos)
+                }
+            }
 
-impl ::flatbuffers::SimpleToVerifyInSlice for Level {}
-pub enum SummaryOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            impl ::flatbuffers::SimpleToVerifyInSlice for Level {}
+            pub enum SummaryOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-/// A condensation of what a region of memory contains.
-///
-/// Summaries form the coarse tier of a two-tier retrieval: a search runs
-/// against them first, then expands along the edges recording what each one
-/// covers. That is the same coarse-to-fine shape the vector path already uses
-/// when a quantized scan narrows the field before a full-precision rerank,
-/// applied at the semantic layer instead of the numeric one.
-pub struct Summary<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            /// A condensation of what a region of memory contains.
+            ///
+            /// Summaries form the coarse tier of a two-tier retrieval: a search runs
+            /// against them first, then expands along the edges recording what each one
+            /// covers. That is the same coarse-to-fine shape the vector path already uses
+            /// when a quantized scan narrows the field before a full-precision rerank,
+            /// applied at the semantic layer instead of the numeric one.
+            pub struct Summary<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for Summary<'a> {
-  type Inner = Summary<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for Summary<'a> {
+                type Inner = Summary<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> Summary<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_LEVEL: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SUBJECT: ::flatbuffers::VOffsetT = 8;
-  pub const VT_CONTENT: ::flatbuffers::VOffsetT = 10;
-  pub const VT_COVERAGE_END_TIME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_STALE: ::flatbuffers::VOffsetT = 14;
-  pub const VT_MODEL_DIGEST: ::flatbuffers::VOffsetT = 16;
-  pub const VT_INHERITED_PROTECTION: ::flatbuffers::VOffsetT = 18;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 20;
+            impl<'a> Summary<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_LEVEL: ::flatbuffers::VOffsetT = 6;
+                pub const VT_SUBJECT: ::flatbuffers::VOffsetT = 8;
+                pub const VT_CONTENT: ::flatbuffers::VOffsetT = 10;
+                pub const VT_COVERAGE_END_TIME: ::flatbuffers::VOffsetT = 12;
+                pub const VT_STALE: ::flatbuffers::VOffsetT = 14;
+                pub const VT_MODEL_DIGEST: ::flatbuffers::VOffsetT = 16;
+                pub const VT_INHERITED_PROTECTION: ::flatbuffers::VOffsetT = 18;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 20;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    Summary { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args SummaryArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<Summary<'bldr>> {
-    let mut builder = SummaryBuilder::new(_fbb);
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.inherited_protection { builder.add_inherited_protection(x); }
-    if let Some(x) = args.model_digest { builder.add_model_digest(x); }
-    if let Some(x) = args.coverage_end_time { builder.add_coverage_end_time(x); }
-    if let Some(x) = args.content { builder.add_content(x); }
-    if let Some(x) = args.subject { builder.add_subject(x); }
-    builder.add_level(args.level);
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.add_stale(args.stale);
-    builder.finish()
-  }
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    Summary { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args SummaryArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<Summary<'bldr>> {
+                    let mut builder = SummaryBuilder::new(_fbb);
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.inherited_protection {
+                        builder.add_inherited_protection(x);
+                    }
+                    if let Some(x) = args.model_digest {
+                        builder.add_model_digest(x);
+                    }
+                    if let Some(x) = args.coverage_end_time {
+                        builder.add_coverage_end_time(x);
+                    }
+                    if let Some(x) = args.content {
+                        builder.add_content(x);
+                    }
+                    if let Some(x) = args.subject {
+                        builder.add_subject(x);
+                    }
+                    builder.add_level(args.level);
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.add_stale(args.stale);
+                    builder.finish()
+                }
 
+                /// Resource name of the summary.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_NAME, None)
+                    }
+                }
+                /// Which layer of the tree this summarizes.
+                ///
+                /// Declared rather than inferred from ordering. "Newest first" sorts within a
+                /// level; it does not distinguish a conversation summary from a space one,
+                /// and a series that relies on recency to tell them apart cannot answer
+                /// "summarize this space" without re-deriving which entries were which.
+                #[inline]
+                pub fn level(&self) -> Level {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<Level>(Summary::VT_LEVEL, Some(Level::LEVEL_UNSPECIFIED))
+                            .unwrap()
+                    }
+                }
+                /// The resource this summary is attached to.
+                #[inline]
+                pub fn subject(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_SUBJECT, None)
+                            .unwrap()
+                    }
+                }
+                /// The summary text.
+                #[inline]
+                pub fn content(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_CONTENT, None)
+                    }
+                }
+                /// How far into the subject this summary reached — its watermark.
+                ///
+                /// A summary is derived data and goes stale: a new message extends past it, a
+                /// branch changes which messages are on the active path, and a conversation
+                /// moving between spaces invalidates summaries on both sides. The watermark
+                /// This is what makes staleness detectable rather than silent.
+                #[inline]
+                pub fn coverage_end_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Summary::VT_COVERAGE_END_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Whether the subject has changed since this summary was generated.
+                ///
+                /// A stale summary is still served, marked, with its watermark — an old
+                /// summary plus an honest marker is more useful than a gap, and serving one
+                /// as current is the failure with no symptom.
+                #[inline]
+                pub fn stale(&self) -> bool {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<bool>(Summary::VT_STALE, Some(false))
+                            .unwrap()
+                    }
+                }
+                /// Digest of the model that produced this summary.
+                ///
+                /// The identity, not a label. A summary that turns out to be wrong is traced
+                /// to the run that produced it and re-derived.
+                #[inline]
+                pub fn model_digest(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            Summary::VT_MODEL_DIGEST,
+                            None,
+                        )
+                    }
+                }
+                /// Strictest protection among the sources this summary covers.
+                ///
+                /// A summary of protected content is protected content: it is derived from
+                /// the text and leaks it regardless of what guards the original. A summary
+                /// spanning several spaces takes the most restrictive protection of any of
+                /// them, never the average and never the destination's — otherwise
+                /// summarizing across a boundary would be a declassification channel.
+                #[inline]
+                pub fn inherited_protection(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            Summary::VT_INHERITED_PROTECTION,
+                            None,
+                        )
+                    }
+                }
+                /// When the summary was generated.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Summary::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+            }
 
-  /// Resource name of the summary.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_NAME, None)}
-  }
-  /// Which layer of the tree this summarizes.
-  ///
-  /// Declared rather than inferred from ordering. "Newest first" sorts within a
-  /// level; it does not distinguish a conversation summary from a space one,
-  /// and a series that relies on recency to tell them apart cannot answer
-  /// "summarize this space" without re-deriving which entries were which.
-  #[inline]
-  pub fn level(&self) -> Level {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<Level>(Summary::VT_LEVEL, Some(Level::LEVEL_UNSPECIFIED)).unwrap()}
-  }
-  /// The resource this summary is attached to.
-  #[inline]
-  pub fn subject(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_SUBJECT, None).unwrap()}
-  }
-  /// The summary text.
-  #[inline]
-  pub fn content(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_CONTENT, None)}
-  }
-  /// How far into the subject this summary reached — its watermark.
-  ///
-  /// A summary is derived data and goes stale: a new message extends past it, a
-  /// branch changes which messages are on the active path, and a conversation
-  /// moving between spaces invalidates summaries on both sides. The watermark
-  /// This is what makes staleness detectable rather than silent.
-  #[inline]
-  pub fn coverage_end_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Summary::VT_COVERAGE_END_TIME, None)}
-  }
-  /// Whether the subject has changed since this summary was generated.
-  ///
-  /// A stale summary is still served, marked, with its watermark — an old
-  /// summary plus an honest marker is more useful than a gap, and serving one
-  /// as current is the failure with no symptom.
-  #[inline]
-  pub fn stale(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(Summary::VT_STALE, Some(false)).unwrap()}
-  }
-  /// Digest of the model that produced this summary.
-  ///
-  /// The identity, not a label. A summary that turns out to be wrong is traced
-  /// to the run that produced it and re-derived.
-  #[inline]
-  pub fn model_digest(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_MODEL_DIGEST, None)}
-  }
-  /// Strictest protection among the sources this summary covers.
-  ///
-  /// A summary of protected content is protected content: it is derived from
-  /// the text and leaks it regardless of what guards the original. A summary
-  /// spanning several spaces takes the most restrictive protection of any of
-  /// them, never the average and never the destination's — otherwise
-  /// summarizing across a boundary would be a declassification channel.
-  #[inline]
-  pub fn inherited_protection(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Summary::VT_INHERITED_PROTECTION, None)}
-  }
-  /// When the summary was generated.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(Summary::VT_CREATE_TIME, None)}
-  }
-}
+            impl ::flatbuffers::Verifiable for Summary<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<Level>("level", Self::VT_LEVEL, false)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "subject",
+                            Self::VT_SUBJECT,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "content",
+                            Self::VT_CONTENT,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "coverage_end_time",
+                            Self::VT_COVERAGE_END_TIME,
+                            false,
+                        )?
+                        .visit_field::<bool>("stale", Self::VT_STALE, false)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "model_digest",
+                            Self::VT_MODEL_DIGEST,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "inherited_protection",
+                            Self::VT_INHERITED_PROTECTION,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct SummaryArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub level: Level,
+                pub subject: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub content: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub coverage_end_time:
+                    Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub stale: bool,
+                pub model_digest: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub inherited_protection: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+            }
+            impl<'a> Default for SummaryArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    SummaryArgs {
+                        name: None,
+                        level: Level::LEVEL_UNSPECIFIED,
+                        subject: None, // required field
+                        content: None,
+                        coverage_end_time: None,
+                        stale: false,
+                        model_digest: None,
+                        inherited_protection: None,
+                        create_time: None,
+                    }
+                }
+            }
 
-impl ::flatbuffers::Verifiable for Summary<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<Level>("level", Self::VT_LEVEL, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("subject", Self::VT_SUBJECT, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("content", Self::VT_CONTENT, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("coverage_end_time", Self::VT_COVERAGE_END_TIME, false)?
-     .visit_field::<bool>("stale", Self::VT_STALE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("model_digest", Self::VT_MODEL_DIGEST, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("inherited_protection", Self::VT_INHERITED_PROTECTION, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct SummaryArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub level: Level,
-    pub subject: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub content: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub coverage_end_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub stale: bool,
-    pub model_digest: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub inherited_protection: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-}
-impl<'a> Default for SummaryArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    SummaryArgs {
-      name: None,
-      level: Level::LEVEL_UNSPECIFIED,
-      subject: None, // required field
-      content: None,
-      coverage_end_time: None,
-      stale: false,
-      model_digest: None,
-      inherited_protection: None,
-      create_time: None,
-    }
-  }
-}
+            pub struct SummaryBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> SummaryBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(Summary::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_level(&mut self, level: Level) {
+                    self.fbb_.push_slot::<Level>(
+                        Summary::VT_LEVEL,
+                        level,
+                        Level::LEVEL_UNSPECIFIED,
+                    );
+                }
+                #[inline]
+                pub fn add_subject(&mut self, subject: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Summary::VT_SUBJECT,
+                        subject,
+                    );
+                }
+                #[inline]
+                pub fn add_content(&mut self, content: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Summary::VT_CONTENT,
+                        content,
+                    );
+                }
+                #[inline]
+                pub fn add_coverage_end_time(
+                    &mut self,
+                    coverage_end_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Summary::VT_COVERAGE_END_TIME,
+                            coverage_end_time,
+                        );
+                }
+                #[inline]
+                pub fn add_stale(&mut self, stale: bool) {
+                    self.fbb_.push_slot::<bool>(Summary::VT_STALE, stale, false);
+                }
+                #[inline]
+                pub fn add_model_digest(
+                    &mut self,
+                    model_digest: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Summary::VT_MODEL_DIGEST,
+                        model_digest,
+                    );
+                }
+                #[inline]
+                pub fn add_inherited_protection(
+                    &mut self,
+                    inherited_protection: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Summary::VT_INHERITED_PROTECTION,
+                        inherited_protection,
+                    );
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Summary::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> SummaryBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    SummaryBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<Summary<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_.required(o, Summary::VT_SUBJECT, "subject");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-pub struct SummaryBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> SummaryBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Summary::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_level(&mut self, level: Level) {
-    self.fbb_.push_slot::<Level>(Summary::VT_LEVEL, level, Level::LEVEL_UNSPECIFIED);
-  }
-  #[inline]
-  pub fn add_subject(&mut self, subject: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Summary::VT_SUBJECT, subject);
-  }
-  #[inline]
-  pub fn add_content(&mut self, content: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Summary::VT_CONTENT, content);
-  }
-  #[inline]
-  pub fn add_coverage_end_time(&mut self, coverage_end_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Summary::VT_COVERAGE_END_TIME, coverage_end_time);
-  }
-  #[inline]
-  pub fn add_stale(&mut self, stale: bool) {
-    self.fbb_.push_slot::<bool>(Summary::VT_STALE, stale, false);
-  }
-  #[inline]
-  pub fn add_model_digest(&mut self, model_digest: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Summary::VT_MODEL_DIGEST, model_digest);
-  }
-  #[inline]
-  pub fn add_inherited_protection(&mut self, inherited_protection: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Summary::VT_INHERITED_PROTECTION, inherited_protection);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(Summary::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> SummaryBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    SummaryBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<Summary<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, Summary::VT_SUBJECT,"subject");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for Summary<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("Summary");
-      ds.field("name", &self.name());
-      ds.field("level", &self.level());
-      ds.field("subject", &self.subject());
-      ds.field("content", &self.content());
-      ds.field("coverage_end_time", &self.coverage_end_time());
-      ds.field("stale", &self.stale());
-      ds.field("model_digest", &self.model_digest());
-      ds.field("inherited_protection", &self.inherited_protection());
-      ds.field("create_time", &self.create_time());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod conversation
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for Summary<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("Summary");
+                    ds.field("name", &self.name());
+                    ds.field("level", &self.level());
+                    ds.field("subject", &self.subject());
+                    ds.field("content", &self.content());
+                    ds.field("coverage_end_time", &self.coverage_end_time());
+                    ds.field("stale", &self.stale());
+                    ds.field("model_digest", &self.model_digest());
+                    ds.field("inherited_protection", &self.inherited_protection());
+                    ds.field("create_time", &self.create_time());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod conversation
+} // pub mod telividb

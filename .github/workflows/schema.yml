@@ -1,35 +1,26 @@
-name: API lint
+name: Schema
 
-# The `.proto` files are the API's source of truth, so they are linted like
-# code. AIP conformance matters more here than style: resource names are the
+# The schema is the API's source of truth, so it is linted and checked like
+# code. AIP conformance matters more here than style: a resource name is the
 # system's external identity, and a name that drifts from AIP-122 breaks the
-# guarantee that a resource means the same thing to every projection of the
-# schema.
+# guarantee that a resource means the same thing in every projection of it.
 
 on:
   pull_request:
     paths:
-      - "buffers/protobuf/**/*.proto"
+      - "buffers/**"
       - "buf.yaml"
       - "buf.gen.yaml"
-      - ".github/workflows/api-lint.yml"
+      - "buffers.yaml"
+      - ".github/workflows/schema.yml"
   push:
     branches: [main]
     paths:
-      - "buffers/protobuf/**/*.proto"
+      - "buffers/**"
 
 permissions:
   contents: read
 
-# Cancel a run when a newer commit lands on the same branch.
-#
-# A full matrix build is minutes of runner time, and the result of an
-# already-superseded commit is never looked at. `group` is keyed on the
-# workflow and the ref, so pushes to different branches never cancel each
-# other.
-#
-# `main` is deliberately excluded from cancellation: its runs are the baseline
-# `buf breaking` compares against, and a cancelled one leaves no record.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -125,7 +116,20 @@ jobs:
           breaking: ${{ steps.baseline.outputs.exists }}
           breaking_against: "https://github.com/${{ github.repository }}.git#branch=main"
 
-  generated:
+
+  # Committed generation only helps if the committed output is actually current.
+  #
+  # Scoped to what is reproducible. `buf` is pinned by the action and `buffers`
+  # by its module version, so both produce byte-identical output on any runner —
+  # a drift here is a real "someone edited a .proto and did not regenerate".
+  #
+  # The Rust that `capnpc-rust` and `flatc` emit is deliberately NOT compared.
+  # Those come from apt, their versions move independently of anything in this
+  # repository, and their output carries a version stamp — so a routine image
+  # update would fail a build that changed nothing, which is indistinguishable
+  # from a real regression and trains everyone to ignore the check. That code is
+  # still verified: `build.yml` compiles every feature combination of it.
+  codegen:
     name: generated code · docs are current
     runs-on: ubuntu-latest
     steps:
@@ -134,24 +138,15 @@ jobs:
         with:
           version: 1.72.0
           setup_only: true
-      # No toolchain action here. `rust-toolchain.toml` is authoritative and
-      # rustup honours it, exactly as every job in ci.yml does.
-      #
-      # It used to be `dtolnay/rust-toolchain@1.98.0`, and that is precisely
-      # the problem: for that action the ref names a *Rust release*, not an
-      # action version. Dependabot cannot tell the difference, so it bumped it
-      # to `@1.100.0` — a compiler that does not exist — and auto-merge landed
-      # it on main. Every pull request then failed, because a `pull_request`
-      # workflow runs from the merge of head into base, so a broken base
-      # breaks branches that never touched it.
-      #
-      # Naming the version twice was the underlying fault. Now it is named
-      # once.
+      # No toolchain action. `rust-toolchain.toml` is authoritative and rustup
+      # honours it — naming a version twice is how the two come to disagree.
       - uses: Swatinem/rust-cache@v2
-      # `cargo install` compiles both plugins from source, which is minutes of
-      # runner time on every run and the single slowest step here. They change
-      # only when the pinned versions below change, so cache the binaries and
-      # skip the build entirely on a hit.
+        with:
+          shared-key: debug
+          cache-on-failure: true
+
+      # Both plugins compile from source, which is the slowest step here. They
+      # change only when the pinned versions do, so cache the binaries.
       - id: plugins
         uses: actions/cache@v4
         with:
@@ -159,14 +154,54 @@ jobs:
             ~/.cargo/bin/protoc-gen-prost
             ~/.cargo/bin/protoc-gen-tonic
           key: proto-plugins-${{ runner.os }}-prost0.5.0-tonic0.5.0
-
       - if: steps.plugins.outputs.cache-hit != 'true'
         run: cargo install protoc-gen-prost@0.5.0 protoc-gen-tonic@0.5.0 --locked
 
-      # Committed generation only helps if the committed output is actually
-      # current. These make that true rather than hoped for.
+      # Pinned to the version whose output is committed. `@latest` would mean a
+      # release upstream silently rewrites this repository's generated code.
+      # The renderer, pinned to the version whose output is committed. `@latest`
+      # would let an upstream release silently rewrite this repository's code.
       #
-      # Linting is not repeated here — the job above owns it, and it is the one
-      # with the linter installed.
-      - run: cargo xtask check-proto
+      # `flatc` and `capnp` come with it because the renderer invokes them to
+      # compile each emitted schema into Rust — there is no schema-only mode.
+      # Their *output* is still not compared, for the reason above; they are
+      # installed so the command can complete, not so its Rust can be checked.
+      - name: install the schema renderer and its compilers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends capnproto flatbuffers-compiler
+          go install github.com/the-protobuf-project/buffers/plugin/cmd/buffers@v0.2.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      # One command, because ordering matters and duplicating it here is how
+      # the two drift. `buf generate` cleans its output directory, so the
+      # descriptor set has to be rebuilt after it rather than before — the
+      # xtask knows that; a hand-written sequence in this file would have to
+      # learn it again.
+      - name: regenerate every rendering
+        run: cargo xtask gen-buffers
+
+      - name: the committed schema is current
+        run: |
+          # Scoped to what is reproducible: `buf` is pinned by the action and
+          # `buffers` by its module version, so both are byte-identical on any
+          # runner. The Rust that capnpc-rust and flatc emit is excluded — see
+          # the note on this job.
+          paths='crates/platform/telividb-buffers/src/generated/protobuf
+                 buffers/capnp
+                 buffers/flatbuffers
+                 buffers.lock'
+          if ! git diff --quiet -- $paths; then
+            echo "::error::the committed schema does not match the protos."
+            echo "Run \`cargo xtask gen-buffers\` and commit the result."
+            git diff --stat -- $paths
+            exit 1
+          fi
+          echo "protobuf, capnp and flatbuffers renderings are all current"
+
+      # The ordinal ledger is the only thing keeping a field in the same slot
+      # across three numbering schemes that do not correspond.
+      - name: no field slot has moved
+        run: buffers verify
+
       - run: cargo xtask check-protodoc

@@ -7,675 +7,1084 @@ use crate::wellknown_generated::*;
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod identity {
+    use crate::wellknown_generated::*;
+    #[allow(unused_imports, dead_code)]
+    pub mod identity {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        use crate::wellknown_generated::*;
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
-  use crate::wellknown_generated::*;
+            use crate::wellknown_generated::*;
 
-pub enum UserOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            pub enum UserOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-/// A person, and separately the principal policy evaluates against.
-///
-/// A user is two things at once and they are kept apart deliberately: an owner
-/// of memory, and a principal whose visibility predicate runs on every query.
-/// Collapsing them would make every permission change a user edit, and grants
-/// attach to groups rather than to people for the same reason.
-pub struct User<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            /// A person, and separately the principal policy evaluates against.
+            ///
+            /// A user is two things at once and they are kept apart deliberately: an owner
+            /// of memory, and a principal whose visibility predicate runs on every query.
+            /// Collapsing them would make every permission change a user edit, and grants
+            /// attach to groups rather than to people for the same reason.
+            pub struct User<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for User<'a> {
-  type Inner = User<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for User<'a> {
+                type Inner = User<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> User<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_PRINCIPAL: ::flatbuffers::VOffsetT = 8;
-  pub const VT_USER_GROUPS: ::flatbuffers::VOffsetT = 10;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 14;
-  pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 16;
-  pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 18;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 20;
+            impl<'a> User<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
+                pub const VT_PRINCIPAL: ::flatbuffers::VOffsetT = 8;
+                pub const VT_USER_GROUPS: ::flatbuffers::VOffsetT = 10;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
+                pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 14;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 16;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 18;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 20;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    User { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args UserArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<User<'bldr>> {
-    let mut builder = UserBuilder::new(_fbb);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.expire_time { builder.add_expire_time(x); }
-    if let Some(x) = args.delete_time { builder.add_delete_time(x); }
-    if let Some(x) = args.update_time { builder.add_update_time(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.user_groups { builder.add_user_groups(x); }
-    if let Some(x) = args.principal { builder.add_principal(x); }
-    if let Some(x) = args.display_name { builder.add_display_name(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    User { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args UserArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<User<'bldr>> {
+                    let mut builder = UserBuilder::new(_fbb);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
+                    if let Some(x) = args.update_time {
+                        builder.add_update_time(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.user_groups {
+                        builder.add_user_groups(x);
+                    }
+                    if let Some(x) = args.principal {
+                        builder.add_principal(x);
+                    }
+                    if let Some(x) = args.display_name {
+                        builder.add_display_name(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
+                /// Resource name of the user.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(User::VT_NAME, None)
+                    }
+                }
+                /// Human-readable name.
+                #[inline]
+                pub fn display_name(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                User::VT_DISPLAY_NAME,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+                /// The principal identifier policy evaluates against.
+                ///
+                /// Distinct from the resource name so an account can be renamed without
+                /// rewriting every grant that refers to it.
+                #[inline]
+                pub fn principal(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(User::VT_PRINCIPAL, None)
+                            .unwrap()
+                    }
+                }
+                /// Groups this user belongs to.
+                #[inline]
+                pub fn user_groups(
+                    &self,
+                ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                        >>(User::VT_USER_GROUPS, None)
+                    }
+                }
+                /// When the user was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                User::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the user was last modified.
+                #[inline]
+                pub fn update_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                User::VT_UPDATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the user was soft-deleted, or unset while live.
+                ///
+                /// Deleting a user cascades to the memory they own. A user delete that left
+                /// their memory searchable would be the worst bug available here, so the
+                /// cascade is part of the operation rather than a follow-up.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                User::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted user is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                User::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(User::VT_ETAG, None)
+                    }
+                }
+            }
 
-  /// Resource name of the user.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(User::VT_NAME, None)}
-  }
-  /// Human-readable name.
-  #[inline]
-  pub fn display_name(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(User::VT_DISPLAY_NAME, None).unwrap()}
-  }
-  /// The principal identifier policy evaluates against.
-  ///
-  /// Distinct from the resource name so an account can be renamed without
-  /// rewriting every grant that refers to it.
-  #[inline]
-  pub fn principal(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(User::VT_PRINCIPAL, None).unwrap()}
-  }
-  /// Groups this user belongs to.
-  #[inline]
-  pub fn user_groups(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(User::VT_USER_GROUPS, None)}
-  }
-  /// When the user was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(User::VT_CREATE_TIME, None)}
-  }
-  /// When the user was last modified.
-  #[inline]
-  pub fn update_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(User::VT_UPDATE_TIME, None)}
-  }
-  /// When the user was soft-deleted, or unset while live.
-  ///
-  /// Deleting a user cascades to the memory they own. A user delete that left
-  /// their memory searchable would be the worst bug available here, so the
-  /// cascade is part of the operation rather than a follow-up.
-  #[inline]
-  pub fn delete_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(User::VT_DELETE_TIME, None)}
-  }
-  /// When a soft-deleted user is purged and becomes unrecoverable.
-  #[inline]
-  pub fn expire_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(User::VT_EXPIRE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(User::VT_ETAG, None)}
-  }
-}
+            impl ::flatbuffers::Verifiable for User<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "display_name",
+                            Self::VT_DISPLAY_NAME,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "principal",
+                            Self::VT_PRINCIPAL,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+                        >>("user_groups", Self::VT_USER_GROUPS, false)?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "update_time",
+                            Self::VT_UPDATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct UserArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub principal: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub user_groups: Option<
+                    ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                    >,
+                >,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for UserArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    UserArgs {
+                        name: None,
+                        display_name: None, // required field
+                        principal: None,    // required field
+                        user_groups: None,
+                        create_time: None,
+                        update_time: None,
+                        delete_time: None,
+                        expire_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
-impl ::flatbuffers::Verifiable for User<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("display_name", Self::VT_DISPLAY_NAME, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("principal", Self::VT_PRINCIPAL, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("user_groups", Self::VT_USER_GROUPS, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("update_time", Self::VT_UPDATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("delete_time", Self::VT_DELETE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("expire_time", Self::VT_EXPIRE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct UserArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub principal: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub user_groups: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for UserArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    UserArgs {
-      name: None,
-      display_name: None, // required field
-      principal: None, // required field
-      user_groups: None,
-      create_time: None,
-      update_time: None,
-      delete_time: None,
-      expire_time: None,
-      etag: None,
-    }
-  }
-}
+            pub struct UserBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> UserBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(User::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_display_name(
+                    &mut self,
+                    display_name: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        User::VT_DISPLAY_NAME,
+                        display_name,
+                    );
+                }
+                #[inline]
+                pub fn add_principal(&mut self, principal: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        User::VT_PRINCIPAL,
+                        principal,
+                    );
+                }
+                #[inline]
+                pub fn add_user_groups(
+                    &mut self,
+                    user_groups: ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+                    >,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        User::VT_USER_GROUPS,
+                        user_groups,
+                    );
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            User::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_update_time(
+                    &mut self,
+                    update_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            User::VT_UPDATE_TIME,
+                            update_time,
+                        );
+                }
+                #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            User::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            User::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(User::VT_ETAG, etag);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> UserBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    UserBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<User<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_.required(o, User::VT_DISPLAY_NAME, "display_name");
+                    self.fbb_.required(o, User::VT_PRINCIPAL, "principal");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-pub struct UserBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> UserBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(User::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_display_name(&mut self, display_name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(User::VT_DISPLAY_NAME, display_name);
-  }
-  #[inline]
-  pub fn add_principal(&mut self, principal: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(User::VT_PRINCIPAL, principal);
-  }
-  #[inline]
-  pub fn add_user_groups(&mut self, user_groups: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(User::VT_USER_GROUPS, user_groups);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(User::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_update_time(&mut self, update_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(User::VT_UPDATE_TIME, update_time);
-  }
-  #[inline]
-  pub fn add_delete_time(&mut self, delete_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(User::VT_DELETE_TIME, delete_time);
-  }
-  #[inline]
-  pub fn add_expire_time(&mut self, expire_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(User::VT_EXPIRE_TIME, expire_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(User::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> UserBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    UserBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<User<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, User::VT_DISPLAY_NAME,"display_name");
-    self.fbb_.required(o, User::VT_PRINCIPAL,"principal");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
+            impl ::core::fmt::Debug for User<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("User");
+                    ds.field("name", &self.name());
+                    ds.field("display_name", &self.display_name());
+                    ds.field("principal", &self.principal());
+                    ds.field("user_groups", &self.user_groups());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("update_time", &self.update_time());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+            pub enum UserGroupOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-impl ::core::fmt::Debug for User<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("User");
-      ds.field("name", &self.name());
-      ds.field("display_name", &self.display_name());
-      ds.field("principal", &self.principal());
-      ds.field("user_groups", &self.user_groups());
-      ds.field("create_time", &self.create_time());
-      ds.field("update_time", &self.update_time());
-      ds.field("delete_time", &self.delete_time());
-      ds.field("expire_time", &self.expire_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-pub enum UserGroupOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            /// A set of users that grants attach to.
+            pub struct UserGroup<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-/// A set of users that grants attach to.
-pub struct UserGroup<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            impl<'a> ::flatbuffers::Follow<'a> for UserGroup<'a> {
+                type Inner = UserGroup<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for UserGroup<'a> {
-  type Inner = UserGroup<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> UserGroup<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 8;
+                pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 10;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 12;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 14;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 16;
 
-impl<'a> UserGroup<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 8;
-  pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 10;
-  pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 14;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 16;
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    UserGroup { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args UserGroupArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<UserGroup<'bldr>> {
+                    let mut builder = UserGroupBuilder::new(_fbb);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
+                    if let Some(x) = args.update_time {
+                        builder.add_update_time(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.display_name {
+                        builder.add_display_name(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    UserGroup { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args UserGroupArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<UserGroup<'bldr>> {
-    let mut builder = UserGroupBuilder::new(_fbb);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.expire_time { builder.add_expire_time(x); }
-    if let Some(x) = args.delete_time { builder.add_delete_time(x); }
-    if let Some(x) = args.update_time { builder.add_update_time(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.display_name { builder.add_display_name(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+                /// Resource name of the group.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(UserGroup::VT_NAME, None)
+                    }
+                }
+                /// Human-readable name.
+                #[inline]
+                pub fn display_name(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                UserGroup::VT_DISPLAY_NAME,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+                /// When the group was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                UserGroup::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the group was last modified.
+                #[inline]
+                pub fn update_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                UserGroup::VT_UPDATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the group was soft-deleted, or unset while live.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                UserGroup::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted group is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                UserGroup::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(UserGroup::VT_ETAG, None)
+                    }
+                }
+            }
 
+            impl ::flatbuffers::Verifiable for UserGroup<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "display_name",
+                            Self::VT_DISPLAY_NAME,
+                            true,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "update_time",
+                            Self::VT_UPDATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct UserGroupArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for UserGroupArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    UserGroupArgs {
+                        name: None,
+                        display_name: None, // required field
+                        create_time: None,
+                        update_time: None,
+                        delete_time: None,
+                        expire_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
-  /// Resource name of the group.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(UserGroup::VT_NAME, None)}
-  }
-  /// Human-readable name.
-  #[inline]
-  pub fn display_name(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(UserGroup::VT_DISPLAY_NAME, None).unwrap()}
-  }
-  /// When the group was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_CREATE_TIME, None)}
-  }
-  /// When the group was last modified.
-  #[inline]
-  pub fn update_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_UPDATE_TIME, None)}
-  }
-  /// When the group was soft-deleted, or unset while live.
-  #[inline]
-  pub fn delete_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_DELETE_TIME, None)}
-  }
-  /// When a soft-deleted group is purged and becomes unrecoverable.
-  #[inline]
-  pub fn expire_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_EXPIRE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(UserGroup::VT_ETAG, None)}
-  }
-}
+            pub struct UserGroupBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> UserGroupBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(UserGroup::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_display_name(
+                    &mut self,
+                    display_name: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        UserGroup::VT_DISPLAY_NAME,
+                        display_name,
+                    );
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            UserGroup::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_update_time(
+                    &mut self,
+                    update_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            UserGroup::VT_UPDATE_TIME,
+                            update_time,
+                        );
+                }
+                #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            UserGroup::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            UserGroup::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(UserGroup::VT_ETAG, etag);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> UserGroupBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    UserGroupBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<UserGroup<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_
+                        .required(o, UserGroup::VT_DISPLAY_NAME, "display_name");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-impl ::flatbuffers::Verifiable for UserGroup<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("display_name", Self::VT_DISPLAY_NAME, true)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("update_time", Self::VT_UPDATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("delete_time", Self::VT_DELETE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("expire_time", Self::VT_EXPIRE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct UserGroupArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for UserGroupArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    UserGroupArgs {
-      name: None,
-      display_name: None, // required field
-      create_time: None,
-      update_time: None,
-      delete_time: None,
-      expire_time: None,
-      etag: None,
-    }
-  }
-}
+            impl ::core::fmt::Debug for UserGroup<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("UserGroup");
+                    ds.field("name", &self.name());
+                    ds.field("display_name", &self.display_name());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("update_time", &self.update_time());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+            pub enum RoleBindingOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-pub struct UserGroupBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> UserGroupBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(UserGroup::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_display_name(&mut self, display_name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(UserGroup::VT_DISPLAY_NAME, display_name);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_update_time(&mut self, update_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_UPDATE_TIME, update_time);
-  }
-  #[inline]
-  pub fn add_delete_time(&mut self, delete_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_DELETE_TIME, delete_time);
-  }
-  #[inline]
-  pub fn add_expire_time(&mut self, expire_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(UserGroup::VT_EXPIRE_TIME, expire_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(UserGroup::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> UserGroupBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    UserGroupBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<UserGroup<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, UserGroup::VT_DISPLAY_NAME,"display_name");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
+            /// A role granted to a group over part of the tenancy tree.
+            ///
+            /// Grants attach at an organization, project or space and inherit downward,
+            /// which is what makes "the projects a principal can see" a set small enough to
+            /// compile into a bitmap once per query.
+            pub struct RoleBinding<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl ::core::fmt::Debug for UserGroup<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("UserGroup");
-      ds.field("name", &self.name());
-      ds.field("display_name", &self.display_name());
-      ds.field("create_time", &self.create_time());
-      ds.field("update_time", &self.update_time());
-      ds.field("delete_time", &self.delete_time());
-      ds.field("expire_time", &self.expire_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-pub enum RoleBindingOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            impl<'a> ::flatbuffers::Follow<'a> for RoleBinding<'a> {
+                type Inner = RoleBinding<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-/// A role granted to a group over part of the tenancy tree.
-///
-/// Grants attach at an organization, project or space and inherit downward,
-/// which is what makes "the projects a principal can see" a set small enough to
-/// compile into a bitmap once per query.
-pub struct RoleBinding<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            impl<'a> RoleBinding<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_USER_GROUP: ::flatbuffers::VOffsetT = 6;
+                pub const VT_ROLE: ::flatbuffers::VOffsetT = 8;
+                pub const VT_SCOPE: ::flatbuffers::VOffsetT = 10;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 14;
 
-impl<'a> ::flatbuffers::Follow<'a> for RoleBinding<'a> {
-  type Inner = RoleBinding<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    RoleBinding { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args RoleBindingArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<RoleBinding<'bldr>> {
+                    let mut builder = RoleBindingBuilder::new(_fbb);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.scope {
+                        builder.add_scope(x);
+                    }
+                    if let Some(x) = args.role {
+                        builder.add_role(x);
+                    }
+                    if let Some(x) = args.user_group {
+                        builder.add_user_group(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
-impl<'a> RoleBinding<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_USER_GROUP: ::flatbuffers::VOffsetT = 6;
-  pub const VT_ROLE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_SCOPE: ::flatbuffers::VOffsetT = 10;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 14;
+                /// Resource name of the binding.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_NAME, None)
+                    }
+                }
+                /// The group this grants to.
+                #[inline]
+                pub fn user_group(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                RoleBinding::VT_USER_GROUP,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+                /// The role granted, such as `reader`, `writer` or `owner`.
+                #[inline]
+                pub fn role(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_ROLE, None)
+                            .unwrap()
+                    }
+                }
+                /// The resource this applies to — an organization, project or space.
+                #[inline]
+                pub fn scope(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                RoleBinding::VT_SCOPE,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+                /// When the binding was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                RoleBinding::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_ETAG, None)
+                    }
+                }
+            }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    RoleBinding { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args RoleBindingArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<RoleBinding<'bldr>> {
-    let mut builder = RoleBindingBuilder::new(_fbb);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.scope { builder.add_scope(x); }
-    if let Some(x) = args.role { builder.add_role(x); }
-    if let Some(x) = args.user_group { builder.add_user_group(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+            impl ::flatbuffers::Verifiable for RoleBinding<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "user_group",
+                            Self::VT_USER_GROUP,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "role",
+                            Self::VT_ROLE,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "scope",
+                            Self::VT_SCOPE,
+                            true,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct RoleBindingArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub user_group: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub role: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub scope: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for RoleBindingArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    RoleBindingArgs {
+                        name: None,
+                        user_group: None, // required field
+                        role: None,       // required field
+                        scope: None,      // required field
+                        create_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
+            pub struct RoleBindingBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> RoleBindingBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        RoleBinding::VT_NAME,
+                        name,
+                    );
+                }
+                #[inline]
+                pub fn add_user_group(&mut self, user_group: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        RoleBinding::VT_USER_GROUP,
+                        user_group,
+                    );
+                }
+                #[inline]
+                pub fn add_role(&mut self, role: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        RoleBinding::VT_ROLE,
+                        role,
+                    );
+                }
+                #[inline]
+                pub fn add_scope(&mut self, scope: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        RoleBinding::VT_SCOPE,
+                        scope,
+                    );
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            RoleBinding::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        RoleBinding::VT_ETAG,
+                        etag,
+                    );
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> RoleBindingBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    RoleBindingBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<RoleBinding<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_
+                        .required(o, RoleBinding::VT_USER_GROUP, "user_group");
+                    self.fbb_.required(o, RoleBinding::VT_ROLE, "role");
+                    self.fbb_.required(o, RoleBinding::VT_SCOPE, "scope");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-  /// Resource name of the binding.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_NAME, None)}
-  }
-  /// The group this grants to.
-  #[inline]
-  pub fn user_group(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_USER_GROUP, None).unwrap()}
-  }
-  /// The role granted, such as `reader`, `writer` or `owner`.
-  #[inline]
-  pub fn role(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_ROLE, None).unwrap()}
-  }
-  /// The resource this applies to — an organization, project or space.
-  #[inline]
-  pub fn scope(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_SCOPE, None).unwrap()}
-  }
-  /// When the binding was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(RoleBinding::VT_CREATE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(RoleBinding::VT_ETAG, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for RoleBinding<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("user_group", Self::VT_USER_GROUP, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("role", Self::VT_ROLE, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("scope", Self::VT_SCOPE, true)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct RoleBindingArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub user_group: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub role: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub scope: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for RoleBindingArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    RoleBindingArgs {
-      name: None,
-      user_group: None, // required field
-      role: None, // required field
-      scope: None, // required field
-      create_time: None,
-      etag: None,
-    }
-  }
-}
-
-pub struct RoleBindingBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> RoleBindingBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(RoleBinding::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_user_group(&mut self, user_group: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(RoleBinding::VT_USER_GROUP, user_group);
-  }
-  #[inline]
-  pub fn add_role(&mut self, role: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(RoleBinding::VT_ROLE, role);
-  }
-  #[inline]
-  pub fn add_scope(&mut self, scope: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(RoleBinding::VT_SCOPE, scope);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(RoleBinding::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(RoleBinding::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> RoleBindingBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    RoleBindingBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<RoleBinding<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, RoleBinding::VT_USER_GROUP,"user_group");
-    self.fbb_.required(o, RoleBinding::VT_ROLE,"role");
-    self.fbb_.required(o, RoleBinding::VT_SCOPE,"scope");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for RoleBinding<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("RoleBinding");
-      ds.field("name", &self.name());
-      ds.field("user_group", &self.user_group());
-      ds.field("role", &self.role());
-      ds.field("scope", &self.scope());
-      ds.field("create_time", &self.create_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod identity
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for RoleBinding<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("RoleBinding");
+                    ds.field("name", &self.name());
+                    ds.field("user_group", &self.user_group());
+                    ds.field("role", &self.role());
+                    ds.field("scope", &self.scope());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod identity
+} // pub mod telividb

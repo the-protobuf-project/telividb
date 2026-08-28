@@ -4,38 +4,38 @@
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PolicySet {
     /// Resource name of the policy set.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Human-readable name.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// The rules, as a policy-language module.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub source: ::prost::alloc::string::String,
     /// Monotonic version, incremented on every change.
     ///
     /// Compiled visibility is cached on the principal, the collection and this
     /// number together, so a policy change invalidates the cache exactly rather
     /// than by timeout.
-    #[prost(int64, tag="4")]
+    #[prost(int64, tag = "4")]
     pub version: i64,
     /// Groups this set is attached to.
-    #[prost(string, repeated, tag="5")]
+    #[prost(string, repeated, tag = "5")]
     pub user_groups: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// When the policy set was created.
-    #[prost(message, optional, tag="6")]
+    #[prost(message, optional, tag = "6")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the policy set was last modified.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the policy set was soft-deleted, or unset while live.
-    #[prost(message, optional, tag="8")]
+    #[prost(message, optional, tag = "8")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When a soft-deleted policy set is purged and becomes unrecoverable.
-    #[prost(message, optional, tag="9")]
+    #[prost(message, optional, tag = "9")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="10")]
+    #[prost(string, tag = "10")]
     pub etag: ::prost::alloc::string::String,
 }
 /// What a principal is allowed to see.
@@ -51,16 +51,16 @@ pub struct Decision {
     ///
     /// Absent policy denies. Failing open would make a misconfiguration
     /// indistinguishable from a grant.
-    #[prost(enumeration="Effect", tag="1")]
+    #[prost(enumeration = "Effect", tag = "1")]
     pub effect: i32,
     /// Row visibility, as a filter expression to AND into the query.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub row_predicate: ::prost::alloc::string::String,
     /// Fields the principal may read.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub field_mask: ::core::option::Option<::prost_types::FieldMask>,
     /// Policy version this was resolved against.
-    #[prost(int64, tag="4")]
+    #[prost(int64, tag = "4")]
     pub policy_version: i64,
 }
 /// Whether a request is permitted.
@@ -101,85 +101,85 @@ impl Effect {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreatePolicySetRequest {
     /// Organization the policy set belongs to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub policy_set_id: ::prost::alloc::string::String,
     /// The policy set to create.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub policy_set: ::core::option::Option<PolicySet>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a policy set.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetPolicySetRequest {
     /// Resource name of the policy set.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing policy sets.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListPolicySetsRequest {
     /// Organization to list policy sets from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression restricting which policy sets are returned.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// Whether to include soft-deleted policy sets.
-    #[prost(bool, tag="5")]
+    #[prost(bool, tag = "5")]
     pub show_deleted: bool,
 }
 /// Response message for listing policy sets.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListPolicySetsResponse {
     /// The policy sets on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub policy_sets: ::prost::alloc::vec::Vec<PolicySet>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for deleting a policy set.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeletePolicySetRequest {
     /// Resource name of the policy set to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
 }
 /// Request message for evaluating policy without applying it.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct EvaluatePolicyRequest {
     /// Organization the evaluation runs in.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// The principal to evaluate for.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub principal: ::prost::alloc::string::String,
     /// The resource the principal is trying to reach.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub resource: ::prost::alloc::string::String,
     /// The operation being attempted, such as `read` or `read_vector`.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub operation: ::prost::alloc::string::String,
 }
 /// Response message for evaluating policy.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct EvaluatePolicyResponse {
     /// What the principal would be permitted to see.
-    #[prost(message, optional, tag="1")]
+    #[prost(message, optional, tag = "1")]
     pub decision: ::core::option::Option<Decision>,
 }
 // @@protoc_insertion_point(module)

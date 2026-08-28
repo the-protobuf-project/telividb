@@ -10,7 +10,6 @@ use crate::error::to_status;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-use telividb_core::{PointStore, ResourceName};
 use telividb_buffers::protobuf::point::v1::points_server::Points;
 use telividb_buffers::protobuf::point::v1::{
     BatchCreatePointsRequest, BatchCreatePointsResponse, BatchDeletePointsRequest,
@@ -18,6 +17,7 @@ use telividb_buffers::protobuf::point::v1::{
     DeletePointRequest, GetPointRequest, ListPointsRequest, ListPointsResponse, Point,
     SearchPointsRequest, SearchPointsResponse,
 };
+use telividb_core::{PointStore, ResourceName};
 use telividb_storage::RedbPointStore;
 use telividb_telemetry::{fields, logger, redact};
 use tonic::{Request, Response, Status};

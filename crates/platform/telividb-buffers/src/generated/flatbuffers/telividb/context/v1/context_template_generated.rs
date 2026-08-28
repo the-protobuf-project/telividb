@@ -7,784 +7,1121 @@ use crate::wellknown_generated::*;
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod context {
+    use crate::wellknown_generated::*;
+    #[allow(unused_imports, dead_code)]
+    pub mod context {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        use crate::wellknown_generated::*;
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
-  use crate::wellknown_generated::*;
+            use crate::wellknown_generated::*;
 
-pub enum ContextTemplateOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            pub enum ContextTemplateOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-/// A saved retrieval configuration.
-///
-/// A resource rather than a set of request parameters, because it is also an
-/// authorization surface: the person who saves a template and the person who
-/// runs it may see different rows. Policy is therefore evaluated at run time
-/// against the caller, never at save time against the author — otherwise a
-/// saved template becomes a way to read rows you could not query for directly.
-pub struct ContextTemplate<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            /// A saved retrieval configuration.
+            ///
+            /// A resource rather than a set of request parameters, because it is also an
+            /// authorization surface: the person who saves a template and the person who
+            /// runs it may see different rows. Policy is therefore evaluated at run time
+            /// against the caller, never at save time against the author — otherwise a
+            /// saved template becomes a way to read rows you could not query for directly.
+            pub struct ContextTemplate<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for ContextTemplate<'a> {
-  type Inner = ContextTemplate<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for ContextTemplate<'a> {
+                type Inner = ContextTemplate<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> ContextTemplate<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_EXPANSION: ::flatbuffers::VOffsetT = 8;
-  pub const VT_BUDGET: ::flatbuffers::VOffsetT = 10;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
-  pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 14;
-  pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 16;
-  pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 18;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 20;
+            impl<'a> ContextTemplate<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
+                pub const VT_EXPANSION: ::flatbuffers::VOffsetT = 8;
+                pub const VT_BUDGET: ::flatbuffers::VOffsetT = 10;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 12;
+                pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 14;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 16;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 18;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 20;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    ContextTemplate { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args ContextTemplateArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<ContextTemplate<'bldr>> {
-    let mut builder = ContextTemplateBuilder::new(_fbb);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.expire_time { builder.add_expire_time(x); }
-    if let Some(x) = args.delete_time { builder.add_delete_time(x); }
-    if let Some(x) = args.update_time { builder.add_update_time(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.budget { builder.add_budget(x); }
-    if let Some(x) = args.expansion { builder.add_expansion(x); }
-    if let Some(x) = args.display_name { builder.add_display_name(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    ContextTemplate { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args ContextTemplateArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<ContextTemplate<'bldr>> {
+                    let mut builder = ContextTemplateBuilder::new(_fbb);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
+                    if let Some(x) = args.update_time {
+                        builder.add_update_time(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.budget {
+                        builder.add_budget(x);
+                    }
+                    if let Some(x) = args.expansion {
+                        builder.add_expansion(x);
+                    }
+                    if let Some(x) = args.display_name {
+                        builder.add_display_name(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
+                /// Resource name of the template.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            ContextTemplate::VT_NAME,
+                            None,
+                        )
+                    }
+                }
+                /// Human-readable name.
+                #[inline]
+                pub fn display_name(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                ContextTemplate::VT_DISPLAY_NAME,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+                /// How far to expand along the graph.
+                #[inline]
+                pub fn expansion(&self) -> Option<Expansion<'a>> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<Expansion>>(
+                            ContextTemplate::VT_EXPANSION,
+                            None,
+                        )
+                    }
+                }
+                /// Ceiling on what may be returned.
+                #[inline]
+                pub fn budget(&self) -> Option<Budget<'a>> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<Budget>>(
+                            ContextTemplate::VT_BUDGET,
+                            None,
+                        )
+                    }
+                }
+                /// When the template was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                ContextTemplate::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the template was last modified.
+                #[inline]
+                pub fn update_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                ContextTemplate::VT_UPDATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the template was soft-deleted, or unset while live.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                ContextTemplate::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted template is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                ContextTemplate::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            ContextTemplate::VT_ETAG,
+                            None,
+                        )
+                    }
+                }
+            }
 
-  /// Resource name of the template.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(ContextTemplate::VT_NAME, None)}
-  }
-  /// Human-readable name.
-  #[inline]
-  pub fn display_name(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(ContextTemplate::VT_DISPLAY_NAME, None).unwrap()}
-  }
-  /// How far to expand along the graph.
-  #[inline]
-  pub fn expansion(&self) -> Option<Expansion<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<Expansion>>(ContextTemplate::VT_EXPANSION, None)}
-  }
-  /// Ceiling on what may be returned.
-  #[inline]
-  pub fn budget(&self) -> Option<Budget<'a>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<Budget>>(ContextTemplate::VT_BUDGET, None)}
-  }
-  /// When the template was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_CREATE_TIME, None)}
-  }
-  /// When the template was last modified.
-  #[inline]
-  pub fn update_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_UPDATE_TIME, None)}
-  }
-  /// When the template was soft-deleted, or unset while live.
-  #[inline]
-  pub fn delete_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_DELETE_TIME, None)}
-  }
-  /// When a soft-deleted template is purged and becomes unrecoverable.
-  #[inline]
-  pub fn expire_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_EXPIRE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(ContextTemplate::VT_ETAG, None)}
-  }
-}
+            impl ::flatbuffers::Verifiable for ContextTemplate<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "display_name",
+                            Self::VT_DISPLAY_NAME,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<Expansion>>(
+                            "expansion",
+                            Self::VT_EXPANSION,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<Budget>>(
+                            "budget",
+                            Self::VT_BUDGET,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "update_time",
+                            Self::VT_UPDATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct ContextTemplateArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub expansion: Option<::flatbuffers::WIPOffset<Expansion<'a>>>,
+                pub budget: Option<::flatbuffers::WIPOffset<Budget<'a>>>,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for ContextTemplateArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    ContextTemplateArgs {
+                        name: None,
+                        display_name: None, // required field
+                        expansion: None,
+                        budget: None,
+                        create_time: None,
+                        update_time: None,
+                        delete_time: None,
+                        expire_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
-impl ::flatbuffers::Verifiable for ContextTemplate<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("display_name", Self::VT_DISPLAY_NAME, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<Expansion>>("expansion", Self::VT_EXPANSION, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<Budget>>("budget", Self::VT_BUDGET, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("update_time", Self::VT_UPDATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("delete_time", Self::VT_DELETE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("expire_time", Self::VT_EXPIRE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct ContextTemplateArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub expansion: Option<::flatbuffers::WIPOffset<Expansion<'a>>>,
-    pub budget: Option<::flatbuffers::WIPOffset<Budget<'a>>>,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for ContextTemplateArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    ContextTemplateArgs {
-      name: None,
-      display_name: None, // required field
-      expansion: None,
-      budget: None,
-      create_time: None,
-      update_time: None,
-      delete_time: None,
-      expire_time: None,
-      etag: None,
-    }
-  }
-}
+            pub struct ContextTemplateBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> ContextTemplateBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        ContextTemplate::VT_NAME,
+                        name,
+                    );
+                }
+                #[inline]
+                pub fn add_display_name(
+                    &mut self,
+                    display_name: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        ContextTemplate::VT_DISPLAY_NAME,
+                        display_name,
+                    );
+                }
+                #[inline]
+                pub fn add_expansion(
+                    &mut self,
+                    expansion: ::flatbuffers::WIPOffset<Expansion<'b>>,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<Expansion>>(
+                            ContextTemplate::VT_EXPANSION,
+                            expansion,
+                        );
+                }
+                #[inline]
+                pub fn add_budget(&mut self, budget: ::flatbuffers::WIPOffset<Budget<'b>>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<Budget>>(
+                            ContextTemplate::VT_BUDGET,
+                            budget,
+                        );
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            ContextTemplate::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_update_time(
+                    &mut self,
+                    update_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            ContextTemplate::VT_UPDATE_TIME,
+                            update_time,
+                        );
+                }
+                #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            ContextTemplate::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            ContextTemplate::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        ContextTemplate::VT_ETAG,
+                        etag,
+                    );
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> ContextTemplateBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    ContextTemplateBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<ContextTemplate<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_
+                        .required(o, ContextTemplate::VT_DISPLAY_NAME, "display_name");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-pub struct ContextTemplateBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> ContextTemplateBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(ContextTemplate::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_display_name(&mut self, display_name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(ContextTemplate::VT_DISPLAY_NAME, display_name);
-  }
-  #[inline]
-  pub fn add_expansion(&mut self, expansion: ::flatbuffers::WIPOffset<Expansion<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<Expansion>>(ContextTemplate::VT_EXPANSION, expansion);
-  }
-  #[inline]
-  pub fn add_budget(&mut self, budget: ::flatbuffers::WIPOffset<Budget<'b >>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<Budget>>(ContextTemplate::VT_BUDGET, budget);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_update_time(&mut self, update_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_UPDATE_TIME, update_time);
-  }
-  #[inline]
-  pub fn add_delete_time(&mut self, delete_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_DELETE_TIME, delete_time);
-  }
-  #[inline]
-  pub fn add_expire_time(&mut self, expire_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(ContextTemplate::VT_EXPIRE_TIME, expire_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(ContextTemplate::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> ContextTemplateBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    ContextTemplateBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<ContextTemplate<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, ContextTemplate::VT_DISPLAY_NAME,"display_name");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
+            impl ::core::fmt::Debug for ContextTemplate<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("ContextTemplate");
+                    ds.field("name", &self.name());
+                    ds.field("display_name", &self.display_name());
+                    ds.field("expansion", &self.expansion());
+                    ds.field("budget", &self.budget());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("update_time", &self.update_time());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+            pub enum ExpansionOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-impl ::core::fmt::Debug for ContextTemplate<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("ContextTemplate");
-      ds.field("name", &self.name());
-      ds.field("display_name", &self.display_name());
-      ds.field("expansion", &self.expansion());
-      ds.field("budget", &self.budget());
-      ds.field("create_time", &self.create_time());
-      ds.field("update_time", &self.update_time());
-      ds.field("delete_time", &self.delete_time());
-      ds.field("expire_time", &self.expire_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-pub enum ExpansionOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            /// How far a retrieval expands from its similarity seeds.
+            pub struct Expansion<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-/// How far a retrieval expands from its similarity seeds.
-pub struct Expansion<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            impl<'a> ::flatbuffers::Follow<'a> for Expansion<'a> {
+                type Inner = Expansion<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for Expansion<'a> {
-  type Inner = Expansion<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> Expansion<'a> {
+                pub const VT_MAX_HOP_COUNT: ::flatbuffers::VOffsetT = 4;
+                pub const VT_EDGE_TYPES: ::flatbuffers::VOffsetT = 6;
+                pub const VT_DECAY: ::flatbuffers::VOffsetT = 8;
+                pub const VT_MAX_EXPANDED_COUNT: ::flatbuffers::VOffsetT = 10;
+                pub const VT_USE_STRENGTH: ::flatbuffers::VOffsetT = 12;
+                pub const VT_USE_SUMMARIES: ::flatbuffers::VOffsetT = 14;
 
-impl<'a> Expansion<'a> {
-  pub const VT_MAX_HOP_COUNT: ::flatbuffers::VOffsetT = 4;
-  pub const VT_EDGE_TYPES: ::flatbuffers::VOffsetT = 6;
-  pub const VT_DECAY: ::flatbuffers::VOffsetT = 8;
-  pub const VT_MAX_EXPANDED_COUNT: ::flatbuffers::VOffsetT = 10;
-  pub const VT_USE_STRENGTH: ::flatbuffers::VOffsetT = 12;
-  pub const VT_USE_SUMMARIES: ::flatbuffers::VOffsetT = 14;
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    Expansion { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args ExpansionArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<Expansion<'bldr>> {
+                    let mut builder = ExpansionBuilder::new(_fbb);
+                    builder.add_max_expanded_count(args.max_expanded_count);
+                    builder.add_decay(args.decay);
+                    if let Some(x) = args.edge_types {
+                        builder.add_edge_types(x);
+                    }
+                    builder.add_max_hop_count(args.max_hop_count);
+                    builder.add_use_summaries(args.use_summaries);
+                    builder.add_use_strength(args.use_strength);
+                    builder.finish()
+                }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    Expansion { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args ExpansionArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<Expansion<'bldr>> {
-    let mut builder = ExpansionBuilder::new(_fbb);
-    builder.add_max_expanded_count(args.max_expanded_count);
-    builder.add_decay(args.decay);
-    if let Some(x) = args.edge_types { builder.add_edge_types(x); }
-    builder.add_max_hop_count(args.max_hop_count);
-    builder.add_use_summaries(args.use_summaries);
-    builder.add_use_strength(args.use_strength);
-    builder.finish()
-  }
+                /// Hops to follow. Zero disables expansion and returns pure similarity.
+                #[inline]
+                pub fn max_hop_count(&self) -> i32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i32>(Expansion::VT_MAX_HOP_COUNT, Some(0))
+                            .unwrap()
+                    }
+                }
+                /// Edge types to follow. Empty follows every non-structural type.
+                #[inline]
+                pub fn edge_types(
+                    &self,
+                ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                        >>(Expansion::VT_EDGE_TYPES, None)
+                    }
+                }
+                /// Per-hop score multiplier.
+                #[inline]
+                pub fn decay(&self) -> f32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<f32>(Expansion::VT_DECAY, Some(0.0))
+                            .unwrap()
+                    }
+                }
+                /// Ceiling on expanded results, so a hub cannot become the whole answer.
+                #[inline]
+                pub fn max_expanded_count(&self) -> i32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i32>(Expansion::VT_MAX_EXPANDED_COUNT, Some(0))
+                            .unwrap()
+                    }
+                }
+                /// Whether learned traversal strength contributes to ranking.
+                #[inline]
+                pub fn use_strength(&self) -> bool {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<bool>(Expansion::VT_USE_STRENGTH, Some(false))
+                            .unwrap()
+                    }
+                }
+                /// Whether to search the summary tier before the message tier.
+                ///
+                /// Coarse-to-fine: summaries narrow the field, then expansion descends into
+                /// the messages they cover. The same shape the vector path already uses when
+                /// a quantized scan precedes a full-precision rerank.
+                #[inline]
+                pub fn use_summaries(&self) -> bool {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<bool>(Expansion::VT_USE_SUMMARIES, Some(false))
+                            .unwrap()
+                    }
+                }
+            }
 
+            impl ::flatbuffers::Verifiable for Expansion<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<i32>("max_hop_count", Self::VT_MAX_HOP_COUNT, false)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+                        >>("edge_types", Self::VT_EDGE_TYPES, false)?
+                        .visit_field::<f32>("decay", Self::VT_DECAY, false)?
+                        .visit_field::<i32>(
+                            "max_expanded_count",
+                            Self::VT_MAX_EXPANDED_COUNT,
+                            false,
+                        )?
+                        .visit_field::<bool>("use_strength", Self::VT_USE_STRENGTH, false)?
+                        .visit_field::<bool>("use_summaries", Self::VT_USE_SUMMARIES, false)?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct ExpansionArgs<'a> {
+                pub max_hop_count: i32,
+                pub edge_types: Option<
+                    ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                    >,
+                >,
+                pub decay: f32,
+                pub max_expanded_count: i32,
+                pub use_strength: bool,
+                pub use_summaries: bool,
+            }
+            impl<'a> Default for ExpansionArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    ExpansionArgs {
+                        max_hop_count: 0,
+                        edge_types: None,
+                        decay: 0.0,
+                        max_expanded_count: 0,
+                        use_strength: false,
+                        use_summaries: false,
+                    }
+                }
+            }
 
-  /// Hops to follow. Zero disables expansion and returns pure similarity.
-  #[inline]
-  pub fn max_hop_count(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(Expansion::VT_MAX_HOP_COUNT, Some(0)).unwrap()}
-  }
-  /// Edge types to follow. Empty follows every non-structural type.
-  #[inline]
-  pub fn edge_types(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(Expansion::VT_EDGE_TYPES, None)}
-  }
-  /// Per-hop score multiplier.
-  #[inline]
-  pub fn decay(&self) -> f32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(Expansion::VT_DECAY, Some(0.0)).unwrap()}
-  }
-  /// Ceiling on expanded results, so a hub cannot become the whole answer.
-  #[inline]
-  pub fn max_expanded_count(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(Expansion::VT_MAX_EXPANDED_COUNT, Some(0)).unwrap()}
-  }
-  /// Whether learned traversal strength contributes to ranking.
-  #[inline]
-  pub fn use_strength(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(Expansion::VT_USE_STRENGTH, Some(false)).unwrap()}
-  }
-  /// Whether to search the summary tier before the message tier.
-  ///
-  /// Coarse-to-fine: summaries narrow the field, then expansion descends into
-  /// the messages they cover. The same shape the vector path already uses when
-  /// a quantized scan precedes a full-precision rerank.
-  #[inline]
-  pub fn use_summaries(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(Expansion::VT_USE_SUMMARIES, Some(false)).unwrap()}
-  }
-}
+            pub struct ExpansionBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> ExpansionBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_max_hop_count(&mut self, max_hop_count: i32) {
+                    self.fbb_
+                        .push_slot::<i32>(Expansion::VT_MAX_HOP_COUNT, max_hop_count, 0);
+                }
+                #[inline]
+                pub fn add_edge_types(
+                    &mut self,
+                    edge_types: ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+                    >,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Expansion::VT_EDGE_TYPES,
+                        edge_types,
+                    );
+                }
+                #[inline]
+                pub fn add_decay(&mut self, decay: f32) {
+                    self.fbb_.push_slot::<f32>(Expansion::VT_DECAY, decay, 0.0);
+                }
+                #[inline]
+                pub fn add_max_expanded_count(&mut self, max_expanded_count: i32) {
+                    self.fbb_.push_slot::<i32>(
+                        Expansion::VT_MAX_EXPANDED_COUNT,
+                        max_expanded_count,
+                        0,
+                    );
+                }
+                #[inline]
+                pub fn add_use_strength(&mut self, use_strength: bool) {
+                    self.fbb_
+                        .push_slot::<bool>(Expansion::VT_USE_STRENGTH, use_strength, false);
+                }
+                #[inline]
+                pub fn add_use_summaries(&mut self, use_summaries: bool) {
+                    self.fbb_
+                        .push_slot::<bool>(Expansion::VT_USE_SUMMARIES, use_summaries, false);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> ExpansionBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    ExpansionBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<Expansion<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-impl ::flatbuffers::Verifiable for Expansion<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<i32>("max_hop_count", Self::VT_MAX_HOP_COUNT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("edge_types", Self::VT_EDGE_TYPES, false)?
-     .visit_field::<f32>("decay", Self::VT_DECAY, false)?
-     .visit_field::<i32>("max_expanded_count", Self::VT_MAX_EXPANDED_COUNT, false)?
-     .visit_field::<bool>("use_strength", Self::VT_USE_STRENGTH, false)?
-     .visit_field::<bool>("use_summaries", Self::VT_USE_SUMMARIES, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct ExpansionArgs<'a> {
-    pub max_hop_count: i32,
-    pub edge_types: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub decay: f32,
-    pub max_expanded_count: i32,
-    pub use_strength: bool,
-    pub use_summaries: bool,
-}
-impl<'a> Default for ExpansionArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    ExpansionArgs {
-      max_hop_count: 0,
-      edge_types: None,
-      decay: 0.0,
-      max_expanded_count: 0,
-      use_strength: false,
-      use_summaries: false,
-    }
-  }
-}
+            impl ::core::fmt::Debug for Expansion<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("Expansion");
+                    ds.field("max_hop_count", &self.max_hop_count());
+                    ds.field("edge_types", &self.edge_types());
+                    ds.field("decay", &self.decay());
+                    ds.field("max_expanded_count", &self.max_expanded_count());
+                    ds.field("use_strength", &self.use_strength());
+                    ds.field("use_summaries", &self.use_summaries());
+                    ds.finish()
+                }
+            }
+            pub enum BudgetOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-pub struct ExpansionBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> ExpansionBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_max_hop_count(&mut self, max_hop_count: i32) {
-    self.fbb_.push_slot::<i32>(Expansion::VT_MAX_HOP_COUNT, max_hop_count, 0);
-  }
-  #[inline]
-  pub fn add_edge_types(&mut self, edge_types: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Expansion::VT_EDGE_TYPES, edge_types);
-  }
-  #[inline]
-  pub fn add_decay(&mut self, decay: f32) {
-    self.fbb_.push_slot::<f32>(Expansion::VT_DECAY, decay, 0.0);
-  }
-  #[inline]
-  pub fn add_max_expanded_count(&mut self, max_expanded_count: i32) {
-    self.fbb_.push_slot::<i32>(Expansion::VT_MAX_EXPANDED_COUNT, max_expanded_count, 0);
-  }
-  #[inline]
-  pub fn add_use_strength(&mut self, use_strength: bool) {
-    self.fbb_.push_slot::<bool>(Expansion::VT_USE_STRENGTH, use_strength, false);
-  }
-  #[inline]
-  pub fn add_use_summaries(&mut self, use_summaries: bool) {
-    self.fbb_.push_slot::<bool>(Expansion::VT_USE_SUMMARIES, use_summaries, false);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> ExpansionBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    ExpansionBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<Expansion<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
+            /// A ceiling on what an assembly may return.
+            pub struct Budget<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl ::core::fmt::Debug for Expansion<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("Expansion");
-      ds.field("max_hop_count", &self.max_hop_count());
-      ds.field("edge_types", &self.edge_types());
-      ds.field("decay", &self.decay());
-      ds.field("max_expanded_count", &self.max_expanded_count());
-      ds.field("use_strength", &self.use_strength());
-      ds.field("use_summaries", &self.use_summaries());
-      ds.finish()
-  }
-}
-pub enum BudgetOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            impl<'a> ::flatbuffers::Follow<'a> for Budget<'a> {
+                type Inner = Budget<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-/// A ceiling on what an assembly may return.
-pub struct Budget<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            impl<'a> Budget<'a> {
+                pub const VT_MAX_FRAGMENT_COUNT: ::flatbuffers::VOffsetT = 4;
+                pub const VT_MAX_TOKEN_COUNT: ::flatbuffers::VOffsetT = 6;
 
-impl<'a> ::flatbuffers::Follow<'a> for Budget<'a> {
-  type Inner = Budget<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    Budget { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args BudgetArgs,
+                ) -> ::flatbuffers::WIPOffset<Budget<'bldr>> {
+                    let mut builder = BudgetBuilder::new(_fbb);
+                    builder.add_max_token_count(args.max_token_count);
+                    builder.add_max_fragment_count(args.max_fragment_count);
+                    builder.finish()
+                }
 
-impl<'a> Budget<'a> {
-  pub const VT_MAX_FRAGMENT_COUNT: ::flatbuffers::VOffsetT = 4;
-  pub const VT_MAX_TOKEN_COUNT: ::flatbuffers::VOffsetT = 6;
+                /// Maximum fragments to return.
+                #[inline]
+                pub fn max_fragment_count(&self) -> i32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i32>(Budget::VT_MAX_FRAGMENT_COUNT, Some(0))
+                            .unwrap()
+                    }
+                }
+                /// Approximate token ceiling across all fragments.
+                #[inline]
+                pub fn max_token_count(&self) -> i32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i32>(Budget::VT_MAX_TOKEN_COUNT, Some(0))
+                            .unwrap()
+                    }
+                }
+            }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    Budget { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args BudgetArgs
-  ) -> ::flatbuffers::WIPOffset<Budget<'bldr>> {
-    let mut builder = BudgetBuilder::new(_fbb);
-    builder.add_max_token_count(args.max_token_count);
-    builder.add_max_fragment_count(args.max_fragment_count);
-    builder.finish()
-  }
+            impl ::flatbuffers::Verifiable for Budget<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<i32>(
+                            "max_fragment_count",
+                            Self::VT_MAX_FRAGMENT_COUNT,
+                            false,
+                        )?
+                        .visit_field::<i32>("max_token_count", Self::VT_MAX_TOKEN_COUNT, false)?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct BudgetArgs {
+                pub max_fragment_count: i32,
+                pub max_token_count: i32,
+            }
+            impl<'a> Default for BudgetArgs {
+                #[inline]
+                fn default() -> Self {
+                    BudgetArgs {
+                        max_fragment_count: 0,
+                        max_token_count: 0,
+                    }
+                }
+            }
 
+            pub struct BudgetBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> BudgetBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_max_fragment_count(&mut self, max_fragment_count: i32) {
+                    self.fbb_.push_slot::<i32>(
+                        Budget::VT_MAX_FRAGMENT_COUNT,
+                        max_fragment_count,
+                        0,
+                    );
+                }
+                #[inline]
+                pub fn add_max_token_count(&mut self, max_token_count: i32) {
+                    self.fbb_
+                        .push_slot::<i32>(Budget::VT_MAX_TOKEN_COUNT, max_token_count, 0);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> BudgetBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    BudgetBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<Budget<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-  /// Maximum fragments to return.
-  #[inline]
-  pub fn max_fragment_count(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(Budget::VT_MAX_FRAGMENT_COUNT, Some(0)).unwrap()}
-  }
-  /// Approximate token ceiling across all fragments.
-  #[inline]
-  pub fn max_token_count(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(Budget::VT_MAX_TOKEN_COUNT, Some(0)).unwrap()}
-  }
-}
+            impl ::core::fmt::Debug for Budget<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("Budget");
+                    ds.field("max_fragment_count", &self.max_fragment_count());
+                    ds.field("max_token_count", &self.max_token_count());
+                    ds.finish()
+                }
+            }
+            pub enum FragmentOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-impl ::flatbuffers::Verifiable for Budget<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<i32>("max_fragment_count", Self::VT_MAX_FRAGMENT_COUNT, false)?
-     .visit_field::<i32>("max_token_count", Self::VT_MAX_TOKEN_COUNT, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct BudgetArgs {
-    pub max_fragment_count: i32,
-    pub max_token_count: i32,
-}
-impl<'a> Default for BudgetArgs {
-  #[inline]
-  fn default() -> Self {
-    BudgetArgs {
-      max_fragment_count: 0,
-      max_token_count: 0,
-    }
-  }
-}
+            /// One retrieved piece of context, with the path that reached it.
+            pub struct Fragment<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-pub struct BudgetBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> BudgetBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_max_fragment_count(&mut self, max_fragment_count: i32) {
-    self.fbb_.push_slot::<i32>(Budget::VT_MAX_FRAGMENT_COUNT, max_fragment_count, 0);
-  }
-  #[inline]
-  pub fn add_max_token_count(&mut self, max_token_count: i32) {
-    self.fbb_.push_slot::<i32>(Budget::VT_MAX_TOKEN_COUNT, max_token_count, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> BudgetBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    BudgetBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<Budget<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for Fragment<'a> {
+                type Inner = Fragment<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl ::core::fmt::Debug for Budget<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("Budget");
-      ds.field("max_fragment_count", &self.max_fragment_count());
-      ds.field("max_token_count", &self.max_token_count());
-      ds.finish()
-  }
-}
-pub enum FragmentOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            impl<'a> Fragment<'a> {
+                pub const VT_SOURCE: ::flatbuffers::VOffsetT = 4;
+                pub const VT_CONTENT: ::flatbuffers::VOffsetT = 6;
+                pub const VT_SCORE: ::flatbuffers::VOffsetT = 8;
+                pub const VT_HOP_COUNT: ::flatbuffers::VOffsetT = 10;
+                pub const VT_REACHED_VIA: ::flatbuffers::VOffsetT = 12;
+                pub const VT_SUMMARIZED: ::flatbuffers::VOffsetT = 14;
+                pub const VT_MCP_SERVER: ::flatbuffers::VOffsetT = 16;
 
-/// One retrieved piece of context, with the path that reached it.
-pub struct Fragment<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    Fragment { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args FragmentArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<Fragment<'bldr>> {
+                    let mut builder = FragmentBuilder::new(_fbb);
+                    if let Some(x) = args.mcp_server {
+                        builder.add_mcp_server(x);
+                    }
+                    if let Some(x) = args.reached_via {
+                        builder.add_reached_via(x);
+                    }
+                    builder.add_hop_count(args.hop_count);
+                    builder.add_score(args.score);
+                    if let Some(x) = args.content {
+                        builder.add_content(x);
+                    }
+                    if let Some(x) = args.source {
+                        builder.add_source(x);
+                    }
+                    builder.add_summarized(args.summarized);
+                    builder.finish()
+                }
 
-impl<'a> ::flatbuffers::Follow<'a> for Fragment<'a> {
-  type Inner = Fragment<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+                /// The resource this came from.
+                #[inline]
+                pub fn source(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Fragment::VT_SOURCE, None)
+                    }
+                }
+                /// The text.
+                #[inline]
+                pub fn content(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(Fragment::VT_CONTENT, None)
+                    }
+                }
+                /// Combined score after similarity, decay, weights and recency.
+                #[inline]
+                pub fn score(&self) -> f32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe { self._tab.get::<f32>(Fragment::VT_SCORE, Some(0.0)).unwrap() }
+                }
+                /// Hops from the nearest seed. Zero means a direct similarity match.
+                #[inline]
+                pub fn hop_count(&self) -> i32 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i32>(Fragment::VT_HOP_COUNT, Some(0))
+                            .unwrap()
+                    }
+                }
+                /// The seed this was reached from.
+                #[inline]
+                pub fn reached_via(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            Fragment::VT_REACHED_VIA,
+                            None,
+                        )
+                    }
+                }
+                /// Whether this fragment is a summary rather than stored content.
+                #[inline]
+                pub fn summarized(&self) -> bool {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<bool>(Fragment::VT_SUMMARIZED, Some(false))
+                            .unwrap()
+                    }
+                }
+                /// The MCP server this originated with, when it came from a tool result.
+                ///
+                /// Provenance carried through to the point of use: text a third-party server
+                /// returned must not rank as memory the same way something a person said
+                /// does, and a caller cannot make that distinction without being told.
+                #[inline]
+                pub fn mcp_server(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            Fragment::VT_MCP_SERVER,
+                            None,
+                        )
+                    }
+                }
+            }
 
-impl<'a> Fragment<'a> {
-  pub const VT_SOURCE: ::flatbuffers::VOffsetT = 4;
-  pub const VT_CONTENT: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SCORE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_HOP_COUNT: ::flatbuffers::VOffsetT = 10;
-  pub const VT_REACHED_VIA: ::flatbuffers::VOffsetT = 12;
-  pub const VT_SUMMARIZED: ::flatbuffers::VOffsetT = 14;
-  pub const VT_MCP_SERVER: ::flatbuffers::VOffsetT = 16;
+            impl ::flatbuffers::Verifiable for Fragment<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "source",
+                            Self::VT_SOURCE,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "content",
+                            Self::VT_CONTENT,
+                            false,
+                        )?
+                        .visit_field::<f32>("score", Self::VT_SCORE, false)?
+                        .visit_field::<i32>("hop_count", Self::VT_HOP_COUNT, false)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "reached_via",
+                            Self::VT_REACHED_VIA,
+                            false,
+                        )?
+                        .visit_field::<bool>("summarized", Self::VT_SUMMARIZED, false)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "mcp_server",
+                            Self::VT_MCP_SERVER,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct FragmentArgs<'a> {
+                pub source: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub content: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub score: f32,
+                pub hop_count: i32,
+                pub reached_via: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub summarized: bool,
+                pub mcp_server: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for FragmentArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    FragmentArgs {
+                        source: None,
+                        content: None,
+                        score: 0.0,
+                        hop_count: 0,
+                        reached_via: None,
+                        summarized: false,
+                        mcp_server: None,
+                    }
+                }
+            }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    Fragment { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args FragmentArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<Fragment<'bldr>> {
-    let mut builder = FragmentBuilder::new(_fbb);
-    if let Some(x) = args.mcp_server { builder.add_mcp_server(x); }
-    if let Some(x) = args.reached_via { builder.add_reached_via(x); }
-    builder.add_hop_count(args.hop_count);
-    builder.add_score(args.score);
-    if let Some(x) = args.content { builder.add_content(x); }
-    if let Some(x) = args.source { builder.add_source(x); }
-    builder.add_summarized(args.summarized);
-    builder.finish()
-  }
+            pub struct FragmentBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> FragmentBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_source(&mut self, source: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Fragment::VT_SOURCE,
+                        source,
+                    );
+                }
+                #[inline]
+                pub fn add_content(&mut self, content: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Fragment::VT_CONTENT,
+                        content,
+                    );
+                }
+                #[inline]
+                pub fn add_score(&mut self, score: f32) {
+                    self.fbb_.push_slot::<f32>(Fragment::VT_SCORE, score, 0.0);
+                }
+                #[inline]
+                pub fn add_hop_count(&mut self, hop_count: i32) {
+                    self.fbb_
+                        .push_slot::<i32>(Fragment::VT_HOP_COUNT, hop_count, 0);
+                }
+                #[inline]
+                pub fn add_reached_via(&mut self, reached_via: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Fragment::VT_REACHED_VIA,
+                        reached_via,
+                    );
+                }
+                #[inline]
+                pub fn add_summarized(&mut self, summarized: bool) {
+                    self.fbb_
+                        .push_slot::<bool>(Fragment::VT_SUMMARIZED, summarized, false);
+                }
+                #[inline]
+                pub fn add_mcp_server(&mut self, mcp_server: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Fragment::VT_MCP_SERVER,
+                        mcp_server,
+                    );
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> FragmentBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    FragmentBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<Fragment<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-
-  /// The resource this came from.
-  #[inline]
-  pub fn source(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Fragment::VT_SOURCE, None)}
-  }
-  /// The text.
-  #[inline]
-  pub fn content(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Fragment::VT_CONTENT, None)}
-  }
-  /// Combined score after similarity, decay, weights and recency.
-  #[inline]
-  pub fn score(&self) -> f32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<f32>(Fragment::VT_SCORE, Some(0.0)).unwrap()}
-  }
-  /// Hops from the nearest seed. Zero means a direct similarity match.
-  #[inline]
-  pub fn hop_count(&self) -> i32 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i32>(Fragment::VT_HOP_COUNT, Some(0)).unwrap()}
-  }
-  /// The seed this was reached from.
-  #[inline]
-  pub fn reached_via(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Fragment::VT_REACHED_VIA, None)}
-  }
-  /// Whether this fragment is a summary rather than stored content.
-  #[inline]
-  pub fn summarized(&self) -> bool {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<bool>(Fragment::VT_SUMMARIZED, Some(false)).unwrap()}
-  }
-  /// The MCP server this originated with, when it came from a tool result.
-  ///
-  /// Provenance carried through to the point of use: text a third-party server
-  /// returned must not rank as memory the same way something a person said
-  /// does, and a caller cannot make that distinction without being told.
-  #[inline]
-  pub fn mcp_server(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Fragment::VT_MCP_SERVER, None)}
-  }
-}
-
-impl ::flatbuffers::Verifiable for Fragment<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("source", Self::VT_SOURCE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("content", Self::VT_CONTENT, false)?
-     .visit_field::<f32>("score", Self::VT_SCORE, false)?
-     .visit_field::<i32>("hop_count", Self::VT_HOP_COUNT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("reached_via", Self::VT_REACHED_VIA, false)?
-     .visit_field::<bool>("summarized", Self::VT_SUMMARIZED, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("mcp_server", Self::VT_MCP_SERVER, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct FragmentArgs<'a> {
-    pub source: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub content: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub score: f32,
-    pub hop_count: i32,
-    pub reached_via: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub summarized: bool,
-    pub mcp_server: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for FragmentArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    FragmentArgs {
-      source: None,
-      content: None,
-      score: 0.0,
-      hop_count: 0,
-      reached_via: None,
-      summarized: false,
-      mcp_server: None,
-    }
-  }
-}
-
-pub struct FragmentBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> FragmentBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_source(&mut self, source: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Fragment::VT_SOURCE, source);
-  }
-  #[inline]
-  pub fn add_content(&mut self, content: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Fragment::VT_CONTENT, content);
-  }
-  #[inline]
-  pub fn add_score(&mut self, score: f32) {
-    self.fbb_.push_slot::<f32>(Fragment::VT_SCORE, score, 0.0);
-  }
-  #[inline]
-  pub fn add_hop_count(&mut self, hop_count: i32) {
-    self.fbb_.push_slot::<i32>(Fragment::VT_HOP_COUNT, hop_count, 0);
-  }
-  #[inline]
-  pub fn add_reached_via(&mut self, reached_via: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Fragment::VT_REACHED_VIA, reached_via);
-  }
-  #[inline]
-  pub fn add_summarized(&mut self, summarized: bool) {
-    self.fbb_.push_slot::<bool>(Fragment::VT_SUMMARIZED, summarized, false);
-  }
-  #[inline]
-  pub fn add_mcp_server(&mut self, mcp_server: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Fragment::VT_MCP_SERVER, mcp_server);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> FragmentBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    FragmentBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<Fragment<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for Fragment<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("Fragment");
-      ds.field("source", &self.source());
-      ds.field("content", &self.content());
-      ds.field("score", &self.score());
-      ds.field("hop_count", &self.hop_count());
-      ds.field("reached_via", &self.reached_via());
-      ds.field("summarized", &self.summarized());
-      ds.field("mcp_server", &self.mcp_server());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod context
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for Fragment<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("Fragment");
+                    ds.field("source", &self.source());
+                    ds.field("content", &self.content());
+                    ds.field("score", &self.score());
+                    ds.field("hop_count", &self.hop_count());
+                    ds.field("reached_via", &self.reached_via());
+                    ds.field("summarized", &self.summarized());
+                    ds.field("mcp_server", &self.mcp_server());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod context
+} // pub mod telividb

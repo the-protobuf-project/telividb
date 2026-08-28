@@ -7,116 +7,140 @@ use crate::system_generated::*;
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-  use crate::system_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod system {
+    use crate::system_generated::*;
+    #[allow(unused_imports, dead_code)]
+    pub mod system {
 
-  use crate::system_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        use crate::system_generated::*;
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
-  use crate::system_generated::*;
+            use crate::system_generated::*;
 
-pub enum GetSystemRequestOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            pub enum GetSystemRequestOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-/// Request message for retrieving the system singleton.
-pub struct GetSystemRequest<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            /// Request message for retrieving the system singleton.
+            pub struct GetSystemRequest<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for GetSystemRequest<'a> {
-  type Inner = GetSystemRequest<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for GetSystemRequest<'a> {
+                type Inner = GetSystemRequest<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> GetSystemRequest<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+            impl<'a> GetSystemRequest<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    GetSystemRequest { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args GetSystemRequestArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<GetSystemRequest<'bldr>> {
-    let mut builder = GetSystemRequestBuilder::new(_fbb);
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    GetSystemRequest { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args GetSystemRequestArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<GetSystemRequest<'bldr>> {
+                    let mut builder = GetSystemRequestBuilder::new(_fbb);
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
+                /// Resource name of the singleton. Always `system`.
+                #[inline]
+                pub fn name(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                GetSystemRequest::VT_NAME,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+            }
 
-  /// Resource name of the singleton. Always `system`.
-  #[inline]
-  pub fn name(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(GetSystemRequest::VT_NAME, None).unwrap()}
-  }
-}
+            impl ::flatbuffers::Verifiable for GetSystemRequest<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            true,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct GetSystemRequestArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for GetSystemRequestArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    GetSystemRequestArgs {
+                        name: None, // required field
+                    }
+                }
+            }
 
-impl ::flatbuffers::Verifiable for GetSystemRequest<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, true)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct GetSystemRequestArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for GetSystemRequestArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    GetSystemRequestArgs {
-      name: None, // required field
-    }
-  }
-}
+            pub struct GetSystemRequestBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> GetSystemRequestBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        GetSystemRequest::VT_NAME,
+                        name,
+                    );
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> GetSystemRequestBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    GetSystemRequestBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<GetSystemRequest<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_.required(o, GetSystemRequest::VT_NAME, "name");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-pub struct GetSystemRequestBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> GetSystemRequestBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(GetSystemRequest::VT_NAME, name);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> GetSystemRequestBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    GetSystemRequestBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<GetSystemRequest<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, GetSystemRequest::VT_NAME,"name");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for GetSystemRequest<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("GetSystemRequest");
-      ds.field("name", &self.name());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod system
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for GetSystemRequest<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("GetSystemRequest");
+                    ds.field("name", &self.name());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod system
+} // pub mod telividb

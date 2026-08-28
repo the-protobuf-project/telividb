@@ -6,10 +6,10 @@ pub mod identity_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct IdentityClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod identity_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             IdentityClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -94,39 +93,29 @@ pub mod identity_client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreateUserRequest>,
         ) -> std::result::Result<tonic::Response<super::User>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.identity.v1.Identity/CreateUser",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.identity.v1.Identity/CreateUser");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.identity.v1.Identity", "CreateUser"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "CreateUser",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_user(
             &mut self,
             request: impl tonic::IntoRequest<super::GetUserRequest>,
         ) -> std::result::Result<tonic::Response<super::User>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.identity.v1.Identity/GetUser",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.identity.v1.Identity/GetUser");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.identity.v1.Identity", "GetUser"));
@@ -135,259 +124,197 @@ pub mod identity_client {
         pub async fn list_users(
             &mut self,
             request: impl tonic::IntoRequest<super::ListUsersRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListUsersResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListUsersResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.identity.v1.Identity/ListUsers",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.identity.v1.Identity/ListUsers");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.identity.v1.Identity", "ListUsers"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "ListUsers",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn delete_user(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteUserRequest>,
         ) -> std::result::Result<tonic::Response<super::User>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.identity.v1.Identity/DeleteUser",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.identity.v1.Identity/DeleteUser");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.identity.v1.Identity", "DeleteUser"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "DeleteUser",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn undelete_user(
             &mut self,
             request: impl tonic::IntoRequest<super::UndeleteUserRequest>,
         ) -> std::result::Result<tonic::Response<super::User>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.identity.v1.Identity/UndeleteUser",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.identity.v1.Identity/UndeleteUser");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "UndeleteUser"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "UndeleteUser",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn create_user_group(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateUserGroupRequest>,
         ) -> std::result::Result<tonic::Response<super::UserGroup>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.identity.v1.Identity/CreateUserGroup",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "CreateUserGroup"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "CreateUserGroup",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_user_group(
             &mut self,
             request: impl tonic::IntoRequest<super::GetUserGroupRequest>,
         ) -> std::result::Result<tonic::Response<super::UserGroup>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.identity.v1.Identity/GetUserGroup",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.identity.v1.Identity/GetUserGroup");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "GetUserGroup"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "GetUserGroup",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn list_user_groups(
             &mut self,
             request: impl tonic::IntoRequest<super::ListUserGroupsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListUserGroupsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListUserGroupsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.identity.v1.Identity/ListUserGroups",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "ListUserGroups"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "ListUserGroups",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn delete_user_group(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteUserGroupRequest>,
         ) -> std::result::Result<tonic::Response<super::UserGroup>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.identity.v1.Identity/DeleteUserGroup",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "DeleteUserGroup"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "DeleteUserGroup",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn create_role_binding(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateRoleBindingRequest>,
         ) -> std::result::Result<tonic::Response<super::RoleBinding>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.identity.v1.Identity/CreateRoleBinding",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "CreateRoleBinding"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "CreateRoleBinding",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_role_binding(
             &mut self,
             request: impl tonic::IntoRequest<super::GetRoleBindingRequest>,
         ) -> std::result::Result<tonic::Response<super::RoleBinding>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.identity.v1.Identity/GetRoleBinding",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "GetRoleBinding"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "GetRoleBinding",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn list_role_bindings(
             &mut self,
             request: impl tonic::IntoRequest<super::ListRoleBindingsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListRoleBindingsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListRoleBindingsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.identity.v1.Identity/ListRoleBindings",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "ListRoleBindings"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "ListRoleBindings",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn delete_role_binding(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteRoleBindingRequest>,
         ) -> std::result::Result<tonic::Response<super::RoleBinding>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.identity.v1.Identity/DeleteRoleBinding",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.identity.v1.Identity", "DeleteRoleBinding"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.identity.v1.Identity",
+                "DeleteRoleBinding",
+            ));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -399,7 +326,7 @@ pub mod identity_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with IdentityServer.
@@ -416,10 +343,7 @@ pub mod identity_server {
         async fn list_users(
             &self,
             request: tonic::Request<super::ListUsersRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListUsersResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListUsersResponse>, tonic::Status>;
         async fn delete_user(
             &self,
             request: tonic::Request<super::DeleteUserRequest>,
@@ -439,10 +363,7 @@ pub mod identity_server {
         async fn list_user_groups(
             &self,
             request: tonic::Request<super::ListUserGroupsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListUserGroupsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListUserGroupsResponse>, tonic::Status>;
         async fn delete_user_group(
             &self,
             request: tonic::Request<super::DeleteUserGroupRequest>,
@@ -458,10 +379,7 @@ pub mod identity_server {
         async fn list_role_bindings(
             &self,
             request: tonic::Request<super::ListRoleBindingsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListRoleBindingsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListRoleBindingsResponse>, tonic::Status>;
         async fn delete_role_binding(
             &self,
             request: tonic::Request<super::DeleteRoleBindingRequest>,
@@ -488,10 +406,7 @@ pub mod identity_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -546,23 +461,16 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/CreateUser" => {
                     #[allow(non_camel_case_types)]
                     struct CreateUserSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::CreateUserRequest>
-                    for CreateUserSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::CreateUserRequest> for CreateUserSvc<T> {
                         type Response = super::User;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateUserRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Identity>::create_user(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Identity>::create_user(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -591,21 +499,16 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/GetUser" => {
                     #[allow(non_camel_case_types)]
                     struct GetUserSvc<T: Identity>(pub Arc<T>);
-                    impl<T: Identity> tonic::server::UnaryService<super::GetUserRequest>
-                    for GetUserSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::GetUserRequest> for GetUserSvc<T> {
                         type Response = super::User;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetUserRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Identity>::get_user(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Identity>::get_user(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -634,23 +537,16 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/ListUsers" => {
                     #[allow(non_camel_case_types)]
                     struct ListUsersSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::ListUsersRequest>
-                    for ListUsersSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::ListUsersRequest> for ListUsersSvc<T> {
                         type Response = super::ListUsersResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListUsersRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Identity>::list_users(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Identity>::list_users(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -679,23 +575,16 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/DeleteUser" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteUserSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::DeleteUserRequest>
-                    for DeleteUserSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::DeleteUserRequest> for DeleteUserSvc<T> {
                         type Response = super::User;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteUserRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Identity>::delete_user(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Identity>::delete_user(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -724,15 +613,9 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/UndeleteUser" => {
                     #[allow(non_camel_case_types)]
                     struct UndeleteUserSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::UndeleteUserRequest>
-                    for UndeleteUserSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::UndeleteUserRequest> for UndeleteUserSvc<T> {
                         type Response = super::User;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::UndeleteUserRequest>,
@@ -769,15 +652,11 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/CreateUserGroup" => {
                     #[allow(non_camel_case_types)]
                     struct CreateUserGroupSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::CreateUserGroupRequest>
-                    for CreateUserGroupSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::CreateUserGroupRequest>
+                        for CreateUserGroupSvc<T>
+                    {
                         type Response = super::UserGroup;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateUserGroupRequest>,
@@ -814,15 +693,9 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/GetUserGroup" => {
                     #[allow(non_camel_case_types)]
                     struct GetUserGroupSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::GetUserGroupRequest>
-                    for GetUserGroupSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::GetUserGroupRequest> for GetUserGroupSvc<T> {
                         type Response = super::UserGroup;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetUserGroupRequest>,
@@ -859,15 +732,11 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/ListUserGroups" => {
                     #[allow(non_camel_case_types)]
                     struct ListUserGroupsSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::ListUserGroupsRequest>
-                    for ListUserGroupsSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::ListUserGroupsRequest>
+                        for ListUserGroupsSvc<T>
+                    {
                         type Response = super::ListUserGroupsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListUserGroupsRequest>,
@@ -904,15 +773,11 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/DeleteUserGroup" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteUserGroupSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::DeleteUserGroupRequest>
-                    for DeleteUserGroupSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::DeleteUserGroupRequest>
+                        for DeleteUserGroupSvc<T>
+                    {
                         type Response = super::UserGroup;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteUserGroupRequest>,
@@ -949,15 +814,11 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/CreateRoleBinding" => {
                     #[allow(non_camel_case_types)]
                     struct CreateRoleBindingSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::CreateRoleBindingRequest>
-                    for CreateRoleBindingSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::CreateRoleBindingRequest>
+                        for CreateRoleBindingSvc<T>
+                    {
                         type Response = super::RoleBinding;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateRoleBindingRequest>,
@@ -994,15 +855,11 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/GetRoleBinding" => {
                     #[allow(non_camel_case_types)]
                     struct GetRoleBindingSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::GetRoleBindingRequest>
-                    for GetRoleBindingSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::GetRoleBindingRequest>
+                        for GetRoleBindingSvc<T>
+                    {
                         type Response = super::RoleBinding;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetRoleBindingRequest>,
@@ -1039,15 +896,11 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/ListRoleBindings" => {
                     #[allow(non_camel_case_types)]
                     struct ListRoleBindingsSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::ListRoleBindingsRequest>
-                    for ListRoleBindingsSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::ListRoleBindingsRequest>
+                        for ListRoleBindingsSvc<T>
+                    {
                         type Response = super::ListRoleBindingsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListRoleBindingsRequest>,
@@ -1084,15 +937,11 @@ pub mod identity_server {
                 "/telividb.identity.v1.Identity/DeleteRoleBinding" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteRoleBindingSvc<T: Identity>(pub Arc<T>);
-                    impl<
-                        T: Identity,
-                    > tonic::server::UnaryService<super::DeleteRoleBindingRequest>
-                    for DeleteRoleBindingSvc<T> {
+                    impl<T: Identity> tonic::server::UnaryService<super::DeleteRoleBindingRequest>
+                        for DeleteRoleBindingSvc<T>
+                    {
                         type Response = super::RoleBinding;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteRoleBindingRequest>,
@@ -1126,25 +975,19 @@ pub mod identity_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

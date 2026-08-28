@@ -6,10 +6,10 @@ pub mod inference_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct InferenceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod inference_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             InferenceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -94,71 +93,52 @@ pub mod inference_client {
             &mut self,
             request: impl tonic::IntoRequest<super::GetModelRequest>,
         ) -> std::result::Result<tonic::Response<super::Model>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.inference.v1.Inference/GetModel",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.inference.v1.Inference/GetModel");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.inference.v1.Inference", "GetModel"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.inference.v1.Inference",
+                "GetModel",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn list_models(
             &mut self,
             request: impl tonic::IntoRequest<super::ListModelsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListModelsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListModelsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.inference.v1.Inference/ListModels",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.inference.v1.Inference/ListModels");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.inference.v1.Inference", "ListModels"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.inference.v1.Inference",
+                "ListModels",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn embed_text(
             &mut self,
             request: impl tonic::IntoRequest<super::EmbedTextRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::EmbedTextResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::EmbedTextResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.inference.v1.Inference/EmbedText",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.inference.v1.Inference/EmbedText");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.inference.v1.Inference", "EmbedText"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.inference.v1.Inference",
+                "EmbedText",
+            ));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -170,7 +150,7 @@ pub mod inference_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with InferenceServer.
@@ -183,17 +163,11 @@ pub mod inference_server {
         async fn list_models(
             &self,
             request: tonic::Request<super::ListModelsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListModelsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListModelsResponse>, tonic::Status>;
         async fn embed_text(
             &self,
             request: tonic::Request<super::EmbedTextRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::EmbedTextResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::EmbedTextResponse>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct InferenceServer<T> {
@@ -216,10 +190,7 @@ pub mod inference_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -274,23 +245,16 @@ pub mod inference_server {
                 "/telividb.inference.v1.Inference/GetModel" => {
                     #[allow(non_camel_case_types)]
                     struct GetModelSvc<T: Inference>(pub Arc<T>);
-                    impl<
-                        T: Inference,
-                    > tonic::server::UnaryService<super::GetModelRequest>
-                    for GetModelSvc<T> {
+                    impl<T: Inference> tonic::server::UnaryService<super::GetModelRequest> for GetModelSvc<T> {
                         type Response = super::Model;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetModelRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Inference>::get_model(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Inference>::get_model(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -319,23 +283,16 @@ pub mod inference_server {
                 "/telividb.inference.v1.Inference/ListModels" => {
                     #[allow(non_camel_case_types)]
                     struct ListModelsSvc<T: Inference>(pub Arc<T>);
-                    impl<
-                        T: Inference,
-                    > tonic::server::UnaryService<super::ListModelsRequest>
-                    for ListModelsSvc<T> {
+                    impl<T: Inference> tonic::server::UnaryService<super::ListModelsRequest> for ListModelsSvc<T> {
                         type Response = super::ListModelsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListModelsRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Inference>::list_models(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Inference>::list_models(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -364,23 +321,16 @@ pub mod inference_server {
                 "/telividb.inference.v1.Inference/EmbedText" => {
                     #[allow(non_camel_case_types)]
                     struct EmbedTextSvc<T: Inference>(pub Arc<T>);
-                    impl<
-                        T: Inference,
-                    > tonic::server::UnaryService<super::EmbedTextRequest>
-                    for EmbedTextSvc<T> {
+                    impl<T: Inference> tonic::server::UnaryService<super::EmbedTextRequest> for EmbedTextSvc<T> {
                         type Response = super::EmbedTextResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::EmbedTextRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Inference>::embed_text(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Inference>::embed_text(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -406,25 +356,19 @@ pub mod inference_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

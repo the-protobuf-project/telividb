@@ -6,10 +6,10 @@ pub mod collections_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct CollectionsClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod collections_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             CollectionsClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -94,117 +93,83 @@ pub mod collections_client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreateCollectionRequest>,
         ) -> std::result::Result<tonic::Response<super::Collection>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.collection.v1.Collections/CreateCollection",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.collection.v1.Collections",
-                        "CreateCollection",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.collection.v1.Collections",
+                "CreateCollection",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /** Retrieves a single collection.
-*/
+        */
         pub async fn get_collection(
             &mut self,
             request: impl tonic::IntoRequest<super::GetCollectionRequest>,
         ) -> std::result::Result<tonic::Response<super::Collection>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.collection.v1.Collections/GetCollection",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.collection.v1.Collections",
-                        "GetCollection",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.collection.v1.Collections",
+                "GetCollection",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /** Lists collections.
-*/
+        */
         pub async fn list_collections(
             &mut self,
             request: impl tonic::IntoRequest<super::ListCollectionsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListCollectionsResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListCollectionsResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.collection.v1.Collections/ListCollections",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.collection.v1.Collections",
-                        "ListCollections",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.collection.v1.Collections",
+                "ListCollections",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /** Deletes a collection and every segment belonging to it.
 
- Returns the tombstoned collection. The collection stops answering queries
- immediately; reclaiming the segments is a checkpointed job, because
- deleting every segment is unbounded work that cannot fit in a deadline.
-*/
+         Returns the tombstoned collection. The collection stops answering queries
+         immediately; reclaiming the segments is a checkpointed job, because
+         deleting every segment is unbounded work that cannot fit in a deadline.
+        */
         pub async fn delete_collection(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteCollectionRequest>,
         ) -> std::result::Result<tonic::Response<super::Collection>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.collection.v1.Collections/DeleteCollection",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new(
-                        "telividb.collection.v1.Collections",
-                        "DeleteCollection",
-                    ),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.collection.v1.Collections",
+                "DeleteCollection",
+            ));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -216,7 +181,7 @@ pub mod collections_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with CollectionsServer.
@@ -227,26 +192,23 @@ pub mod collections_server {
             request: tonic::Request<super::CreateCollectionRequest>,
         ) -> std::result::Result<tonic::Response<super::Collection>, tonic::Status>;
         /** Retrieves a single collection.
-*/
+        */
         async fn get_collection(
             &self,
             request: tonic::Request<super::GetCollectionRequest>,
         ) -> std::result::Result<tonic::Response<super::Collection>, tonic::Status>;
         /** Lists collections.
-*/
+        */
         async fn list_collections(
             &self,
             request: tonic::Request<super::ListCollectionsRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListCollectionsResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListCollectionsResponse>, tonic::Status>;
         /** Deletes a collection and every segment belonging to it.
 
- Returns the tombstoned collection. The collection stops answering queries
- immediately; reclaiming the segments is a checkpointed job, because
- deleting every segment is unbounded work that cannot fit in a deadline.
-*/
+         Returns the tombstoned collection. The collection stops answering queries
+         immediately; reclaiming the segments is a checkpointed job, because
+         deleting every segment is unbounded work that cannot fit in a deadline.
+        */
         async fn delete_collection(
             &self,
             request: tonic::Request<super::DeleteCollectionRequest>,
@@ -273,10 +235,7 @@ pub mod collections_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -331,15 +290,11 @@ pub mod collections_server {
                 "/telividb.collection.v1.Collections/CreateCollection" => {
                     #[allow(non_camel_case_types)]
                     struct CreateCollectionSvc<T: Collections>(pub Arc<T>);
-                    impl<
-                        T: Collections,
-                    > tonic::server::UnaryService<super::CreateCollectionRequest>
-                    for CreateCollectionSvc<T> {
+                    impl<T: Collections> tonic::server::UnaryService<super::CreateCollectionRequest>
+                        for CreateCollectionSvc<T>
+                    {
                         type Response = super::Collection;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateCollectionRequest>,
@@ -376,15 +331,11 @@ pub mod collections_server {
                 "/telividb.collection.v1.Collections/GetCollection" => {
                     #[allow(non_camel_case_types)]
                     struct GetCollectionSvc<T: Collections>(pub Arc<T>);
-                    impl<
-                        T: Collections,
-                    > tonic::server::UnaryService<super::GetCollectionRequest>
-                    for GetCollectionSvc<T> {
+                    impl<T: Collections> tonic::server::UnaryService<super::GetCollectionRequest>
+                        for GetCollectionSvc<T>
+                    {
                         type Response = super::Collection;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetCollectionRequest>,
@@ -421,15 +372,11 @@ pub mod collections_server {
                 "/telividb.collection.v1.Collections/ListCollections" => {
                     #[allow(non_camel_case_types)]
                     struct ListCollectionsSvc<T: Collections>(pub Arc<T>);
-                    impl<
-                        T: Collections,
-                    > tonic::server::UnaryService<super::ListCollectionsRequest>
-                    for ListCollectionsSvc<T> {
+                    impl<T: Collections> tonic::server::UnaryService<super::ListCollectionsRequest>
+                        for ListCollectionsSvc<T>
+                    {
                         type Response = super::ListCollectionsResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListCollectionsRequest>,
@@ -466,15 +413,11 @@ pub mod collections_server {
                 "/telividb.collection.v1.Collections/DeleteCollection" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteCollectionSvc<T: Collections>(pub Arc<T>);
-                    impl<
-                        T: Collections,
-                    > tonic::server::UnaryService<super::DeleteCollectionRequest>
-                    for DeleteCollectionSvc<T> {
+                    impl<T: Collections> tonic::server::UnaryService<super::DeleteCollectionRequest>
+                        for DeleteCollectionSvc<T>
+                    {
                         type Response = super::Collection;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteCollectionRequest>,
@@ -508,25 +451,19 @@ pub mod collections_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

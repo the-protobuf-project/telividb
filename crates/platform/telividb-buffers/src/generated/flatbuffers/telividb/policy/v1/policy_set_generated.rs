@@ -7,537 +7,786 @@ use crate::wellknown_generated::*;
 #[allow(unused_imports, dead_code)]
 pub mod telividb {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod policy {
+    use crate::wellknown_generated::*;
+    #[allow(unused_imports, dead_code)]
+    pub mod policy {
 
-  use crate::wellknown_generated::*;
-#[allow(unused_imports, dead_code)]
-pub mod v_1 {
+        use crate::wellknown_generated::*;
+        #[allow(unused_imports, dead_code)]
+        pub mod v_1 {
 
-  use crate::wellknown_generated::*;
+            use crate::wellknown_generated::*;
 
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MIN_EFFECT: i32 = 0;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-pub const ENUM_MAX_EFFECT: i32 = 2;
-#[deprecated(since = "2.0.0", note = "Use associated constants instead. This will no longer be generated in 2021.")]
-#[allow(non_camel_case_types)]
-pub const ENUM_VALUES_EFFECT: [Effect; 3] = [
-  Effect::EFFECT_UNSPECIFIED,
-  Effect::EFFECT_ALLOW,
-  Effect::EFFECT_DENY,
-];
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            pub const ENUM_MIN_EFFECT: i32 = 0;
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            pub const ENUM_MAX_EFFECT: i32 = 2;
+            #[deprecated(
+                since = "2.0.0",
+                note = "Use associated constants instead. This will no longer be generated in 2021."
+            )]
+            #[allow(non_camel_case_types)]
+            pub const ENUM_VALUES_EFFECT: [Effect; 3] = [
+                Effect::EFFECT_UNSPECIFIED,
+                Effect::EFFECT_ALLOW,
+                Effect::EFFECT_DENY,
+            ];
 
-/// Whether a request is permitted.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-#[repr(transparent)]
-pub struct Effect(pub i32);
-#[allow(non_upper_case_globals)]
-impl Effect {
-  /// Default value. Treated as a denial.
-  pub const EFFECT_UNSPECIFIED: Self = Self(0);
-  /// The request proceeds, restricted by the accompanying predicate.
-  pub const EFFECT_ALLOW: Self = Self(1);
-  /// The request is refused, and the refusal is reported rather than returned
-  /// as an empty result.
-  pub const EFFECT_DENY: Self = Self(2);
+            /// Whether a request is permitted.
+            #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+            #[repr(transparent)]
+            pub struct Effect(pub i32);
+            #[allow(non_upper_case_globals)]
+            impl Effect {
+                /// Default value. Treated as a denial.
+                pub const EFFECT_UNSPECIFIED: Self = Self(0);
+                /// The request proceeds, restricted by the accompanying predicate.
+                pub const EFFECT_ALLOW: Self = Self(1);
+                /// The request is refused, and the refusal is reported rather than returned
+                /// as an empty result.
+                pub const EFFECT_DENY: Self = Self(2);
 
-  pub const ENUM_MIN: i32 = 0;
-  pub const ENUM_MAX: i32 = 2;
-  pub const ENUM_VALUES: &'static [Self] = &[
-    Self::EFFECT_UNSPECIFIED,
-    Self::EFFECT_ALLOW,
-    Self::EFFECT_DENY,
-  ];
-  /// Returns the variant's name or "" if unknown.
-  pub fn variant_name(self) -> Option<&'static str> {
-    match self {
-      Self::EFFECT_UNSPECIFIED => Some("EFFECT_UNSPECIFIED"),
-      Self::EFFECT_ALLOW => Some("EFFECT_ALLOW"),
-      Self::EFFECT_DENY => Some("EFFECT_DENY"),
-      _ => None,
-    }
-  }
-}
-impl ::core::fmt::Debug for Effect {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-    if let Some(name) = self.variant_name() {
-      f.write_str(name)
-    } else {
-      f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
-    }
-  }
-}
-impl<'a> ::flatbuffers::Follow<'a> for Effect {
-  type Inner = Self;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
-    Self(b)
-  }
-}
+                pub const ENUM_MIN: i32 = 0;
+                pub const ENUM_MAX: i32 = 2;
+                pub const ENUM_VALUES: &'static [Self] = &[
+                    Self::EFFECT_UNSPECIFIED,
+                    Self::EFFECT_ALLOW,
+                    Self::EFFECT_DENY,
+                ];
+                /// Returns the variant's name or "" if unknown.
+                pub fn variant_name(self) -> Option<&'static str> {
+                    match self {
+                        Self::EFFECT_UNSPECIFIED => Some("EFFECT_UNSPECIFIED"),
+                        Self::EFFECT_ALLOW => Some("EFFECT_ALLOW"),
+                        Self::EFFECT_DENY => Some("EFFECT_DENY"),
+                        _ => None,
+                    }
+                }
+            }
+            impl ::core::fmt::Debug for Effect {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                    if let Some(name) = self.variant_name() {
+                        f.write_str(name)
+                    } else {
+                        f.write_fmt(format_args!("<UNKNOWN {:?}>", self.0))
+                    }
+                }
+            }
+            impl<'a> ::flatbuffers::Follow<'a> for Effect {
+                type Inner = Self;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    let b = unsafe { ::flatbuffers::read_scalar_at::<i32>(buf, loc) };
+                    Self(b)
+                }
+            }
 
-impl ::flatbuffers::Push for Effect {
-    type Output = Effect;
-    #[inline]
-    unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
-        unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
-    }
-}
+            impl ::flatbuffers::Push for Effect {
+                type Output = Effect;
+                #[inline]
+                unsafe fn push(&self, dst: &mut [u8], _written_len: usize) {
+                    unsafe { ::flatbuffers::emplace_scalar::<i32>(dst, self.0) };
+                }
+            }
 
-impl ::flatbuffers::EndianScalar for Effect {
-  type Scalar = i32;
-  #[inline]
-  fn to_little_endian(self) -> i32 {
-    self.0.to_le()
-  }
-  #[inline]
-  #[allow(clippy::wrong_self_convention)]
-  fn from_little_endian(v: i32) -> Self {
-    let b = i32::from_le(v);
-    Self(b)
-  }
-}
+            impl ::flatbuffers::EndianScalar for Effect {
+                type Scalar = i32;
+                #[inline]
+                fn to_little_endian(self) -> i32 {
+                    self.0.to_le()
+                }
+                #[inline]
+                #[allow(clippy::wrong_self_convention)]
+                fn from_little_endian(v: i32) -> Self {
+                    let b = i32::from_le(v);
+                    Self(b)
+                }
+            }
 
-impl<'a> ::flatbuffers::Verifiable for Effect {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    i32::run_verifier(v, pos)
-  }
-}
+            impl<'a> ::flatbuffers::Verifiable for Effect {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    i32::run_verifier(v, pos)
+                }
+            }
 
-impl ::flatbuffers::SimpleToVerifyInSlice for Effect {}
-pub enum PolicySetOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            impl ::flatbuffers::SimpleToVerifyInSlice for Effect {}
+            pub enum PolicySetOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-/// A set of rules attached to groups, evaluated before any index runs.
-pub struct PolicySet<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            /// A set of rules attached to groups, evaluated before any index runs.
+            pub struct PolicySet<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for PolicySet<'a> {
-  type Inner = PolicySet<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> ::flatbuffers::Follow<'a> for PolicySet<'a> {
+                type Inner = PolicySet<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> PolicySet<'a> {
-  pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
-  pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
-  pub const VT_SOURCE: ::flatbuffers::VOffsetT = 8;
-  pub const VT_VERSION: ::flatbuffers::VOffsetT = 10;
-  pub const VT_USER_GROUPS: ::flatbuffers::VOffsetT = 12;
-  pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 14;
-  pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 16;
-  pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 18;
-  pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 20;
-  pub const VT_ETAG: ::flatbuffers::VOffsetT = 22;
+            impl<'a> PolicySet<'a> {
+                pub const VT_NAME: ::flatbuffers::VOffsetT = 4;
+                pub const VT_DISPLAY_NAME: ::flatbuffers::VOffsetT = 6;
+                pub const VT_SOURCE: ::flatbuffers::VOffsetT = 8;
+                pub const VT_VERSION: ::flatbuffers::VOffsetT = 10;
+                pub const VT_USER_GROUPS: ::flatbuffers::VOffsetT = 12;
+                pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 14;
+                pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 16;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 18;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 20;
+                pub const VT_ETAG: ::flatbuffers::VOffsetT = 22;
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    PolicySet { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args PolicySetArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<PolicySet<'bldr>> {
-    let mut builder = PolicySetBuilder::new(_fbb);
-    builder.add_version(args.version);
-    if let Some(x) = args.etag { builder.add_etag(x); }
-    if let Some(x) = args.expire_time { builder.add_expire_time(x); }
-    if let Some(x) = args.delete_time { builder.add_delete_time(x); }
-    if let Some(x) = args.update_time { builder.add_update_time(x); }
-    if let Some(x) = args.create_time { builder.add_create_time(x); }
-    if let Some(x) = args.user_groups { builder.add_user_groups(x); }
-    if let Some(x) = args.source { builder.add_source(x); }
-    if let Some(x) = args.display_name { builder.add_display_name(x); }
-    if let Some(x) = args.name { builder.add_name(x); }
-    builder.finish()
-  }
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    PolicySet { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args PolicySetArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<PolicySet<'bldr>> {
+                    let mut builder = PolicySetBuilder::new(_fbb);
+                    builder.add_version(args.version);
+                    if let Some(x) = args.etag {
+                        builder.add_etag(x);
+                    }
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
+                    if let Some(x) = args.update_time {
+                        builder.add_update_time(x);
+                    }
+                    if let Some(x) = args.create_time {
+                        builder.add_create_time(x);
+                    }
+                    if let Some(x) = args.user_groups {
+                        builder.add_user_groups(x);
+                    }
+                    if let Some(x) = args.source {
+                        builder.add_source(x);
+                    }
+                    if let Some(x) = args.display_name {
+                        builder.add_display_name(x);
+                    }
+                    if let Some(x) = args.name {
+                        builder.add_name(x);
+                    }
+                    builder.finish()
+                }
 
+                /// Resource name of the policy set.
+                #[inline]
+                pub fn name(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(PolicySet::VT_NAME, None)
+                    }
+                }
+                /// Human-readable name.
+                #[inline]
+                pub fn display_name(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(
+                                PolicySet::VT_DISPLAY_NAME,
+                                None,
+                            )
+                            .unwrap()
+                    }
+                }
+                /// The rules, as a policy-language module.
+                #[inline]
+                pub fn source(&self) -> &'a str {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(PolicySet::VT_SOURCE, None)
+                            .unwrap()
+                    }
+                }
+                /// Monotonic version, incremented on every change.
+                ///
+                /// Compiled visibility is cached on the principal, the collection and this
+                /// number together, so a policy change invalidates the cache exactly rather
+                /// than by timeout.
+                #[inline]
+                pub fn version(&self) -> i64 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i64>(PolicySet::VT_VERSION, Some(0))
+                            .unwrap()
+                    }
+                }
+                /// Groups this set is attached to.
+                #[inline]
+                pub fn user_groups(
+                    &self,
+                ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                        >>(PolicySet::VT_USER_GROUPS, None)
+                    }
+                }
+                /// When the policy set was created.
+                #[inline]
+                pub fn create_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                PolicySet::VT_CREATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the policy set was last modified.
+                #[inline]
+                pub fn update_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                PolicySet::VT_UPDATE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When the policy set was soft-deleted, or unset while live.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                PolicySet::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted policy set is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                PolicySet::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// Opaque value for optimistic concurrency on update.
+                #[inline]
+                pub fn etag(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<::flatbuffers::ForwardsUOffset<&str>>(PolicySet::VT_ETAG, None)
+                    }
+                }
+            }
 
-  /// Resource name of the policy set.
-  #[inline]
-  pub fn name(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(PolicySet::VT_NAME, None)}
-  }
-  /// Human-readable name.
-  #[inline]
-  pub fn display_name(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(PolicySet::VT_DISPLAY_NAME, None).unwrap()}
-  }
-  /// The rules, as a policy-language module.
-  #[inline]
-  pub fn source(&self) -> &'a str {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(PolicySet::VT_SOURCE, None).unwrap()}
-  }
-  /// Monotonic version, incremented on every change.
-  ///
-  /// Compiled visibility is cached on the principal, the collection and this
-  /// number together, so a policy change invalidates the cache exactly rather
-  /// than by timeout.
-  #[inline]
-  pub fn version(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(PolicySet::VT_VERSION, Some(0)).unwrap()}
-  }
-  /// Groups this set is attached to.
-  #[inline]
-  pub fn user_groups(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(PolicySet::VT_USER_GROUPS, None)}
-  }
-  /// When the policy set was created.
-  #[inline]
-  pub fn create_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_CREATE_TIME, None)}
-  }
-  /// When the policy set was last modified.
-  #[inline]
-  pub fn update_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_UPDATE_TIME, None)}
-  }
-  /// When the policy set was soft-deleted, or unset while live.
-  #[inline]
-  pub fn delete_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_DELETE_TIME, None)}
-  }
-  /// When a soft-deleted policy set is purged and becomes unrecoverable.
-  #[inline]
-  pub fn expire_time(&self) -> Option<&'a super::super::super::buffers::wellknown::Timestamp> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_EXPIRE_TIME, None)}
-  }
-  /// Opaque value for optimistic concurrency on update.
-  #[inline]
-  pub fn etag(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(PolicySet::VT_ETAG, None)}
-  }
-}
+            impl ::flatbuffers::Verifiable for PolicySet<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "name",
+                            Self::VT_NAME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "display_name",
+                            Self::VT_DISPLAY_NAME,
+                            true,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "source",
+                            Self::VT_SOURCE,
+                            true,
+                        )?
+                        .visit_field::<i64>("version", Self::VT_VERSION, false)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+                        >>("user_groups", Self::VT_USER_GROUPS, false)?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "create_time",
+                            Self::VT_CREATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "update_time",
+                            Self::VT_UPDATE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "etag",
+                            Self::VT_ETAG,
+                            false,
+                        )?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct PolicySetArgs<'a> {
+                pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub source: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub version: i64,
+                pub user_groups: Option<
+                    ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                    >,
+                >,
+                pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+            }
+            impl<'a> Default for PolicySetArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    PolicySetArgs {
+                        name: None,
+                        display_name: None, // required field
+                        source: None,       // required field
+                        version: 0,
+                        user_groups: None,
+                        create_time: None,
+                        update_time: None,
+                        delete_time: None,
+                        expire_time: None,
+                        etag: None,
+                    }
+                }
+            }
 
-impl ::flatbuffers::Verifiable for PolicySet<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("name", Self::VT_NAME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("display_name", Self::VT_DISPLAY_NAME, true)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("source", Self::VT_SOURCE, true)?
-     .visit_field::<i64>("version", Self::VT_VERSION, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("user_groups", Self::VT_USER_GROUPS, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("create_time", Self::VT_CREATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("update_time", Self::VT_UPDATE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("delete_time", Self::VT_DELETE_TIME, false)?
-     .visit_field::<super::super::super::buffers::wellknown::Timestamp>("expire_time", Self::VT_EXPIRE_TIME, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("etag", Self::VT_ETAG, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct PolicySetArgs<'a> {
-    pub name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub display_name: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub source: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub version: i64,
-    pub user_groups: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
-    pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
-}
-impl<'a> Default for PolicySetArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    PolicySetArgs {
-      name: None,
-      display_name: None, // required field
-      source: None, // required field
-      version: 0,
-      user_groups: None,
-      create_time: None,
-      update_time: None,
-      delete_time: None,
-      expire_time: None,
-      etag: None,
-    }
-  }
-}
+            pub struct PolicySetBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> PolicySetBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(PolicySet::VT_NAME, name);
+                }
+                #[inline]
+                pub fn add_display_name(
+                    &mut self,
+                    display_name: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        PolicySet::VT_DISPLAY_NAME,
+                        display_name,
+                    );
+                }
+                #[inline]
+                pub fn add_source(&mut self, source: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        PolicySet::VT_SOURCE,
+                        source,
+                    );
+                }
+                #[inline]
+                pub fn add_version(&mut self, version: i64) {
+                    self.fbb_
+                        .push_slot::<i64>(PolicySet::VT_VERSION, version, 0);
+                }
+                #[inline]
+                pub fn add_user_groups(
+                    &mut self,
+                    user_groups: ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+                    >,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        PolicySet::VT_USER_GROUPS,
+                        user_groups,
+                    );
+                }
+                #[inline]
+                pub fn add_create_time(
+                    &mut self,
+                    create_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            PolicySet::VT_CREATE_TIME,
+                            create_time,
+                        );
+                }
+                #[inline]
+                pub fn add_update_time(
+                    &mut self,
+                    update_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            PolicySet::VT_UPDATE_TIME,
+                            update_time,
+                        );
+                }
+                #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            PolicySet::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            PolicySet::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
+                pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b str>) {
+                    self.fbb_
+                        .push_slot_always::<::flatbuffers::WIPOffset<_>>(PolicySet::VT_ETAG, etag);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> PolicySetBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    PolicySetBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<PolicySet<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    self.fbb_
+                        .required(o, PolicySet::VT_DISPLAY_NAME, "display_name");
+                    self.fbb_.required(o, PolicySet::VT_SOURCE, "source");
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-pub struct PolicySetBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> PolicySetBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_name(&mut self, name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(PolicySet::VT_NAME, name);
-  }
-  #[inline]
-  pub fn add_display_name(&mut self, display_name: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(PolicySet::VT_DISPLAY_NAME, display_name);
-  }
-  #[inline]
-  pub fn add_source(&mut self, source: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(PolicySet::VT_SOURCE, source);
-  }
-  #[inline]
-  pub fn add_version(&mut self, version: i64) {
-    self.fbb_.push_slot::<i64>(PolicySet::VT_VERSION, version, 0);
-  }
-  #[inline]
-  pub fn add_user_groups(&mut self, user_groups: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(PolicySet::VT_USER_GROUPS, user_groups);
-  }
-  #[inline]
-  pub fn add_create_time(&mut self, create_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_CREATE_TIME, create_time);
-  }
-  #[inline]
-  pub fn add_update_time(&mut self, update_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_UPDATE_TIME, update_time);
-  }
-  #[inline]
-  pub fn add_delete_time(&mut self, delete_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_DELETE_TIME, delete_time);
-  }
-  #[inline]
-  pub fn add_expire_time(&mut self, expire_time: &super::super::super::buffers::wellknown::Timestamp) {
-    self.fbb_.push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(PolicySet::VT_EXPIRE_TIME, expire_time);
-  }
-  #[inline]
-  pub fn add_etag(&mut self, etag: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(PolicySet::VT_ETAG, etag);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> PolicySetBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    PolicySetBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<PolicySet<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    self.fbb_.required(o, PolicySet::VT_DISPLAY_NAME,"display_name");
-    self.fbb_.required(o, PolicySet::VT_SOURCE,"source");
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
+            impl ::core::fmt::Debug for PolicySet<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("PolicySet");
+                    ds.field("name", &self.name());
+                    ds.field("display_name", &self.display_name());
+                    ds.field("source", &self.source());
+                    ds.field("version", &self.version());
+                    ds.field("user_groups", &self.user_groups());
+                    ds.field("create_time", &self.create_time());
+                    ds.field("update_time", &self.update_time());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
+                    ds.field("etag", &self.etag());
+                    ds.finish()
+                }
+            }
+            pub enum DecisionOffset {}
+            #[derive(Copy, Clone, PartialEq)]
 
-impl ::core::fmt::Debug for PolicySet<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("PolicySet");
-      ds.field("name", &self.name());
-      ds.field("display_name", &self.display_name());
-      ds.field("source", &self.source());
-      ds.field("version", &self.version());
-      ds.field("user_groups", &self.user_groups());
-      ds.field("create_time", &self.create_time());
-      ds.field("update_time", &self.update_time());
-      ds.field("delete_time", &self.delete_time());
-      ds.field("expire_time", &self.expire_time());
-      ds.field("etag", &self.etag());
-      ds.finish()
-  }
-}
-pub enum DecisionOffset {}
-#[derive(Copy, Clone, PartialEq)]
+            /// What a principal is allowed to see.
+            ///
+            /// A predicate, never a boolean. A boolean cannot express row-level visibility
+            /// and cannot be retrofitted into one cheaply — and the predicate is ANDed into
+            /// the query before the index runs, because searching first and discarding
+            /// afterwards leaks the existence, count and ranking of rows the caller was
+            /// never allowed to know about.
+            pub struct Decision<'a> {
+                pub _tab: ::flatbuffers::Table<'a>,
+            }
 
-/// What a principal is allowed to see.
-///
-/// A predicate, never a boolean. A boolean cannot express row-level visibility
-/// and cannot be retrofitted into one cheaply — and the predicate is ANDed into
-/// the query before the index runs, because searching first and discarding
-/// afterwards leaks the existence, count and ranking of rows the caller was
-/// never allowed to know about.
-pub struct Decision<'a> {
-  pub _tab: ::flatbuffers::Table<'a>,
-}
+            impl<'a> ::flatbuffers::Follow<'a> for Decision<'a> {
+                type Inner = Decision<'a>;
+                #[inline]
+                unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                    Self {
+                        _tab: unsafe { ::flatbuffers::Table::new(buf, loc) },
+                    }
+                }
+            }
 
-impl<'a> ::flatbuffers::Follow<'a> for Decision<'a> {
-  type Inner = Decision<'a>;
-  #[inline]
-  unsafe fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    Self { _tab: unsafe { ::flatbuffers::Table::new(buf, loc) } }
-  }
-}
+            impl<'a> Decision<'a> {
+                pub const VT_EFFECT: ::flatbuffers::VOffsetT = 4;
+                pub const VT_ROW_PREDICATE: ::flatbuffers::VOffsetT = 6;
+                pub const VT_FIELD_MASK: ::flatbuffers::VOffsetT = 8;
+                pub const VT_POLICY_VERSION: ::flatbuffers::VOffsetT = 10;
 
-impl<'a> Decision<'a> {
-  pub const VT_EFFECT: ::flatbuffers::VOffsetT = 4;
-  pub const VT_ROW_PREDICATE: ::flatbuffers::VOffsetT = 6;
-  pub const VT_FIELD_MASK: ::flatbuffers::VOffsetT = 8;
-  pub const VT_POLICY_VERSION: ::flatbuffers::VOffsetT = 10;
+                #[inline]
+                pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
+                    Decision { _tab: table }
+                }
+                #[allow(unused_mut)]
+                pub fn create<
+                    'bldr: 'args,
+                    'args: 'mut_bldr,
+                    'mut_bldr,
+                    A: ::flatbuffers::Allocator + 'bldr,
+                >(
+                    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
+                    args: &'args DecisionArgs<'args>,
+                ) -> ::flatbuffers::WIPOffset<Decision<'bldr>> {
+                    let mut builder = DecisionBuilder::new(_fbb);
+                    builder.add_policy_version(args.policy_version);
+                    if let Some(x) = args.field_mask {
+                        builder.add_field_mask(x);
+                    }
+                    if let Some(x) = args.row_predicate {
+                        builder.add_row_predicate(x);
+                    }
+                    builder.add_effect(args.effect);
+                    builder.finish()
+                }
 
-  #[inline]
-  pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
-    Decision { _tab: table }
-  }
-  #[allow(unused_mut)]
-  pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr, A: ::flatbuffers::Allocator + 'bldr>(
-    _fbb: &'mut_bldr mut ::flatbuffers::FlatBufferBuilder<'bldr, A>,
-    args: &'args DecisionArgs<'args>
-  ) -> ::flatbuffers::WIPOffset<Decision<'bldr>> {
-    let mut builder = DecisionBuilder::new(_fbb);
-    builder.add_policy_version(args.policy_version);
-    if let Some(x) = args.field_mask { builder.add_field_mask(x); }
-    if let Some(x) = args.row_predicate { builder.add_row_predicate(x); }
-    builder.add_effect(args.effect);
-    builder.finish()
-  }
+                /// Whether the request is permitted at all.
+                ///
+                /// Absent policy denies. Failing open would make a misconfiguration
+                /// indistinguishable from a grant.
+                #[inline]
+                pub fn effect(&self) -> Effect {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<Effect>(Decision::VT_EFFECT, Some(Effect::EFFECT_UNSPECIFIED))
+                            .unwrap()
+                    }
+                }
+                /// Row visibility, as a filter expression to AND into the query.
+                #[inline]
+                pub fn row_predicate(&self) -> Option<&'a str> {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(
+                            Decision::VT_ROW_PREDICATE,
+                            None,
+                        )
+                    }
+                }
+                /// Fields the principal may read.
+                #[inline]
+                pub fn field_mask(
+                    &self,
+                ) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab.get::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                        >>(Decision::VT_FIELD_MASK, None)
+                    }
+                }
+                /// Policy version this was resolved against.
+                #[inline]
+                pub fn policy_version(&self) -> i64 {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<i64>(Decision::VT_POLICY_VERSION, Some(0))
+                            .unwrap()
+                    }
+                }
+            }
 
+            impl ::flatbuffers::Verifiable for Decision<'_> {
+                #[inline]
+                fn run_verifier(
+                    v: &mut ::flatbuffers::Verifier,
+                    pos: usize,
+                ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
+                    v.visit_table(pos)?
+                        .visit_field::<Effect>("effect", Self::VT_EFFECT, false)?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<&str>>(
+                            "row_predicate",
+                            Self::VT_ROW_PREDICATE,
+                            false,
+                        )?
+                        .visit_field::<::flatbuffers::ForwardsUOffset<
+                            ::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>,
+                        >>("field_mask", Self::VT_FIELD_MASK, false)?
+                        .visit_field::<i64>("policy_version", Self::VT_POLICY_VERSION, false)?
+                        .finish();
+                    Ok(())
+                }
+            }
+            pub struct DecisionArgs<'a> {
+                pub effect: Effect,
+                pub row_predicate: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub field_mask: Option<
+                    ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>,
+                    >,
+                >,
+                pub policy_version: i64,
+            }
+            impl<'a> Default for DecisionArgs<'a> {
+                #[inline]
+                fn default() -> Self {
+                    DecisionArgs {
+                        effect: Effect::EFFECT_UNSPECIFIED,
+                        row_predicate: None,
+                        field_mask: None,
+                        policy_version: 0,
+                    }
+                }
+            }
 
-  /// Whether the request is permitted at all.
-  ///
-  /// Absent policy denies. Failing open would make a misconfiguration
-  /// indistinguishable from a grant.
-  #[inline]
-  pub fn effect(&self) -> Effect {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<Effect>(Decision::VT_EFFECT, Some(Effect::EFFECT_UNSPECIFIED)).unwrap()}
-  }
-  /// Row visibility, as a filter expression to AND into the query.
-  #[inline]
-  pub fn row_predicate(&self) -> Option<&'a str> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<&str>>(Decision::VT_ROW_PREDICATE, None)}
-  }
-  /// Fields the principal may read.
-  #[inline]
-  pub fn field_mask(&self) -> Option<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>> {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>(Decision::VT_FIELD_MASK, None)}
-  }
-  /// Policy version this was resolved against.
-  #[inline]
-  pub fn policy_version(&self) -> i64 {
-    // Safety:
-    // Created from valid Table for this object
-    // which contains a valid value in this slot
-    unsafe { self._tab.get::<i64>(Decision::VT_POLICY_VERSION, Some(0)).unwrap()}
-  }
-}
+            pub struct DecisionBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
+                fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
+            }
+            impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> DecisionBuilder<'a, 'b, A> {
+                #[inline]
+                pub fn add_effect(&mut self, effect: Effect) {
+                    self.fbb_.push_slot::<Effect>(
+                        Decision::VT_EFFECT,
+                        effect,
+                        Effect::EFFECT_UNSPECIFIED,
+                    );
+                }
+                #[inline]
+                pub fn add_row_predicate(
+                    &mut self,
+                    row_predicate: ::flatbuffers::WIPOffset<&'b str>,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Decision::VT_ROW_PREDICATE,
+                        row_predicate,
+                    );
+                }
+                #[inline]
+                pub fn add_field_mask(
+                    &mut self,
+                    field_mask: ::flatbuffers::WIPOffset<
+                        ::flatbuffers::Vector<'b, ::flatbuffers::ForwardsUOffset<&'b str>>,
+                    >,
+                ) {
+                    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(
+                        Decision::VT_FIELD_MASK,
+                        field_mask,
+                    );
+                }
+                #[inline]
+                pub fn add_policy_version(&mut self, policy_version: i64) {
+                    self.fbb_
+                        .push_slot::<i64>(Decision::VT_POLICY_VERSION, policy_version, 0);
+                }
+                #[inline]
+                pub fn new(
+                    _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
+                ) -> DecisionBuilder<'a, 'b, A> {
+                    let start = _fbb.start_table();
+                    DecisionBuilder {
+                        fbb_: _fbb,
+                        start_: start,
+                    }
+                }
+                #[inline]
+                pub fn finish(self) -> ::flatbuffers::WIPOffset<Decision<'a>> {
+                    let o = self.fbb_.end_table(self.start_);
+                    ::flatbuffers::WIPOffset::new(o.value())
+                }
+            }
 
-impl ::flatbuffers::Verifiable for Decision<'_> {
-  #[inline]
-  fn run_verifier(
-    v: &mut ::flatbuffers::Verifier, pos: usize
-  ) -> Result<(), ::flatbuffers::InvalidFlatbuffer> {
-    v.visit_table(pos)?
-     .visit_field::<Effect>("effect", Self::VT_EFFECT, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<&str>>("row_predicate", Self::VT_ROW_PREDICATE, false)?
-     .visit_field::<::flatbuffers::ForwardsUOffset<::flatbuffers::Vector<'_, ::flatbuffers::ForwardsUOffset<&'_ str>>>>("field_mask", Self::VT_FIELD_MASK, false)?
-     .visit_field::<i64>("policy_version", Self::VT_POLICY_VERSION, false)?
-     .finish();
-    Ok(())
-  }
-}
-pub struct DecisionArgs<'a> {
-    pub effect: Effect,
-    pub row_predicate: Option<::flatbuffers::WIPOffset<&'a str>>,
-    pub field_mask: Option<::flatbuffers::WIPOffset<::flatbuffers::Vector<'a, ::flatbuffers::ForwardsUOffset<&'a str>>>>,
-    pub policy_version: i64,
-}
-impl<'a> Default for DecisionArgs<'a> {
-  #[inline]
-  fn default() -> Self {
-    DecisionArgs {
-      effect: Effect::EFFECT_UNSPECIFIED,
-      row_predicate: None,
-      field_mask: None,
-      policy_version: 0,
-    }
-  }
-}
-
-pub struct DecisionBuilder<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> {
-  fbb_: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
-  start_: ::flatbuffers::WIPOffset<::flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b, A: ::flatbuffers::Allocator + 'a> DecisionBuilder<'a, 'b, A> {
-  #[inline]
-  pub fn add_effect(&mut self, effect: Effect) {
-    self.fbb_.push_slot::<Effect>(Decision::VT_EFFECT, effect, Effect::EFFECT_UNSPECIFIED);
-  }
-  #[inline]
-  pub fn add_row_predicate(&mut self, row_predicate: ::flatbuffers::WIPOffset<&'b  str>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Decision::VT_ROW_PREDICATE, row_predicate);
-  }
-  #[inline]
-  pub fn add_field_mask(&mut self, field_mask: ::flatbuffers::WIPOffset<::flatbuffers::Vector<'b , ::flatbuffers::ForwardsUOffset<&'b  str>>>) {
-    self.fbb_.push_slot_always::<::flatbuffers::WIPOffset<_>>(Decision::VT_FIELD_MASK, field_mask);
-  }
-  #[inline]
-  pub fn add_policy_version(&mut self, policy_version: i64) {
-    self.fbb_.push_slot::<i64>(Decision::VT_POLICY_VERSION, policy_version, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>) -> DecisionBuilder<'a, 'b, A> {
-    let start = _fbb.start_table();
-    DecisionBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> ::flatbuffers::WIPOffset<Decision<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    ::flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-impl ::core::fmt::Debug for Decision<'_> {
-  fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-    let mut ds = f.debug_struct("Decision");
-      ds.field("effect", &self.effect());
-      ds.field("row_predicate", &self.row_predicate());
-      ds.field("field_mask", &self.field_mask());
-      ds.field("policy_version", &self.policy_version());
-      ds.finish()
-  }
-}
-}  // pub mod v1
-}  // pub mod policy
-}  // pub mod telividb
-
+            impl ::core::fmt::Debug for Decision<'_> {
+                fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                    let mut ds = f.debug_struct("Decision");
+                    ds.field("effect", &self.effect());
+                    ds.field("row_predicate", &self.row_predicate());
+                    ds.field("field_mask", &self.field_mask());
+                    ds.field("policy_version", &self.policy_version());
+                    ds.finish()
+                }
+            }
+        } // pub mod v1
+    } // pub mod policy
+} // pub mod telividb

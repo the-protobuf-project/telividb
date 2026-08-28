@@ -13,35 +13,35 @@
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Organization {
     /// Resource name of the organization.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Human-readable name.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// Projects belonging to this organization.
-    #[prost(int32, tag="3")]
+    #[prost(int32, tag = "3")]
     pub project_count: i32,
     /// Spaces belonging to this organization.
-    #[prost(int32, tag="4")]
+    #[prost(int32, tag = "4")]
     pub space_count: i32,
     /// When the organization was created.
-    #[prost(message, optional, tag="5")]
+    #[prost(message, optional, tag = "5")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the organization was last modified.
-    #[prost(message, optional, tag="6")]
+    #[prost(message, optional, tag = "6")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the organization was soft-deleted, or unset while it is live.
     ///
     /// Deletion is reversible until `expire_time`. Nothing is physically removed
     /// at delete: the tenant is tombstoned so queries exclude it immediately, and
     /// compaction reclaims the bytes later.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When a soft-deleted organization is purged and becomes unrecoverable.
-    #[prost(message, optional, tag="8")]
+    #[prost(message, optional, tag = "8")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="9")]
+    #[prost(string, tag = "9")]
     pub etag: ::prost::alloc::string::String,
 }
 /// A unit of work within an organization, and the unit at which access is
@@ -55,25 +55,25 @@ pub struct Organization {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Project {
     /// Resource name of the project.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Human-readable name.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// When the project was created.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the project was last modified.
-    #[prost(message, optional, tag="4")]
+    #[prost(message, optional, tag = "4")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the project was soft-deleted, or unset while it is live.
-    #[prost(message, optional, tag="5")]
+    #[prost(message, optional, tag = "5")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When a soft-deleted project is purged and becomes unrecoverable.
-    #[prost(message, optional, tag="6")]
+    #[prost(message, optional, tag = "6")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="7")]
+    #[prost(string, tag = "7")]
     pub etag: ::prost::alloc::string::String,
 }
 /// A recorded working period holding several conversations.
@@ -85,33 +85,33 @@ pub struct Project {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Session {
     /// Resource name of the session.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Human-readable name.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// Space this session belongs to.
     ///
     /// Mutable, and therefore a field rather than a path segment.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub space: ::prost::alloc::string::String,
     /// When the working period began.
-    #[prost(message, optional, tag="4")]
+    #[prost(message, optional, tag = "4")]
     pub start_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the working period ended, or unset while it is still open.
-    #[prost(message, optional, tag="5")]
+    #[prost(message, optional, tag = "5")]
     pub end_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Conversations recorded in this session.
-    #[prost(int32, tag="6")]
+    #[prost(int32, tag = "6")]
     pub conversation_count: i32,
     /// When the session was created.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the session was last modified.
-    #[prost(message, optional, tag="8")]
+    #[prost(message, optional, tag = "8")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="9")]
+    #[prost(string, tag = "9")]
     pub etag: ::prost::alloc::string::String,
 }
 /// A named container for related conversation — a finance space, an education
@@ -124,20 +124,20 @@ pub struct Session {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Space {
     /// Resource name of the space.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Human-readable name, such as `Finance`.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub display_name: ::prost::alloc::string::String,
     /// Projects this space belongs to.
     ///
     /// Repeated, and mutable: a space may span projects, and membership is not
     /// encoded in the resource name precisely so it can change without renaming
     /// anything that refers to this space.
-    #[prost(string, repeated, tag="3")]
+    #[prost(string, repeated, tag = "3")]
     pub projects: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// How the contents of this space are protected.
-    #[prost(enumeration="Protection", tag="4")]
+    #[prost(enumeration = "Protection", tag = "4")]
     pub protection: i32,
     /// Whether the space is currently readable.
     ///
@@ -145,22 +145,22 @@ pub struct Space {
     /// silently skipped: a search that could not read it sets `complete` to false
     /// and names it, so a caller can tell "no results" from "no results you can
     /// currently see".
-    #[prost(bool, tag="5")]
+    #[prost(bool, tag = "5")]
     pub locked: bool,
     /// When the space was created.
-    #[prost(message, optional, tag="6")]
+    #[prost(message, optional, tag = "6")]
     pub create_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the space was last modified.
-    #[prost(message, optional, tag="7")]
+    #[prost(message, optional, tag = "7")]
     pub update_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When the space was soft-deleted, or unset while it is live.
-    #[prost(message, optional, tag="8")]
+    #[prost(message, optional, tag = "8")]
     pub delete_time: ::core::option::Option<::prost_types::Timestamp>,
     /// When a soft-deleted space is purged and becomes unrecoverable.
-    #[prost(message, optional, tag="9")]
+    #[prost(message, optional, tag = "9")]
     pub expire_time: ::core::option::Option<::prost_types::Timestamp>,
     /// Opaque value for optimistic concurrency on update.
-    #[prost(string, tag="10")]
+    #[prost(string, tag = "10")]
     pub etag: ::prost::alloc::string::String,
 }
 /// What actually protects the contents of a space.
@@ -221,290 +221,290 @@ impl Protection {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreateOrganizationRequest {
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub organization_id: ::prost::alloc::string::String,
     /// The organization to create.
-    #[prost(message, optional, tag="2")]
+    #[prost(message, optional, tag = "2")]
     pub organization: ::core::option::Option<Organization>,
     /// Unique identifier making this request safe to retry.
     ///
     /// A create that times out and is retried without one writes the resource
     /// twice, which for a tenant root is expensive to unpick.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving an organization.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetOrganizationRequest {
     /// Resource name of the organization.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing organizations.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListOrganizationsRequest {
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="1")]
+    #[prost(int32, tag = "1")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression restricting which organizations are returned.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub filter: ::prost::alloc::string::String,
     /// Whether to include soft-deleted organizations.
-    #[prost(bool, tag="4")]
+    #[prost(bool, tag = "4")]
     pub show_deleted: bool,
 }
 /// Response message for listing organizations.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListOrganizationsResponse {
     /// The organizations on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub organizations: ::prost::alloc::vec::Vec<Organization>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for updating an organization.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UpdateOrganizationRequest {
     /// The organization to update, identified by its `name`.
-    #[prost(message, optional, tag="1")]
+    #[prost(message, optional, tag = "1")]
     pub organization: ::core::option::Option<Organization>,
     /// Fields to update.
-    #[prost(message, optional, tag="2")]
+    #[prost(message, optional, tag = "2")]
     pub update_mask: ::core::option::Option<::prost_types::FieldMask>,
 }
 /// Request message for deleting an organization.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteOrganizationRequest {
     /// Resource name of the organization to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
     /// Whether to delete the resource even though it still has children.
     ///
     /// Without this a delete that would orphan children is refused. Deleting
     /// is reversible until expiry either way, but refusing by default keeps a
     /// mistaken call from tombstoning a whole subtree in one step.
-    #[prost(bool, tag="3")]
+    #[prost(bool, tag = "3")]
     pub force: bool,
 }
 /// Request message for restoring a soft-deleted organization.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UndeleteOrganizationRequest {
     /// Resource name of the organization to restore.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for creating a project.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreateProjectRequest {
     /// Organization the project belongs to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub project_id: ::prost::alloc::string::String,
     /// The project to create.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub project: ::core::option::Option<Project>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a project.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetProjectRequest {
     /// Resource name of the project.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing projects.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListProjectsRequest {
     /// Organization to list projects from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression restricting which projects are returned.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
     /// Whether to include soft-deleted projects.
-    #[prost(bool, tag="5")]
+    #[prost(bool, tag = "5")]
     pub show_deleted: bool,
 }
 /// Response message for listing projects.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListProjectsResponse {
     /// The projects on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub projects: ::prost::alloc::vec::Vec<Project>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for deleting a project.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteProjectRequest {
     /// Resource name of the project to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
 }
 /// Request message for creating a space.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreateSpaceRequest {
     /// Organization the space belongs to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub space_id: ::prost::alloc::string::String,
     /// The space to create.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub space: ::core::option::Option<Space>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a space.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetSpaceRequest {
     /// Resource name of the space.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing spaces.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListSpacesRequest {
     /// Organization to list spaces from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression restricting which spaces are returned.
     ///
     /// A space the caller holds no grant on is absent from the result rather
     /// than reported as denied: reporting it would disclose that it exists, and
     /// for a private thread the existence is often the sensitive part.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
 }
 /// Response message for listing spaces.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSpacesResponse {
     /// The spaces on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub spaces: ::prost::alloc::vec::Vec<Space>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for unlocking a key-wrapped space.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UnlockSpaceRequest {
     /// Resource name of the space to unlock.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Client-held key material, for a sealed space.
     ///
     /// Required when protection is SEALED, because the server holds no key that
     /// opens it. Never persisted.
-    #[prost(bytes="bytes", tag="2")]
+    #[prost(bytes = "bytes", tag = "2")]
     pub unwrap_key: ::prost::bytes::Bytes,
 }
 /// Response message for unlocking a space.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UnlockSpaceResponse {
     /// The space, now reporting `locked` as false.
-    #[prost(message, optional, tag="1")]
+    #[prost(message, optional, tag = "1")]
     pub space: ::core::option::Option<Space>,
     /// Segments made readable by this unlock.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub unlocked_segment_count: i32,
 }
 /// Request message for deleting a space.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteSpaceRequest {
     /// Resource name of the space to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
 }
 /// Request message for creating a session.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreateSessionRequest {
     /// Organization the session belongs to.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Identifier to use, forming the final path segment.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub session_id: ::prost::alloc::string::String,
     /// The session to create.
-    #[prost(message, optional, tag="3")]
+    #[prost(message, optional, tag = "3")]
     pub session: ::core::option::Option<Session>,
     /// Unique identifier making this request safe to retry.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub request_id: ::prost::alloc::string::String,
 }
 /// Request message for retrieving a session.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetSessionRequest {
     /// Resource name of the session.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
 }
 /// Request message for listing sessions.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListSessionsRequest {
     /// Organization to list sessions from.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub parent: ::prost::alloc::string::String,
     /// Maximum number to return. Zero selects a server-chosen default.
-    #[prost(int32, tag="2")]
+    #[prost(int32, tag = "2")]
     pub page_size: i32,
     /// Page token from a previous call.
-    #[prost(string, tag="3")]
+    #[prost(string, tag = "3")]
     pub page_token: ::prost::alloc::string::String,
     /// Filter expression restricting which sessions are returned.
-    #[prost(string, tag="4")]
+    #[prost(string, tag = "4")]
     pub filter: ::prost::alloc::string::String,
 }
 /// Response message for listing sessions.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ListSessionsResponse {
     /// The sessions on this page.
-    #[prost(message, repeated, tag="1")]
+    #[prost(message, repeated, tag = "1")]
     pub sessions: ::prost::alloc::vec::Vec<Session>,
     /// Token to retrieve the next page, or empty if this is the last.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub next_page_token: ::prost::alloc::string::String,
 }
 /// Request message for deleting a session.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteSessionRequest {
     /// Resource name of the session to delete.
-    #[prost(string, tag="1")]
+    #[prost(string, tag = "1")]
     pub name: ::prost::alloc::string::String,
     /// Current etag, to refuse a delete racing a concurrent change.
-    #[prost(string, tag="2")]
+    #[prost(string, tag = "2")]
     pub etag: ::prost::alloc::string::String,
 }
 // @@protoc_insertion_point(module)

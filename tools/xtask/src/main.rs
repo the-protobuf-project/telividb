@@ -7,7 +7,6 @@ mod check_docs;
 mod check_layers;
 mod check_len;
 mod gen_buffers;
-mod gen_proto;
 mod lint_proto;
 mod proc;
 mod protodoc;
@@ -21,8 +20,6 @@ fn main() -> std::process::ExitCode {
         Some("check-layers") => check_layers::run(),
         Some("gen-buffers") => gen_buffers::run(false),
         Some("check-buffers") => gen_buffers::run(true),
-        Some("gen-proto") => gen_proto::run(false),
-        Some("check-proto") => gen_proto::run(true),
         Some("lint-proto") => lint_proto::run(),
         Some("vendor-proto") => vendor_proto::run(),
         Some("protodoc") => protodoc::run(false),
@@ -45,10 +42,8 @@ fn usage() {
          check-len    fail on any .rs file over the line limit\n  \
          check-docs    fail on an undocumented `pub` item or an empty doc comment\n  \
          check-layers  fail on an outward crate or module dependency\n  \
-         gen-proto     regenerate Rust from buffers/protobuf/ with buf\n  \
          gen-buffers   render capnp + flatbuffers and their Rust\n  \
          check-buffers fail if the rendered output has drifted\n  \
-         check-proto   fail if the committed generated code has drifted\n  \
          lint-proto    run the AIP linter over the full import closure\n  \
          vendor-proto  vendor proto dependencies into buffers/protobuf/.deps for editors\n  \
          protodoc      write README.md for every protobuf module\n  \

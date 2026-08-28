@@ -3,11 +3,11 @@
 //! Split out of `point.rs` so the RPC handlers read as request handling, not
 //! field-by-field mapping.
 
-use telividb_core::{ContentRef, ResourceName, Span};
 use telividb_buffers::protobuf::point::v1::{
     ContentRef as WireContentRef, NamedVector, Point as WirePoint, Span as WireSpan,
     Vector as WireVector,
 };
+use telividb_core::{ContentRef, ResourceName, Span};
 use tonic::Status;
 
 /// Build a domain `Point` from a wire `Point` and the name it will be

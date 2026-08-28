@@ -5,7 +5,7 @@
 //! it removed rather than an empty message — both consequences of the same
 //! fact, that a delete in this engine is deferred rather than immediate.
 
-use super::point::{PointsSvc, parse_name, parent_collection};
+use super::point::{PointsSvc, parent_collection, parse_name};
 use super::point_convert::to_wire;
 use crate::error::{storage_status, to_status};
 use telividb_buffers::protobuf::point::v1::{DeletePointRequest, Point};

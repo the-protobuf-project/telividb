@@ -6,10 +6,10 @@ pub mod mcp_servers_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct McpServersClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod mcp_servers_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             McpServersClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -94,117 +93,88 @@ pub mod mcp_servers_client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreateMcpServerRequest>,
         ) -> std::result::Result<tonic::Response<super::McpServer>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.mcp.v1.McpServers/CreateMcpServer",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.mcp.v1.McpServers/CreateMcpServer");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.mcp.v1.McpServers", "CreateMcpServer"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.mcp.v1.McpServers",
+                "CreateMcpServer",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn get_mcp_server(
             &mut self,
             request: impl tonic::IntoRequest<super::GetMcpServerRequest>,
         ) -> std::result::Result<tonic::Response<super::McpServer>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.mcp.v1.McpServers/GetMcpServer",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.mcp.v1.McpServers/GetMcpServer");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.mcp.v1.McpServers", "GetMcpServer"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.mcp.v1.McpServers",
+                "GetMcpServer",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn list_mcp_servers(
             &mut self,
             request: impl tonic::IntoRequest<super::ListMcpServersRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListMcpServersResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListMcpServersResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.mcp.v1.McpServers/ListMcpServers",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.mcp.v1.McpServers/ListMcpServers");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.mcp.v1.McpServers", "ListMcpServers"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.mcp.v1.McpServers",
+                "ListMcpServers",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn introspect_mcp_server(
             &mut self,
             request: impl tonic::IntoRequest<super::IntrospectMcpServerRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::IntrospectMcpServerResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::IntrospectMcpServerResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/telividb.mcp.v1.McpServers/IntrospectMcpServer",
             );
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.mcp.v1.McpServers", "IntrospectMcpServer"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.mcp.v1.McpServers",
+                "IntrospectMcpServer",
+            ));
             self.inner.unary(req, path, codec).await
         }
         pub async fn delete_mcp_server(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteMcpServerRequest>,
         ) -> std::result::Result<tonic::Response<super::McpServer>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.mcp.v1.McpServers/DeleteMcpServer",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.mcp.v1.McpServers/DeleteMcpServer");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("telividb.mcp.v1.McpServers", "DeleteMcpServer"),
-                );
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.mcp.v1.McpServers",
+                "DeleteMcpServer",
+            ));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -216,7 +186,7 @@ pub mod mcp_servers_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with McpServersServer.
@@ -233,17 +203,11 @@ pub mod mcp_servers_server {
         async fn list_mcp_servers(
             &self,
             request: tonic::Request<super::ListMcpServersRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListMcpServersResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListMcpServersResponse>, tonic::Status>;
         async fn introspect_mcp_server(
             &self,
             request: tonic::Request<super::IntrospectMcpServerRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::IntrospectMcpServerResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::IntrospectMcpServerResponse>, tonic::Status>;
         async fn delete_mcp_server(
             &self,
             request: tonic::Request<super::DeleteMcpServerRequest>,
@@ -270,10 +234,7 @@ pub mod mcp_servers_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -328,15 +289,11 @@ pub mod mcp_servers_server {
                 "/telividb.mcp.v1.McpServers/CreateMcpServer" => {
                     #[allow(non_camel_case_types)]
                     struct CreateMcpServerSvc<T: McpServers>(pub Arc<T>);
-                    impl<
-                        T: McpServers,
-                    > tonic::server::UnaryService<super::CreateMcpServerRequest>
-                    for CreateMcpServerSvc<T> {
+                    impl<T: McpServers> tonic::server::UnaryService<super::CreateMcpServerRequest>
+                        for CreateMcpServerSvc<T>
+                    {
                         type Response = super::McpServer;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateMcpServerRequest>,
@@ -373,15 +330,9 @@ pub mod mcp_servers_server {
                 "/telividb.mcp.v1.McpServers/GetMcpServer" => {
                     #[allow(non_camel_case_types)]
                     struct GetMcpServerSvc<T: McpServers>(pub Arc<T>);
-                    impl<
-                        T: McpServers,
-                    > tonic::server::UnaryService<super::GetMcpServerRequest>
-                    for GetMcpServerSvc<T> {
+                    impl<T: McpServers> tonic::server::UnaryService<super::GetMcpServerRequest> for GetMcpServerSvc<T> {
                         type Response = super::McpServer;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetMcpServerRequest>,
@@ -418,15 +369,11 @@ pub mod mcp_servers_server {
                 "/telividb.mcp.v1.McpServers/ListMcpServers" => {
                     #[allow(non_camel_case_types)]
                     struct ListMcpServersSvc<T: McpServers>(pub Arc<T>);
-                    impl<
-                        T: McpServers,
-                    > tonic::server::UnaryService<super::ListMcpServersRequest>
-                    for ListMcpServersSvc<T> {
+                    impl<T: McpServers> tonic::server::UnaryService<super::ListMcpServersRequest>
+                        for ListMcpServersSvc<T>
+                    {
                         type Response = super::ListMcpServersResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListMcpServersRequest>,
@@ -463,23 +410,19 @@ pub mod mcp_servers_server {
                 "/telividb.mcp.v1.McpServers/IntrospectMcpServer" => {
                     #[allow(non_camel_case_types)]
                     struct IntrospectMcpServerSvc<T: McpServers>(pub Arc<T>);
-                    impl<
-                        T: McpServers,
-                    > tonic::server::UnaryService<super::IntrospectMcpServerRequest>
-                    for IntrospectMcpServerSvc<T> {
+                    impl<T: McpServers>
+                        tonic::server::UnaryService<super::IntrospectMcpServerRequest>
+                        for IntrospectMcpServerSvc<T>
+                    {
                         type Response = super::IntrospectMcpServerResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::IntrospectMcpServerRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as McpServers>::introspect_mcp_server(&inner, request)
-                                    .await
+                                <T as McpServers>::introspect_mcp_server(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -509,15 +452,11 @@ pub mod mcp_servers_server {
                 "/telividb.mcp.v1.McpServers/DeleteMcpServer" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteMcpServerSvc<T: McpServers>(pub Arc<T>);
-                    impl<
-                        T: McpServers,
-                    > tonic::server::UnaryService<super::DeleteMcpServerRequest>
-                    for DeleteMcpServerSvc<T> {
+                    impl<T: McpServers> tonic::server::UnaryService<super::DeleteMcpServerRequest>
+                        for DeleteMcpServerSvc<T>
+                    {
                         type Response = super::McpServer;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteMcpServerRequest>,
@@ -551,25 +490,19 @@ pub mod mcp_servers_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }

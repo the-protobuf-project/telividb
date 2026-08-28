@@ -6,10 +6,10 @@ pub mod graph_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
-    use tonic::codegen::*;
     use tonic::codegen::http::Uri;
+    use tonic::codegen::*;
     #[derive(Debug, Clone)]
     pub struct GraphClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -48,14 +48,13 @@ pub mod graph_client {
             F: tonic::service::Interceptor,
             T::ResponseBody: Default,
             T: tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-                Response = http::Response<
-                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    http::Request<tonic::body::Body>,
+                    Response = http::Response<
+                        <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
+                    >,
                 >,
-            >,
-            <T as tonic::codegen::Service<
-                http::Request<tonic::body::Body>,
-            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<http::Request<tonic::body::Body>>>::Error:
+                Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             GraphClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -94,120 +93,83 @@ pub mod graph_client {
             &mut self,
             request: impl tonic::IntoRequest<super::CreateEdgeRequest>,
         ) -> std::result::Result<tonic::Response<super::Edge>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/CreateEdge",
-            );
+            let path = http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/CreateEdge");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "CreateEdge"));
             self.inner.unary(req, path, codec).await
         }
         /** Retrieves a single edge.
-*/
+        */
         pub async fn get_edge(
             &mut self,
             request: impl tonic::IntoRequest<super::GetEdgeRequest>,
         ) -> std::result::Result<tonic::Response<super::Edge>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/GetEdge",
-            );
+            let path = http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/GetEdge");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "GetEdge"));
             self.inner.unary(req, path, codec).await
         }
         /** Lists edges.
-*/
+        */
         pub async fn list_edges(
             &mut self,
             request: impl tonic::IntoRequest<super::ListEdgesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListEdgesResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListEdgesResponse>, tonic::Status> {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/ListEdges",
-            );
+            let path = http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/ListEdges");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "ListEdges"));
             self.inner.unary(req, path, codec).await
         }
         /** Creates several edges in one request.
-*/
+        */
         pub async fn batch_create_edges(
             &mut self,
             request: impl tonic::IntoRequest<super::BatchCreateEdgesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchCreateEdgesResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::BatchCreateEdgesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/BatchCreateEdges",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/BatchCreateEdges");
             let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("telividb.graph.v1.Graph", "BatchCreateEdges"));
+            req.extensions_mut().insert(GrpcMethod::new(
+                "telividb.graph.v1.Graph",
+                "BatchCreateEdges",
+            ));
             self.inner.unary(req, path, codec).await
         }
         /** Soft-deletes an edge.
 
- Returns the tombstoned edge. Deleting from the graph is reversible until
- expiry, which matters more here than elsewhere: an edge is often the only
- record that two things were ever related.
-*/
+         Returns the tombstoned edge. Deleting from the graph is reversible until
+         expiry, which matters more here than elsewhere: an edge is often the only
+         record that two things were ever related.
+        */
         pub async fn delete_edge(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteEdgeRequest>,
         ) -> std::result::Result<tonic::Response<super::Edge>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/DeleteEdge",
-            );
+            let path = http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/DeleteEdge");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "DeleteEdge"));
@@ -215,125 +177,90 @@ pub mod graph_client {
         }
         /** Traverses the graph outward from a set of seeds.
 
- Bounded best-first expansion, not a search over all paths. Each hop depends
- on the last, so this runs on the host rather than a device, and the bounds
- — hop count, result ceiling, per-hop decay — are what keep it from becoming
- the most expensive thing in a query.
-*/
+         Bounded best-first expansion, not a search over all paths. Each hop depends
+         on the last, so this runs on the host rather than a device, and the bounds
+         — hop count, result ceiling, per-hop decay — are what keep it from becoming
+         the most expensive thing in a query.
+        */
         pub async fn traverse_graph(
             &mut self,
             request: impl tonic::IntoRequest<super::TraverseGraphRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::TraverseGraphResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::TraverseGraphResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/TraverseGraph",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/TraverseGraph");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "TraverseGraph"));
             self.inner.unary(req, path, codec).await
         }
         /** Creates an edge type, declaring the default weight its edges take.
-*/
+        */
         pub async fn create_edge_type(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateEdgeTypeRequest>,
         ) -> std::result::Result<tonic::Response<super::EdgeType>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/CreateEdgeType",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/CreateEdgeType");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "CreateEdgeType"));
             self.inner.unary(req, path, codec).await
         }
         /** Retrieves a single edge type.
-*/
+        */
         pub async fn get_edge_type(
             &mut self,
             request: impl tonic::IntoRequest<super::GetEdgeTypeRequest>,
         ) -> std::result::Result<tonic::Response<super::EdgeType>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/GetEdgeType",
-            );
+            let path = http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/GetEdgeType");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "GetEdgeType"));
             self.inner.unary(req, path, codec).await
         }
         /** Lists edge types.
-*/
+        */
         pub async fn list_edge_types(
             &mut self,
             request: impl tonic::IntoRequest<super::ListEdgeTypesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListEdgeTypesResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+        ) -> std::result::Result<tonic::Response<super::ListEdgeTypesResponse>, tonic::Status>
+        {
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/ListEdgeTypes",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/ListEdgeTypes");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "ListEdgeTypes"));
             self.inner.unary(req, path, codec).await
         }
         /** Soft-deletes an edge type.
-*/
+        */
         pub async fn delete_edge_type(
             &mut self,
             request: impl tonic::IntoRequest<super::DeleteEdgeTypeRequest>,
         ) -> std::result::Result<tonic::Response<super::EdgeType>, tonic::Status> {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
+            self.inner.ready().await.map_err(|e| {
+                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
+            })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/telividb.graph.v1.Graph/DeleteEdgeType",
-            );
+            let path =
+                http::uri::PathAndQuery::from_static("/telividb.graph.v1.Graph/DeleteEdgeType");
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("telividb.graph.v1.Graph", "DeleteEdgeType"));
@@ -348,7 +275,7 @@ pub mod graph_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value,
+        clippy::let_unit_value
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with GraphServer.
@@ -359,76 +286,64 @@ pub mod graph_server {
             request: tonic::Request<super::CreateEdgeRequest>,
         ) -> std::result::Result<tonic::Response<super::Edge>, tonic::Status>;
         /** Retrieves a single edge.
-*/
+        */
         async fn get_edge(
             &self,
             request: tonic::Request<super::GetEdgeRequest>,
         ) -> std::result::Result<tonic::Response<super::Edge>, tonic::Status>;
         /** Lists edges.
-*/
+        */
         async fn list_edges(
             &self,
             request: tonic::Request<super::ListEdgesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListEdgesResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListEdgesResponse>, tonic::Status>;
         /** Creates several edges in one request.
-*/
+        */
         async fn batch_create_edges(
             &self,
             request: tonic::Request<super::BatchCreateEdgesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::BatchCreateEdgesResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::BatchCreateEdgesResponse>, tonic::Status>;
         /** Soft-deletes an edge.
 
- Returns the tombstoned edge. Deleting from the graph is reversible until
- expiry, which matters more here than elsewhere: an edge is often the only
- record that two things were ever related.
-*/
+         Returns the tombstoned edge. Deleting from the graph is reversible until
+         expiry, which matters more here than elsewhere: an edge is often the only
+         record that two things were ever related.
+        */
         async fn delete_edge(
             &self,
             request: tonic::Request<super::DeleteEdgeRequest>,
         ) -> std::result::Result<tonic::Response<super::Edge>, tonic::Status>;
         /** Traverses the graph outward from a set of seeds.
 
- Bounded best-first expansion, not a search over all paths. Each hop depends
- on the last, so this runs on the host rather than a device, and the bounds
- — hop count, result ceiling, per-hop decay — are what keep it from becoming
- the most expensive thing in a query.
-*/
+         Bounded best-first expansion, not a search over all paths. Each hop depends
+         on the last, so this runs on the host rather than a device, and the bounds
+         — hop count, result ceiling, per-hop decay — are what keep it from becoming
+         the most expensive thing in a query.
+        */
         async fn traverse_graph(
             &self,
             request: tonic::Request<super::TraverseGraphRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::TraverseGraphResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::TraverseGraphResponse>, tonic::Status>;
         /** Creates an edge type, declaring the default weight its edges take.
-*/
+        */
         async fn create_edge_type(
             &self,
             request: tonic::Request<super::CreateEdgeTypeRequest>,
         ) -> std::result::Result<tonic::Response<super::EdgeType>, tonic::Status>;
         /** Retrieves a single edge type.
-*/
+        */
         async fn get_edge_type(
             &self,
             request: tonic::Request<super::GetEdgeTypeRequest>,
         ) -> std::result::Result<tonic::Response<super::EdgeType>, tonic::Status>;
         /** Lists edge types.
-*/
+        */
         async fn list_edge_types(
             &self,
             request: tonic::Request<super::ListEdgeTypesRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::ListEdgeTypesResponse>,
-            tonic::Status,
-        >;
+        ) -> std::result::Result<tonic::Response<super::ListEdgeTypesResponse>, tonic::Status>;
         /** Soft-deletes an edge type.
-*/
+        */
         async fn delete_edge_type(
             &self,
             request: tonic::Request<super::DeleteEdgeTypeRequest>,
@@ -455,10 +370,7 @@ pub mod graph_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(
-            inner: T,
-            interceptor: F,
-        ) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -513,21 +425,16 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/CreateEdge" => {
                     #[allow(non_camel_case_types)]
                     struct CreateEdgeSvc<T: Graph>(pub Arc<T>);
-                    impl<T: Graph> tonic::server::UnaryService<super::CreateEdgeRequest>
-                    for CreateEdgeSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::CreateEdgeRequest> for CreateEdgeSvc<T> {
                         type Response = super::Edge;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateEdgeRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Graph>::create_edge(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Graph>::create_edge(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -556,21 +463,15 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/GetEdge" => {
                     #[allow(non_camel_case_types)]
                     struct GetEdgeSvc<T: Graph>(pub Arc<T>);
-                    impl<T: Graph> tonic::server::UnaryService<super::GetEdgeRequest>
-                    for GetEdgeSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::GetEdgeRequest> for GetEdgeSvc<T> {
                         type Response = super::Edge;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetEdgeRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Graph>::get_edge(&inner, request).await
-                            };
+                            let fut = async move { <T as Graph>::get_edge(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -599,21 +500,16 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/ListEdges" => {
                     #[allow(non_camel_case_types)]
                     struct ListEdgesSvc<T: Graph>(pub Arc<T>);
-                    impl<T: Graph> tonic::server::UnaryService<super::ListEdgesRequest>
-                    for ListEdgesSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::ListEdgesRequest> for ListEdgesSvc<T> {
                         type Response = super::ListEdgesResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListEdgesRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Graph>::list_edges(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Graph>::list_edges(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -642,15 +538,11 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/BatchCreateEdges" => {
                     #[allow(non_camel_case_types)]
                     struct BatchCreateEdgesSvc<T: Graph>(pub Arc<T>);
-                    impl<
-                        T: Graph,
-                    > tonic::server::UnaryService<super::BatchCreateEdgesRequest>
-                    for BatchCreateEdgesSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::BatchCreateEdgesRequest>
+                        for BatchCreateEdgesSvc<T>
+                    {
                         type Response = super::BatchCreateEdgesResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::BatchCreateEdgesRequest>,
@@ -687,21 +579,16 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/DeleteEdge" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteEdgeSvc<T: Graph>(pub Arc<T>);
-                    impl<T: Graph> tonic::server::UnaryService<super::DeleteEdgeRequest>
-                    for DeleteEdgeSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::DeleteEdgeRequest> for DeleteEdgeSvc<T> {
                         type Response = super::Edge;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteEdgeRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Graph>::delete_edge(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Graph>::delete_edge(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -730,23 +617,16 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/TraverseGraph" => {
                     #[allow(non_camel_case_types)]
                     struct TraverseGraphSvc<T: Graph>(pub Arc<T>);
-                    impl<
-                        T: Graph,
-                    > tonic::server::UnaryService<super::TraverseGraphRequest>
-                    for TraverseGraphSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::TraverseGraphRequest> for TraverseGraphSvc<T> {
                         type Response = super::TraverseGraphResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::TraverseGraphRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Graph>::traverse_graph(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Graph>::traverse_graph(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -775,15 +655,9 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/CreateEdgeType" => {
                     #[allow(non_camel_case_types)]
                     struct CreateEdgeTypeSvc<T: Graph>(pub Arc<T>);
-                    impl<
-                        T: Graph,
-                    > tonic::server::UnaryService<super::CreateEdgeTypeRequest>
-                    for CreateEdgeTypeSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::CreateEdgeTypeRequest> for CreateEdgeTypeSvc<T> {
                         type Response = super::EdgeType;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::CreateEdgeTypeRequest>,
@@ -820,21 +694,16 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/GetEdgeType" => {
                     #[allow(non_camel_case_types)]
                     struct GetEdgeTypeSvc<T: Graph>(pub Arc<T>);
-                    impl<T: Graph> tonic::server::UnaryService<super::GetEdgeTypeRequest>
-                    for GetEdgeTypeSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::GetEdgeTypeRequest> for GetEdgeTypeSvc<T> {
                         type Response = super::EdgeType;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::GetEdgeTypeRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Graph>::get_edge_type(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Graph>::get_edge_type(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -863,23 +732,16 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/ListEdgeTypes" => {
                     #[allow(non_camel_case_types)]
                     struct ListEdgeTypesSvc<T: Graph>(pub Arc<T>);
-                    impl<
-                        T: Graph,
-                    > tonic::server::UnaryService<super::ListEdgeTypesRequest>
-                    for ListEdgeTypesSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::ListEdgeTypesRequest> for ListEdgeTypesSvc<T> {
                         type Response = super::ListEdgeTypesResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::ListEdgeTypesRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as Graph>::list_edge_types(&inner, request).await
-                            };
+                            let fut =
+                                async move { <T as Graph>::list_edge_types(&inner, request).await };
                             Box::pin(fut)
                         }
                     }
@@ -908,15 +770,9 @@ pub mod graph_server {
                 "/telividb.graph.v1.Graph/DeleteEdgeType" => {
                     #[allow(non_camel_case_types)]
                     struct DeleteEdgeTypeSvc<T: Graph>(pub Arc<T>);
-                    impl<
-                        T: Graph,
-                    > tonic::server::UnaryService<super::DeleteEdgeTypeRequest>
-                    for DeleteEdgeTypeSvc<T> {
+                    impl<T: Graph> tonic::server::UnaryService<super::DeleteEdgeTypeRequest> for DeleteEdgeTypeSvc<T> {
                         type Response = super::EdgeType;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
+                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::DeleteEdgeTypeRequest>,
@@ -950,25 +806,19 @@ pub mod graph_server {
                     };
                     Box::pin(fut)
                 }
-                _ => {
-                    Box::pin(async move {
-                        let mut response = http::Response::new(
-                            tonic::body::Body::default(),
-                        );
-                        let headers = response.headers_mut();
-                        headers
-                            .insert(
-                                tonic::Status::GRPC_STATUS,
-                                (tonic::Code::Unimplemented as i32).into(),
-                            );
-                        headers
-                            .insert(
-                                http::header::CONTENT_TYPE,
-                                tonic::metadata::GRPC_CONTENT_TYPE,
-                            );
-                        Ok(response)
-                    })
-                }
+                _ => Box::pin(async move {
+                    let mut response = http::Response::new(tonic::body::Body::default());
+                    let headers = response.headers_mut();
+                    headers.insert(
+                        tonic::Status::GRPC_STATUS,
+                        (tonic::Code::Unimplemented as i32).into(),
+                    );
+                    headers.insert(
+                        http::header::CONTENT_TYPE,
+                        tonic::metadata::GRPC_CONTENT_TYPE,
+                    );
+                    Ok(response)
+                }),
             }
         }
     }
