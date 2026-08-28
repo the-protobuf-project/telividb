@@ -13,6 +13,7 @@ import "telividb/tenancy/v1/project.proto";
 import "telividb/tenancy/v1/session.proto";
 import "telividb/tenancy/v1/space.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/tenancy/v1;tenancyv1";
 option java_multiple_files = true;
 option java_outer_classname = "TenancyMessagesProto";
 option java_package = "dev.telividb.tenancy.v1";

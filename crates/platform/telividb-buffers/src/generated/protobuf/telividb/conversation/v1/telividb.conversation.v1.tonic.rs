@@ -10,6 +10,8 @@ pub mod conversations_client {
     )]
     use tonic::codegen::http::Uri;
     use tonic::codegen::*;
+    /** Manages conversations and the messages within them.
+    */
     #[derive(Debug, Clone)]
     pub struct ConversationsClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -538,6 +540,8 @@ pub mod conversations_server {
             request: tonic::Request<super::ListSummariesRequest>,
         ) -> std::result::Result<tonic::Response<super::ListSummariesResponse>, tonic::Status>;
     }
+    /** Manages conversations and the messages within them.
+    */
     #[derive(Debug)]
     pub struct ConversationsServer<T> {
         inner: Arc<T>,

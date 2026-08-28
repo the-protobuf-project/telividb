@@ -56,7 +56,11 @@
 //! single-buffer layout is what a one-sided RDMA write wants, and that is the
 //! case worth paying the `unsafe` for.
 #![cfg_attr(not(feature = "flatbuffers"), forbid(unsafe_code))]
-#![allow(missing_docs, clippy::all, rustdoc::all)]
+// `dead_code` joins the list because a generator emits a complete surface
+// whether or not this build reaches all of it: each MCP server defines its own
+// tool constructor, and a binary that serves one service still compiles the
+// other thirteen.
+#![allow(dead_code, missing_docs, clippy::all, rustdoc::all)]
 
 // Roots the generators require at the crate root. Hidden: the grouped
 // modules below are the surface a caller is meant to find.
@@ -73,6 +77,14 @@ pub mod collection_messages_capnp;
 #[path = "generated/capnp/telividb/collection/v1/collection_service_capnp.rs"]
 #[doc(hidden)]
 pub mod collection_service_capnp;
+#[cfg(feature = "capnp")]
+#[path = "generated/capnp/telividb/connector/v1/connector_capnp.rs"]
+#[doc(hidden)]
+pub mod connector_capnp;
+#[cfg(feature = "capnp")]
+#[path = "generated/capnp/telividb/connector/v1/connector_service_capnp.rs"]
+#[doc(hidden)]
+pub mod connector_service_capnp;
 #[cfg(feature = "capnp")]
 #[path = "generated/capnp/telividb/context/v1/context_service_capnp.rs"]
 #[doc(hidden)]
@@ -113,14 +125,6 @@ pub mod identity_service_capnp;
 #[path = "generated/capnp/telividb/inference/v1/inference_service_capnp.rs"]
 #[doc(hidden)]
 pub mod inference_service_capnp;
-#[cfg(feature = "capnp")]
-#[path = "generated/capnp/telividb/mcp/v1/mcp_server_capnp.rs"]
-#[doc(hidden)]
-pub mod mcp_server_capnp;
-#[cfg(feature = "capnp")]
-#[path = "generated/capnp/telividb/mcp/v1/mcp_service_capnp.rs"]
-#[doc(hidden)]
-pub mod mcp_service_capnp;
 #[cfg(feature = "capnp")]
 #[path = "generated/capnp/telividb/conversation/v1/message_capnp.rs"]
 #[doc(hidden)]
@@ -215,6 +219,14 @@ pub mod collection_generated;
 #[doc(hidden)]
 pub mod collection_messages_generated;
 #[cfg(feature = "flatbuffers")]
+#[path = "generated/flatbuffers/telividb/connector/v1/connector_generated.rs"]
+#[doc(hidden)]
+pub mod connector_generated;
+#[cfg(feature = "flatbuffers")]
+#[path = "generated/flatbuffers/telividb/connector/v1/connector_service_generated.rs"]
+#[doc(hidden)]
+pub mod connector_service_generated;
+#[cfg(feature = "flatbuffers")]
 #[path = "generated/flatbuffers/telividb/context/v1/context_service_generated.rs"]
 #[doc(hidden)]
 pub mod context_service_generated;
@@ -246,14 +258,6 @@ pub mod identity_service_generated;
 #[path = "generated/flatbuffers/telividb/inference/v1/inference_service_generated.rs"]
 #[doc(hidden)]
 pub mod inference_service_generated;
-#[cfg(feature = "flatbuffers")]
-#[path = "generated/flatbuffers/telividb/mcp/v1/mcp_server_generated.rs"]
-#[doc(hidden)]
-pub mod mcp_server_generated;
-#[cfg(feature = "flatbuffers")]
-#[path = "generated/flatbuffers/telividb/mcp/v1/mcp_service_generated.rs"]
-#[doc(hidden)]
-pub mod mcp_service_generated;
 #[cfg(feature = "flatbuffers")]
 #[path = "generated/flatbuffers/telividb/conversation/v1/message_generated.rs"]
 #[doc(hidden)]
@@ -332,8 +336,8 @@ pub mod traversal_generated;
 pub mod wellknown_generated;
 
 /// Protobuf views and the gRPC service stubs, the wire protocol the
-/// server speaks. Nested directly: `prost` addresses siblings
-/// relatively, so unlike the flat formats these need no root layer.
+///          /// server speaks. Nested directly: `prost` addresses siblings
+///          /// relatively, so unlike the flat formats these need no root layer.
 #[cfg(feature = "protobuf")]
 pub mod protobuf {
     /// `collection`.
@@ -342,6 +346,14 @@ pub mod protobuf {
         pub mod v1 {
             include!("generated/protobuf/telividb/collection/v1/telividb.collection.v1.rs");
             include!("generated/protobuf/telividb/collection/v1/telividb.collection.v1.tonic.rs");
+        }
+    }
+    /// `connector`.
+    pub mod connector {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/protobuf/telividb/connector/v1/telividb.connector.v1.rs");
+            include!("generated/protobuf/telividb/connector/v1/telividb.connector.v1.tonic.rs");
         }
     }
     /// `context`.
@@ -386,14 +398,6 @@ pub mod protobuf {
             include!("generated/protobuf/telividb/inference/v1/telividb.inference.v1.tonic.rs");
         }
     }
-    /// `mcp`.
-    pub mod mcp {
-        /// `v1`.
-        pub mod v1 {
-            include!("generated/protobuf/telividb/mcp/v1/telividb.mcp.v1.rs");
-            include!("generated/protobuf/telividb/mcp/v1/telividb.mcp.v1.tonic.rs");
-        }
-    }
     /// `point`.
     pub mod point {
         /// `v1`.
@@ -428,9 +432,96 @@ pub mod protobuf {
     }
     /// Serialized `FileDescriptorSet` for every service here.
     ///
-    /// Served over gRPC reflection so generic clients can introspect the
-    /// API without being shipped the protos first.
+    /// Served over gRPC reflection so generic clients can introspect
+    /// the API without being shipped the protos first.
     pub const FILE_DESCRIPTOR_SET: &[u8] = include_bytes!("generated/protobuf/descriptor.bin");
+}
+
+/// Model Context Protocol servers, one per gRPC service.
+///          ///
+///          /// Generated from the same annotations the gRPC surface carries, so
+///          /// the tools an agent sees cannot drift from the API they call. An
+///          /// agent reaching a server here takes the same authorization path as
+///          /// any other client — there is no MCP-privileged route.
+#[cfg(feature = "mcp")]
+pub mod mcp {
+    /// `collection`.
+    pub mod collection {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/collection/v1/collection_service.mcp.rs");
+        }
+    }
+    /// `connector`.
+    pub mod connector {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/connector/v1/connector_service.mcp.rs");
+        }
+    }
+    /// `context`.
+    pub mod context {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/context/v1/context_service.mcp.rs");
+        }
+    }
+    /// `conversation`.
+    pub mod conversation {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/conversation/v1/conversation_service.mcp.rs");
+        }
+    }
+    /// `graph`.
+    pub mod graph {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/graph/v1/graph_service.mcp.rs");
+        }
+    }
+    /// `identity`.
+    pub mod identity {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/identity/v1/identity_service.mcp.rs");
+        }
+    }
+    /// `inference`.
+    pub mod inference {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/inference/v1/inference_service.mcp.rs");
+        }
+    }
+    /// `point`.
+    pub mod point {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/point/v1/point_service.mcp.rs");
+        }
+    }
+    /// `policy`.
+    pub mod policy {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/policy/v1/policy_service.mcp.rs");
+        }
+    }
+    /// `system`.
+    pub mod system {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/system/v1/system_service.mcp.rs");
+        }
+    }
+    /// `tenancy`.
+    pub mod tenancy {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/tenancy/v1/tenancy_service.mcp.rs");
+        }
+    }
 }
 
 // The documented surface: one module per format, nested by package.
@@ -449,6 +540,13 @@ pub mod capnp {
             pub use crate::{
                 collection_capnp, collection_messages_capnp, collection_service_capnp,
             };
+        }
+    }
+    /// `connector` schemas.
+    pub mod connector {
+        /// `v1` schemas.
+        pub mod v1 {
+            pub use crate::{connector_capnp, connector_service_capnp};
         }
     }
     /// `context` schemas.
@@ -489,13 +587,6 @@ pub mod capnp {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{inference_service_capnp, model_capnp};
-        }
-    }
-    /// `mcp` schemas.
-    pub mod mcp {
-        /// `v1` schemas.
-        pub mod v1 {
-            pub use crate::{mcp_server_capnp, mcp_service_capnp};
         }
     }
     /// `point` schemas.
@@ -547,6 +638,13 @@ pub mod flatbuffers {
             pub use crate::{collection_generated, collection_messages_generated};
         }
     }
+    /// `connector` schemas.
+    pub mod connector {
+        /// `v1` schemas.
+        pub mod v1 {
+            pub use crate::{connector_generated, connector_service_generated};
+        }
+    }
     /// `context` schemas.
     pub mod context {
         /// `v1` schemas.
@@ -583,13 +681,6 @@ pub mod flatbuffers {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{inference_service_generated, model_generated};
-        }
-    }
-    /// `mcp` schemas.
-    pub mod mcp {
-        /// `v1` schemas.
-        pub mod v1 {
-            pub use crate::{mcp_server_generated, mcp_service_generated};
         }
     }
     /// `point` schemas.

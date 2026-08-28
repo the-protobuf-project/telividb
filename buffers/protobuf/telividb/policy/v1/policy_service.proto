@@ -9,8 +9,10 @@ import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/field_info.proto";
 import "google/api/resource.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/policy/v1/policy_set.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/policy/v1;policyv1";
 option java_multiple_files = true;
 option java_outer_classname = "PolicyServiceProto";
 option java_package = "dev.telividb.policy.v1";
@@ -24,6 +26,13 @@ option (buffers.v1.file) = {namespace: "telividb.policy.v1"};
 // systems that must agree drift apart and leak.
 service Policy {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb policy"
+      version: "0.1.0"
+      description: "Policy sets, and what a principal would be permitted to see."
+    }
+  };
 
   // Creates a policy set.
   rpc CreatePolicySet(CreatePolicySetRequest) returns (PolicySet) {
@@ -53,6 +62,7 @@ service Policy {
   rpc DeletePolicySet(DeletePolicySetRequest) returns (PolicySet) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/policySets/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the policy set. Absent policy denies, so access narrows rather than widens. Confirm?"};
   }
 
   // Evaluates policy without applying it, returning the resulting decision.

@@ -9,8 +9,10 @@ import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/field_info.proto";
 import "google/api/resource.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/identity/v1/principal.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/identity/v1;identityv1";
 option java_multiple_files = true;
 option java_outer_classname = "IdentityServiceProto";
 option java_package = "dev.telividb.identity.v1";
@@ -19,6 +21,13 @@ option (buffers.v1.file) = {namespace: "telividb.identity.v1"};
 // Manages users, groups and the role bindings that grant over the tree.
 service Identity {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb identity"
+      version: "0.1.0"
+      description: "Users, groups, and the role bindings that grant over the tenancy tree."
+    }
+  };
 
   // Creates a user.
   rpc CreateUser(CreateUserRequest) returns (User) {
@@ -44,6 +53,7 @@ service Identity {
   rpc DeleteUser(DeleteUserRequest) returns (User) {
     option (google.api.http) = {delete: "/v1/{name=users/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the user and cascades to the memory they own. Confirm?"};
   }
 
   // Restores a soft-deleted user before they expire.
@@ -79,6 +89,7 @@ service Identity {
   rpc DeleteUserGroup(DeleteUserGroupRequest) returns (UserGroup) {
     option (google.api.http) = {delete: "/v1/{name=userGroups/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the group. Grants attached to it stop applying. Confirm?"};
   }
 
   // Grants a role to a group over part of the tree.
@@ -106,6 +117,7 @@ service Identity {
   rpc DeleteRoleBinding(DeleteRoleBindingRequest) returns (RoleBinding) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/roleBindings/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This revokes the role binding. The group loses that access immediately. Confirm?"};
   }
 }
 

@@ -7,6 +7,7 @@ import "buffers/v1/annotations.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/system/v1;systemv1";
 option java_multiple_files = true;
 option java_outer_classname = "SystemProto";
 option java_package = "dev.telividb.system.v1";

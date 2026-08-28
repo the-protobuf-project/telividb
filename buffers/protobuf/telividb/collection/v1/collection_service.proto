@@ -6,9 +6,11 @@ package telividb.collection.v1;
 import "buffers/v1/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/collection/v1/collection.proto";
 import "telividb/collection/v1/collection_messages.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/collection/v1;collectionv1";
 option java_multiple_files = true;
 option java_outer_classname = "CollectionServiceProto";
 option java_package = "dev.telividb.collection.v1";
@@ -17,6 +19,13 @@ option (buffers.v1.file) = {namespace: "telividb.collection.v1"};
 // Manages collections and their schemas.
 service Collections {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb collections"
+      version: "0.1.0"
+      description: "Create and inspect collections and the schema each one is bound to."
+    }
+  };
 
   // Creates a collection from a compiled schema descriptor set.
   rpc CreateCollection(CreateCollectionRequest) returns (Collection) {
@@ -46,5 +55,6 @@ service Collections {
   rpc DeleteCollection(DeleteCollectionRequest) returns (Collection) {
     option (google.api.http) = {delete: "/v1/{name=collections/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the collection and every segment belonging to it. Confirm?"};
   }
 }

@@ -9,6 +9,7 @@ import "google/api/resource.proto";
 import "google/protobuf/field_mask.proto";
 import "telividb/point/v1/point.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/point/v1;pointv1";
 option java_multiple_files = true;
 option java_outer_classname = "PointSearchProto";
 option java_package = "dev.telividb.point.v1";

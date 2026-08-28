@@ -8,8 +8,10 @@ import "google/api/annotations.proto";
 import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/system/v1/system.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/system/v1;systemv1";
 option java_multiple_files = true;
 option java_outer_classname = "SystemServiceProto";
 option java_package = "dev.telividb.system.v1";
@@ -22,6 +24,13 @@ option (buffers.v1.file) = {namespace: "telividb.system.v1"};
 // be inverted back toward its source text.
 service SystemInfo {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb system"
+      version: "0.1.0"
+      description: "Runtime facts only this process can observe about itself."
+    }
+  };
 
   // Retrieves the selected backend, the device, and the memory budget.
   rpc GetSystem(GetSystemRequest) returns (System) {

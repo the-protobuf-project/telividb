@@ -8,12 +8,12 @@ One package per resource, each in its own versioned directory. Files within a pa
 | --- | --- | ---: | ---: | ---: |
 | [Buffers](.deps/buffers/README.md) | `buffers.v1` | 0 | 8 | 3 |
 | [Collection](telividb/collection/README.md) | `telividb.collection.v1` | 1 | 7 | 3 |
+| [Connector](telividb/connector/README.md) | `telividb.connector.v1` | 1 | 9 | 0 |
 | [Context](telividb/context/README.md) | `telividb.context.v1` | 1 | 11 | 0 |
 | [Conversation](telividb/conversation/README.md) | `telividb.conversation.v1` | 1 | 24 | 3 |
 | [Graph](telividb/graph/README.md) | `telividb.graph.v1` | 1 | 18 | 0 |
 | [Identity](telividb/identity/README.md) | `telividb.identity.v1` | 1 | 19 | 0 |
 | [Inference](telividb/inference/README.md) | `telividb.inference.v1` | 1 | 7 | 1 |
-| [Mcp](telividb/mcp/README.md) | `telividb.mcp.v1` | 1 | 9 | 0 |
 | [Point](telividb/point/README.md) | `telividb.point.v1` | 1 | 20 | 0 |
 | [Policy](telividb/policy/README.md) | `telividb.policy.v1` | 1 | 9 | 1 |
 | [System](telividb/system/README.md) | `telividb.system.v1` | 1 | 2 | 1 |

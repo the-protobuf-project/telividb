@@ -8,6 +8,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/timestamp.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/conversation/v1;conversationv1";
 option java_multiple_files = true;
 option java_outer_classname = "SummaryProto";
 option java_package = "dev.telividb.conversation.v1";

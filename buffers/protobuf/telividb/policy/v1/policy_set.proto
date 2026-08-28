@@ -9,6 +9,7 @@ import "google/api/resource.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/policy/v1;policyv1";
 option java_multiple_files = true;
 option java_outer_classname = "PolicySetProto";
 option java_package = "dev.telividb.policy.v1";

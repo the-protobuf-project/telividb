@@ -34,3 +34,18 @@ plugins:
     out: crates/platform/telividb-buffers/src/generated/protobuf
     opt:
       - no_include
+
+  # MCP servers, one per service, generated from the same annotations the gRPC
+  # surface already carries. Emitting MCP is generated from the descriptor set
+  # and never hand-built, so the tool surface an agent sees cannot drift from
+  # the API it exposes — they are the same definition rendered twice.
+  #
+  # A tool's description comes from the RPC's own doc comment unless
+  # `(mcp.tool)` overrides it, which is why the protos carry no duplicated
+  # prose: the comment a reader gets and the description an agent gets are the
+  # same sentence.
+  - local: protoc-gen-mcp
+    out: crates/platform/telividb-buffers/src/generated/mcp
+    opt:
+      - lang=rust
+      - paths=source_relative

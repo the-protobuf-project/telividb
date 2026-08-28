@@ -104,8 +104,6 @@ pub mod points_client {
                 .insert(GrpcMethod::new("telividb.point.v1.Points", "CreatePoint"));
             self.inner.unary(req, path, codec).await
         }
-        /** Retrieves a single point.
-        */
         pub async fn get_point(
             &mut self,
             request: impl tonic::IntoRequest<super::GetPointRequest>,
@@ -120,8 +118,6 @@ pub mod points_client {
                 .insert(GrpcMethod::new("telividb.point.v1.Points", "GetPoint"));
             self.inner.unary(req, path, codec).await
         }
-        /** Lists the points of a collection.
-        */
         pub async fn list_points(
             &mut self,
             request: impl tonic::IntoRequest<super::ListPointsRequest>,
@@ -263,14 +259,10 @@ pub mod points_server {
             &self,
             request: tonic::Request<super::CreatePointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status>;
-        /** Retrieves a single point.
-        */
         async fn get_point(
             &self,
             request: tonic::Request<super::GetPointRequest>,
         ) -> std::result::Result<tonic::Response<super::Point>, tonic::Status>;
-        /** Lists the points of a collection.
-        */
         async fn list_points(
             &self,
             request: tonic::Request<super::ListPointsRequest>,

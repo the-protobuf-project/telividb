@@ -15,6 +15,76 @@
 # from guessing.
 version: 1
 messages:
+  - message: mcp.MCPApp
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: version
+      - number: 3
+        ordinal: 2
+        name: description
+  - message: mcp.MCPElicitation
+    fields:
+      - number: 1
+        ordinal: 0
+        name: message
+      - number: 2
+        ordinal: 1
+        name: schema
+  - message: mcp.MCPEnumOptions
+    fields:
+      - number: 1
+        ordinal: 0
+        name: description
+  - message: mcp.MCPEnumValueOptions
+    fields:
+      - number: 1
+        ordinal: 0
+        name: description
+  - message: mcp.MCPFieldOptions
+    fields:
+      - number: 1
+        ordinal: 0
+        name: description
+      - number: 2
+        ordinal: 1
+        name: examples
+      - number: 3
+        ordinal: 2
+        name: deprecated
+      - number: 4
+        ordinal: 3
+        name: format
+  - message: mcp.MCPPrompt
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: description
+      - number: 3
+        ordinal: 2
+        name: schema
+  - message: mcp.MCPServiceOptions
+    fields:
+      - number: 1
+        ordinal: 0
+        name: app
+  - message: mcp.MCPToolOptions
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: description
+      - number: 3
+        ordinal: 2
+        name: progress
   - message: telividb.collection.v1.Collection
     fields:
       - number: 1
@@ -98,6 +168,120 @@ messages:
       - number: 8
         ordinal: 7
         name: permission
+  - message: telividb.connector.v1.CreateMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: mcp_server_id
+      - number: 3
+        ordinal: 2
+        name: mcp_server
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.connector.v1.DeleteMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.connector.v1.GetMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.connector.v1.IntrospectMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.connector.v1.IntrospectMcpServerResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: tools
+      - number: 2
+        ordinal: 1
+        name: capability_digest
+      - number: 3
+        ordinal: 2
+        name: drifted
+  - message: telividb.connector.v1.ListMcpServersRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: show_deleted
+  - message: telividb.connector.v1.ListMcpServersResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: mcp_servers
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.connector.v1.McpServer
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: endpoint
+      - number: 4
+        ordinal: 3
+        name: embed_results
+      - number: 5
+        ordinal: 4
+        name: capability_digest
+      - number: 6
+        ordinal: 5
+        name: introspect_time
+      - number: 7
+        ordinal: 6
+        name: create_time
+      - number: 8
+        ordinal: 7
+        name: update_time
+      - number: 9
+        ordinal: 8
+        name: delete_time
+      - number: 10
+        ordinal: 9
+        name: expire_time
+      - number: 11
+        ordinal: 10
+        name: etag
+  - message: telividb.connector.v1.McpTool
+    fields:
+      - number: 1
+        ordinal: 0
+        name: tool
+      - number: 2
+        ordinal: 1
+        name: description
+      - number: 3
+        ordinal: 2
+        name: input_schema
   - message: telividb.context.v1.AssembleContextRequest
     fields:
       - number: 1
@@ -1135,120 +1319,6 @@ messages:
       - number: 2
         ordinal: 1
         name: dimensions
-  - message: telividb.mcp.v1.CreateMcpServerRequest
-    fields:
-      - number: 1
-        ordinal: 0
-        name: parent
-      - number: 2
-        ordinal: 1
-        name: mcp_server_id
-      - number: 3
-        ordinal: 2
-        name: mcp_server
-      - number: 4
-        ordinal: 3
-        name: request_id
-  - message: telividb.mcp.v1.DeleteMcpServerRequest
-    fields:
-      - number: 1
-        ordinal: 0
-        name: name
-      - number: 2
-        ordinal: 1
-        name: etag
-  - message: telividb.mcp.v1.GetMcpServerRequest
-    fields:
-      - number: 1
-        ordinal: 0
-        name: name
-  - message: telividb.mcp.v1.IntrospectMcpServerRequest
-    fields:
-      - number: 1
-        ordinal: 0
-        name: name
-  - message: telividb.mcp.v1.IntrospectMcpServerResponse
-    fields:
-      - number: 1
-        ordinal: 0
-        name: tools
-      - number: 2
-        ordinal: 1
-        name: capability_digest
-      - number: 3
-        ordinal: 2
-        name: drifted
-  - message: telividb.mcp.v1.ListMcpServersRequest
-    fields:
-      - number: 1
-        ordinal: 0
-        name: parent
-      - number: 2
-        ordinal: 1
-        name: page_size
-      - number: 3
-        ordinal: 2
-        name: page_token
-      - number: 4
-        ordinal: 3
-        name: filter
-      - number: 5
-        ordinal: 4
-        name: show_deleted
-  - message: telividb.mcp.v1.ListMcpServersResponse
-    fields:
-      - number: 1
-        ordinal: 0
-        name: mcp_servers
-      - number: 2
-        ordinal: 1
-        name: next_page_token
-  - message: telividb.mcp.v1.McpServer
-    fields:
-      - number: 1
-        ordinal: 0
-        name: name
-      - number: 2
-        ordinal: 1
-        name: display_name
-      - number: 3
-        ordinal: 2
-        name: endpoint
-      - number: 4
-        ordinal: 3
-        name: embed_results
-      - number: 5
-        ordinal: 4
-        name: capability_digest
-      - number: 6
-        ordinal: 5
-        name: introspect_time
-      - number: 7
-        ordinal: 6
-        name: create_time
-      - number: 8
-        ordinal: 7
-        name: update_time
-      - number: 9
-        ordinal: 8
-        name: delete_time
-      - number: 10
-        ordinal: 9
-        name: expire_time
-      - number: 11
-        ordinal: 10
-        name: etag
-  - message: telividb.mcp.v1.McpTool
-    fields:
-      - number: 1
-        ordinal: 0
-        name: tool
-      - number: 2
-        ordinal: 1
-        name: description
-      - number: 3
-        ordinal: 2
-        name: input_schema
   - message: telividb.point.v1.BatchCreatePointsRequest
     fields:
       - number: 1
@@ -2119,6 +2189,18 @@ services:
         ordinal: 2
       - name: DeleteCollection
         ordinal: 3
+  - service: telividb.connector.v1.McpServers
+    methods:
+      - name: CreateMcpServer
+        ordinal: 0
+      - name: GetMcpServer
+        ordinal: 1
+      - name: ListMcpServers
+        ordinal: 2
+      - name: IntrospectMcpServer
+        ordinal: 3
+      - name: DeleteMcpServer
+        ordinal: 4
   - service: telividb.context.v1.ContextTemplates
     methods:
       - name: CreateContextTemplate
@@ -2219,18 +2301,6 @@ services:
         ordinal: 1
       - name: EmbedText
         ordinal: 2
-  - service: telividb.mcp.v1.McpServers
-    methods:
-      - name: CreateMcpServer
-        ordinal: 0
-      - name: GetMcpServer
-        ordinal: 1
-      - name: ListMcpServers
-        ordinal: 2
-      - name: IntrospectMcpServer
-        ordinal: 3
-      - name: DeleteMcpServer
-        ordinal: 4
   - service: telividb.point.v1.Points
     methods:
       - name: CreatePoint

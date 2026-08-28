@@ -6,12 +6,14 @@ package telividb.tenancy.v1;
 import "buffers/v1/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/tenancy/v1/organization.proto";
 import "telividb/tenancy/v1/project.proto";
 import "telividb/tenancy/v1/session.proto";
 import "telividb/tenancy/v1/space.proto";
 import "telividb/tenancy/v1/tenancy_messages.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/tenancy/v1;tenancyv1";
 option java_multiple_files = true;
 option java_outer_classname = "TenancyServiceProto";
 option java_package = "dev.telividb.tenancy.v1";
@@ -28,6 +30,13 @@ option (buffers.v1.file) = {namespace: "telividb.tenancy.v1"};
 // breaking change to a shipped signature.
 service Organizations {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb organizations"
+      version: "0.1.0"
+      description: "The root of the tenancy tree. Deleting one tombstones every collection beneath it."
+    }
+  };
 
   // Creates an organization and the collection backing it.
   rpc CreateOrganization(CreateOrganizationRequest) returns (Organization) {
@@ -67,6 +76,7 @@ service Organizations {
   rpc DeleteOrganization(DeleteOrganizationRequest) returns (Organization) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the organization and every collection beneath it. It stays recoverable until it expires. Confirm?"};
   }
 
   // Restores a soft-deleted organization before it expires.
@@ -86,6 +96,13 @@ service Organizations {
 // Manages projects, the unit at which access is granted.
 service Projects {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb projects"
+      version: "0.1.0"
+      description: "Units of work within an organization, and where access is granted."
+    }
+  };
 
   // Creates a project.
   rpc CreateProject(CreateProjectRequest) returns (Project) {
@@ -112,12 +129,20 @@ service Projects {
   rpc DeleteProject(DeleteProjectRequest) returns (Project) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/projects/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the project. Spaces it contained survive and lose the link. Confirm?"};
   }
 }
 
 // Manages spaces and their protection.
 service Spaces {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb spaces"
+      version: "0.1.0"
+      description: "Named containers for related conversation, and where protection is declared."
+    }
+  };
 
   // Creates a space with a declared protection state.
   //
@@ -151,18 +176,27 @@ service Spaces {
       post: "/v1/{name=organizations/*/spaces/*}:unlock"
       body: "*"
     };
+    option (mcp.elicitation) = {message: "This unlocks a key-wrapped space for the session, making its contents readable. Confirm?"};
   }
 
   // Soft-deletes a space and every conversation within it.
   rpc DeleteSpace(DeleteSpaceRequest) returns (Space) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/spaces/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the space and every conversation within it. Confirm?"};
   }
 }
 
 // Manages sessions — recorded working periods holding conversations.
 service Sessions {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb sessions"
+      version: "0.1.0"
+      description: "Recorded working periods holding conversations."
+    }
+  };
 
   // Creates a session.
   rpc CreateSession(CreateSessionRequest) returns (Session) {
@@ -189,5 +223,6 @@ service Sessions {
   rpc DeleteSession(DeleteSessionRequest) returns (Session) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/sessions/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the session. Its conversations survive and lose the link. Confirm?"};
   }
 }
