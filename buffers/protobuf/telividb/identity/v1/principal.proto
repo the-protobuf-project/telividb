@@ -1,0 +1,132 @@
+// The User and UserGroup resources.
+syntax = "proto3";
+
+package telividb.identity.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PrincipalProto";
+option java_package = "dev.telividb.identity.v1";
+option (buffers.v1.file) = {namespace: "telividb.identity.v1"};
+
+// A person, and separately the principal policy evaluates against.
+//
+// A user is two things at once and they are kept apart deliberately: an owner
+// of memory, and a principal whose visibility predicate runs on every query.
+// Collapsing them would make every permission change a user edit, and grants
+// attach to groups rather than to people for the same reason.
+message User {
+  option (google.api.resource) = {
+    type: "telividb.dev/User"
+    pattern: "users/{user}"
+    singular: "user"
+    plural: "users"
+  };
+
+  // Resource name of the user.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The principal identifier policy evaluates against.
+  //
+  // Distinct from the resource name so an account can be renamed without
+  // rewriting every grant that refers to it.
+  string principal = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Groups this user belongs to.
+  repeated string user_groups = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "telividb.dev/UserGroup"}
+  ];
+
+  // When the user was created.
+  google.protobuf.Timestamp create_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the user was last modified.
+  google.protobuf.Timestamp update_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the user was soft-deleted, or unset while live.
+  //
+  // Deleting a user cascades to the memory they own. A user delete that left
+  // their memory searchable would be the worst bug available here, so the
+  // cascade is part of the operation rather than a follow-up.
+  google.protobuf.Timestamp delete_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted user is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A set of users that grants attach to.
+message UserGroup {
+  option (google.api.resource) = {
+    type: "telividb.dev/UserGroup"
+    pattern: "userGroups/{user_group}"
+    singular: "userGroup"
+    plural: "userGroups"
+  };
+
+  // Resource name of the group.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // When the group was created.
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the group was last modified.
+  google.protobuf.Timestamp update_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the group was soft-deleted, or unset while live.
+  google.protobuf.Timestamp delete_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted group is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A role granted to a group over part of the tenancy tree.
+//
+// Grants attach at an organization, project or space and inherit downward,
+// which is what makes "the projects a principal can see" a set small enough to
+// compile into a bitmap once per query.
+message RoleBinding {
+  option (google.api.resource) = {
+    type: "telividb.dev/RoleBinding"
+    pattern: "organizations/{organization}/roleBindings/{role_binding}"
+    singular: "roleBinding"
+    plural: "roleBindings"
+  };
+
+  // Resource name of the binding.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The group this grants to.
+  string user_group = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/UserGroup"}
+  ];
+
+  // The role granted, such as `reader`, `writer` or `owner`.
+  string role = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The resource this applies to — an organization, project or space.
+  string scope = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // When the binding was created.
+  google.protobuf.Timestamp create_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

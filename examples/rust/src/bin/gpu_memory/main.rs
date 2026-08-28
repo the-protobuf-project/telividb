@@ -19,8 +19,7 @@ mod scale;
 
 use scale::{Args, run_scale};
 use telividb_index::adapters::{
-    BUDGET_ENV, best_device, budget_source, device_allocated_bytes, device_name, gpu_budget_bytes,
-    gpu_resident_bytes,
+    BUDGET_ENV, Device, budget_source, device_allocated_bytes, gpu_budget_bytes, gpu_resident_bytes,
 };
 
 /// First corpus size; each step doubles from here.
@@ -44,9 +43,9 @@ fn parse_args() -> Args {
 
 fn main() {
     let args = parse_args();
-    let device = best_device();
+    let device = Device::best();
 
-    println!("device      : {}", device_name(&device));
+    println!("device      : {}", device.kind().as_str());
     println!("dim         : {}", args.dim);
     println!("k           : {}", args.k);
     println!(
@@ -54,7 +53,7 @@ fn main() {
         gpu_budget_bytes() as f64 / (1024.0 * 1024.0 * 1024.0),
         budget_source().as_str(),
     );
-    if device_name(&device) == "cpu" {
+    if device.kind().as_str() == "cpu" {
         println!("\nNOTE: no GPU backend initialised — this measures the CPU");
         println!("fallback, which is correct but says nothing about VRAM.");
     }

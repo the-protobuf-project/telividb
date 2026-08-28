@@ -1,0 +1,150 @@
+// The inference service — the single compute boundary.
+syntax = "proto3";
+
+package telividb.inference.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/duration.proto";
+import "telividb/inference/v1/model.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "InferenceServiceProto";
+option java_package = "dev.telividb.inference.v1";
+option (buffers.v1.file) = {namespace: "telividb.inference.v1"};
+
+// Computes vectors, and deliberately does not write them.
+//
+// Two writers to one store is how provenance diverges: this returns, and the
+// points service stores. It is also the single compute boundary — ingest
+// embedding, query encoding and every plugin's compute step arrive here, which
+// is what makes a permission check before a model runs possible at all.
+service Inference {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Retrieves a single model.
+  rpc GetModel(GetModelRequest) returns (Model) {
+    option (google.api.http) = {get: "/v1/{name=models/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists models known to the inference server.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
+    option (google.api.http) = {get: "/v1/models"};
+  }
+
+  // Computes embeddings for a batch of text.
+  //
+  // Policy is evaluated before the model runs, not only before results return.
+  // That is stronger than checking at the query planner alone: it stops a
+  // caller producing a vector for data it was never granted, rather than
+  // hiding the output afterwards.
+  rpc EmbedText(EmbedTextRequest) returns (EmbedTextResponse) {
+    option (google.api.http) = {
+      post: "/v1/{model=models/*}:embedText"
+      body: "*"
+    };
+    option (google.api.method_signature) = "model,input";
+  }
+}
+
+// A vector, carried as raw bytes rather than a repeated scalar.
+//
+// Protobuf encodes a repeated scalar element by element, so a 768-dimension
+// vector would cost 768 varint operations per message in each direction on the
+// hot path. One length-delimited field costs one.
+message Vector {
+  // Raw little-endian IEEE-754 single-precision components.
+  bytes data = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Number of components, so a reader can validate before casting.
+  int32 dimensions = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+// Request message for retrieving a model.
+message GetModelRequest {
+  // Resource name of the model.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Model"}
+  ];
+}
+
+// Request message for listing models.
+message ListModelsRequest {
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression, such as `resident = true`.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing models.
+message ListModelsResponse {
+  // The models on this page.
+  repeated Model models = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for computing embeddings.
+message EmbedTextRequest {
+  // Model to encode with.
+  string model = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Model"}
+  ];
+
+  // Text to encode. One or many; the call is the same either way.
+  repeated string input = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether this is document-side or query-side encoding.
+  //
+  // Not cosmetic: the two use different prefixes, and for a jointly trained
+  // model a query routes to the other tower entirely. Encoding a query through
+  // the document tower returns plausible garbage rather than an error.
+  Task task = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to truncate input longer than the model's context.
+  //
+  // Defaults to true. The alternative is failing a batch of ten thousand
+  // because one document was long.
+  bool truncate = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for computing embeddings.
+message EmbedTextResponse {
+  // The vectors, in the order the inputs were given.
+  repeated Vector embeddings = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Digest of the model that produced them — the identity, not the label.
+  string model_digest = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Time spent loading the model.
+  //
+  // Near zero is the proof a model stayed resident rather than being reloaded,
+  // which is the difference between batching working and not.
+  google.protobuf.Duration load_duration = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Tokens consumed across the batch.
+  int32 prompt_token_count = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Whether text is being encoded as a document or as a query.
+enum Task {
+  // Default value. Treated as a document.
+  TASK_UNSPECIFIED = 0;
+
+  // Content being stored.
+  TASK_DOCUMENT = 1;
+
+  // A query being matched against stored content.
+  TASK_QUERY = 2;
+}

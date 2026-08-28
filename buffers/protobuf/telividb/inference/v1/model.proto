@@ -1,0 +1,63 @@
+// The Model resource.
+syntax = "proto3";
+
+package telividb.inference.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ModelProto";
+option java_package = "dev.telividb.inference.v1";
+option (buffers.v1.file) = {namespace: "telividb.inference.v1"};
+
+// A GGUF model the inference server can hold resident.
+message Model {
+  option (google.api.resource) = {
+    type: "telividb.dev/Model"
+    pattern: "models/{model}"
+    singular: "model"
+    plural: "models"
+  };
+
+  // Resource name of the model.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Digest of the model file.
+  //
+  // The identity, not the label. A vector field binds to this rather than to a
+  // name, because two files called the same thing produce different vectors and
+  // mixing them into one index degrades recall with nothing reporting it.
+  // Computed from the bytes read, never trusted from metadata.
+  string digest = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Architecture, read from the file rather than configured.
+  string architecture = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Components in the vectors this model produces.
+  int32 dimensions = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Maximum input length in tokens.
+  int32 context_length = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Quantization the file carries, such as `Q4_K_M`.
+  string quantization = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the model is currently loaded on a device.
+  //
+  // Several models stay resident at once and nothing swaps per call: reloading
+  // between calls would defeat the batching that makes in-process inference
+  // worth having.
+  bool resident = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Device memory this model occupies while resident.
+  int64 resident_bytes = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the model was registered.
+  google.protobuf.Timestamp create_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

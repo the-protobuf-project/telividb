@@ -11,31 +11,42 @@ telemetry.workspace = true
 thiserror.workspace = true
 serde_json = "1"
 
-# The only tensor runtime in this project (rule 42). Note what is *not* here:
-# `candle-nn` and `candle-transformers`. Everything the encoder needs —
-# `QTensor`, `QMatMul`, `gguf_file`, and the tensor ops that layer norm, GELU
-# and softmax are built from — lives in `candle-core` alone, so neither of the
-# larger crates (and neither one's model zoo) enters the build.
-candle-core.workspace = true
+# Layer one, and the only tensor runtime in this project (rule 42).
+#
+# The encoder is built from these graph operations rather than from a model
+# library: `matmul`, `layer_norm`, `masked_softmax`, `rope`, `rows`. That is
+# why there is no model-zoo dependency here and no second GGUF loader — a
+# quantized weight is multiplied where it sits.
+telividb-compute = { path = "../../platform/telividb-compute" }
 
 # WordPiece tokenization, built from the vocabulary the GGUF already carries.
+# **`fancy-regex`, not `onig`.** `tokenizers` requires one regex engine or the
+# other. `onig` is Oniguruma, which is C and builds with `cc`; `fancy-regex` is
+# pure Rust. While candle was in the tree its `tokenizers` dependency pulled
+# `onig` and there was nothing to be gained by objecting — the union of Cargo
+# features made the choice elsewhere. Removing candle put that choice back in
+# reach, so this crate now contributes **no native dependency at all**, which
+# is one fewer carve-out against rule 1 than the workspace carried yesterday.
 #
 # `default-features = false` is load-bearing, not tidiness. The defaults are
-# `progressbar`, `onig` and `esaxx_fast`; the last enables `esaxx-rs/cpp`,
-# which is C++ and would be a *third* native carve-out against rule 1. candle
-# already pulls this crate with `onig` alone (rule 1's second carve-out), and
-# because Cargo unions features, asking for nothing here keeps the union at
-# exactly what it is today rather than widening it.
-tokenizers = { version = "0.23", default-features = false }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-candle-core = { workspace = true, features = ["metal"] }
+# `progressbar`, `onig` and `esaxx_fast`. The last enables `esaxx-rs/cpp`, which
+# is C++ and would be a native carve-out against rule 1; it is only used for
+# Unigram *training*, which a loader never does.
+#
+# `fancy-regex` replaces `onig` — pure Rust, and the reason rule 1's second
+# carve-out could be deleted rather than kept once candle left the tree.
+tokenizers = { version = "0.23", default-features = false, features = ["fancy-regex"] }
 
 [features]
 default = []
 # Dispatch inference to CUDA. Requires the CUDA SDK at build time, which is
 # why it is opt-in — see rule 46 and the note in `.github/workflows/ci.yml`.
-cuda = ["candle-core/cuda"]
+cuda = ["telividb-compute/cuda"]
+# Dispatch inference to AMD, Intel or any Vulkan device. Each needs its own SDK
+# at build time, which is why none is default.
+hip = ["telividb-compute/hip"]
+sycl = ["telividb-compute/sycl"]
+vulkan = ["telividb-compute/vulkan"]
 
 [dev-dependencies]
 tempfile = "3"

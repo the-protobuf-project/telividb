@@ -1,6 +1,6 @@
 //! Declaring a collection before anything is written to it.
 
-use telividb_proto::collection::v1 as wire;
+use telividb_buffers::protobuf::collection::v1 as wire;
 
 /// How similarity is measured in a vector field.
 ///

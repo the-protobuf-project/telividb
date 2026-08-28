@@ -4,14 +4,17 @@ deps:
   # AIP annotations: field_behavior, resource, http. Required by the linter,
   # which is the authority on this API surface.
   - buf.build/googleapis/googleapis
+  # The buffers.v1 facet vocabulary — namespace, layout, ordinals — read by
+  # protoc-gen-buffers when rendering the flat IDLs.
+  - buf.build/the-protobuf-project/buffers
 
 modules:
-  - path: protobuf
+  - path: buffers/protobuf
     # Vendored dependencies live here for editor import resolution only. buf
     # resolves them from the registry, so compiling the copies as well would
     # define every google.api extension twice.
     excludes:
-      - protobuf/.deps
+      - buffers/protobuf/.deps
 
 # No `lint` block, deliberately.
 #

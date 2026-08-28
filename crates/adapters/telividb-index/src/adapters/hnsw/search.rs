@@ -5,6 +5,7 @@ use super::scored::{Farthest, Nearest, Scored, to_distance};
 use super::visited::VisitedSet;
 use std::collections::BinaryHeap;
 use telividb_core::{Metric, Ordinal, VectorStore};
+use telividb_distance::Scorer;
 
 /// Distance from `query` to the vector at `ordinal`.
 ///
@@ -17,10 +18,7 @@ pub fn distance_to(
     ordinal: Ordinal,
 ) -> Option<f32> {
     let vector = store.get(ordinal)?;
-    Some(to_distance(
-        metric,
-        telividb_distance::score(metric, query, vector),
-    ))
+    Some(to_distance(metric, metric.score(query, vector)))
 }
 
 /// Greedy descent through one upper layer.

@@ -1,0 +1,99 @@
+// The PolicySet resource and the decision it produces.
+syntax = "proto3";
+
+package telividb.policy.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PolicySetProto";
+option java_package = "dev.telividb.policy.v1";
+option (buffers.v1.file) = {namespace: "telividb.policy.v1"};
+
+// A set of rules attached to groups, evaluated before any index runs.
+message PolicySet {
+  option (google.api.resource) = {
+    type: "telividb.dev/PolicySet"
+    pattern: "organizations/{organization}/policySets/{policy_set}"
+    singular: "policySet"
+    plural: "policySets"
+  };
+
+  // Resource name of the policy set.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The rules, as a policy-language module.
+  string source = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Monotonic version, incremented on every change.
+  //
+  // Compiled visibility is cached on the principal, the collection and this
+  // number together, so a policy change invalidates the cache exactly rather
+  // than by timeout.
+  int64 version = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Groups this set is attached to.
+  repeated string user_groups = 5 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "telividb.dev/UserGroup"}
+  ];
+
+  // When the policy set was created.
+  google.protobuf.Timestamp create_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the policy set was last modified.
+  google.protobuf.Timestamp update_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the policy set was soft-deleted, or unset while live.
+  google.protobuf.Timestamp delete_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted policy set is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// What a principal is allowed to see.
+//
+// A predicate, never a boolean. A boolean cannot express row-level visibility
+// and cannot be retrofitted into one cheaply — and the predicate is ANDed into
+// the query before the index runs, because searching first and discarding
+// afterwards leaks the existence, count and ranking of rows the caller was
+// never allowed to know about.
+message Decision {
+  // Whether the request is permitted at all.
+  //
+  // Absent policy denies. Failing open would make a misconfiguration
+  // indistinguishable from a grant.
+  Effect effect = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Row visibility, as a filter expression to AND into the query.
+  string row_predicate = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Fields the principal may read.
+  google.protobuf.FieldMask field_mask = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Policy version this was resolved against.
+  int64 policy_version = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Whether a request is permitted.
+enum Effect {
+  // Default value. Treated as a denial.
+  EFFECT_UNSPECIFIED = 0;
+
+  // The request proceeds, restricted by the accompanying predicate.
+  EFFECT_ALLOW = 1;
+
+  // The request is refused, and the refusal is reported rather than returned
+  // as an empty result.
+  EFFECT_DENY = 2;
+}

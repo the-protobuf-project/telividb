@@ -4,9 +4,9 @@ use crate::collection::Collection;
 use crate::error::Result;
 use crate::names;
 use crate::new_collection::NewCollection;
-use telividb_proto::collection::v1 as wire;
-use telividb_proto::collection::v1::collections_client::CollectionsClient;
-use telividb_proto::point::v1::points_client::PointsClient;
+use telividb_buffers::protobuf::collection::v1 as wire;
+use telividb_buffers::protobuf::collection::v1::collections_client::CollectionsClient;
+use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
 use tonic::transport::Channel;
 
 /// A connection to a telividb server.

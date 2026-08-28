@@ -21,7 +21,7 @@ managed:
 
 plugins:
   - local: protoc-gen-prost
-    out: crates/platform/telividb-proto/src/generated
+    out: crates/platform/telividb-buffers/src/generated/protobuf
     opt:
       # Well-known types are left to `prost-types`, which prost maps by
       # default. Compiling them locally emits paths relative to the output
@@ -31,6 +31,6 @@ plugins:
       # so a vector arriving over the wire can be sliced without a copy.
 
   - local: protoc-gen-tonic
-    out: crates/platform/telividb-proto/src/generated
+    out: crates/platform/telividb-buffers/src/generated/protobuf
     opt:
       - no_include

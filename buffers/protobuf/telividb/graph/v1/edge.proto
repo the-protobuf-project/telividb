@@ -1,0 +1,134 @@
+// The Edge and EdgeType resources.
+syntax = "proto3";
+
+package telividb.graph.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "EdgeProto";
+option java_package = "dev.telividb.graph.v1";
+option (buffers.v1.file) = {namespace: "telividb.graph.v1"};
+
+// A typed relationship between two resources.
+//
+// Edges relate resources by name, never by internal ordinal: an ordinal is
+// segment-local and means nothing outside the process that produced it, so an
+// edge carrying one could not survive an export or a compaction.
+//
+// This one type carries both kinds of relationship in the model — the semantic
+// ones a retrieval follows, and the containment ones that place a conversation
+// in a session or a session in a space. Keeping them in one graph is what lets
+// a visibility predicate and a traversal be answered by the same structure
+// rather than by two that must agree.
+message Edge {
+  option (google.api.resource) = {
+    type: "telividb.dev/Edge"
+    pattern: "organizations/{organization}/edges/{edge}"
+    singular: "edge"
+    plural: "edges"
+  };
+
+  // Resource name of the edge.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Resource this edge points from.
+  string source = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Resource this edge points to.
+  string target = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The type of relationship, such as `FOLLOWS` or `IN_SPACE`.
+  string edge_type = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/EdgeType"}
+  ];
+
+  // Declared strength of this particular relationship.
+  //
+  // A prior about what this link is worth, overriding the default its type
+  // supplies. Weights multiply along a path rather than adding, so two hops
+  // through weak edges rank below one hop through a strong one — addition would
+  // let a long chain of weak links accumulate into a false strong signal.
+  float weight = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // How live this path is, as a time-decayed count of traversals.
+  //
+  // Learned evidence, kept separate from `weight` so reinforcement never
+  // overwrites the declared prior. Decayed rather than raw because a hundred
+  // traversals a year ago and three yesterday are not the same signal, and a
+  // separate recency factor over a raw count would double-count age.
+  //
+  // Accumulated in the resident graph and flushed periodically. The flush is
+  // allowed to lose recent increments: this ranks results, it does not audit
+  // them, and making every read a durable write would serialize the read path.
+  float strength = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When this edge was last traversed.
+  google.protobuf.Timestamp last_traverse_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether traversal stops here.
+  //
+  // A suppressed edge is a hard stop rather than a low score. The content it
+  // leads to is retained and its owner can still reach it deliberately; it is
+  // excluded from recall, and its existence remains visible to a caller
+  // assembling context so an agent knows what not to raise.
+  bool suppressed = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // When the edge was created.
+  google.protobuf.Timestamp create_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the edge was soft-deleted, or unset while it is live.
+  google.protobuf.Timestamp delete_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted edge is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A declared kind of relationship, carrying the default weight its edges take.
+//
+// Declaring the default once means an edge of a given kind inherits a priority
+// instead of every edge carrying its own magic number.
+message EdgeType {
+  option (google.api.resource) = {
+    type: "telividb.dev/EdgeType"
+    pattern: "organizations/{organization}/edgeTypes/{edge_type}"
+    singular: "edgeType"
+    plural: "edgeTypes"
+  };
+
+  // Resource name of the edge type.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Weight edges of this type take unless they override it.
+  float default_weight = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether edges of this type express containment rather than meaning.
+  //
+  // Containment edges place a conversation in a session or a session in a
+  // space. They are followed when resolving what a principal can see and are
+  // not followed when expanding a retrieval, because membership is not a
+  // semantic relationship and would otherwise pull in every sibling.
+  bool structural = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // When the edge type was created.
+  google.protobuf.Timestamp create_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the edge type was soft-deleted, or unset while it is live.
+  google.protobuf.Timestamp delete_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted edge type is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

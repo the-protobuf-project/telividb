@@ -1,0 +1,73 @@
+name: Lint
+
+# Style and structure. Fast, and independent of the build matrix, so a
+# formatting mistake reports in a minute rather than behind a full compile.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  # LLVM for the two sanctioned native paths (CLAUDE.md rule 1), matching the
+  # `[env]` block in `.cargo/config.toml` so a local build and a CI build
+  # compile them the same way rather than diverging on the runner's default.
+  CC: clang
+  CXX: clang++
+
+# Cancel a run when a newer commit lands on the same branch.
+#
+# `main` is deliberately excluded: its runs are the baseline `buf breaking`
+# compares against, and a cancelled one leaves no record.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  lint:
+    name: fmt · clippy
+    runs-on: ubuntu-latest
+    steps:
+      # `submodules: recursive` because `telividb-compute` vendors ggml and
+      # builds it with CMake. Without it the vendor directory is empty, CMake
+      # fails, and every job that compiles the workspace fails with it — the
+      # default feature set reaches `telividb-compute` through
+      # `telividb-index`'s `gpu`, so this is not an opt-in path.
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
+      - run: cargo fmt --all --check
+      # Not `--all-features`: see the test job. `cuda` cannot build without the
+      # CUDA SDK, so linting both real configurations is the useful pair.
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --workspace --all-targets --no-default-features -- -D warnings
+
+  # Structural rules from CLAUDE.md, enforced because rules that depend on
+  # discipline decay.
+
+  structure:
+    name: file length · doc coverage · layering
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
+      - run: cargo xtask check-len
+      - run: cargo xtask check-docs
+      # Invariant 14. Nothing else enforces the dependency direction.
+      - run: cargo xtask check-layers
+
+
+  # No *unexpected* native build dependency. The original "no C toolchain at
+  # all" promise is gone — `telividb-compute` vendors ggml and builds it with
+  # CMake, deliberately, for hardware coverage (CLAUDE.md rule 42). What is
+  # still worth enforcing, and what this checks, is that no *new* native path
+  # appears without being a recorded decision.

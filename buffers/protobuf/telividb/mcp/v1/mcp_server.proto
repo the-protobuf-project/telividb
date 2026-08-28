@@ -1,0 +1,92 @@
+// The McpServer resource.
+syntax = "proto3";
+
+package telividb.mcp.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "McpServerProto";
+option java_package = "dev.telividb.mcp.v1";
+option (buffers.v1.file) = {namespace: "telividb.mcp.v1"};
+
+// A registered MCP server this deployment may call tools on.
+//
+// Consuming an MCP server is an ordinary source, not a parallel ingest path: it
+// emits the same record stream bulk import already consumes, inheriting jobs,
+// checkpoints, resume and reject files rather than growing failure machinery of
+// its own.
+message McpServer {
+  option (google.api.resource) = {
+    type: "telividb.dev/McpServer"
+    pattern: "organizations/{organization}/mcpServers/{mcp_server}"
+    singular: "mcpServer"
+    plural: "mcpServers"
+  };
+
+  // Resource name of the server.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Where to reach the server.
+  string endpoint = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether results from this server may be embedded into the index.
+  //
+  // False unless an operator sets it deliberately, and that default is the
+  // security boundary rather than a convenience. Text a server returns is
+  // written by whoever runs that server; embedding it makes it retrievable
+  // memory that a later context assembly can pull into a window, where it
+  // steers the agent. Unlike a one-time schema review, that recurs on every
+  // call and persists.
+  //
+  // Nothing infers this. A classifier may propose the change and may never
+  // apply it — automatic movement is permitted only toward withholding.
+  bool embed_results = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Digest of the capability set last introspected from this server.
+  //
+  // A source that silently gains or changes a tool is how ingest starts
+  // dropping data or accepting something it was never reviewed for. Comparing
+  // this is what detects drift.
+  string capability_digest = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the server was last introspected.
+  google.protobuf.Timestamp introspect_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the server was registered.
+  google.protobuf.Timestamp create_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the registration was last modified.
+  google.protobuf.Timestamp update_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the registration was soft-deleted, or unset while it is live.
+  google.protobuf.Timestamp delete_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted registration is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// One tool a server exposes.
+message McpTool {
+  // Name the server gives this tool.
+  //
+  // Attacker-controlled text: written by whoever runs the server, never by this
+  // deployment. It is displayed and filtered on, and it is never fed to a model
+  // that decides what to embed.
+  string tool = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Description the server supplies, carried verbatim.
+  string description = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // JSON Schema for the tool's input, as the server published it.
+  string input_schema = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

@@ -27,7 +27,13 @@ pub fn print_table(dataset: &str, points: &[Point]) {
 /// The mermaid charts, ready to paste into a README or an issue.
 pub fn print_charts(dataset: &str, points: &[Point]) {
     println!("\n---- charts ----\n");
-    print!("{}", chart::fenced(&chart::recall_vs_qps(dataset, points)));
+    for family in ["hnsw", "ivf"] {
+        print!(
+            "{}",
+            chart::fenced(&chart::recall_vs_qps(dataset, points, family))
+        );
+        println!();
+    }
     println!();
     print!("{}", chart::fenced(&chart::tail_latency(dataset, points)));
     println!();

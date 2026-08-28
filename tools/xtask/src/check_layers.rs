@@ -28,48 +28,7 @@ use std::process::ExitCode;
 mod modules;
 use modules::check_modules;
 
-/// What each crate is allowed to depend on, inside the workspace.
-///
-/// Listed rather than derived from a rank, because the interesting constraint
-/// is not "lower number" but *which* boundary a crate is allowed to see. A rank
-/// would silently permit `telividb-storage` to depend on `telividb-index`, and
-/// that is precisely the edge invariant 6 exists to forbid.
-const ALLOWED: &[(&str, &[&str])] = &[
-    ("telividb-core", &[]),
-    ("telividb-proto", &[]),
-    ("telividb-telemetry", &[]),
-    ("telividb-graph", &["telividb-core", "telividb-telemetry"]),
-    ("telividb-distance", &["telividb-core"]),
-    (
-        "telividb-storage",
-        &["telividb-core", "telividb-distance", "telividb-telemetry"],
-    ),
-    (
-        "telividb-index",
-        &["telividb-core", "telividb-distance", "telividb-telemetry"],
-    ),
-    // Note what is absent: `telividb-index`. The inference server and the GPU
-    // index both sit on candle, but neither may reach into the other — a
-    // shared device helper would put one adapter behind the other's optional
-    // feature, which is the outward dependency rule 14 forbids.
-    ("telividb-embed", &["telividb-core", "telividb-telemetry"]),
-    // The SDK speaks the wire protocol and nothing else: no storage, no index,
-    // no model. That is what keeps one server behaviour rather than one per
-    // client, and it is why this list is as short as it is.
-    ("telividb-client", &["telividb-proto"]),
-    (
-        "telividb-server",
-        &[
-            "telividb-core",
-            "telividb-distance",
-            "telividb-embed",
-            "telividb-index",
-            "telividb-proto",
-            "telividb-storage",
-            "telividb-telemetry",
-        ],
-    ),
-];
+use crate::allowed::ALLOWED;
 
 /// Every crate directory two levels under `crates/` —
 /// `crates/<domain|adapters|platform|bin>/<crate>/`.

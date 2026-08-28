@@ -107,5 +107,5 @@ pub(crate) async fn run_queries(client: &mut Client, id: &str, field: &str) {
 /// but genuinely a `FileDescriptorSet` — which is what the server refuses to
 /// create a collection without, since it never parses `.proto` itself.
 fn descriptor_set() -> Vec<u8> {
-    telividb_proto::FILE_DESCRIPTOR_SET.to_vec()
+    telividb_buffers::protobuf::FILE_DESCRIPTOR_SET.to_vec()
 }

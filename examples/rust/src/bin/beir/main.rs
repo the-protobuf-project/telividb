@@ -35,7 +35,7 @@ mod report;
 mod run;
 
 use telividb_core::Fingerprint;
-use telividb_embed::{CandleInferencer, Inferencer, ModelId};
+use telividb_embed::{GgmlInferencer, Inferencer, ModelId};
 use telividb_examples::model;
 
 /// Below this, something is broken rather than merely mediocre.
@@ -70,9 +70,9 @@ fn main() {
     let mut server = match max_tokens() {
         Some(cap) => {
             println!("max tokens : {cap} (capped below the model's context)");
-            CandleInferencer::new().with_max_tokens(cap)
+            GgmlInferencer::new().with_max_tokens(cap)
         }
-        None => CandleInferencer::new(),
+        None => GgmlInferencer::new(),
     };
     let id = ModelId::new("beir-eval", Fingerprint::unset());
     if let Err(e) = server.register(&id, &model_path) {

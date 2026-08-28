@@ -1,0 +1,50 @@
+[package]
+name = "telividb-compute"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# Layer one: the tensor runtime, and the only crate in the workspace that
+# contains `unsafe`.
+#
+# ggml is vendored as a submodule and built here, so every other crate sees a
+# safe Rust API with methods on types and never a raw pointer. That isolation is
+# the point — the FFI surface is one crate wide, not workspace wide.
+#
+# `links` declares the native library so Cargo refuses two crates linking the
+# same one, which is how a duplicate ggml would otherwise slip in.
+links = "ggml"
+build = "build.rs"
+
+[dependencies]
+telividb-core.workspace = true
+
+[build-dependencies]
+# Generates the raw declarations from ggml's own headers, so the bindings
+# cannot drift from the C API the way a hand-written one would.
+bindgen = "0.72"
+# Drives ggml's CMake build.
+cmake = "0.1"
+
+[features]
+# Build ggml for the architecture baseline instead of the build machine.
+#
+# Off by default because everything here is built from source today, where
+# `-march=native` is strictly better. Turn it on for anything shipped to a
+# machine that did not compile it — a binary built with AVX-512 faults on a CPU
+# without it, and the failure is a SIGILL at first use, not a clear error.
+portable = []
+# Metal is compiled in automatically on macOS through the target section below,
+# for the same reason `telividb-index` does it: `default-features` cannot be
+# platform-conditional, and a default that broke every Linux build is not a
+# default.
+default = []
+# NVIDIA. Needs the CUDA toolkit at build time.
+cuda = []
+# AMD. Needs ROCm.
+hip = []
+# Cross-vendor GPU: NVIDIA, AMD and Intel through one driver interface.
+vulkan = []
+# Intel GPU via oneAPI.
+sycl = []
+

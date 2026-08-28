@@ -1,0 +1,345 @@
+// Request and response messages for the tenancy services.
+syntax = "proto3";
+
+package telividb.tenancy.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/field_info.proto";
+import "google/api/resource.proto";
+import "google/protobuf/field_mask.proto";
+import "telividb/tenancy/v1/organization.proto";
+import "telividb/tenancy/v1/project.proto";
+import "telividb/tenancy/v1/session.proto";
+import "telividb/tenancy/v1/space.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "TenancyMessagesProto";
+option java_package = "dev.telividb.tenancy.v1";
+option (buffers.v1.file) = {namespace: "telividb.tenancy.v1"};
+
+// Request message for creating an organization.
+message CreateOrganizationRequest {
+  // Identifier to use, forming the final path segment.
+  string organization_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The organization to create.
+  Organization organization = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  //
+  // A create that times out and is retried without one writes the resource
+  // twice, which for a tenant root is expensive to unpick.
+  string request_id = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving an organization.
+message GetOrganizationRequest {
+  // Resource name of the organization.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Organization"}
+  ];
+}
+
+// Request message for listing organizations.
+message ListOrganizationsRequest {
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression restricting which organizations are returned.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include soft-deleted organizations.
+  bool show_deleted = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing organizations.
+message ListOrganizationsResponse {
+  // The organizations on this page.
+  repeated Organization organizations = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for updating an organization.
+message UpdateOrganizationRequest {
+  // The organization to update, identified by its `name`.
+  Organization organization = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Fields to update.
+  google.protobuf.FieldMask update_mask = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for deleting an organization.
+message DeleteOrganizationRequest {
+  // Resource name of the organization to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Organization"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to delete the resource even though it still has children.
+  //
+  // Without this a delete that would orphan children is refused. Deleting
+  // is reversible until expiry either way, but refusing by default keeps a
+  // mistaken call from tombstoning a whole subtree in one step.
+  bool force = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for restoring a soft-deleted organization.
+message UndeleteOrganizationRequest {
+  // Resource name of the organization to restore.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Organization"}
+  ];
+}
+
+// Request message for creating a project.
+message CreateProjectRequest {
+  // Organization the project belongs to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/Project"}
+  ];
+
+  // Identifier to use, forming the final path segment.
+  string project_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The project to create.
+  Project project = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  string request_id = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving a project.
+message GetProjectRequest {
+  // Resource name of the project.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Project"}
+  ];
+}
+
+// Request message for listing projects.
+message ListProjectsRequest {
+  // Organization to list projects from.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/Project"}
+  ];
+
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression restricting which projects are returned.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include soft-deleted projects.
+  bool show_deleted = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing projects.
+message ListProjectsResponse {
+  // The projects on this page.
+  repeated Project projects = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a project.
+message DeleteProjectRequest {
+  // Resource name of the project to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Project"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for creating a space.
+message CreateSpaceRequest {
+  // Organization the space belongs to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/Space"}
+  ];
+
+  // Identifier to use, forming the final path segment.
+  string space_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The space to create.
+  Space space = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  string request_id = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving a space.
+message GetSpaceRequest {
+  // Resource name of the space.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Space"}
+  ];
+}
+
+// Request message for listing spaces.
+message ListSpacesRequest {
+  // Organization to list spaces from.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/Space"}
+  ];
+
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression restricting which spaces are returned.
+  //
+  // A space the caller holds no grant on is absent from the result rather
+  // than reported as denied: reporting it would disclose that it exists, and
+  // for a private thread the existence is often the sensitive part.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing spaces.
+message ListSpacesResponse {
+  // The spaces on this page.
+  repeated Space spaces = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for unlocking a key-wrapped space.
+message UnlockSpaceRequest {
+  // Resource name of the space to unlock.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Space"}
+  ];
+
+  // Client-held key material, for a sealed space.
+  //
+  // Required when protection is SEALED, because the server holds no key that
+  // opens it. Never persisted.
+  bytes unwrap_key = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for unlocking a space.
+message UnlockSpaceResponse {
+  // The space, now reporting `locked` as false.
+  Space space = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Segments made readable by this unlock.
+  int32 unlocked_segment_count = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a space.
+message DeleteSpaceRequest {
+  // Resource name of the space to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Space"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for creating a session.
+message CreateSessionRequest {
+  // Organization the session belongs to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/Session"}
+  ];
+
+  // Identifier to use, forming the final path segment.
+  string session_id = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // The session to create.
+  Session session = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  string request_id = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving a session.
+message GetSessionRequest {
+  // Resource name of the session.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Session"}
+  ];
+}
+
+// Request message for listing sessions.
+message ListSessionsRequest {
+  // Organization to list sessions from.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/Session"}
+  ];
+
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression restricting which sessions are returned.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing sessions.
+message ListSessionsResponse {
+  // The sessions on this page.
+  repeated Session sessions = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a session.
+message DeleteSessionRequest {
+  // Resource name of the session to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Session"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+}

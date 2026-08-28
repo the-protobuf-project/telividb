@@ -7,7 +7,7 @@
 mod support;
 
 use support::vectors::{create, search, start_at, started};
-use telividb_proto::point::v1::points_client::PointsClient;
+use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
 
 #[tokio::test]
 async fn vectors_are_written_and_searched_over_grpc() {

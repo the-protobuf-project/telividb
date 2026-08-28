@@ -1,0 +1,2313 @@
+# buffers.lock — the ordinal ledger. Generated; commit it.
+#
+# Every field, enum value and method this plugin has assigned a target slot to is
+# recorded here by its proto field number. A later build that would assign a
+# different slot reports the disagreement instead of shipping it.
+#
+# That matters because the slot is a wire format. A consumer compiled against a
+# schema where a field sat at ordinal 5 reads ordinal 5 forever, and if a rebuild
+# moves something else there, nothing — not protoc, not capnp, not flatc, not the
+# consumer — reports an error. It just reads the wrong field.
+#
+# Do not edit by hand, and do not resolve a merge conflict in this file textually.
+# A conflict here means two branches each assigned a slot; deciding which one wins
+# is a compatibility decision, so .gitattributes marks the file -merge to keep git
+# from guessing.
+version: 1
+messages:
+  - message: telividb.collection.v1.Collection
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: descriptor_set
+      - number: 3
+        ordinal: 2
+        name: schema_fingerprint
+      - number: 4
+        ordinal: 3
+        name: vector_fields
+      - number: 5
+        ordinal: 4
+        name: live_point_count
+      - number: 6
+        ordinal: 5
+        name: tombstoned_point_count
+      - number: 7
+        ordinal: 6
+        name: segment_count
+  - message: telividb.collection.v1.CreateCollectionRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: collection_id
+      - number: 2
+        ordinal: 1
+        name: collection
+  - message: telividb.collection.v1.DeleteCollectionRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.collection.v1.GetCollectionRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.collection.v1.ListCollectionsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: page_size
+      - number: 2
+        ordinal: 1
+        name: page_token
+  - message: telividb.collection.v1.ListCollectionsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: collections
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.collection.v1.VectorField
+    fields:
+      - number: 1
+        ordinal: 0
+        name: field_id
+      - number: 2
+        ordinal: 1
+        name: dimensions
+      - number: 3
+        ordinal: 2
+        name: metric
+      - number: 4
+        ordinal: 3
+        name: index_kind
+      - number: 5
+        ordinal: 4
+        name: codec
+      - number: 6
+        ordinal: 5
+        name: model
+      - number: 7
+        ordinal: 6
+        name: query_encoder
+      - number: 8
+        ordinal: 7
+        name: permission
+  - message: telividb.context.v1.AssembleContextRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: query
+      - number: 3
+        ordinal: 2
+        name: spaces
+      - number: 4
+        ordinal: 3
+        name: context_template
+      - number: 5
+        ordinal: 4
+        name: expansion
+      - number: 6
+        ordinal: 5
+        name: budget
+  - message: telividb.context.v1.AssembleContextResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: fragments
+      - number: 2
+        ordinal: 1
+        name: complete
+      - number: 3
+        ordinal: 2
+        name: locked_spaces
+      - number: 4
+        ordinal: 3
+        name: suppressed_region_adjacent
+  - message: telividb.context.v1.Budget
+    fields:
+      - number: 1
+        ordinal: 0
+        name: max_fragment_count
+      - number: 2
+        ordinal: 1
+        name: max_token_count
+  - message: telividb.context.v1.ContextTemplate
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: expansion
+      - number: 4
+        ordinal: 3
+        name: budget
+      - number: 5
+        ordinal: 4
+        name: create_time
+      - number: 6
+        ordinal: 5
+        name: update_time
+      - number: 7
+        ordinal: 6
+        name: delete_time
+      - number: 8
+        ordinal: 7
+        name: expire_time
+      - number: 9
+        ordinal: 8
+        name: etag
+  - message: telividb.context.v1.CreateContextTemplateRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: context_template_id
+      - number: 3
+        ordinal: 2
+        name: context_template
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.context.v1.DeleteContextTemplateRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.context.v1.Expansion
+    fields:
+      - number: 1
+        ordinal: 0
+        name: max_hop_count
+      - number: 2
+        ordinal: 1
+        name: edge_types
+      - number: 3
+        ordinal: 2
+        name: decay
+      - number: 4
+        ordinal: 3
+        name: max_expanded_count
+      - number: 5
+        ordinal: 4
+        name: use_strength
+      - number: 6
+        ordinal: 5
+        name: use_summaries
+  - message: telividb.context.v1.Fragment
+    fields:
+      - number: 1
+        ordinal: 0
+        name: source
+      - number: 2
+        ordinal: 1
+        name: content
+      - number: 3
+        ordinal: 2
+        name: score
+      - number: 4
+        ordinal: 3
+        name: hop_count
+      - number: 5
+        ordinal: 4
+        name: reached_via
+      - number: 6
+        ordinal: 5
+        name: summarized
+      - number: 7
+        ordinal: 6
+        name: mcp_server
+  - message: telividb.context.v1.GetContextTemplateRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.context.v1.ListContextTemplatesRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+  - message: telividb.context.v1.ListContextTemplatesResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: context_templates
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.conversation.v1.ContentRef
+    fields:
+      - number: 1
+        ordinal: 0
+        name: uri
+      - number: 2
+        ordinal: 1
+        name: sha256
+      - number: 3
+        ordinal: 2
+        name: inline_text
+  - message: telividb.conversation.v1.Conversation
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: session
+      - number: 4
+        ordinal: 3
+        name: head
+      - number: 5
+        ordinal: 4
+        name: suppressed
+      - number: 6
+        ordinal: 5
+        name: message_count
+      - number: 7
+        ordinal: 6
+        name: create_time
+      - number: 8
+        ordinal: 7
+        name: update_time
+      - number: 9
+        ordinal: 8
+        name: delete_time
+      - number: 10
+        ordinal: 9
+        name: expire_time
+      - number: 11
+        ordinal: 10
+        name: etag
+  - message: telividb.conversation.v1.CreateConversationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: conversation_id
+      - number: 3
+        ordinal: 2
+        name: conversation
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.conversation.v1.CreateMessageRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: message
+      - number: 3
+        ordinal: 2
+        name: request_id
+      - number: 4
+        ordinal: 3
+        name: message_id
+  - message: telividb.conversation.v1.DeleteConversationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+      - number: 3
+        ordinal: 2
+        name: force
+  - message: telividb.conversation.v1.GetConversationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.conversation.v1.GetMessageRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.conversation.v1.GetSummaryRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.conversation.v1.GetToolInvocationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.conversation.v1.ListConversationsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: order_by
+  - message: telividb.conversation.v1.ListConversationsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: conversations
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.conversation.v1.ListMessagesRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: order_by
+  - message: telividb.conversation.v1.ListMessagesResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: messages
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.conversation.v1.ListSummariesRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: order_by
+  - message: telividb.conversation.v1.ListSummariesResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: summaries
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.conversation.v1.ListToolInvocationsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: order_by
+  - message: telividb.conversation.v1.ListToolInvocationsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: tool_invocations
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.conversation.v1.Message
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: role
+      - number: 3
+        ordinal: 2
+        name: parent
+      - number: 4
+        ordinal: 3
+        name: content
+      - number: 5
+        ordinal: 4
+        name: content_ref
+      - number: 6
+        ordinal: 5
+        name: embedded
+      - number: 7
+        ordinal: 6
+        name: occur_time
+      - number: 8
+        ordinal: 7
+        name: create_time
+      - number: 9
+        ordinal: 8
+        name: etag
+  - message: telividb.conversation.v1.MoveConversationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: destination_session
+  - message: telividb.conversation.v1.MoveConversationResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: conversation
+      - number: 2
+        ordinal: 1
+        name: invalidated_summaries
+  - message: telividb.conversation.v1.Summary
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: level
+      - number: 3
+        ordinal: 2
+        name: subject
+      - number: 4
+        ordinal: 3
+        name: content
+      - number: 5
+        ordinal: 4
+        name: coverage_end_time
+      - number: 6
+        ordinal: 5
+        name: stale
+      - number: 7
+        ordinal: 6
+        name: model_digest
+      - number: 8
+        ordinal: 7
+        name: inherited_protection
+      - number: 9
+        ordinal: 8
+        name: create_time
+  - message: telividb.conversation.v1.SuppressConversationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.conversation.v1.ToolInvocation
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: caller
+      - number: 3
+        ordinal: 2
+        name: call_id
+      - number: 4
+        ordinal: 3
+        name: tool
+      - number: 5
+        ordinal: 4
+        name: input
+      - number: 6
+        ordinal: 5
+        name: result
+      - number: 7
+        ordinal: 6
+        name: state
+      - number: 8
+        ordinal: 7
+        name: mcp_server
+      - number: 9
+        ordinal: 8
+        name: embedded
+      - number: 10
+        ordinal: 9
+        name: create_time
+  - message: telividb.conversation.v1.UnsuppressConversationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.graph.v1.BatchCreateEdgesRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: requests
+  - message: telividb.graph.v1.BatchCreateEdgesResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: edges
+  - message: telividb.graph.v1.CreateEdgeRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: edge_id
+      - number: 3
+        ordinal: 2
+        name: edge
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.graph.v1.CreateEdgeTypeRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: edge_type_id
+      - number: 3
+        ordinal: 2
+        name: edge_type
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.graph.v1.DeleteEdgeRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.graph.v1.DeleteEdgeTypeRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+      - number: 3
+        ordinal: 2
+        name: force
+  - message: telividb.graph.v1.Edge
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: source
+      - number: 3
+        ordinal: 2
+        name: target
+      - number: 4
+        ordinal: 3
+        name: edge_type
+      - number: 5
+        ordinal: 4
+        name: weight
+      - number: 6
+        ordinal: 5
+        name: strength
+      - number: 7
+        ordinal: 6
+        name: last_traverse_time
+      - number: 8
+        ordinal: 7
+        name: suppressed
+      - number: 9
+        ordinal: 8
+        name: create_time
+      - number: 10
+        ordinal: 9
+        name: delete_time
+      - number: 11
+        ordinal: 10
+        name: expire_time
+      - number: 12
+        ordinal: 11
+        name: etag
+  - message: telividb.graph.v1.EdgeType
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: default_weight
+      - number: 4
+        ordinal: 3
+        name: structural
+      - number: 5
+        ordinal: 4
+        name: create_time
+      - number: 6
+        ordinal: 5
+        name: delete_time
+      - number: 7
+        ordinal: 6
+        name: expire_time
+      - number: 8
+        ordinal: 7
+        name: etag
+  - message: telividb.graph.v1.GetEdgeRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.graph.v1.GetEdgeTypeRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.graph.v1.ListEdgeTypesRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+  - message: telividb.graph.v1.ListEdgeTypesResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: edge_types
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.graph.v1.ListEdgesRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: order_by
+      - number: 6
+        ordinal: 5
+        name: show_deleted
+  - message: telividb.graph.v1.ListEdgesResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: edges
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.graph.v1.TraversalResult
+    fields:
+      - number: 1
+        ordinal: 0
+        name: resource
+      - number: 2
+        ordinal: 1
+        name: score
+      - number: 3
+        ordinal: 2
+        name: hop_count
+      - number: 4
+        ordinal: 3
+        name: path
+  - message: telividb.graph.v1.TraversalStep
+    fields:
+      - number: 1
+        ordinal: 0
+        name: edge
+      - number: 2
+        ordinal: 1
+        name: resource
+  - message: telividb.graph.v1.TraverseGraphRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: seeds
+      - number: 3
+        ordinal: 2
+        name: max_hop_count
+      - number: 4
+        ordinal: 3
+        name: edge_types
+      - number: 5
+        ordinal: 4
+        name: decay
+      - number: 6
+        ordinal: 5
+        name: max_result_count
+      - number: 7
+        ordinal: 6
+        name: use_strength
+  - message: telividb.graph.v1.TraverseGraphResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: results
+      - number: 2
+        ordinal: 1
+        name: suppressed_edge_count
+      - number: 3
+        ordinal: 2
+        name: complete
+      - number: 4
+        ordinal: 3
+        name: locked_spaces
+  - message: telividb.identity.v1.CreateRoleBindingRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: role_binding_id
+      - number: 3
+        ordinal: 2
+        name: role_binding
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.identity.v1.CreateUserGroupRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: user_group_id
+      - number: 2
+        ordinal: 1
+        name: user_group
+      - number: 3
+        ordinal: 2
+        name: request_id
+  - message: telividb.identity.v1.CreateUserRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: user_id
+      - number: 2
+        ordinal: 1
+        name: user
+      - number: 3
+        ordinal: 2
+        name: request_id
+  - message: telividb.identity.v1.DeleteRoleBindingRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.identity.v1.DeleteUserGroupRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.identity.v1.DeleteUserRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+      - number: 3
+        ordinal: 2
+        name: force
+  - message: telividb.identity.v1.GetRoleBindingRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.identity.v1.GetUserGroupRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.identity.v1.GetUserRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.identity.v1.ListRoleBindingsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+  - message: telividb.identity.v1.ListRoleBindingsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: role_bindings
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.identity.v1.ListUserGroupsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: page_size
+      - number: 2
+        ordinal: 1
+        name: page_token
+      - number: 3
+        ordinal: 2
+        name: filter
+  - message: telividb.identity.v1.ListUserGroupsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: user_groups
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.identity.v1.ListUsersRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: page_size
+      - number: 2
+        ordinal: 1
+        name: page_token
+      - number: 3
+        ordinal: 2
+        name: filter
+      - number: 4
+        ordinal: 3
+        name: show_deleted
+  - message: telividb.identity.v1.ListUsersResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: users
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.identity.v1.RoleBinding
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: user_group
+      - number: 3
+        ordinal: 2
+        name: role
+      - number: 4
+        ordinal: 3
+        name: scope
+      - number: 5
+        ordinal: 4
+        name: create_time
+      - number: 6
+        ordinal: 5
+        name: etag
+  - message: telividb.identity.v1.UndeleteUserRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.identity.v1.User
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: principal
+      - number: 4
+        ordinal: 3
+        name: user_groups
+      - number: 5
+        ordinal: 4
+        name: create_time
+      - number: 6
+        ordinal: 5
+        name: update_time
+      - number: 7
+        ordinal: 6
+        name: delete_time
+      - number: 8
+        ordinal: 7
+        name: expire_time
+      - number: 9
+        ordinal: 8
+        name: etag
+  - message: telividb.identity.v1.UserGroup
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: create_time
+      - number: 4
+        ordinal: 3
+        name: update_time
+      - number: 5
+        ordinal: 4
+        name: delete_time
+      - number: 6
+        ordinal: 5
+        name: expire_time
+      - number: 7
+        ordinal: 6
+        name: etag
+  - message: telividb.inference.v1.EmbedTextRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: model
+      - number: 2
+        ordinal: 1
+        name: input
+      - number: 3
+        ordinal: 2
+        name: task
+      - number: 4
+        ordinal: 3
+        name: truncate
+  - message: telividb.inference.v1.EmbedTextResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: embeddings
+      - number: 2
+        ordinal: 1
+        name: model_digest
+      - number: 3
+        ordinal: 2
+        name: load_duration
+      - number: 4
+        ordinal: 3
+        name: prompt_token_count
+  - message: telividb.inference.v1.GetModelRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.inference.v1.ListModelsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: page_size
+      - number: 2
+        ordinal: 1
+        name: page_token
+      - number: 3
+        ordinal: 2
+        name: filter
+  - message: telividb.inference.v1.ListModelsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: models
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.inference.v1.Model
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: digest
+      - number: 3
+        ordinal: 2
+        name: architecture
+      - number: 4
+        ordinal: 3
+        name: dimensions
+      - number: 5
+        ordinal: 4
+        name: context_length
+      - number: 6
+        ordinal: 5
+        name: quantization
+      - number: 7
+        ordinal: 6
+        name: resident
+      - number: 8
+        ordinal: 7
+        name: resident_bytes
+      - number: 9
+        ordinal: 8
+        name: create_time
+      - number: 10
+        ordinal: 9
+        name: etag
+  - message: telividb.inference.v1.Vector
+    fields:
+      - number: 1
+        ordinal: 0
+        name: data
+      - number: 2
+        ordinal: 1
+        name: dimensions
+  - message: telividb.mcp.v1.CreateMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: mcp_server_id
+      - number: 3
+        ordinal: 2
+        name: mcp_server
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.mcp.v1.DeleteMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.mcp.v1.GetMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.mcp.v1.IntrospectMcpServerRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.mcp.v1.IntrospectMcpServerResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: tools
+      - number: 2
+        ordinal: 1
+        name: capability_digest
+      - number: 3
+        ordinal: 2
+        name: drifted
+  - message: telividb.mcp.v1.ListMcpServersRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: show_deleted
+  - message: telividb.mcp.v1.ListMcpServersResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: mcp_servers
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.mcp.v1.McpServer
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: endpoint
+      - number: 4
+        ordinal: 3
+        name: embed_results
+      - number: 5
+        ordinal: 4
+        name: capability_digest
+      - number: 6
+        ordinal: 5
+        name: introspect_time
+      - number: 7
+        ordinal: 6
+        name: create_time
+      - number: 8
+        ordinal: 7
+        name: update_time
+      - number: 9
+        ordinal: 8
+        name: delete_time
+      - number: 10
+        ordinal: 9
+        name: expire_time
+      - number: 11
+        ordinal: 10
+        name: etag
+  - message: telividb.mcp.v1.McpTool
+    fields:
+      - number: 1
+        ordinal: 0
+        name: tool
+      - number: 2
+        ordinal: 1
+        name: description
+      - number: 3
+        ordinal: 2
+        name: input_schema
+  - message: telividb.point.v1.BatchCreatePointsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: requests
+  - message: telividb.point.v1.BatchCreatePointsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: points
+  - message: telividb.point.v1.BatchDeletePointsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: names
+  - message: telividb.point.v1.BatchDeletePointsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: points
+  - message: telividb.point.v1.BatchGetPointsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: names
+      - number: 3
+        ordinal: 2
+        name: read_mask
+  - message: telividb.point.v1.BatchGetPointsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: points
+  - message: telividb.point.v1.ContentRef
+    fields:
+      - number: 1
+        ordinal: 0
+        name: uri
+      - number: 2
+        ordinal: 1
+        name: range_start
+      - number: 3
+        ordinal: 2
+        name: range_end
+      - number: 4
+        ordinal: 3
+        name: sha256
+      - number: 5
+        ordinal: 4
+        name: inline_text
+  - message: telividb.point.v1.CreatePointRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: point_id
+      - number: 3
+        ordinal: 2
+        name: point
+  - message: telividb.point.v1.DeletePointRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.point.v1.GetPointRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: read_mask
+  - message: telividb.point.v1.ListPointsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: read_mask
+  - message: telividb.point.v1.ListPointsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: points
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.point.v1.NamedVector
+    fields:
+      - number: 1
+        ordinal: 0
+        name: field_id
+      - number: 2
+        ordinal: 1
+        name: vector
+      - number: 3
+        ordinal: 2
+        name: text
+  - message: telividb.point.v1.Point
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: vectors
+      - number: 3
+        ordinal: 2
+        name: span
+      - number: 4
+        ordinal: 3
+        name: content_ref
+  - message: telividb.point.v1.SearchPointsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: field_id
+      - number: 3
+        ordinal: 2
+        name: query
+      - number: 4
+        ordinal: 3
+        name: page_size
+      - number: 5
+        ordinal: 4
+        name: page_token
+      - number: 6
+        ordinal: 5
+        name: candidate_breadth
+      - number: 7
+        ordinal: 6
+        name: read_mask
+      - number: 8
+        ordinal: 7
+        name: query_text
+  - message: telividb.point.v1.SearchPointsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: results
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+      - number: 3
+        ordinal: 2
+        name: complete
+      - number: 4
+        ordinal: 3
+        name: answered_source_count
+      - number: 5
+        ordinal: 4
+        name: total_source_count
+      - number: 6
+        ordinal: 5
+        name: locked_vaults
+      - number: 7
+        ordinal: 6
+        name: stats
+  - message: telividb.point.v1.SearchResult
+    fields:
+      - number: 1
+        ordinal: 0
+        name: point
+      - number: 2
+        ordinal: 1
+        name: score
+  - message: telividb.point.v1.SearchStats
+    fields:
+      - number: 1
+        ordinal: 0
+        name: candidates_visited
+      - number: 2
+        ordinal: 1
+        name: reranked_count
+      - number: 3
+        ordinal: 2
+        name: buffer_hit_count
+      - number: 4
+        ordinal: 3
+        name: index_hit_count
+      - number: 5
+        ordinal: 4
+        name: filter_strategy
+  - message: telividb.point.v1.Span
+    fields:
+      - number: 1
+        ordinal: 0
+        name: start_offset
+      - number: 2
+        ordinal: 1
+        name: end_offset
+  - message: telividb.point.v1.Vector
+    fields:
+      - number: 1
+        ordinal: 0
+        name: data
+      - number: 2
+        ordinal: 1
+        name: dimensions
+  - message: telividb.policy.v1.CreatePolicySetRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: policy_set_id
+      - number: 3
+        ordinal: 2
+        name: policy_set
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.policy.v1.Decision
+    fields:
+      - number: 1
+        ordinal: 0
+        name: effect
+      - number: 2
+        ordinal: 1
+        name: row_predicate
+      - number: 3
+        ordinal: 2
+        name: field_mask
+      - number: 4
+        ordinal: 3
+        name: policy_version
+  - message: telividb.policy.v1.DeletePolicySetRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.policy.v1.EvaluatePolicyRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: principal
+      - number: 3
+        ordinal: 2
+        name: resource
+      - number: 4
+        ordinal: 3
+        name: operation
+  - message: telividb.policy.v1.EvaluatePolicyResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: decision
+  - message: telividb.policy.v1.GetPolicySetRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.policy.v1.ListPolicySetsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: show_deleted
+  - message: telividb.policy.v1.ListPolicySetsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: policy_sets
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.policy.v1.PolicySet
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: source
+      - number: 4
+        ordinal: 3
+        name: version
+      - number: 5
+        ordinal: 4
+        name: user_groups
+      - number: 6
+        ordinal: 5
+        name: create_time
+      - number: 7
+        ordinal: 6
+        name: update_time
+      - number: 8
+        ordinal: 7
+        name: delete_time
+      - number: 9
+        ordinal: 8
+        name: expire_time
+      - number: 10
+        ordinal: 9
+        name: etag
+  - message: telividb.system.v1.GetSystemRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.system.v1.System
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: backend
+      - number: 3
+        ordinal: 2
+        name: device
+      - number: 4
+        ordinal: 3
+        name: budget_limit_bytes
+      - number: 5
+        ordinal: 4
+        name: budget_used_bytes
+      - number: 6
+        ordinal: 5
+        name: budget_source
+      - number: 7
+        ordinal: 6
+        name: version
+  - message: telividb.tenancy.v1.CreateOrganizationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: organization_id
+      - number: 2
+        ordinal: 1
+        name: organization
+      - number: 3
+        ordinal: 2
+        name: request_id
+  - message: telividb.tenancy.v1.CreateProjectRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: project_id
+      - number: 3
+        ordinal: 2
+        name: project
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.tenancy.v1.CreateSessionRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: session_id
+      - number: 3
+        ordinal: 2
+        name: session
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.tenancy.v1.CreateSpaceRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: space_id
+      - number: 3
+        ordinal: 2
+        name: space
+      - number: 4
+        ordinal: 3
+        name: request_id
+  - message: telividb.tenancy.v1.DeleteOrganizationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+      - number: 3
+        ordinal: 2
+        name: force
+  - message: telividb.tenancy.v1.DeleteProjectRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.tenancy.v1.DeleteSessionRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.tenancy.v1.DeleteSpaceRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: etag
+  - message: telividb.tenancy.v1.GetOrganizationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.tenancy.v1.GetProjectRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.tenancy.v1.GetSessionRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.tenancy.v1.GetSpaceRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.tenancy.v1.ListOrganizationsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: page_size
+      - number: 2
+        ordinal: 1
+        name: page_token
+      - number: 3
+        ordinal: 2
+        name: filter
+      - number: 4
+        ordinal: 3
+        name: show_deleted
+  - message: telividb.tenancy.v1.ListOrganizationsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: organizations
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.tenancy.v1.ListProjectsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+      - number: 5
+        ordinal: 4
+        name: show_deleted
+  - message: telividb.tenancy.v1.ListProjectsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: projects
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.tenancy.v1.ListSessionsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+  - message: telividb.tenancy.v1.ListSessionsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: sessions
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.tenancy.v1.ListSpacesRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: parent
+      - number: 2
+        ordinal: 1
+        name: page_size
+      - number: 3
+        ordinal: 2
+        name: page_token
+      - number: 4
+        ordinal: 3
+        name: filter
+  - message: telividb.tenancy.v1.ListSpacesResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: spaces
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.tenancy.v1.Organization
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: project_count
+      - number: 4
+        ordinal: 3
+        name: space_count
+      - number: 5
+        ordinal: 4
+        name: create_time
+      - number: 6
+        ordinal: 5
+        name: update_time
+      - number: 7
+        ordinal: 6
+        name: delete_time
+      - number: 8
+        ordinal: 7
+        name: expire_time
+      - number: 9
+        ordinal: 8
+        name: etag
+  - message: telividb.tenancy.v1.Project
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: create_time
+      - number: 4
+        ordinal: 3
+        name: update_time
+      - number: 5
+        ordinal: 4
+        name: delete_time
+      - number: 6
+        ordinal: 5
+        name: expire_time
+      - number: 7
+        ordinal: 6
+        name: etag
+  - message: telividb.tenancy.v1.Session
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: space
+      - number: 4
+        ordinal: 3
+        name: start_time
+      - number: 5
+        ordinal: 4
+        name: end_time
+      - number: 6
+        ordinal: 5
+        name: conversation_count
+      - number: 7
+        ordinal: 6
+        name: create_time
+      - number: 8
+        ordinal: 7
+        name: update_time
+      - number: 9
+        ordinal: 8
+        name: etag
+  - message: telividb.tenancy.v1.Space
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: projects
+      - number: 4
+        ordinal: 3
+        name: protection
+      - number: 5
+        ordinal: 4
+        name: locked
+      - number: 6
+        ordinal: 5
+        name: create_time
+      - number: 7
+        ordinal: 6
+        name: update_time
+      - number: 8
+        ordinal: 7
+        name: delete_time
+      - number: 9
+        ordinal: 8
+        name: expire_time
+      - number: 10
+        ordinal: 9
+        name: etag
+  - message: telividb.tenancy.v1.UndeleteOrganizationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.tenancy.v1.UnlockSpaceRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: unwrap_key
+  - message: telividb.tenancy.v1.UnlockSpaceResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: space
+      - number: 2
+        ordinal: 1
+        name: unlocked_segment_count
+  - message: telividb.tenancy.v1.UpdateOrganizationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: organization
+      - number: 2
+        ordinal: 1
+        name: update_mask
+enums:
+  - enum: telividb.collection.v1.Codec
+    values:
+      - number: 0
+        ordinal: 0
+        name: CODEC_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: CODEC_NONE
+      - number: 2
+        ordinal: 2
+        name: CODEC_F16
+      - number: 3
+        ordinal: 3
+        name: CODEC_INT8
+      - number: 4
+        ordinal: 4
+        name: CODEC_PQ
+      - number: 5
+        ordinal: 5
+        name: CODEC_BINARY
+  - enum: telividb.collection.v1.IndexKind
+    values:
+      - number: 0
+        ordinal: 0
+        name: INDEX_KIND_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: INDEX_KIND_FLAT
+      - number: 2
+        ordinal: 2
+        name: INDEX_KIND_HNSW
+      - number: 3
+        ordinal: 3
+        name: INDEX_KIND_IVF_PQ
+  - enum: telividb.collection.v1.Metric
+    values:
+      - number: 0
+        ordinal: 0
+        name: METRIC_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: METRIC_DOT
+      - number: 2
+        ordinal: 2
+        name: METRIC_L2
+      - number: 3
+        ordinal: 3
+        name: METRIC_COSINE
+  - enum: telividb.conversation.v1.Level
+    values:
+      - number: 0
+        ordinal: 0
+        name: LEVEL_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: LEVEL_CONVERSATION
+      - number: 2
+        ordinal: 2
+        name: LEVEL_SESSION
+      - number: 3
+        ordinal: 3
+        name: LEVEL_SPACE
+      - number: 4
+        ordinal: 4
+        name: LEVEL_PROJECT
+  - enum: telividb.conversation.v1.Role
+    values:
+      - number: 0
+        ordinal: 0
+        name: ROLE_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: ROLE_USER
+      - number: 2
+        ordinal: 2
+        name: ROLE_ASSISTANT
+      - number: 3
+        ordinal: 3
+        name: ROLE_SYSTEM
+      - number: 4
+        ordinal: 4
+        name: ROLE_DEVELOPER
+      - number: 5
+        ordinal: 5
+        name: ROLE_TOOL
+  - enum: telividb.conversation.v1.State
+    values:
+      - number: 0
+        ordinal: 0
+        name: STATE_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: STATE_SUCCEEDED
+      - number: 2
+        ordinal: 2
+        name: STATE_FAILED
+      - number: 3
+        ordinal: 3
+        name: STATE_TIMED_OUT
+  - enum: telividb.inference.v1.Task
+    values:
+      - number: 0
+        ordinal: 0
+        name: TASK_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: TASK_DOCUMENT
+      - number: 2
+        ordinal: 2
+        name: TASK_QUERY
+  - enum: telividb.policy.v1.Effect
+    values:
+      - number: 0
+        ordinal: 0
+        name: EFFECT_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: EFFECT_ALLOW
+      - number: 2
+        ordinal: 2
+        name: EFFECT_DENY
+  - enum: telividb.system.v1.BudgetSource
+    values:
+      - number: 0
+        ordinal: 0
+        name: BUDGET_SOURCE_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: BUDGET_SOURCE_MEASURED
+      - number: 2
+        ordinal: 2
+        name: BUDGET_SOURCE_ESTIMATED
+      - number: 3
+        ordinal: 3
+        name: BUDGET_SOURCE_CONFIGURED
+  - enum: telividb.tenancy.v1.Protection
+    values:
+      - number: 0
+        ordinal: 0
+        name: PROTECTION_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: PROTECTION_NONE
+      - number: 2
+        ordinal: 2
+        name: PROTECTION_PRIVATE
+      - number: 3
+        ordinal: 3
+        name: PROTECTION_VAULT
+      - number: 4
+        ordinal: 4
+        name: PROTECTION_SEALED
+services:
+  - service: telividb.collection.v1.Collections
+    methods:
+      - name: CreateCollection
+        ordinal: 0
+      - name: GetCollection
+        ordinal: 1
+      - name: ListCollections
+        ordinal: 2
+      - name: DeleteCollection
+        ordinal: 3
+  - service: telividb.context.v1.ContextTemplates
+    methods:
+      - name: CreateContextTemplate
+        ordinal: 0
+      - name: GetContextTemplate
+        ordinal: 1
+      - name: ListContextTemplates
+        ordinal: 2
+      - name: DeleteContextTemplate
+        ordinal: 3
+      - name: AssembleContext
+        ordinal: 4
+  - service: telividb.conversation.v1.Conversations
+    methods:
+      - name: CreateConversation
+        ordinal: 0
+      - name: GetConversation
+        ordinal: 1
+      - name: ListConversations
+        ordinal: 2
+      - name: MoveConversation
+        ordinal: 3
+      - name: SuppressConversation
+        ordinal: 4
+      - name: UnsuppressConversation
+        ordinal: 5
+      - name: DeleteConversation
+        ordinal: 6
+      - name: CreateMessage
+        ordinal: 7
+      - name: GetMessage
+        ordinal: 8
+      - name: ListMessages
+        ordinal: 9
+      - name: GetToolInvocation
+        ordinal: 10
+      - name: ListToolInvocations
+        ordinal: 11
+      - name: GetSummary
+        ordinal: 12
+      - name: ListSummaries
+        ordinal: 13
+  - service: telividb.graph.v1.Graph
+    methods:
+      - name: CreateEdge
+        ordinal: 0
+      - name: GetEdge
+        ordinal: 1
+      - name: ListEdges
+        ordinal: 2
+      - name: BatchCreateEdges
+        ordinal: 3
+      - name: DeleteEdge
+        ordinal: 4
+      - name: TraverseGraph
+        ordinal: 5
+      - name: CreateEdgeType
+        ordinal: 6
+      - name: GetEdgeType
+        ordinal: 7
+      - name: ListEdgeTypes
+        ordinal: 8
+      - name: DeleteEdgeType
+        ordinal: 9
+  - service: telividb.identity.v1.Identity
+    methods:
+      - name: CreateUser
+        ordinal: 0
+      - name: GetUser
+        ordinal: 1
+      - name: ListUsers
+        ordinal: 2
+      - name: DeleteUser
+        ordinal: 3
+      - name: UndeleteUser
+        ordinal: 4
+      - name: CreateUserGroup
+        ordinal: 5
+      - name: GetUserGroup
+        ordinal: 6
+      - name: ListUserGroups
+        ordinal: 7
+      - name: DeleteUserGroup
+        ordinal: 8
+      - name: CreateRoleBinding
+        ordinal: 9
+      - name: GetRoleBinding
+        ordinal: 10
+      - name: ListRoleBindings
+        ordinal: 11
+      - name: DeleteRoleBinding
+        ordinal: 12
+  - service: telividb.inference.v1.Inference
+    methods:
+      - name: GetModel
+        ordinal: 0
+      - name: ListModels
+        ordinal: 1
+      - name: EmbedText
+        ordinal: 2
+  - service: telividb.mcp.v1.McpServers
+    methods:
+      - name: CreateMcpServer
+        ordinal: 0
+      - name: GetMcpServer
+        ordinal: 1
+      - name: ListMcpServers
+        ordinal: 2
+      - name: IntrospectMcpServer
+        ordinal: 3
+      - name: DeleteMcpServer
+        ordinal: 4
+  - service: telividb.point.v1.Points
+    methods:
+      - name: CreatePoint
+        ordinal: 0
+      - name: GetPoint
+        ordinal: 1
+      - name: ListPoints
+        ordinal: 2
+      - name: DeletePoint
+        ordinal: 3
+      - name: BatchCreatePoints
+        ordinal: 4
+      - name: BatchGetPoints
+        ordinal: 5
+      - name: BatchDeletePoints
+        ordinal: 6
+      - name: SearchPoints
+        ordinal: 7
+  - service: telividb.policy.v1.Policy
+    methods:
+      - name: CreatePolicySet
+        ordinal: 0
+      - name: GetPolicySet
+        ordinal: 1
+      - name: ListPolicySets
+        ordinal: 2
+      - name: DeletePolicySet
+        ordinal: 3
+      - name: EvaluatePolicy
+        ordinal: 4
+  - service: telividb.system.v1.SystemInfo
+    methods:
+      - name: GetSystem
+        ordinal: 0
+  - service: telividb.tenancy.v1.Organizations
+    methods:
+      - name: CreateOrganization
+        ordinal: 0
+      - name: GetOrganization
+        ordinal: 1
+      - name: ListOrganizations
+        ordinal: 2
+      - name: UpdateOrganization
+        ordinal: 3
+      - name: DeleteOrganization
+        ordinal: 4
+      - name: UndeleteOrganization
+        ordinal: 5
+  - service: telividb.tenancy.v1.Projects
+    methods:
+      - name: CreateProject
+        ordinal: 0
+      - name: GetProject
+        ordinal: 1
+      - name: ListProjects
+        ordinal: 2
+      - name: DeleteProject
+        ordinal: 3
+  - service: telividb.tenancy.v1.Sessions
+    methods:
+      - name: CreateSession
+        ordinal: 0
+      - name: GetSession
+        ordinal: 1
+      - name: ListSessions
+        ordinal: 2
+      - name: DeleteSession
+        ordinal: 3
+  - service: telividb.tenancy.v1.Spaces
+    methods:
+      - name: CreateSpace
+        ordinal: 0
+      - name: GetSpace
+        ordinal: 1
+      - name: ListSpaces
+        ordinal: 2
+      - name: UnlockSpace
+        ordinal: 3
+      - name: DeleteSpace
+        ordinal: 4

@@ -21,7 +21,7 @@ use std::process::{Command, ExitCode};
 /// message appear to be declared twice.
 pub fn run() -> ExitCode {
     let root = std::env::current_dir().expect("cwd is readable");
-    let deps = root.join("protobuf/.deps");
+    let deps = root.join("buffers/protobuf/.deps");
 
     if which("buf").is_none() {
         eprintln!("vendor-proto: `buf` is not installed.");
@@ -52,7 +52,7 @@ pub fn run() -> ExitCode {
 
     let mut count = 0usize;
     count_protos(&deps, &mut count);
-    println!("vendor-proto: {count} dependency file(s) in protobuf/.deps");
+    println!("vendor-proto: {count} dependency file(s) in buffers/protobuf/.deps");
     println!("Configure the editor with `gapi.protoPath`; see docs/REPO_SETUP.md");
     ExitCode::SUCCESS
 }

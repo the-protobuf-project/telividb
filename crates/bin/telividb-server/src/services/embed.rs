@@ -13,9 +13,9 @@
 //! check. That check is not wired yet; this is the boundary it will attach to.
 
 use std::sync::Arc;
+use telividb_buffers::protobuf::point::v1::{NamedVector, Point as WirePoint};
 use telividb_core::Fingerprint;
-use telividb_embed::{CandleInferencer, Inferencer, ModelId, Task};
-use telividb_proto::point::v1::{NamedVector, Point as WirePoint};
+use telividb_embed::{GgmlInferencer, Inferencer, ModelId, Task};
 use telividb_telemetry::{fields, logger};
 use tonic::Status;
 
@@ -29,7 +29,7 @@ use tonic::Status;
 pub struct Embeddings {
     /// `Arc` because embedding runs on the blocking pool: the handle is cloned
     /// into `spawn_blocking`, not borrowed across an await.
-    inference: Option<Arc<CandleInferencer>>,
+    inference: Option<Arc<GgmlInferencer>>,
     model: Option<ModelId>,
 }
 
@@ -41,7 +41,7 @@ impl Embeddings {
     /// several seconds on a model load is indistinguishable from one that has
     /// hung.
     pub fn load(path: &std::path::Path, name: &str) -> Result<Self, telividb_embed::Error> {
-        let mut inference = CandleInferencer::new();
+        let mut inference = GgmlInferencer::new();
         let id = ModelId::new(name, Fingerprint::unset());
         inference.register(&id, path)?;
 
@@ -150,7 +150,7 @@ fn check_exactly_one(named: &NamedVector) -> Result<(), Status> {
 }
 
 /// The digest the inference server actually loaded.
-fn resident_digest(inference: &CandleInferencer, id: &ModelId) -> Fingerprint {
+fn resident_digest(inference: &GgmlInferencer, id: &ModelId) -> Fingerprint {
     inference
         .resident_digest(&id.name)
         .unwrap_or_else(Fingerprint::unset)

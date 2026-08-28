@@ -5,6 +5,7 @@
 
 use crate::ports::VectorStore;
 use telividb_core::{Dim, Metric, Ordinal};
+use telividb_distance::NormalizeInPlace;
 
 /// Row-major vectors held in one contiguous allocation.
 #[derive(Debug, Clone)]
@@ -41,7 +42,7 @@ impl MemoryStore {
         let start = self.data.len();
         self.data.extend_from_slice(vector);
         if self.metric.normalises_at_ingest() {
-            telividb_distance::normalize(&mut self.data[start..]);
+            self.data[start..].normalize();
         }
         self.present.push(true);
         Ok(Ordinal::from_row((self.present.len() - 1) as u32))

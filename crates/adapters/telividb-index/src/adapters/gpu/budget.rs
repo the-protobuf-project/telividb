@@ -15,20 +15,25 @@
 //! one at once, where two individually-legal indexes together exceeded the
 //! device.
 //!
-//! **Where the ceiling comes from.** [`DEFAULT_FRACTION`] of whatever memory is
-//! detected. On Metal that detection is Apple's own
-//! `recommendedMaxWorkingSetSize` — what the GPU can use with good performance
-//! — which is a real device figure rather than a guess. Elsewhere it falls back
-//! to system memory, which is right for the CPU path and **overestimates a
-//! discrete CUDA card**, since candle exposes no device-memory API for one. Set
-//! `TELIVIDB_GPU_BUDGET_BYTES` explicitly on such a machine.
+//! **Where the ceiling comes from.** [`DEFAULT_FRACTION`] of whatever the
+//! device reports for itself, through `ggml`'s backend interface — which
+//! answers for CUDA, HIP, Vulkan and Metal alike. That is the reading that
+//! improved when this crate moved off candle: candle exposed device memory for
+//! Metal only, so a discrete CUDA card had to budget against *system* memory,
+//! overestimating its own by whatever the host had spare. Now every
+//! accelerator budgets against its own figure.
 //!
-//! The fraction applies to *both* readings deliberately. Apple's figure is what
-//! the GPU can address, not what is free — the rest of the system, and the host
-//! copy every upload is made from, still have to fit alongside.
+//! A CPU backend still falls back to system memory, and correctly so — its
+//! device memory *is* system memory, and `ggml` reports nothing rather than
+//! inventing a number.
+//!
+//! The fraction applies to both readings deliberately. A device's total is what
+//! it can address, not what is free — the rest of the system, and the host copy
+//! every upload is made from, still have to fit alongside.
 
-use super::detect::{metal_working_set_size, system_memory};
+use super::host::system_memory;
 use std::sync::OnceLock;
+use telividb_compute::Backend;
 use telividb_core::{Error, Result};
 use telividb_telemetry::residency::{self, Location, ResidentKind};
 
@@ -56,8 +61,8 @@ pub const BUDGET_ENV: &str = "TELIVIDB_GPU_BUDGET_BYTES";
 pub enum BudgetSource {
     /// Set explicitly through [`BUDGET_ENV`].
     Configured,
-    /// Reported by Metal as its recommended working-set size.
-    MetalReported,
+    /// Reported by the device itself, through `ggml`'s backend interface.
+    DeviceReported,
     /// A fraction of system memory — an estimate, not a device figure.
     Estimated,
 }
@@ -67,7 +72,7 @@ impl BudgetSource {
     pub fn as_str(self) -> &'static str {
         match self {
             BudgetSource::Configured => "configured",
-            BudgetSource::MetalReported => "metal-reported",
+            BudgetSource::DeviceReported => "device-reported",
             BudgetSource::Estimated => "estimated",
         }
     }
@@ -82,10 +87,10 @@ fn budget() -> (usize, BudgetSource) {
         {
             return (bytes, BudgetSource::Configured);
         }
-        if let Some(bytes) = metal_working_set_size() {
+        if let Some(memory) = Backend::best().ok().and_then(|b| b.memory()) {
             return (
-                (bytes as f64 * DEFAULT_FRACTION) as usize,
-                BudgetSource::MetalReported,
+                (memory.total as f64 * DEFAULT_FRACTION) as usize,
+                BudgetSource::DeviceReported,
             );
         }
         // With no reading at all, assume a modest 4 GiB rather than falling
@@ -139,7 +144,18 @@ pub fn limit_bytes() -> usize {
     budget().0
 }
 
-pub use super::detect::device_allocated_bytes;
+/// Bytes the device reports as in use, by anything — not only by this process.
+///
+/// Worth emitting beside the reservation total: the two drifting apart is how
+/// you learn the registry has stopped describing reality — an allocation
+/// nothing reserved, or a reservation whose memory was never freed.
+///
+/// Device-wide rather than per-process, which is the more useful reading of the
+/// two: a budget's job is to avoid exhausting the device, and another process
+/// on the same GPU exhausts it just as effectively.
+pub fn device_allocated_bytes() -> Option<usize> {
+    Backend::best().ok()?.memory().map(|m| m.used())
+}
 
 /// Where the ceiling came from.
 pub fn budget_source() -> BudgetSource {

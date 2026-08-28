@@ -106,8 +106,8 @@ async fn the_batch_rpc_is_still_unimplemented() {
     // Pins why `insert_many` issues one request per point. When this fails,
     // the server has grown the batch RPC and `insert_many` should switch to
     // it — which is a change in round trips, not in behaviour.
-    use telividb_proto::point::v1 as wire;
-    use telividb_proto::point::v1::points_client::PointsClient;
+    use telividb_buffers::protobuf::point::v1 as wire;
+    use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
 
     let (addr, _dir) = start().await;
     let mut raw = PointsClient::connect(format!("http://{addr}"))

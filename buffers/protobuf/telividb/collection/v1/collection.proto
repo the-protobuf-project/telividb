@@ -1,0 +1,143 @@
+// The Collection resource.
+syntax = "proto3";
+
+package telividb.collection.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "CollectionProto";
+option java_package = "dev.telividb.collection.v1";
+option (buffers.v1.file) = {namespace: "telividb.collection.v1"};
+
+// One named vector field within a collection.
+//
+// A collection may declare several, each with its own model, dimension and
+// metric — which is what makes a single collection multimodal.
+message VectorField {
+  // Identifier of the field, such as `image_clip`. Unique within its
+  // collection.
+  //
+  // Named `field_id` rather than `name` because a vector field is a component
+  // of a collection, not a resource of its own — it has no resource name and
+  // cannot be addressed directly.
+  string field_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Number of components in every vector of this field.
+  int32 dimensions = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // How similarity is measured.
+  Metric metric = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Which search algorithm indexes this field.
+  IndexKind index_kind = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Compression applied to the coarse scan tier.
+  Codec codec = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Identifier of the model that produces vectors for this field.
+  string model = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Encoder that handles queries against this field.
+  //
+  // For a jointly trained model this is the other tower: searching an image
+  // field with text must encode that text with the model's text encoder.
+  // Declared rather than left to convention, because getting it wrong yields
+  // plausible but incorrect results rather than an error.
+  string query_encoder = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // Permission controlling access to raw vectors of this field.
+  //
+  // Per field rather than per collection, because a voiceprint is biometric
+  // data where a transcript is not.
+  string permission = 8 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// A set of points sharing one schema, one identity space and one set of
+// vector fields.
+message Collection {
+  option (google.api.resource) = {
+    type: "telividb.dev/Collection"
+    pattern: "collections/{collection}"
+    singular: "collection"
+    plural: "collections"
+  };
+
+  // Resource name of the collection, such as `collections/media`.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Serialized `FileDescriptorSet` describing this collection's schema.
+  //
+  // The engine never parses `.proto`. A generator produces this and it is
+  // stored verbatim as the schema of record.
+  bytes descriptor_set = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Digest of the canonicalized descriptor set, mirrored into every segment
+  // written under it.
+  bytes schema_fingerprint = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Named vector fields this collection holds.
+  repeated VectorField vector_fields = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Points currently visible to readers.
+  int64 live_point_count = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Points deleted but not yet reclaimed by compaction.
+  int64 tombstoned_point_count = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Sealed segments making up this collection.
+  int32 segment_count = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// How similarity is measured within a named vector field.
+enum Metric {
+  // Default value. Never valid in a request.
+  METRIC_UNSPECIFIED = 0;
+
+  // Inner product. A higher score is nearer.
+  METRIC_DOT = 1;
+
+  // Squared Euclidean distance. A lower score is nearer.
+  METRIC_L2 = 2;
+
+  // Angular similarity. Normalized at ingest and scored as dot thereafter.
+  METRIC_COSINE = 3;
+}
+
+// Compression applied to a field's coarse scan tier.
+enum Codec {
+  // Default value. Never valid in a request.
+  CODEC_UNSPECIFIED = 0;
+
+  // No scan tier. Searches read full precision directly.
+  CODEC_NONE = 1;
+
+  // Half precision. Two bytes per component, effectively lossless for ranking.
+  CODEC_F16 = 2;
+
+  // Scalar quantization with a per-row scale and offset.
+  CODEC_INT8 = 3;
+
+  // Product quantization. One byte per subspace.
+  CODEC_PQ = 4;
+
+  // One bit per component. Coarse enough to require a rerank.
+  CODEC_BINARY = 5;
+}
+
+// Which search algorithm indexes a field.
+enum IndexKind {
+  // Default value. Never valid in a request.
+  INDEX_KIND_UNSPECIFIED = 0;
+
+  // Exhaustive search. Ground truth, and correct for small fields.
+  INDEX_KIND_FLAT = 1;
+
+  // Hierarchical navigable small world graph.
+  INDEX_KIND_HNSW = 2;
+
+  // Inverted file with product quantization, for memory-constrained fields.
+  INDEX_KIND_IVF_PQ = 3;
+}

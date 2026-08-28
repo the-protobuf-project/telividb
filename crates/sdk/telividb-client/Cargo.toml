@@ -14,7 +14,7 @@ license.workspace = true
 # something a caller can match on.
 
 [dependencies]
-telividb-proto.workspace = true
+telividb-buffers.workspace = true
 thiserror.workspace = true
 tonic = { version = "0.14", features = ["transport"] }
 
@@ -26,5 +26,5 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
 # direction for anyone consuming the SDK.
 telividb-server.workspace = true
 telividb-telemetry.workspace = true
-telividb-proto.workspace = true
+telividb-buffers.workspace = true
 tempfile = "3"

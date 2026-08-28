@@ -7,6 +7,7 @@
 use crate::error::{Error, Result as StorageResult};
 use crate::format::quantize::F16Row;
 use telividb_core::{Dim, Metric, Ordinal, PreparedQuery, PreparedState, Result, ScanTier};
+use telividb_distance::Scorer;
 
 /// Half-precision rows for one field.
 #[derive(Debug)]
@@ -95,7 +96,7 @@ impl ScanTier for F16Tier {
         };
         let mut decoded = vec![0f32; self.dim.get()];
         row.decode_into(&mut decoded);
-        Some(telividb_distance::score(prepared.metric, query, &decoded))
+        Some(prepared.metric.score(query, &decoded))
     }
 }
 

@@ -1,0 +1,59 @@
+# buffers.yaml — rendering the protobuf schema of record into flat IDLs.
+#
+# The .proto under buffers/protobuf/ stays the single source of truth. These targets are
+# projections of it, never hand-edited, and buffers.lock is what keeps a field's
+# slot stable across numbering schemes that do not correspond: proto is 1-based
+# and sparse, Cap'n Proto is 0-based and contiguous, and FlatBuffers consumes ids
+# two at a time wherever a union synthesises a discriminant.
+#
+# Rule 40 says a shipped field number is permanent. The lockfile is what makes
+# that hold *across formats* rather than only within protobuf.
+version: v1
+
+proto:
+  # A prebuilt descriptor set, not a directory scan. These protos import
+  # googleapis (field_behavior, resource, http, client, field_info), and buf has
+  # already resolved that from the registry — reimplementing the resolution here
+  # would be a second opinion about what the schema is.
+  #
+  # Rebuild with: buf build -o descriptors.binpb --as-file-descriptor-set
+  descriptor_set: descriptors.binpb
+
+# Schemas only. The generated Rust that consumes them is produced separately and
+# committed, the same discipline the prost output already follows.
+out: buffers
+
+# The ordinal ledger. Committed, and checked in CI by `buffers verify`.
+#
+# A slot is a wire format: a consumer compiled against a schema where a field sat
+# at ordinal 5 reads slot 5 forever, and none of these formats report it when a
+# rebuild puts something else there.
+lock: buffers.lock
+
+# Errors, not warnings, on any ordinal movement.
+strict: ordinal:error
+
+generate:
+  # FlatBuffers is the target that would actually be wired. A FlatBuffers message
+  # is a single contiguous buffer by construction, with no segments and no far
+  # pointers to canonicalise away — which is what a one-sided RDMA write into a
+  # registered region needs. It also reaches fifteen language backends through
+  # flatc, which is the real payoff: a plugin author outside this repo can emit a
+  # record stream without taking a protobuf dependency.
+  - target: flatbuffers
+    languages: [rust]
+    # Compiled Rust lands in the crate that owns it, not beside the schema.
+    # The .fbs is the contract and lives here; the Rust is code and lives in
+    # telividb-buffers, committed, so `cargo build` needs no flatc.
+    lang_out: ../crates/platform/telividb-buffers/src/generated/flatbuffers
+
+  # Cap'n Proto is kept as the alternative, not as the plan. Its RPC layer is
+  # deliberately unused — adopting capnp-rpc would put auth and tracing in a
+  # second place and foreclose the one-sided RDMA path it appears to enable,
+  # because its transport is a byte stream the far CPU must still unframe.
+  - target: capnp
+    languages: [rust]
+    lang_out: ../crates/platform/telividb-buffers/src/generated/capnp
+
+  # thrift, ros and wire are deliberately absent. Neither has a consumer here,
+  # and each would add lockfile surface for nothing.

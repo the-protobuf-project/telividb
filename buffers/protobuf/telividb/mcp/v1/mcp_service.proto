@@ -1,0 +1,159 @@
+// The MCP server registry service.
+syntax = "proto3";
+
+package telividb.mcp.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/field_info.proto";
+import "google/api/resource.proto";
+import "telividb/mcp/v1/mcp_server.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "McpServiceProto";
+option java_package = "dev.telividb.mcp.v1";
+option (buffers.v1.file) = {namespace: "telividb.mcp.v1"};
+
+// Manages the MCP servers this deployment may call.
+service McpServers {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Registers an MCP server.
+  rpc CreateMcpServer(CreateMcpServerRequest) returns (McpServer) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/mcpServers"
+      body: "mcp_server"
+    };
+    option (google.api.method_signature) = "parent,mcp_server,mcp_server_id";
+  }
+
+  // Retrieves a single registration.
+  rpc GetMcpServer(GetMcpServerRequest) returns (McpServer) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/mcpServers/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists registered servers.
+  rpc ListMcpServers(ListMcpServersRequest) returns (ListMcpServersResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/mcpServers"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Connects and enumerates what the server exposes.
+  //
+  // Reports the raw capability set. No model is involved and nothing is
+  // applied: the text here is written by whoever runs that server, so feeding
+  // it to something that decides what to embed would be a prompt-injection
+  // surface where the injected instruction acts on this deployment's data.
+  rpc IntrospectMcpServer(IntrospectMcpServerRequest) returns (IntrospectMcpServerResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=organizations/*/mcpServers/*}:introspect"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Soft-deletes a registration.
+  rpc DeleteMcpServer(DeleteMcpServerRequest) returns (McpServer) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/mcpServers/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Request message for registering an MCP server.
+message CreateMcpServerRequest {
+  // Organization the registration belongs to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/McpServer"}
+  ];
+
+  // Identifier to use, forming the final path segment.
+  string mcp_server_id = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The server to register.
+  McpServer mcp_server = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  string request_id = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving a registered MCP server.
+message GetMcpServerRequest {
+  // Resource name of the server.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/McpServer"}
+  ];
+}
+
+// Request message for listing registered MCP servers.
+message ListMcpServersRequest {
+  // Organization to list servers from.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/McpServer"}
+  ];
+
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression, such as `embed_results = true`.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include soft-deleted registrations.
+  bool show_deleted = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing registered MCP servers.
+message ListMcpServersResponse {
+  // The servers on this page.
+  repeated McpServer mcp_servers = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a registered MCP server.
+message DeleteMcpServerRequest {
+  // Resource name of the server to deregister.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/McpServer"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for introspecting an MCP server's capabilities.
+message IntrospectMcpServerRequest {
+  // Resource name of the server to introspect.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/McpServer"}
+  ];
+}
+
+// Response message for introspecting an MCP server.
+message IntrospectMcpServerResponse {
+  // Tools the server exposes, carried verbatim.
+  repeated McpTool tools = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Digest of this capability set.
+  string capability_digest = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the capability set changed since the last introspection.
+  //
+  // Drift pauses a sync rather than proceeding without the changed field.
+  // Silently dropping a field is the failure with no symptom.
+  bool drifted = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

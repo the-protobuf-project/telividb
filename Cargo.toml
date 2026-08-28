@@ -41,14 +41,16 @@ repository = "https://github.com/oh-tarnished/telividb"
 
 [workspace.dependencies]
 telividb-client     = { path = "crates/sdk/telividb-client" }
+telividb-compute    = { path = "crates/platform/telividb-compute" }
 telividb-core       = { path = "crates/domain/telividb-core" }
 telividb-graph      = { path = "crates/domain/telividb-graph" }
+telividb-query      = { path = "crates/domain/telividb-query" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }
 telividb-embed      = { path = "crates/adapters/telividb-embed" }
 telividb-index      = { path = "crates/adapters/telividb-index" }
 telividb-storage    = { path = "crates/adapters/telividb-storage" }
 telividb-telemetry  = { path = "crates/platform/telividb-telemetry" }
-telividb-proto      = { path = "crates/platform/telividb-proto" }
+telividb-buffers    = { path = "crates/platform/telividb-buffers" }
 telividb-server     = { path = "crates/bin/telividb-server" }
 
 # The observability stack for the whole workspace. Pinned to a tag so a push

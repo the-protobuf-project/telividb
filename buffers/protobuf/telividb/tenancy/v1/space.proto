@@ -1,0 +1,103 @@
+// The Space resource — where conversation actually lives.
+syntax = "proto3";
+
+package telividb.tenancy.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "SpaceProto";
+option java_package = "dev.telividb.tenancy.v1";
+option (buffers.v1.file) = {namespace: "telividb.tenancy.v1"};
+
+// A named container for related conversation — a finance space, an education
+// space, a private thread with one other person.
+//
+// A space is the unit at which protection is declared, and that is deliberate
+// rather than incidental: an encrypted space needs its own segments so a whole
+// region decrypts at unlock. Declaring protection per conversation would force
+// per-row decryption and destroy the zero-copy read path.
+message Space {
+  option (google.api.resource) = {
+    type: "telividb.dev/Space"
+    pattern: "organizations/{organization}/spaces/{space}"
+    singular: "space"
+    plural: "spaces"
+  };
+
+  // Resource name of the space.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name, such as `Finance`.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Projects this space belongs to.
+  //
+  // Repeated, and mutable: a space may span projects, and membership is not
+  // encoded in the resource name precisely so it can change without renaming
+  // anything that refers to this space.
+  repeated string projects = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "telividb.dev/Project"}
+  ];
+
+  // How the contents of this space are protected.
+  Protection protection = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Whether the space is currently readable.
+  //
+  // A key-wrapped space that has not been unlocked is reported rather than
+  // silently skipped: a search that could not read it sets `complete` to false
+  // and names it, so a caller can tell "no results" from "no results you can
+  // currently see".
+  bool locked = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the space was created.
+  google.protobuf.Timestamp create_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the space was last modified.
+  google.protobuf.Timestamp update_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the space was soft-deleted, or unset while it is live.
+  google.protobuf.Timestamp delete_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted space is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// What actually protects the contents of a space.
+//
+// The distinction is load-bearing rather than descriptive: only the last two
+// involve cryptography, and calling an access-controlled space a vault would
+// invite the assumption that it survives a compromised server.
+enum Protection {
+  // Default value. Never valid in a request.
+  PROTECTION_UNSPECIFIED = 0;
+
+  // Visible according to ordinary role grants on the containing projects.
+  PROTECTION_NONE = 1;
+
+  // Readable only by its owner, enforced by a visibility predicate.
+  //
+  // Access control, not cryptography. Anyone who compromises the server reads
+  // it, which is exactly why it is not called a vault.
+  PROTECTION_PRIVATE = 2;
+
+  // Encrypted with a key the server wraps and holds.
+  //
+  // Contents live in their own segments so unlocking decrypts a region rather
+  // than a row at a time.
+  PROTECTION_VAULT = 3;
+
+  // Encrypted with a key only the client holds.
+  //
+  // The server cannot read the contents even when compromised, and cannot
+  // search them while locked.
+  PROTECTION_SEALED = 4;
+}

@@ -1,13 +1,13 @@
-use super::super::codebook::PqCodebook;
-use super::super::kmeans;
 use super::*;
 use crate::error::Error;
 use crate::format::quantize::PqParams;
+use telividb_distance::pq::PqCodebook;
+use telividb_distance::rng::Rng;
 
 /// Clustered training data — the shape PQ is designed for. Uniform noise has no
 /// structure for a codebook to capture, so it would understate the codec badly.
 fn training(count: usize, dim: usize, seed: u64) -> Vec<Vec<f32>> {
-    let mut rng = kmeans::Rng(seed);
+    let mut rng = Rng(seed);
     let centres: Vec<Vec<f32>> = (0..16)
         .map(|_| {
             (0..dim)
@@ -48,10 +48,10 @@ fn fit(dim: usize, m: usize) -> (PqCodebook, Vec<Vec<f32>>) {
 fn serialization_round_trips() {
     let (book, data) = fit(32, 4);
     let mut bytes = Vec::new();
-    book.write_to(&mut bytes);
+    encode_codebook(&book, &mut bytes);
 
-    assert_eq!(bytes.len(), book.encoded_len());
-    let back = PqCodebook::read_from(&bytes).unwrap();
+    assert_eq!(bytes.len(), encoded_len(&book));
+    let back = decode_codebook(&bytes).unwrap();
     assert_eq!(back, book);
     assert_eq!(
         back.encode(&data[0]).unwrap(),
@@ -63,10 +63,10 @@ fn serialization_round_trips() {
 fn a_foreign_codebook_is_rejected() {
     let (book, _) = fit(32, 4);
     let mut bytes = Vec::new();
-    book.write_to(&mut bytes);
+    encode_codebook(&book, &mut bytes);
     bytes[0..4].copy_from_slice(b"XXXX");
     assert!(matches!(
-        PqCodebook::read_from(&bytes),
+        decode_codebook(&bytes),
         Err(Error::BadMagic { .. })
     ));
 }
@@ -75,10 +75,10 @@ fn a_foreign_codebook_is_rejected() {
 fn a_newer_version_is_refused() {
     let (book, _) = fit(32, 4);
     let mut bytes = Vec::new();
-    book.write_to(&mut bytes);
+    encode_codebook(&book, &mut bytes);
     bytes[4..6].copy_from_slice(&(CODEBOOK_VERSION + 1).to_le_bytes());
     assert!(matches!(
-        PqCodebook::read_from(&bytes),
+        decode_codebook(&bytes),
         Err(Error::UnsupportedVersion { .. })
     ));
 }
@@ -88,9 +88,9 @@ fn a_truncated_codebook_is_an_error_never_an_overrun() {
     // Codebooks arrive inside archives, so this is untrusted input.
     let (book, _) = fit(32, 4);
     let mut bytes = Vec::new();
-    book.write_to(&mut bytes);
+    encode_codebook(&book, &mut bytes);
     for cut in [0usize, 8, 13, 20, bytes.len() - 1] {
-        assert!(PqCodebook::read_from(&bytes[..cut]).is_err(), "cut {cut}");
+        assert!(decode_codebook(&bytes[..cut]).is_err(), "cut {cut}");
     }
 }
 
@@ -98,7 +98,7 @@ fn a_truncated_codebook_is_an_error_never_an_overrun() {
 fn a_lying_dimension_header_does_not_overrun() {
     let (book, _) = fit(32, 4);
     let mut bytes = Vec::new();
-    book.write_to(&mut bytes);
+    encode_codebook(&book, &mut bytes);
     bytes[6..10].copy_from_slice(&65536u32.to_le_bytes());
-    assert!(PqCodebook::read_from(&bytes).is_err());
+    assert!(decode_codebook(&bytes).is_err());
 }

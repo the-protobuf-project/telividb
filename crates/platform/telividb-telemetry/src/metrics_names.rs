@@ -19,6 +19,25 @@
 /// Histogram. End-to-end search latency, planner through rerank.
 pub const SEARCH_DURATION: &str = "telividb_search_duration_seconds";
 
+/// Histogram. The device half of a search: uploading the queries, the matmul,
+/// and reading the score matrix back.
+///
+/// Paired with [`SEARCH_SELECT_DURATION`] deliberately. "The device scores; the
+/// host decides" (CLAUDE.md rule 46) is a claim about *where the time goes*,
+/// and these two are what make it checkable rather than asserted — including
+/// when it stops being true, which is the case actually worth catching. A
+/// device that silently fell back to the host shows up here as the two halves
+/// converging, long before anyone re-runs a benchmark.
+pub const SEARCH_SCORE_DURATION: &str = "telividb_search_score_duration_seconds";
+
+/// Histogram. The host half of a search: applying the metric to each row's
+/// inner product and selecting the best `k`.
+///
+/// Expected to be the *larger* half on a batched device query, which surprises
+/// people — the matmul is one contiguous pass at high arithmetic intensity,
+/// while selection walks every score through a branchy bounded heap.
+pub const SEARCH_SELECT_DURATION: &str = "telividb_search_select_duration_seconds";
+
 /// Histogram. Vectors actually scored. The number that explains a slow query:
 /// latency tracks this far more closely than it tracks `k`.
 pub const SEARCH_CANDIDATES: &str = "telividb_search_candidates_visited";

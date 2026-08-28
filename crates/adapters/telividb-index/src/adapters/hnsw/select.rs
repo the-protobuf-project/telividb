@@ -2,6 +2,7 @@
 
 use super::scored::{Scored, to_distance};
 use telividb_core::{Metric, VectorStore};
+use telividb_distance::Scorer;
 
 /// Select up to `m` neighbours from `candidates`, favouring diversity.
 ///
@@ -44,9 +45,9 @@ pub fn select_neighbours(
 
         // Keep it only if it is nearer to the query than to anything already
         // chosen — otherwise an existing edge already covers that direction.
-        let dominated = selected_vectors.iter().any(|kept| {
-            to_distance(metric, telividb_distance::score(metric, vector, kept)) < candidate.distance
-        });
+        let dominated = selected_vectors
+            .iter()
+            .any(|kept| to_distance(metric, metric.score(vector, kept)) < candidate.distance);
 
         if !dominated {
             selected.push(candidate);

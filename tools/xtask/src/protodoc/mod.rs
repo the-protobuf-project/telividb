@@ -24,7 +24,7 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 /// Directory holding the protobuf tree.
-const PROTO_ROOT: &str = "protobuf";
+const PROTO_ROOT: &str = "buffers/protobuf";
 
 /// Import prefix identifying a module local to this repository.
 const LOCAL_PREFIX: &str = "telividb/";

@@ -32,6 +32,44 @@ pub enum Error {
     #[error("dimension must be non-zero")]
     ZeroDim,
 
+    /// A PQ configuration that cannot describe a vector.
+    ///
+    /// Refused rather than padded: a silent pad makes the final subspace
+    /// partly meaningless, and the resulting recall loss is very hard to
+    /// attribute back to here.
+    #[error("invalid pq shape: {m} subspaces do not divide {dim} dimensions evenly")]
+    InvalidPqShape {
+        /// Vector width being divided.
+        dim: usize,
+        /// Requested subspace count, which does not divide `dim` evenly.
+        m: usize,
+    },
+    /// A PQ codebook was trained on too few vectors to be meaningful.
+    ///
+    /// With no training vectors at all, seeding returns zeros and the update
+    /// loop exits before it runs, so `train` used to succeed with a degenerate
+    /// codebook: every row then encodes to code 0, every distance is identical,
+    /// and the scan tier ranks nothing — silently, with no error anywhere and
+    /// full recall loss.
+    #[error(
+        "pq codebook needs at least {needed} training vectors per subspace, got {found}; \
+         a codebook trained on fewer cannot distinguish rows"
+    )]
+    PqTrainingTooSmall {
+        /// Vectors required — one per centroid.
+        needed: usize,
+        /// Vectors actually supplied.
+        found: usize,
+    },
+    /// A vector or code run did not match the codebook it was used with.
+    #[error("pq length mismatch: expected {expected}, got {actual}")]
+    PqDimMismatch {
+        /// Length the codebook requires.
+        expected: usize,
+        /// Length actually supplied.
+        actual: usize,
+    },
+
     /// A serialized index was malformed.
     ///
     /// Index files are untrusted input the moment an archive arrives from

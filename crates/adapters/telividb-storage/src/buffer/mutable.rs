@@ -17,6 +17,7 @@
 //! noise.
 
 use telividb_core::{Dim, Error, Metric, Ordinal, Result, VectorStore};
+use telividb_distance::NormalizeInPlace;
 
 /// Vectors held in memory, in one contiguous allocation, awaiting seal.
 #[derive(Debug, Clone)]
@@ -68,7 +69,7 @@ impl MutableBuffer {
         let start = self.data.len();
         self.data.extend_from_slice(vector);
         if self.metric.normalises_at_ingest() {
-            telividb_distance::normalize(&mut self.data[start..]);
+            self.data[start..].normalize();
         }
         self.present.push(true);
         Ok(Ordinal::from_row((self.present.len() - 1) as u32))

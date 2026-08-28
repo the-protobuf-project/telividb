@@ -1,0 +1,106 @@
+// Traversal request and result types.
+syntax = "proto3";
+
+package telividb.graph.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "TraversalProto";
+option java_package = "dev.telividb.graph.v1";
+option (buffers.v1.file) = {namespace: "telividb.graph.v1"};
+
+// One step along a traversed path.
+message TraversalStep {
+  // The edge that was followed.
+  string edge = 1 [
+    (google.api.field_behavior) = OUTPUT_ONLY,
+    (google.api.resource_reference) = {type: "telividb.dev/Edge"}
+  ];
+
+  // The resource this step arrived at.
+  string resource = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// A resource reached by traversal, with the path that reached it.
+message TraversalResult {
+  // The resource that was reached.
+  string resource = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Combined score after applying edge weights and the per-hop decay.
+  float score = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // How many hops from the nearest seed. Zero means the seed itself.
+  int32 hop_count = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The path taken, so a result can be cited rather than merely returned.
+  //
+  // Provenance, not diagnostics: an assembled answer that cannot say how it
+  // reached a fact cannot be verified, which for a memory system is most of
+  // what it is worth.
+  repeated TraversalStep path = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for traversing the graph from a set of seeds.
+message TraverseGraphRequest {
+  // Organization whose graph is traversed.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/Edge"}
+  ];
+
+  // Resources to start from.
+  repeated string seeds = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // How many hops to expand. Zero selects a server-chosen default.
+  int32 max_hop_count = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Edge types to follow. Empty follows every non-structural type.
+  repeated string edge_types = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "telividb.dev/EdgeType"}
+  ];
+
+  // Per-hop score multiplier.
+  //
+  // Without a decay a node with many neighbours contributes all of them at its
+  // own score, and the graph half of a retrieval swamps the similarity half.
+  float decay = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Ceiling on resources returned, so a hub cannot become the whole answer.
+  int32 max_result_count = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether learned traversal strength contributes to the score.
+  //
+  // Defaults to false, leaving existing behaviour unchanged until asked for.
+  // When enabled, an untravelled edge still scores at a prior rather than at
+  // zero — otherwise a new edge could never be traversed, so it could never
+  // earn a count, and the trap would close on itself.
+  bool use_strength = 7 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for traversing the graph.
+message TraverseGraphResponse {
+  // Resources reached, highest score first.
+  repeated TraversalResult results = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Edges skipped because they are suppressed.
+  //
+  // A count, never the edges themselves. The caller assembling context learns
+  // that a region was avoided so it can decline to pursue the topic; the person
+  // being protected must not be handed the reminder, which is the harm
+  // suppression was asked for.
+  int32 suppressed_edge_count = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether every part of the graph could be consulted.
+  //
+  // False when a locked space held part of the path. A caller must be able to
+  // tell "nothing is there" from "something is there that you cannot currently
+  // see".
+  bool complete = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Spaces skipped because they are locked. Names only, never contents.
+  repeated string locked_spaces = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

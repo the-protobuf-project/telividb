@@ -1,4 +1,4 @@
-//! Exhaustive search on the GPU, over a corpus held as a GGUF tensor.
+//! Exhaustive search on a device, over a corpus held as one resident matrix.
 //!
 //! Exact, like [`FlatIndex`](crate::adapters::FlatIndex), and for the same
 //! reason: it scores every row. What differs is where — one matmul on a
@@ -16,31 +16,42 @@
 //! memory access pattern is unpredictable. That is the opposite of what a GPU
 //! rewards, which is why FAISS ships no GPU HNSW either. HNSW stays a CPU
 //! path; this complements it rather than replacing it.
+//!
+//! **The corpus is rebuilt, never persisted.** It is exactly derivable from
+//! the store, and rebuilding a million rows measures at 0.14 s against the
+//! 512 MB a serialized copy would occupy — so persisting it would trade real
+//! disk for no recovery time. Nothing here writes a file; rule 4 has nothing
+//! to version because there is no on-disk structure.
 
 mod budget;
-mod detect;
-mod device;
-mod gguf;
-mod load;
-mod norms;
+mod corpus;
+mod error;
+mod host;
+mod metric;
+mod scan;
+mod scored;
 mod search;
+mod select;
+
+#[cfg(test)]
+mod test_support;
 
 pub use budget::{
     BUDGET_ENV, BudgetSource, DEFAULT_FRACTION as DEFAULT_GPU_BUDGET_FRACTION, budget_source,
     device_allocated_bytes, limit_bytes as gpu_budget_bytes, resident_bytes as gpu_resident_bytes,
 };
-pub use device::{best_device, device_name};
 
-use crate::domain::Candidate;
-use crate::ports::{VectorIndex, VectorStore};
-use candle_core::Device;
+use crate::ports::VectorStore;
+use corpus::DeviceCorpus;
+use error::OnDevice;
 use std::time::Instant;
-use telividb_core::{Ordinal, Result};
-use telividb_telemetry::{Meter, fields, logger, metrics_names, redact};
+use telividb_compute::{Backend, DeviceKind};
+use telividb_core::Result;
+use telividb_telemetry::{Meter, fields, logger, metrics_names};
 
 /// A device-resident corpus, searched exhaustively.
 pub struct GpuFlatIndex {
-    corpus: gguf::Corpus,
+    corpus: DeviceCorpus,
     /// Registration in the shared residency registry, released on drop.
     ///
     /// Held rather than merely checked at construction: the ceiling has to
@@ -63,7 +74,7 @@ impl std::fmt::Debug for GpuFlatIndex {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("GpuFlatIndex")
             .field("device", &self.device)
-            .field("rows", &self.corpus.present.len())
+            .field("rows", &self.corpus.rows())
             .field("dim", &self.corpus.dim.get())
             .field("metric", &self.corpus.metric)
             .finish()
@@ -71,42 +82,34 @@ impl std::fmt::Debug for GpuFlatIndex {
 }
 
 impl GpuFlatIndex {
-    /// Serialize `store` as GGUF bytes, ready to persist as
-    /// `vectors/<field>/index.gguf`.
-    ///
-    /// Separate from opening so the index crate never touches a file — it
-    /// hands bytes to storage, exactly as HNSW's `encode` does (invariant 6).
-    pub fn encode(store: &dyn VectorStore) -> Result<Vec<u8>> {
-        let mut buffer = std::io::Cursor::new(Vec::new());
-        gguf::write_corpus(store, &mut buffer)?;
-        Ok(buffer.into_inner())
-    }
-
-    /// Build directly from a store, choosing the best available device.
-    ///
-    /// Convenience over `encode` + `decode` for the common case; the bytes are
-    /// still what gets persisted.
+    /// Build from a store, on the fastest device this build can reach.
     pub fn build(store: &dyn VectorStore) -> Result<Self> {
-        Self::decode(&Self::encode(store)?, &best_device())
+        Self::open(store, Backend::best().on_device()?)
     }
 
-    /// Open a corpus written by [`GpuFlatIndex::encode`], onto `device`.
-    pub fn decode(bytes: &[u8], device: &Device) -> Result<Self> {
+    /// Build from a store on a chosen device kind.
+    ///
+    /// Fails if that kind was not compiled in, rather than falling back — a
+    /// caller who names a device is testing or benchmarking that device, and a
+    /// silent substitution would make the measurement meaningless.
+    pub fn build_on(store: &dyn VectorStore, kind: DeviceKind) -> Result<Self> {
+        Self::open(store, Backend::of(kind).on_device()?)
+    }
+
+    /// Upload `store` to `backend` and account for it.
+    fn open(store: &dyn VectorStore, backend: Backend) -> Result<Self> {
         let started = Instant::now();
-        let mut reader = std::io::Cursor::new(bytes);
+        let device = backend.device().kind().as_str();
 
-        // Reserve *before* loading. An over-large upload does not fail
-        // gracefully on Metal — it aborts the process — so this check is the
-        // only point at which the failure is still recoverable.
-        let reservation = budget::reserve("gpu-flat", bytes.len())?;
+        // Reserved *before* the upload: an over-large one aborts the process on
+        // Metal rather than failing, so this is the last recoverable point.
+        let reservation = budget::reserve("gpu-flat", DeviceCorpus::device_bytes(store))?;
+        let corpus = DeviceCorpus::from_store(store, backend)?;
 
-        let corpus = load::load_corpus(&mut reader, device)?;
-        let name = device_name(device);
-
-        logger::info!("gpu index loaded").with_data(&serde_json::json!({
+        logger::info!("gpu index built").with_data(&serde_json::json!({
             fields::INDEX_KIND: "gpu-flat",
-            fields::DEVICE: name,
-            fields::ROWS: corpus.present.len(),
+            fields::DEVICE: device,
+            fields::ROWS: corpus.rows(),
             fields::DIM: corpus.dim.get(),
             fields::BYTES: reservation.bytes(),
             fields::DURATION_SECONDS: started.elapsed().as_secs_f64(),
@@ -114,8 +117,8 @@ impl GpuFlatIndex {
 
         Ok(Self {
             corpus,
+            device,
             _reservation: reservation,
-            device: name,
             meter: Meter::disabled(),
         })
     }
@@ -126,50 +129,60 @@ impl GpuFlatIndex {
         self
     }
 
-    /// Which device this corpus is resident on: `metal`, `cuda` or `cpu`.
+    /// Which device this corpus is resident on: `metal`, `cuda`, `cpu`, …
     pub fn device(&self) -> &'static str {
         self.device
     }
-}
 
-impl VectorIndex for GpuFlatIndex {
-    fn kind(&self) -> &'static str {
-        "gpu-flat"
+    /// How the host half of a batched search is executed: `parallel` or
+    /// `serial`.
+    ///
+    /// Reported for the same reason the device is (rule 46): selection is the
+    /// larger half of a batched query, so a build that quietly lost the
+    /// `parallel` feature answers every query correctly at roughly half the
+    /// throughput — and nothing else would surface that.
+    pub fn selection() -> &'static str {
+        match cfg!(feature = "parallel") {
+            true => "parallel",
+            false => "serial",
+        }
     }
 
-    fn search(
-        &self,
-        _store: &dyn VectorStore,
-        query: &[f32],
-        k: usize,
-        allowed: Option<&dyn Fn(Ordinal) -> bool>,
-    ) -> Result<Vec<Candidate>> {
-        // `_store` is deliberately unused: this index owns a device-resident
-        // copy of the corpus, so scoring never reads back through the store.
-        // The parameter stays because it is the port's shape, and an index
-        // that needed the store for reranking would use it.
-        let started = Instant::now();
-        let hits = search::search(&self.corpus, query, k, allowed)?;
-        let elapsed = started.elapsed().as_secs_f64();
-
+    /// Report where a batch spent its time, device against host.
+    ///
+    /// Recorded for the batch rather than per query because that is the unit
+    /// the device call actually covers — attributing one matmul across 32
+    /// queries would invent a per-query number the hardware never produced.
+    fn record_split(&self, on_device: f64, on_host: f64, queries: usize, k: usize, filtered: bool) {
         self.meter
-            .histogram(metrics_names::SEARCH_DURATION, elapsed);
+            .histogram(metrics_names::SEARCH_DURATION, on_device + on_host);
         self.meter
-            .histogram(metrics_names::SEARCH_RESULTS, hits.len() as f64);
+            .histogram(metrics_names::SEARCH_SCORE_DURATION, on_device);
+        self.meter
+            .histogram(metrics_names::SEARCH_SELECT_DURATION, on_host);
 
-        logger::debug!("search complete").with_data(&serde_json::json!({
-            fields::INDEX_KIND: self.kind(),
+        logger::debug!("batch search complete").with_data(&serde_json::json!({
+            fields::INDEX_KIND: "gpu-flat",
             fields::DEVICE: self.device,
             fields::K: k,
             fields::DIM: self.corpus.dim.get(),
-            fields::FILTERED: allowed.is_some(),
-            // Shape only, never values: a query vector can be inverted toward
-            // its source text, and logs are read by people granted nothing
-            // (invariant 28).
-            fields::QUERY: redact::vector_shape(query),
-            fields::RESULTS_RETURNED: hits.len(),
-            fields::DURATION_SECONDS: elapsed,
+            fields::FILTERED: filtered,
+            fields::QUERIES: queries,
+            fields::DURATION_SECONDS: on_device + on_host,
+            fields::SCORE_SECONDS: on_device,
+            fields::SELECT_SECONDS: on_host,
         }));
-        Ok(hits)
+    }
+
+    /// Reject a query whose width is not the corpus's.
+    fn check_dim(&self, query: &[f32]) -> Result<()> {
+        let dim = self.corpus.dim.get();
+        match query.len() {
+            len if len == dim => Ok(()),
+            actual => Err(telividb_core::Error::DimMismatch {
+                expected: dim,
+                actual,
+            }),
+        }
     }
 }

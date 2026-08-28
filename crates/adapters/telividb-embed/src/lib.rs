@@ -17,7 +17,7 @@ pub mod domain;
 pub mod error;
 pub mod ports;
 
-pub use adapters::CandleInferencer;
+pub use adapters::GgmlInferencer;
 pub use domain::{ModelId, Pooling, Task};
 pub use error::{Error, Result};
 pub use ports::Inferencer;

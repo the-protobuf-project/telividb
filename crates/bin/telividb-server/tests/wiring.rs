@@ -6,8 +6,10 @@
 
 use std::net::SocketAddr;
 use std::time::Duration;
-use telividb_proto::collection::v1::collections_client::CollectionsClient;
-use telividb_proto::collection::v1::{Collection, CreateCollectionRequest, ListCollectionsRequest};
+use telividb_buffers::protobuf::collection::v1::collections_client::CollectionsClient;
+use telividb_buffers::protobuf::collection::v1::{
+    Collection, CreateCollectionRequest, ListCollectionsRequest,
+};
 use telividb_server::{ServerConfig, serve};
 
 /// Start a server on an ephemeral port and wait for it to accept connections.
@@ -112,7 +114,7 @@ fn the_descriptor_set_is_embedded_for_reflection() {
     // Without it, reflection cannot answer and every client must be shipped the
     // protos — which defeats `grpcurl` and generic tooling.
     assert!(
-        !telividb_proto::FILE_DESCRIPTOR_SET.is_empty(),
+        !telividb_buffers::protobuf::FILE_DESCRIPTOR_SET.is_empty(),
         "descriptor set was not embedded at build time"
     );
 }

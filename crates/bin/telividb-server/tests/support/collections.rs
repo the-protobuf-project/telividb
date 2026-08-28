@@ -6,8 +6,10 @@
 //! here means each test states only what is interesting about *its* case.
 
 use std::net::SocketAddr;
-use telividb_proto::collection::v1::collections_client::CollectionsClient;
-use telividb_proto::collection::v1::{Collection, CreateCollectionRequest, Metric, VectorField};
+use telividb_buffers::protobuf::collection::v1::collections_client::CollectionsClient;
+use telividb_buffers::protobuf::collection::v1::{
+    Collection, CreateCollectionRequest, Metric, VectorField,
+};
 
 /// Create `id` declaring one field of `dim` dimensions under cosine.
 ///
@@ -25,7 +27,9 @@ pub async fn declare(addr: SocketAddr, id: &str, field: &str, dim: i32) {
                 name: format!("collections/{id}"),
                 // The engine never parses `.proto`; it consumes compiled
                 // bytes. This workspace's own set is a real one.
-                descriptor_set: telividb_proto::FILE_DESCRIPTOR_SET.to_vec().into(),
+                descriptor_set: telividb_buffers::protobuf::FILE_DESCRIPTOR_SET
+                    .to_vec()
+                    .into(),
                 vector_fields: vec![VectorField {
                     field_id: field.to_owned(),
                     dimensions: dim,

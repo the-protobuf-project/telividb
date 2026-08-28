@@ -1,0 +1,119 @@
+// Context assembly — the high-level retrieval surface.
+syntax = "proto3";
+
+package telividb.context.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ContextTemplateProto";
+option java_package = "dev.telividb.context.v1";
+option (buffers.v1.file) = {namespace: "telividb.context.v1"};
+
+// A saved retrieval configuration.
+//
+// A resource rather than a set of request parameters, because it is also an
+// authorization surface: the person who saves a template and the person who
+// runs it may see different rows. Policy is therefore evaluated at run time
+// against the caller, never at save time against the author — otherwise a
+// saved template becomes a way to read rows you could not query for directly.
+message ContextTemplate {
+  option (google.api.resource) = {
+    type: "telividb.dev/ContextTemplate"
+    pattern: "organizations/{organization}/contextTemplates/{context_template}"
+    singular: "contextTemplate"
+    plural: "contextTemplates"
+  };
+
+  // Resource name of the template.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // How far to expand along the graph.
+  Expansion expansion = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Ceiling on what may be returned.
+  Budget budget = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // When the template was created.
+  google.protobuf.Timestamp create_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the template was last modified.
+  google.protobuf.Timestamp update_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the template was soft-deleted, or unset while live.
+  google.protobuf.Timestamp delete_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted template is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// How far a retrieval expands from its similarity seeds.
+message Expansion {
+  // Hops to follow. Zero disables expansion and returns pure similarity.
+  int32 max_hop_count = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Edge types to follow. Empty follows every non-structural type.
+  repeated string edge_types = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Per-hop score multiplier.
+  float decay = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Ceiling on expanded results, so a hub cannot become the whole answer.
+  int32 max_expanded_count = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether learned traversal strength contributes to ranking.
+  bool use_strength = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to search the summary tier before the message tier.
+  //
+  // Coarse-to-fine: summaries narrow the field, then expansion descends into
+  // the messages they cover. The same shape the vector path already uses when
+  // a quantized scan precedes a full-precision rerank.
+  bool use_summaries = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// A ceiling on what an assembly may return.
+message Budget {
+  // Maximum fragments to return.
+  int32 max_fragment_count = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Approximate token ceiling across all fragments.
+  int32 max_token_count = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// One retrieved piece of context, with the path that reached it.
+message Fragment {
+  // The resource this came from.
+  string source = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The text.
+  string content = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Combined score after similarity, decay, weights and recency.
+  float score = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Hops from the nearest seed. Zero means a direct similarity match.
+  int32 hop_count = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The seed this was reached from.
+  string reached_via = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether this fragment is a summary rather than stored content.
+  bool summarized = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The MCP server this originated with, when it came from a tool result.
+  //
+  // Provenance carried through to the point of use: text a third-party server
+  // returned must not rank as memory the same way something a person said
+  // does, and a caller cannot make that distinction without being told.
+  string mcp_server = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

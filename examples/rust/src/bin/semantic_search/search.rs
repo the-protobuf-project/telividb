@@ -58,7 +58,7 @@ impl Corpus {
 /// Build the GPU index when the feature is on, falling back to flat.
 #[cfg(feature = "gpu")]
 fn select(store: &MemoryStore) -> Result<(Box<dyn VectorIndex>, String)> {
-    use telividb_index::adapters::{GpuFlatIndex, best_device, device_name};
+    use telividb_index::adapters::{Device, GpuFlatIndex};
 
     match GpuFlatIndex::build(store) {
         Ok(index) => {
@@ -71,7 +71,7 @@ fn select(store: &MemoryStore) -> Result<(Box<dyn VectorIndex>, String)> {
         // still a visible one.
         Err(error) => {
             eprintln!("note: GPU index unavailable ({error}); using the flat index.");
-            let device = device_name(&best_device());
+            let device = Device::best().kind().as_str();
             Ok((
                 Box::new(FlatIndex::default()),
                 format!("{device} (flat fallback)"),

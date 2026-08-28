@@ -1,0 +1,161 @@
+name: Build
+
+# Does it compile and do the tests pass, on every target that matters.
+#
+# CPU only. No runner here has a GPU, which is deliberate: the default
+# feature set must resolve to a CPU backend and still be correct, and that
+# property is only proven by running it somewhere with no device at all.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  # LLVM for the two sanctioned native paths (CLAUDE.md rule 1), matching the
+  # `[env]` block in `.cargo/config.toml` so a local build and a CI build
+  # compile them the same way rather than diverging on the runner's default.
+  CC: clang
+  CXX: clang++
+
+# Cancel a run when a newer commit lands on the same branch.
+#
+# `main` is deliberately excluded: its runs are the baseline `buf breaking`
+# compares against, and a cancelled one leaves no record.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # The default build must need no C toolchain, no CMake, no CUDA SDK.
+  #
+  # macOS is a first-class target rather than an afterthought: on Apple silicon
+  # the binary runs natively, because containers get no GPU there. Linux ARM64
+  # is here because Jetson is CUDA-on-aarch64 and Graviton is ordinary
+  # deployment — an aarch64 regression must not be discovered on the device.
+  #
+  # Windows is deliberately out of scope.
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux · x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - name: linux · arm64
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - name: macos · arm64
+            os: macos-latest
+            target: aarch64-apple-darwin
+            # GitHub's macOS runners are virtualised, and their Metal driver is
+            # missing operations ggml uses — `MUL_MAT` among them. The device is
+            # selected because it compiles in and reports present, then fails
+            # inside a graph computation.
+            #
+            # So this leg pins the host backend. What it is really for is the
+            # Apple-silicon *link*: a different linker, libc++ rather than
+            # libstdc++, and the Metal frameworks. Metal compute itself cannot
+            # be verified on a virtual GPU and is checked on real hardware.
+            device: cpu
+    steps:
+      # `submodules: recursive` because `telividb-compute` vendors ggml and
+      # builds it with CMake. Without it the vendor directory is empty, CMake
+      # fails, and every job that compiles the workspace fails with it — the
+      # default feature set reaches `telividb-compute` through
+      # `telividb-index`'s `gpu`, so this is not an opt-in path.
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      # No toolchain version here — rust-toolchain.toml is authoritative and
+      # rustup honours it. Stated twice, the two would eventually disagree.
+      - run: rustup target add ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+          # Save the cache even when the job fails. Without this a failing
+          # build discards everything it compiled, so the next attempt starts
+          # cold — which is exactly when a fast rebuild matters most.
+          cache-on-failure: true
+
+      - name: Confirm the architecture under test
+        run: |
+          echo "runner arch : $(uname -m)"
+          echo "rust target : ${{ matrix.target }}"
+          rustc --print cfg | grep -E 'target_arch|target_endian|target_pointer_width'
+
+      - run: cargo build --workspace --all-targets --target ${{ matrix.target }}
+
+      # Both feature sets, because neither is a superset of the other: they
+      # change which `#[cfg(feature = ...)]` code compiles. `telividb-index`
+      # without `parallel` takes the sequential builder, which is the
+      # configuration every embedded caller gets, and without `gpu` it takes
+      # the pure-Rust flat path with no candle in the tree at all (rule 46
+      # keeps that configuration supported, so it has to be *run*, not just
+      # built).
+      #
+      # Deliberately not `--all-features`. The only thing it adds over the
+      # defaults is `cuda`, which pulls `cudarc` and panics in its build script
+      # without `nvcc` on PATH — so on a runner with no CUDA SDK that flag can
+      # only ever fail. CUDA is opt-in by design (rule 46) and is not
+      # CI-verifiable here; it needs a GPU runner to mean anything.
+      # `TELIVIDB_DEVICE` is empty on the Linux legs, where it selects normally
+      # — and those runners have no GPU, so normal selection is the host anyway.
+      - run: cargo test --workspace --target ${{ matrix.target }}
+        env:
+          TELIVIDB_DEVICE: ${{ matrix.device }}
+      - run: cargo test --workspace --no-default-features --target ${{ matrix.target }}
+        env:
+          TELIVIDB_DEVICE: ${{ matrix.device }}
+
+
+  # Every feature combination of the schema crate, built separately.
+  #
+  # Worth its own job because features are not additive here: each one selects a
+  # different set of `#[cfg]` modules, so a combination that nobody builds is a
+  # combination that silently rots. Cargo also unifies features across a
+  # workspace build, which means `cargo build --workspace` can mask a crate that
+  # cannot stand on its own — the failure only appears for the downstream
+  # consumer who enabled exactly one.
+  buffers-features:
+    name: schema crate · ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default (protobuf + capnp)
+            args: ""
+          - name: no features
+            args: "--no-default-features"
+          - name: protobuf only
+            args: "--no-default-features --features protobuf"
+          - name: capnp only
+            args: "--no-default-features --features capnp"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: debug
+          cache-on-failure: true
+      - run: cargo check -p telividb-buffers --all-targets ${{ matrix.args }}
+
+      # `forbid(unsafe_code)` is active in every configuration above, and that
+      # is the point of keeping FlatBuffers out of them: its generated accessors
+      # are `unsafe` by construction, so enabling that feature widens the
+      # workspace's unsafe surface. The guard belongs in CI rather than in a
+      # comment, because a future feature could quietly enable it.
+      - name: the built configurations contain no unsafe
+        run: |
+          if grep -rn --include='*.rs' -E '^\s*unsafe\b' \
+               crates/platform/telividb-buffers/src/generated/protobuf \
+               crates/platform/telividb-buffers/src/generated/capnp 2>/dev/null; then
+            echo "::error::unsafe reached a configuration that forbids it"
+            exit 1
+          fi
+          echo "protobuf and capnp renderings are unsafe-free"

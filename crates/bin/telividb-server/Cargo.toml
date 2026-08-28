@@ -8,7 +8,7 @@ license.workspace = true
 telividb-core.workspace = true
 telividb-embed.workspace = true
 telividb-index.workspace = true
-telividb-proto.workspace = true
+telividb-buffers.workspace = true
 telividb-storage.workspace = true
 telividb-telemetry.workspace = true
 
@@ -22,7 +22,7 @@ tonic-web = "0.14"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
 thiserror.workspace = true
 # `google.protobuf.Duration`, for converting a wire `Span`'s offsets to and
-# from milliseconds. Pinned to the same version telividb-proto builds
+# from milliseconds. Pinned to the same version telividb-buffers builds
 # against, so there is exactly one `prost-types` in the dependency graph.
 prost-types = "0.14"
 # Structured data on a log record is a JSON value, keyed by the `fields::`

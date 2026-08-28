@@ -1,0 +1,50 @@
+// The Collections service.
+syntax = "proto3";
+
+package telividb.collection.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "telividb/collection/v1/collection.proto";
+import "telividb/collection/v1/collection_messages.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "CollectionServiceProto";
+option java_package = "dev.telividb.collection.v1";
+option (buffers.v1.file) = {namespace: "telividb.collection.v1"};
+
+// Manages collections and their schemas.
+service Collections {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates a collection from a compiled schema descriptor set.
+  rpc CreateCollection(CreateCollectionRequest) returns (Collection) {
+    option (google.api.http) = {
+      post: "/v1/collections"
+      body: "collection"
+    };
+    option (google.api.method_signature) = "collection,collection_id";
+  }
+
+  // Retrieves a single collection.
+  rpc GetCollection(GetCollectionRequest) returns (Collection) {
+    option (google.api.http) = {get: "/v1/{name=collections/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists collections.
+  rpc ListCollections(ListCollectionsRequest) returns (ListCollectionsResponse) {
+    option (google.api.http) = {get: "/v1/collections"};
+  }
+
+  // Deletes a collection and every segment belonging to it.
+  //
+  // Returns the tombstoned collection. The collection stops answering queries
+  // immediately; reclaiming the segments is a checkpointed job, because
+  // deleting every segment is unbounded work that cannot fit in a deadline.
+  rpc DeleteCollection(DeleteCollectionRequest) returns (Collection) {
+    option (google.api.http) = {delete: "/v1/{name=collections/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}

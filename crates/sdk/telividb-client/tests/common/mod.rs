@@ -78,7 +78,7 @@ pub async fn collection(client: &mut Client, id: &str, dim: usize) -> telividb_c
 /// carry — but it is genuinely a `FileDescriptorSet`, which is what the server
 /// refuses to create a collection without.
 pub fn descriptor_set() -> Vec<u8> {
-    telividb_proto::FILE_DESCRIPTOR_SET.to_vec()
+    telividb_buffers::protobuf::FILE_DESCRIPTOR_SET.to_vec()
 }
 
 /// The GGUF the text tests need, if it has been downloaded.

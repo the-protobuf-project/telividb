@@ -100,20 +100,11 @@ impl ScanTier for PqTier {
             });
         }
 
-        // One partial score per (subspace, centroid). Scoring a row then costs
-        // m lookups rather than a full-width distance computation.
+        // Built by the codebook, so the scan tier and the IVF-PQ index score a
+        // code the same way rather than through two tables that must agree.
         let m = self.codebook.m();
-        let sub_dim = dim / m;
-        let mut distances = Vec::with_capacity(m * CENTROIDS);
+        let distances = self.codebook.distance_table(query, metric)?;
 
-        for sub in 0..m {
-            let start = sub * sub_dim;
-            let part = &query[start..start + sub_dim];
-            for centroid in 0..CENTROIDS {
-                let c = self.codebook.centroid(sub, centroid);
-                distances.push(partial(metric, part, c));
-            }
-        }
         Ok(PreparedQuery::table(metric, m, distances))
     }
 
@@ -143,20 +134,6 @@ impl ScanTier for PqTier {
             total += *distances.get(sub * CENTROIDS + code as usize)?;
         }
         Some(total)
-    }
-}
-
-/// One subspace's contribution to the score.
-///
-/// Cosine is stored normalized and scored as dot, so it shares that arm.
-fn partial(metric: Metric, query: &[f32], centroid: &[f32]) -> f32 {
-    match metric {
-        Metric::Dot | Metric::Cosine => query.iter().zip(centroid).map(|(a, b)| a * b).sum(),
-        Metric::L2 => query
-            .iter()
-            .zip(centroid)
-            .map(|(a, b)| (a - b) * (a - b))
-            .sum(),
     }
 }
 

@@ -1,0 +1,155 @@
+// The conversation services.
+syntax = "proto3";
+
+package telividb.conversation.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "telividb/conversation/v1/conversation.proto";
+import "telividb/conversation/v1/conversation_messages.proto";
+import "telividb/conversation/v1/message.proto";
+import "telividb/conversation/v1/summary.proto";
+import "telividb/conversation/v1/tool_invocation.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ConversationServiceProto";
+option java_package = "dev.telividb.conversation.v1";
+option (buffers.v1.file) = {namespace: "telividb.conversation.v1"};
+
+// Manages conversations and the messages within them.
+service Conversations {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates a conversation.
+  rpc CreateConversation(CreateConversationRequest) returns (Conversation) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/conversations"
+      body: "conversation"
+    };
+    option (google.api.method_signature) = "parent,conversation,conversation_id";
+  }
+
+  // Retrieves a single conversation.
+  rpc GetConversation(GetConversationRequest) returns (Conversation) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/conversations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists conversations, filtered by space, session or project.
+  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/conversations"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Moves a conversation into another session, and so into another space.
+  //
+  // The resource name does not change, which is the entire reason session and
+  // space are fields rather than path segments: a move that renamed the
+  // conversation would invalidate every edge endpoint, archive entry and
+  // citation that refers to it.
+  //
+  // The move itself is a metadata transaction. No vector data is touched,
+  // because membership is never written into a segment — which is what makes
+  // this cheap rather than a rewrite.
+  rpc MoveConversation(MoveConversationRequest) returns (MoveConversationResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=organizations/*/conversations/*}:move"
+      body: "*"
+    };
+  }
+
+  // Excludes a conversation from ordinary recall without deleting it.
+  //
+  // Suppression is a third state, distinct from deletion and from a policy
+  // denial: the content is retained, its owner can still reach it deliberately,
+  // and traversal stops at it rather than ranking it low. Its existence stays
+  // visible to a caller assembling context — so an agent knows what not to
+  // raise — while the rendered answer must not surface it, because delivering
+  // the reminder is the harm suppression was asked for.
+  //
+  // A separate method rather than a field update so that setting it is its own
+  // audit entry. Only the owner may call it; a classifier may propose
+  // suppression and may never apply or lift it.
+  rpc SuppressConversation(SuppressConversationRequest) returns (Conversation) {
+    option (google.api.http) = {
+      post: "/v1/{name=organizations/*/conversations/*}:suppress"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Returns a suppressed conversation to ordinary recall.
+  rpc UnsuppressConversation(UnsuppressConversationRequest) returns (Conversation) {
+    option (google.api.http) = {
+      post: "/v1/{name=organizations/*/conversations/*}:unsuppress"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Soft-deletes a conversation and the messages beneath it.
+  rpc DeleteConversation(DeleteConversationRequest) returns (Conversation) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/conversations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Appends a message, branching where the request says to.
+  //
+  // Embedding happens server-side through the one inference server, so the
+  // model that produced a field's vectors is a property of the server rather
+  // than of whichever client wrote them. System and developer turns are stored
+  // without being encoded.
+  rpc CreateMessage(CreateMessageRequest) returns (Message) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*/conversations/*}/messages"
+      body: "message"
+    };
+    option (google.api.method_signature) = "parent,message,message_id";
+  }
+
+  // Retrieves a single message.
+  rpc GetMessage(GetMessageRequest) returns (Message) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/conversations/*/messages/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists the messages of a conversation, every branch by default.
+  rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*/conversations/*}/messages"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Retrieves a single tool invocation.
+  rpc GetToolInvocation(GetToolInvocationRequest) returns (ToolInvocation) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/conversations/*/toolInvocations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists the tool invocations of a conversation.
+  //
+  // A collection of its own rather than a field on the message list. A call and
+  // its result are one resource here, and returning them inside the message
+  // stream would rebuild the two-message split this model exists to avoid.
+  rpc ListToolInvocations(ListToolInvocationsRequest) returns (ListToolInvocationsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*/conversations/*}/toolInvocations"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Retrieves a single summary.
+  rpc GetSummary(GetSummaryRequest) returns (Summary) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/summaries/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists summaries, filtered by subject and level.
+  //
+  // The coarse tier of retrieval: a search runs against these first and
+  // expands into messages only where it needs to. Each carries the watermark
+  // it reached and whether its subject has changed since, so a stale summary
+  // is served honestly rather than passed off as current.
+  rpc ListSummaries(ListSummariesRequest) returns (ListSummariesResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/summaries"};
+    option (google.api.method_signature) = "parent";
+  }
+}

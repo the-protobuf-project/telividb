@@ -28,6 +28,7 @@
 //! an issue without a plotting toolchain anywhere in the build.
 
 mod chart;
+mod families;
 mod report;
 mod sweep;
 mod vecs;
@@ -108,6 +109,8 @@ fn main() {
             Err(e) => eprintln!("  hnsw ef={ef} failed: {e}"),
         }
     }
+
+    families::sweep_ivf(&dataset, &store, &mut points);
 
     report::print_table(&name, &points);
     report::print_charts(&name, &points);

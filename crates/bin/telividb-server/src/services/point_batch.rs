@@ -5,7 +5,7 @@
 //! the single-point path is correct, and a batch that merely looped it would
 //! add API surface without adding throughput.
 
-use telividb_proto::point::v1::{
+use telividb_buffers::protobuf::point::v1::{
     BatchCreatePointsRequest, BatchCreatePointsResponse, BatchDeletePointsRequest,
     BatchDeletePointsResponse, BatchGetPointsRequest, BatchGetPointsResponse,
 };

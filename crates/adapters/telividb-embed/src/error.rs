@@ -11,13 +11,13 @@ pub enum Error {
         std::io::Error,
     ),
 
-    /// `candle` refused a tensor operation, or could not read the GGUF.
-    #[error("candle: {0}")]
-    Candle(
-        /// The underlying tensor-runtime failure.
-        #[from]
-        candle_core::Error,
-    ),
+    /// The tensor runtime refused an operation.
+    ///
+    /// Carries the message rather than the type: `telividb_compute::Error` is
+    /// defined elsewhere, so the orphan rule rules out a richer conversion, and
+    /// the string is what a caller would print anyway.
+    #[error("compute: {0}")]
+    Compute(String),
 
     /// Text could not be tokenized.
     #[error("tokenizer: {0}")]
@@ -77,3 +77,9 @@ pub enum Error {
 
 /// Convenience alias for an inference-layer result.
 pub type Result<T> = std::result::Result<T, Error>;
+
+impl From<telividb_compute::Error> for Error {
+    fn from(e: telividb_compute::Error) -> Self {
+        Error::Compute(e.to_string())
+    }
+}

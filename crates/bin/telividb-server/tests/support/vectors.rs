@@ -8,7 +8,7 @@
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::time::Duration;
-use telividb_proto::point::v1::{
+use telividb_buffers::protobuf::point::v1::{
     CreatePointRequest, NamedVector, Point, SearchPointsRequest, Vector,
 };
 use telividb_server::{ServerConfig, serve};

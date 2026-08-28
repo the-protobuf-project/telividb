@@ -2,7 +2,7 @@
 
 use crate::convert;
 use crate::names;
-use telividb_proto::point::v1 as wire;
+use telividb_buffers::protobuf::point::v1 as wire;
 
 /// One matching point.
 #[derive(Debug, Clone, PartialEq)]

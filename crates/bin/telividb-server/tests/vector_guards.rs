@@ -7,8 +7,8 @@
 mod support;
 
 use support::vectors::{DIM, FIELD, start_at, wire_vector};
-use telividb_proto::point::v1::points_client::PointsClient;
-use telividb_proto::point::v1::{SearchPointsRequest, Vector};
+use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
+use telividb_buffers::protobuf::point::v1::{SearchPointsRequest, Vector};
 
 #[tokio::test]
 async fn a_search_against_an_unknown_field_is_empty_not_an_error() {

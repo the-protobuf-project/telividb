@@ -21,7 +21,7 @@ fn the_encoding_is_raw_little_endian_not_repeated_float() {
 fn a_declared_width_that_disagrees_with_the_bytes_is_refused() {
     // A truncation here would score the query against reinterpreted bytes and
     // return plausible, wrongly-ranked results.
-    let malformed = telividb_proto::point::v1::Vector {
+    let malformed = telividb_buffers::protobuf::point::v1::Vector {
         data: vec![0u8; 8].into(),
         dimensions: 4,
     };
@@ -52,7 +52,7 @@ fn an_absent_or_empty_inline_text_reads_as_none() {
     let mut point = point_with_vector("text", &[1.0]);
     assert_eq!(inline_text(&point), None);
 
-    point.content_ref = Some(telividb_proto::point::v1::ContentRef {
+    point.content_ref = Some(telividb_buffers::protobuf::point::v1::ContentRef {
         uri: "file:///x".to_owned(),
         range_start: 0,
         range_end: 0,

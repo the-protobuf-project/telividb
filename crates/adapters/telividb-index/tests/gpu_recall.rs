@@ -7,7 +7,7 @@
 //! parameter. See `assert_same_quality` for why the comparison is on scores
 //! rather than ordinals.
 //!
-//! Runs on whatever device `best_device` selects, so on a Mac built with the
+//! Runs on whatever device `Device::best` selects, so on a Mac built with the
 //! `metal` feature this is genuinely exercising Metal, and on CI it exercises
 //! the CPU fallback. Both must produce the same answers as `FlatIndex`.
 
@@ -17,7 +17,7 @@ mod support;
 
 use support::{DIM, corpus};
 use telividb_core::{Metric, Ordinal, VectorStore};
-use telividb_index::adapters::{FlatIndex, GpuFlatIndex, best_device, device_name};
+use telividb_index::adapters::{Device, FlatIndex, GpuFlatIndex};
 use telividb_index::{VectorIndex, adapters::MemoryStore};
 
 const ROWS: usize = 2_000;
@@ -149,7 +149,6 @@ fn the_selected_device_is_reported() {
     // Not a correctness property — an observability one. A GPU index that
     // silently fell back to CPU passes every test above while delivering none
     // of the speed, so the device it chose has to be inspectable.
-    let device = best_device();
-    let name = device_name(&device);
+    let name = Device::best().kind().as_str();
     assert!(matches!(name, "metal" | "cuda" | "cpu"));
 }

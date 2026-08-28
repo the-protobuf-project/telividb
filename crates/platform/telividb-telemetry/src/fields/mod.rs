@@ -9,8 +9,10 @@
 //! file length, not about there being two vocabularies.
 
 mod model;
+mod timing;
 
 pub use model::{MODEL, MODEL_FINGERPRINT, POOLING, TASK};
+pub use timing::{DURATION_SECONDS, EXPANDED, QUERIES, SCORE_SECONDS, SELECT_SECONDS};
 
 /// Collection the operation targets. **Label-safe** — bounded by how many
 /// collections exist.
@@ -129,12 +131,6 @@ pub const RECORDS: &str = "telividb.records";
 /// Vector width. Safe to emit — shape discloses nothing.
 pub const DIM: &str = "telividb.dim";
 
-/// Wall-clock duration of whatever the record covers, in seconds.
-///
-/// Carried on the log record as well as in a histogram: the histogram is
-/// what a dashboard reads, and this is what someone reading one operation's
-/// log line needs in order to see why it was slow.
-pub const DURATION_SECONDS: &str = "telividb.duration_seconds";
 /// Byte offset within a file — where a torn WAL tail was found.
 pub const OFFSET: &str = "telividb.offset";
 /// Segment count of whatever the record covers.

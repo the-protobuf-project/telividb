@@ -7,25 +7,12 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
-mod scalar;
+pub mod cluster;
+pub mod kmeans;
+mod ops;
+pub mod pq;
+pub mod rng;
+mod scoring;
 
-pub use scalar::{dot, l2_squared, normalize};
-
-use telividb_core::Metric;
-
-/// Score `query` against `candidate` under `metric`.
-///
-/// Ordering follows [`Metric::higher_is_nearer`] — callers must not assume that
-/// a larger score always means a nearer neighbour.
-///
-/// # Panics
-/// Panics if the slices differ in length; callers validate dimension before the
-/// hot path rather than paying for a check per comparison.
-pub fn score(metric: Metric, query: &[f32], candidate: &[f32]) -> f32 {
-    debug_assert_eq!(query.len(), candidate.len(), "dimension checked by caller");
-    match metric {
-        // Cosine is normalised at ingest, so it *is* dot by this point.
-        Metric::Dot | Metric::Cosine => dot(query, candidate),
-        Metric::L2 => l2_squared(query, candidate),
-    }
-}
+pub use ops::{NormalizeInPlace, VectorOps};
+pub use scoring::Scorer;
