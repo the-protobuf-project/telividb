@@ -12,6 +12,19 @@ license = "Apache-2.0"
 # `capnp` and no `flatc` — the same rule that keeps C compilers out of the
 # default build.
 
+[lib]
+# No doctests. There is no hand-written code here to document, and what
+# rustdoc would otherwise collect is not code at all: tonic renders a
+# multi-paragraph proto comment as an indented `/** */` block, and Markdown
+# reads a four-space indent as a code block. The prose then fails to parse as
+# Rust — an em dash is not a token — so a comment written for a reader becomes
+# a compile error.
+#
+# Turning them off is the honest fix rather than reformatting the protos to
+# suit a generator's whitespace, or dropping the paragraphs that make the
+# comments worth reading.
+doctest = false
+
 [features]
 default = ["protobuf", "capnp"]
 
