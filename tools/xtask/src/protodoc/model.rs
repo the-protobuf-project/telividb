@@ -6,7 +6,7 @@
 
 /// A directory whose version sub-directories hold `.proto` files.
 ///
-/// `protobuf/telividb/collection/` is a module; `v1/` inside it is a version.
+/// `buffers/protobuf/telividb/collection/` is a module; `v1/` inside it is a version.
 #[derive(Debug, Default, Clone)]
 pub struct Module {
     /// Display name, derived from the directory, e.g. `Collection`.

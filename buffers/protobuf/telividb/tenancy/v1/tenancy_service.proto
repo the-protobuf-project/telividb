@@ -1,0 +1,193 @@
+// The tenancy services — organizations, projects, spaces and sessions.
+syntax = "proto3";
+
+package telividb.tenancy.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "telividb/tenancy/v1/organization.proto";
+import "telividb/tenancy/v1/project.proto";
+import "telividb/tenancy/v1/session.proto";
+import "telividb/tenancy/v1/space.proto";
+import "telividb/tenancy/v1/tenancy_messages.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "TenancyServiceProto";
+option java_package = "dev.telividb.tenancy.v1";
+option (buffers.v1.file) = {namespace: "telividb.tenancy.v1"};
+
+// Manages organizations, the root of the tenancy tree.
+//
+// Every destructive method here returns the resource it acted on rather than
+// an empty message. That is the soft-delete form, and it is not a workaround
+// for a house style: deletion tombstones the resource so queries exclude it
+// immediately and compaction reclaims the bytes later, so the resource still
+// exists and describing it is the truthful response. An empty return would
+// also be a dead end — a method returning it can never gain a field without a
+// breaking change to a shipped signature.
+service Organizations {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates an organization and the collection backing it.
+  rpc CreateOrganization(CreateOrganizationRequest) returns (Organization) {
+    option (google.api.http) = {
+      post: "/v1/organizations"
+      body: "organization"
+    };
+    option (google.api.method_signature) = "organization,organization_id";
+  }
+
+  // Retrieves a single organization.
+  rpc GetOrganization(GetOrganizationRequest) returns (Organization) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists organizations visible to the caller.
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
+    option (google.api.http) = {get: "/v1/organizations"};
+  }
+
+  // Updates an organization.
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (Organization) {
+    option (google.api.http) = {
+      patch: "/v1/{organization.name=organizations/*}"
+      body: "organization"
+    };
+    option (google.api.method_signature) = "organization,update_mask";
+  }
+
+  // Soft-deletes an organization, tombstoning every collection beneath it.
+  //
+  // Returns the tombstoned organization carrying `delete_time` and
+  // `expire_time`. Nothing is physically removed here: the tenant becomes
+  // invisible to queries at once, and the bytes are reclaimed at expiry. Until
+  // then the operation is reversible.
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (Organization) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Restores a soft-deleted organization before it expires.
+  //
+  // This is the rollback that a long-running transaction could not provide:
+  // the delete committed atomically in metadata and the data was never
+  // touched, so restoring it is another metadata write rather than a replay.
+  rpc UndeleteOrganization(UndeleteOrganizationRequest) returns (Organization) {
+    option (google.api.http) = {
+      post: "/v1/{name=organizations/*}:undelete"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Manages projects, the unit at which access is granted.
+service Projects {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates a project.
+  rpc CreateProject(CreateProjectRequest) returns (Project) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/projects"
+      body: "project"
+    };
+    option (google.api.method_signature) = "parent,project,project_id";
+  }
+
+  // Retrieves a single project.
+  rpc GetProject(GetProjectRequest) returns (Project) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/projects/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists the projects of an organization.
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/projects"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Soft-deletes a project. Spaces it contained survive and lose the link.
+  rpc DeleteProject(DeleteProjectRequest) returns (Project) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/projects/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Manages spaces and their protection.
+service Spaces {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates a space with a declared protection state.
+  //
+  // Protection is fixed at creation because it determines segment routing: an
+  // encrypted space writes into its own segments so unlocking decrypts a
+  // region rather than a row at a time. Changing it later is a rewrite, not a
+  // field update.
+  rpc CreateSpace(CreateSpaceRequest) returns (Space) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/spaces"
+      body: "space"
+    };
+    option (google.api.method_signature) = "parent,space,space_id";
+  }
+
+  // Retrieves a single space.
+  rpc GetSpace(GetSpaceRequest) returns (Space) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/spaces/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists the spaces of an organization that the caller can see.
+  rpc ListSpaces(ListSpacesRequest) returns (ListSpacesResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/spaces"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Unlocks a key-wrapped space for the duration of a session.
+  rpc UnlockSpace(UnlockSpaceRequest) returns (UnlockSpaceResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=organizations/*/spaces/*}:unlock"
+      body: "*"
+    };
+  }
+
+  // Soft-deletes a space and every conversation within it.
+  rpc DeleteSpace(DeleteSpaceRequest) returns (Space) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/spaces/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Manages sessions — recorded working periods holding conversations.
+service Sessions {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates a session.
+  rpc CreateSession(CreateSessionRequest) returns (Session) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/sessions"
+      body: "session"
+    };
+    option (google.api.method_signature) = "parent,session,session_id";
+  }
+
+  // Retrieves a single session.
+  rpc GetSession(GetSessionRequest) returns (Session) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/sessions/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists the sessions of an organization.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/sessions"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Soft-deletes a session. Its conversations survive and lose the link.
+  rpc DeleteSession(DeleteSessionRequest) returns (Session) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/sessions/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}

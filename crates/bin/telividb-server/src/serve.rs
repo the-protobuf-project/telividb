@@ -4,9 +4,9 @@ use crate::announce::{announce, announce_residency};
 use crate::config::ServerConfig;
 use crate::error::{Error, Result};
 use crate::services::{CollectionSvc, Embeddings, PointsSvc};
-use telividb_proto::FILE_DESCRIPTOR_SET;
-use telividb_proto::collection::v1::collections_server::CollectionsServer;
-use telividb_proto::point::v1::points_server::PointsServer;
+use telividb_buffers::protobuf::FILE_DESCRIPTOR_SET;
+use telividb_buffers::protobuf::collection::v1::collections_server::CollectionsServer;
+use telividb_buffers::protobuf::point::v1::points_server::PointsServer;
 use telividb_telemetry::{Telemetry, TelemetryConfig, fields, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.

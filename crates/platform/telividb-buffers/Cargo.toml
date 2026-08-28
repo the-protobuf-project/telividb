@@ -1,0 +1,39 @@
+[package]
+name = "telividb-buffers"
+version.workspace = true
+edition.workspace = true
+# Apache-2.0, not AGPL, for the same reason telividb-proto is: a proprietary
+# client that merely speaks the wire format must not need a commercial licence.
+# The line is drawn at linking the engine, not at parsing its messages.
+license = "Apache-2.0"
+
+# No build script. Everything in `src/generated/` is produced by `buf` and
+# `buffers` and committed, so `cargo build` needs no protobuf toolchain, no
+# `capnp` and no `flatc` — the same rule that keeps C compilers out of the
+# default build.
+
+[features]
+default = ["protobuf", "capnp"]
+
+# Protobuf, via prost and tonic. On by default because it is the wire protocol
+# the server actually speaks; a consumer that only wants a flat view can turn it
+# off and skip the tonic dependency tree entirely.
+protobuf = ["dep:tonic", "dep:tonic-prost", "dep:prost", "dep:prost-types", "dep:bytes"]
+
+# Cap'n Proto. Validates as it reads, so the generated code contains no
+# `unsafe` and the crate keeps `forbid(unsafe_code)`.
+capnp = ["dep:capnp"]
+
+# FlatBuffers. Deliberately NOT default: its accessors are `unsafe` by
+# construction, and admitting 1066 unsafe blocks to the default build would
+# widen the workspace's unsafe surface for a path nothing wires yet.
+flatbuffers = ["dep:flatbuffers"]
+
+[dependencies]
+tonic = { version = "0.14", features = ["router", "codegen"], optional = true }
+tonic-prost = { version = "0.14", optional = true }
+prost = { version = "0.14", optional = true }
+prost-types = { version = "0.14", optional = true }
+bytes = { version = "1", optional = true }
+capnp = { version = "0.27", optional = true }
+flatbuffers = { version = "25", optional = true }

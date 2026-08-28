@@ -4,3 +4,6 @@ deps:
   - name: buf.build/googleapis/googleapis
     commit: c17df5b2beca46928cc87d5656bd5343
     digest: b5:648a01e0170d4512dea7d564016165decd1ed6e34bef79fe54753e51ad7e27545709ad9157d7551270147d551155c595a2fb0bf5bb33b1c83040ddbce915c604
+  - name: buf.build/the-protobuf-project/buffers
+    commit: ae728c88ce86433685f83d331549a78a
+    digest: b5:eee16c3c0c537b4194c59c03864baa7d5f54beb1cc4ea2b8402233aa51aff8e9501dbfd2d1fcd7d1c6230211d207f71c79877f17e30acd8be3934da5834f0cde

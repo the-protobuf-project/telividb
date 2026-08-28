@@ -6,13 +6,13 @@
 
 use super::point_convert::to_wire;
 use super::vectors::VectorFields;
-use crate::error::{storage_status, to_status};
+use crate::error::to_status;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use telividb_core::{PointStore, ResourceName};
-use telividb_proto::point::v1::points_server::Points;
-use telividb_proto::point::v1::{
+use telividb_buffers::protobuf::point::v1::points_server::Points;
+use telividb_buffers::protobuf::point::v1::{
     BatchCreatePointsRequest, BatchCreatePointsResponse, BatchDeletePointsRequest,
     BatchDeletePointsResponse, BatchGetPointsRequest, BatchGetPointsResponse, CreatePointRequest,
     DeletePointRequest, GetPointRequest, ListPointsRequest, ListPointsResponse, Point,
@@ -136,25 +136,8 @@ impl Points for PointsSvc {
     async fn delete_point(
         &self,
         request: Request<DeletePointRequest>,
-    ) -> Result<Response<()>, Status> {
-        let name = parse_name(&request.into_inner().name)?;
-        let collection = parent_collection(&name)?;
-        // A mutation is worth one record per call at info: they are rare and
-        // they are what an incident gets reconstructed from.
-        logger::info!("delete point").with_data(&serde_json::json!({
-            fields::COLLECTION: redact::collection_label(collection.as_str()),
-            fields::RESOURCE: redact::resource_token(name.as_str()),
-        }));
-
-        let store = self.store(&collection)?;
-        if store.delete(&name).map_err(|e| storage_status(&e))? {
-            Ok(Response::new(()))
-        } else {
-            logger::debug!("delete missed: no such point").with_data(&serde_json::json!({
-                fields::RESOURCE: redact::resource_token(name.as_str()),
-            }));
-            Err(Status::not_found(format!("point {name} not found")))
-        }
+    ) -> Result<Response<Point>, Status> {
+        super::point_delete::delete_point(self, request).await
     }
 
     async fn batch_create_points(
@@ -186,7 +169,7 @@ impl Points for PointsSvc {
     }
 }
 
-fn parent_collection(name: &ResourceName) -> Result<ResourceName, Status> {
+pub(super) fn parent_collection(name: &ResourceName) -> Result<ResourceName, Status> {
     name.parent()
         .ok_or_else(|| Status::invalid_argument(format!("{name} has no parent collection")))
 }

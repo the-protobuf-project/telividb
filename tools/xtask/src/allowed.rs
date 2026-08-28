@@ -20,7 +20,11 @@ pub(crate) const ALLOWED: &[(&str, &[&str])] = &[
     // Layer one. Depends only on the ontology — it must not know what an index
     // or a model is, or the layers above could not be swapped independently.
     ("telividb-compute", &["telividb-core"]),
-    ("telividb-proto", &[]),
+    // Every rendering of the schema: protobuf and its gRPC stubs, plus the
+    // Cap'n Proto and FlatBuffers views. Depends on nothing in the workspace and
+    // must not — it is the wire format and nothing else, so a plugin author
+    // outside this repo can take it without taking the engine.
+    ("telividb-buffers", &[]),
     ("telividb-telemetry", &[]),
     ("telividb-graph", &["telividb-core", "telividb-telemetry"]),
     // The query planner composes *results*, not indexes — a caller runs its own
@@ -63,7 +67,7 @@ pub(crate) const ALLOWED: &[(&str, &[&str])] = &[
     // The SDK speaks the wire protocol and nothing else: no storage, no index,
     // no model. That is what keeps one server behaviour rather than one per
     // client, and it is why this list is as short as it is.
-    ("telividb-client", &["telividb-proto"]),
+    ("telividb-client", &["telividb-buffers"]),
     (
         "telividb-server",
         &[
@@ -71,7 +75,7 @@ pub(crate) const ALLOWED: &[(&str, &[&str])] = &[
             "telividb-distance",
             "telividb-embed",
             "telividb-index",
-            "telividb-proto",
+            "telividb-buffers",
             "telividb-storage",
             "telividb-telemetry",
         ],

@@ -1,0 +1,70 @@
+// The System singleton — facts only this process knows.
+syntax = "proto3";
+
+package telividb.system.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "SystemProto";
+option java_package = "dev.telividb.system.v1";
+option (buffers.v1.file) = {namespace: "telividb.system.v1"};
+
+// Runtime facts an orchestrator cannot observe from outside the process.
+//
+// Deliberately small. Liveness, restarts, CPU and memory limits and GPU
+// allocation are all things a scheduler already does better than a database
+// can. What remains is what only this process knows — and the most important
+// of it is which backend was actually selected, because a build that quietly
+// fell back to the CPU passes every correctness test while delivering none of
+// the speed. From outside, that failure is invisible: the pod is healthy, the
+// GPU is allocated, and nothing is using it.
+message System {
+  option (google.api.resource) = {
+    type: "telividb.dev/System"
+    pattern: "system"
+    singular: "system"
+    plural: "systems"
+  };
+
+  // Resource name of the singleton. Always `system`.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Compute backend actually in use, such as `metal` or `cpu`.
+  string backend = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Human-readable device description.
+  string device = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Device memory ceiling this process will use.
+  int64 budget_limit_bytes = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Device memory currently held by resident models and indexes.
+  int64 budget_used_bytes = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the ceiling was measured or estimated.
+  //
+  // An estimate on a discrete card overshoots, and an operator sizing a
+  // deployment has to be able to tell which number they are looking at.
+  BudgetSource budget_source = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Version of this build.
+  string version = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// How the device memory ceiling was determined.
+enum BudgetSource {
+  // Default value. Never valid in a response.
+  BUDGET_SOURCE_UNSPECIFIED = 0;
+
+  // Read from the device.
+  BUDGET_SOURCE_MEASURED = 1;
+
+  // Inferred, because the backend reports no ceiling.
+  BUDGET_SOURCE_ESTIMATED = 2;
+
+  // Set by configuration, overriding whatever the device reports.
+  BUDGET_SOURCE_CONFIGURED = 3;
+}

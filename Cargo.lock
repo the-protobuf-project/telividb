@@ -247,6 +247,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
+name = "capnp"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ebfc0da565e747b1640e029bfbda72f61f39fcddfc8b465b4ae3f3e8b649f78"
+dependencies = [
+ "embedded-io",
+]
+
+[[package]]
 name = "castaway"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -569,6 +578,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34"
 
 [[package]]
+name = "embedded-io"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9eb1aa714776b75c7e67e1da744b81a129b3ff919c8712b5e1b32252c1f07cc7"
+
+[[package]]
 name = "enumset"
 version = "1.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -655,6 +670,16 @@ name = "fixedbitset"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
+
+[[package]]
+name = "flatbuffers"
+version = "25.12.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35f6839d7b3b98adde531effaf34f0c2badc6f4735d26fe74709d8e513a96ef3"
+dependencies = [
+ "bitflags",
+ "rustc_version",
+]
 
 [[package]]
 name = "fnv"
@@ -2214,10 +2239,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "telividb-buffers"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "capnp",
+ "flatbuffers",
+ "prost",
+ "prost-types",
+ "tonic",
+ "tonic-prost",
+]
+
+[[package]]
 name = "telividb-client"
 version = "0.1.0"
 dependencies = [
- "telividb-proto",
+ "telividb-buffers",
  "telividb-server",
  "telividb-telemetry",
  "tempfile",
@@ -2269,12 +2307,12 @@ name = "telividb-examples"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "telividb-buffers",
  "telividb-client",
  "telividb-core",
  "telividb-distance",
  "telividb-embed",
  "telividb-index",
- "telividb-proto",
  "telividb-server",
  "telividb-storage",
  "telividb-telemetry",
@@ -2310,17 +2348,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "telividb-proto"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "prost",
- "prost-types",
- "tonic",
- "tonic-prost",
-]
-
-[[package]]
 name = "telividb-query"
 version = "0.1.0"
 dependencies = [
@@ -2338,10 +2365,10 @@ dependencies = [
  "bytes",
  "prost-types",
  "serde_json",
+ "telividb-buffers",
  "telividb-core",
  "telividb-embed",
  "telividb-index",
- "telividb-proto",
  "telividb-storage",
  "telividb-telemetry",
  "tempfile",

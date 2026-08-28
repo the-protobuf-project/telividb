@@ -1,0 +1,98 @@
+// The Summary resource.
+syntax = "proto3";
+
+package telividb.conversation.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "SummaryProto";
+option java_package = "dev.telividb.conversation.v1";
+option (buffers.v1.file) = {namespace: "telividb.conversation.v1"};
+
+// A condensation of what a region of memory contains.
+//
+// Summaries form the coarse tier of a two-tier retrieval: a search runs
+// against them first, then expands along the edges recording what each one
+// covers. That is the same coarse-to-fine shape the vector path already uses
+// when a quantized scan narrows the field before a full-precision rerank,
+// applied at the semantic layer instead of the numeric one.
+message Summary {
+  option (google.api.resource) = {
+    type: "telividb.dev/Summary"
+    pattern: "organizations/{organization}/summaries/{summary}"
+    singular: "summary"
+    plural: "summaries"
+  };
+
+  // Resource name of the summary.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Which layer of the tree this summarizes.
+  //
+  // Declared rather than inferred from ordering. "Newest first" sorts within a
+  // level; it does not distinguish a conversation summary from a space one,
+  // and a series that relies on recency to tell them apart cannot answer
+  // "summarize this space" without re-deriving which entries were which.
+  Level level = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The resource this summary is attached to.
+  string subject = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // The summary text.
+  string content = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // How far into the subject this summary reached — its watermark.
+  //
+  // A summary is derived data and goes stale: a new message extends past it, a
+  // branch changes which messages are on the active path, and a conversation
+  // moving between spaces invalidates summaries on both sides. The watermark
+  // This is what makes staleness detectable rather than silent.
+  google.protobuf.Timestamp coverage_end_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the subject has changed since this summary was generated.
+  //
+  // A stale summary is still served, marked, with its watermark — an old
+  // summary plus an honest marker is more useful than a gap, and serving one
+  // as current is the failure with no symptom.
+  bool stale = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Digest of the model that produced this summary.
+  //
+  // The identity, not a label. A summary that turns out to be wrong is traced
+  // to the run that produced it and re-derived.
+  string model_digest = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Strictest protection among the sources this summary covers.
+  //
+  // A summary of protected content is protected content: it is derived from
+  // the text and leaks it regardless of what guards the original. A summary
+  // spanning several spaces takes the most restrictive protection of any of
+  // them, never the average and never the destination's — otherwise
+  // summarizing across a boundary would be a declassification channel.
+  string inherited_protection = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the summary was generated.
+  google.protobuf.Timestamp create_time = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Which layer of the tenancy tree a summary condenses.
+enum Level {
+  // Default value. Never valid in a request.
+  LEVEL_UNSPECIFIED = 0;
+
+  // Messages along one branch of a conversation.
+  LEVEL_CONVERSATION = 1;
+
+  // The conversations recorded in one session.
+  LEVEL_SESSION = 2;
+
+  // The sessions in one space — the rolling series.
+  LEVEL_SPACE = 3;
+
+  // The spaces in one project.
+  LEVEL_PROJECT = 4;
+}

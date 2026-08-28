@@ -1,5 +1,5 @@
 use super::*;
-use telividb_proto::point::v1::NamedVector;
+use telividb_buffers::protobuf::point::v1::NamedVector;
 
 fn name() -> ResourceName {
     ResourceName::parse("collections/media/points/doc-1").unwrap()

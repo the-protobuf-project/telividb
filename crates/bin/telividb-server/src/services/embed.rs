@@ -15,7 +15,7 @@
 use std::sync::Arc;
 use telividb_core::Fingerprint;
 use telividb_embed::{GgmlInferencer, Inferencer, ModelId, Task};
-use telividb_proto::point::v1::{NamedVector, Point as WirePoint};
+use telividb_buffers::protobuf::point::v1::{NamedVector, Point as WirePoint};
 use telividb_telemetry::{fields, logger};
 use tonic::Status;
 

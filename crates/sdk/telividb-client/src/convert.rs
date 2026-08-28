@@ -1,7 +1,7 @@
 //! Turning wire types into Rust ones and back.
 
 use crate::error::{Error, Result};
-use telividb_proto::point::v1 as wire;
+use telividb_buffers::protobuf::point::v1 as wire;
 
 /// Bytes per `f32` on the wire.
 const F32_BYTES: usize = 4;

@@ -1,0 +1,111 @@
+// The ToolInvocation resource.
+syntax = "proto3";
+
+package telividb.conversation.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+import "telividb/conversation/v1/message.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ToolInvocationProto";
+option java_package = "dev.telividb.conversation.v1";
+option (buffers.v1.file) = {namespace: "telividb.conversation.v1"};
+
+// One tool call and the result it returned.
+//
+// A call and its result are one event with one lifetime and one set of
+// permissions. The OpenAI wire format splits them across two messages — the
+// call embedded in an assistant turn, the result as a separate turn keyed by
+// `tool_call_id` — but that split is an artefact of JSON having no way to
+// express a cross-message reference. Here the reference is an edge, and the
+// two-message form is reconstructed deterministically on the way out.
+message ToolInvocation {
+  option (google.api.resource) = {
+    type: "telividb.dev/ToolInvocation"
+    pattern: "organizations/{organization}/conversations/{conversation}/toolInvocations/{tool_invocation}"
+    singular: "toolInvocation"
+    plural: "toolInvocations"
+  };
+
+  // Resource name of the invocation.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The message that triggered this call.
+  string caller = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Message"}
+  ];
+
+  // Identifier carried by the originating format, preserved for round-trip.
+  //
+  // Stored so a conversation exported back to an OpenAI-shaped transcript
+  // reproduces the same `tool_call_id` it arrived with. Never used internally
+  // to resolve the relationship — an edge does that.
+  string call_id = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // The tool that was called.
+  string tool = 4 [(google.api.field_behavior) = REQUIRED];
+
+  // Arguments the tool was called with, JSON-encoded.
+  //
+  // A string rather than a `Struct`, and that is a deliberate narrowing. The
+  // shape is whatever the tool's own JSON Schema declares, so it is not knowable
+  // here — and a dynamically typed value has no equivalent in a flat format:
+  // rendering it degrades to a JSON string in FlatBuffers and to an opaque
+  // pointer in Cap'n Proto that no generated accessor can read. Storing what it
+  // actually is keeps every projection of this schema honest.
+  //
+  // Never embedded. JSON ranks against real content; the useful operations are
+  // filtering on `tool` and `mcp_server`, not searching arguments by similarity.
+  string input = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // What the tool returned.
+  //
+  // Inlined when small; a reference when large, because a result can be
+  // megabytes and blobs stay outside the database.
+  ContentRef result = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether the call succeeded.
+  State state = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // The MCP server that produced this result.
+  //
+  // Recorded on every invocation whether or not the result was embedded,
+  // because provenance is what lets retrieval distinguish something a person
+  // said from something a third-party server said. Without it those rank
+  // equally as memory, and text returned by a server is written by whoever
+  // runs that server.
+  string mcp_server = 8 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "telividb.dev/McpServer"}
+  ];
+
+  // Whether the result contributed vectors to the index.
+  //
+  // False unless the originating server is explicitly marked embeddable. A
+  // result that is embedded becomes retrievable memory and can later be
+  // assembled into a context window, so an untrusted one is a persistent
+  // injection surface rather than a one-time one. The default withholds.
+  bool embedded = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the call was made.
+  google.protobuf.Timestamp create_time = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Lifecycle state of a tool call.
+enum State {
+  // Default value. Never valid in a response.
+  STATE_UNSPECIFIED = 0;
+
+  // The tool returned a result.
+  STATE_SUCCEEDED = 1;
+
+  // The tool reported a failure. The result carries its message.
+  STATE_FAILED = 2;
+
+  // The call did not complete within its deadline.
+  STATE_TIMED_OUT = 3;
+}

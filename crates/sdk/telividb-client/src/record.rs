@@ -4,7 +4,7 @@ use crate::convert;
 use crate::error::Result;
 use crate::names;
 use std::collections::BTreeMap;
-use telividb_proto::point::v1 as wire;
+use telividb_buffers::protobuf::point::v1 as wire;
 
 /// A stored point.
 ///

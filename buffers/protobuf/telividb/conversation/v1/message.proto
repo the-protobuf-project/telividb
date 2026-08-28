@@ -1,0 +1,117 @@
+// The Message resource.
+syntax = "proto3";
+
+package telividb.conversation.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "MessageProto";
+option java_package = "dev.telividb.conversation.v1";
+option (buffers.v1.file) = {namespace: "telividb.conversation.v1"};
+
+// A pointer to the bytes a message was derived from.
+//
+// Declared here rather than imported: a package that reached into a shared one
+// would couple its versioning to that package's, which AIP-215 forbids.
+message ContentRef {
+  // Location of the source, such as `file://`, `s3://` or `https://`.
+  string uri = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // SHA-256 digest of the referenced bytes.
+  //
+  // What detects that a source changed and anything derived from it — an
+  // embedding, a summary — is now stale.
+  bytes sha256 = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Source text, inlined when small enough to keep the message re-embeddable.
+  //
+  // Without a reachable source, content is locked to the model that first
+  // encoded it.
+  string inline_text = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// One turn in a conversation.
+//
+// Modelled on the OpenAI chat message because that vocabulary is universal and
+// round-trips into every agent framework — but *projected* to that shape at
+// the boundary rather than stored in it. That format is not a specification
+// and it churns, and a stored field number is permanent.
+//
+// A message is one resource and several stored points: long content is chunked
+// for the encoder, and each chunk records which part of this message it covers.
+message Message {
+  option (google.api.resource) = {
+    type: "telividb.dev/Message"
+    pattern: "organizations/{organization}/conversations/{conversation}/messages/{message}"
+    singular: "message"
+    plural: "messages"
+  };
+
+  // Resource name of the message.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Who produced this turn.
+  Role role = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // The message this one replies to.
+  //
+  // A message may have several children: regenerating or editing branches the
+  // conversation rather than replacing what was there. Discarded branches are
+  // retained, because an abandoned attempt is evidence about what was tried.
+  string parent = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.resource_reference) = {type: "telividb.dev/Message"}
+  ];
+
+  // Textual content of the turn.
+  string content = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Reference to the bytes this message was derived from, for content too
+  // large to inline.
+  ContentRef content_ref = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether this message contributed vectors to the index.
+  //
+  // Not every turn is embedded. System and developer content is boilerplate
+  // that ranks against real content and degrades retrieval, so it is stored
+  // and searchable by filter without being encoded.
+  bool embedded = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the turn occurred.
+  //
+  // Time is a ranking term here rather than only a filter: "what did we
+  // discuss last Tuesday" has a weak semantic signal and a strong temporal one.
+  google.protobuf.Timestamp occur_time = 7 [(google.api.field_behavior) = OPTIONAL];
+
+  // When the message was recorded.
+  google.protobuf.Timestamp create_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Who produced a turn.
+enum Role {
+  // Default value. Never valid in a request.
+  ROLE_UNSPECIFIED = 0;
+
+  // A human participant.
+  ROLE_USER = 1;
+
+  // A model response.
+  ROLE_ASSISTANT = 2;
+
+  // Instructions framing the exchange.
+  ROLE_SYSTEM = 3;
+
+  // Operator instructions ranking above system content.
+  ROLE_DEVELOPER = 4;
+
+  // The result of a tool invocation, projected back as a message on the way
+  // out. Stored as an invocation rather than as a turn.
+  ROLE_TOOL = 5;
+}

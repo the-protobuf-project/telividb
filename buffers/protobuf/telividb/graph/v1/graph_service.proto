@@ -1,0 +1,104 @@
+// The graph services.
+syntax = "proto3";
+
+package telividb.graph.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "telividb/graph/v1/edge.proto";
+import "telividb/graph/v1/graph_messages.proto";
+import "telividb/graph/v1/traversal.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "GraphServiceProto";
+option java_package = "dev.telividb.graph.v1";
+option (buffers.v1.file) = {namespace: "telividb.graph.v1"};
+
+// Manages edges and traverses the graph they form.
+//
+// The engine beneath this — edge storage, rehydration into an in-memory graph,
+// and hop-bounded traversal with type filtering — is built and tested. Nothing
+// could reach it until this service existed.
+service Graph {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates an edge.
+  rpc CreateEdge(CreateEdgeRequest) returns (Edge) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/edges"
+      body: "edge"
+    };
+    option (google.api.method_signature) = "parent,edge,edge_id";
+  }
+
+  // Retrieves a single edge.
+  rpc GetEdge(GetEdgeRequest) returns (Edge) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/edges/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists edges.
+  rpc ListEdges(ListEdgesRequest) returns (ListEdgesResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/edges"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Creates several edges in one request.
+  rpc BatchCreateEdges(BatchCreateEdgesRequest) returns (BatchCreateEdgesResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/edges:batchCreate"
+      body: "*"
+    };
+  }
+
+  // Soft-deletes an edge.
+  //
+  // Returns the tombstoned edge. Deleting from the graph is reversible until
+  // expiry, which matters more here than elsewhere: an edge is often the only
+  // record that two things were ever related.
+  rpc DeleteEdge(DeleteEdgeRequest) returns (Edge) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/edges/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Traverses the graph outward from a set of seeds.
+  //
+  // Bounded best-first expansion, not a search over all paths. Each hop depends
+  // on the last, so this runs on the host rather than a device, and the bounds
+  // — hop count, result ceiling, per-hop decay — are what keep it from becoming
+  // the most expensive thing in a query.
+  rpc TraverseGraph(TraverseGraphRequest) returns (TraverseGraphResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/edges:traverse"
+      body: "*"
+    };
+  }
+
+  // Creates an edge type, declaring the default weight its edges take.
+  rpc CreateEdgeType(CreateEdgeTypeRequest) returns (EdgeType) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/edgeTypes"
+      body: "edge_type"
+    };
+    option (google.api.method_signature) = "parent,edge_type,edge_type_id";
+  }
+
+  // Retrieves a single edge type.
+  rpc GetEdgeType(GetEdgeTypeRequest) returns (EdgeType) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/edgeTypes/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists edge types.
+  rpc ListEdgeTypes(ListEdgeTypesRequest) returns (ListEdgeTypesResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/edgeTypes"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Soft-deletes an edge type.
+  rpc DeleteEdgeType(DeleteEdgeTypeRequest) returns (EdgeType) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/edgeTypes/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}

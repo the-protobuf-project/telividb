@@ -50,7 +50,7 @@ telividb-embed      = { path = "crates/adapters/telividb-embed" }
 telividb-index      = { path = "crates/adapters/telividb-index" }
 telividb-storage    = { path = "crates/adapters/telividb-storage" }
 telividb-telemetry  = { path = "crates/platform/telividb-telemetry" }
-telividb-proto      = { path = "crates/platform/telividb-proto" }
+telividb-buffers    = { path = "crates/platform/telividb-buffers" }
 telividb-server     = { path = "crates/bin/telividb-server" }
 
 # The observability stack for the whole workspace. Pinned to a tag so a push

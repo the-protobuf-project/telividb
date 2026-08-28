@@ -3,7 +3,7 @@
 use telividb_core::{
     Collection, Dim, Fingerprint, IndexKind, Metric, ResourceName, VectorFieldSpec,
 };
-use telividb_proto::collection::v1 as wire;
+use telividb_buffers::protobuf::collection::v1 as wire;
 use tonic::Status;
 
 /// Build a domain collection from a create request's payload.

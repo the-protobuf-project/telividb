@@ -11,12 +11,23 @@
 /models
 *.gguf
 *.bin.zst
+*.html
 
 .DS_Store
 .idea/
 .vscode/
+.claude/
 AGENT_*.md
+AGENTS.md
 docs/STATUS.md
 
 # Evaluation datasets. Fetched by examples/datasets/download.sh.
 /examples/datasets/*/
+
+# Descriptor set consumed by `buffers generate`. A build artifact of `buf build`,
+# reproducible from the protos, so it is rebuilt rather than committed.
+/descriptors.binpb
+
+# Generated Rust now lives in telividb-buffers and is committed, the same way
+# telividb-proto commits its prost output: `cargo build` needs neither capnp nor
+# flatc installed. Nothing to ignore here any more.

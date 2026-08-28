@@ -1,0 +1,61 @@
+// The Session resource.
+syntax = "proto3";
+
+package telividb.tenancy.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "SessionProto";
+option java_package = "dev.telividb.tenancy.v1";
+option (buffers.v1.file) = {namespace: "telividb.tenancy.v1"};
+
+// A recorded working period holding several conversations.
+//
+// A session is a resource rather than a traversal result because it has its
+// own identity, its own span, and its own summaries. "The conversations I had
+// on Tuesday about the merger" is a thing a person names and returns to, and
+// deriving it from edge ordering every time would lose the name.
+message Session {
+  option (google.api.resource) = {
+    type: "telividb.dev/Session"
+    pattern: "organizations/{organization}/sessions/{session}"
+    singular: "session"
+    plural: "sessions"
+  };
+
+  // Resource name of the session.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Space this session belongs to.
+  //
+  // Mutable, and therefore a field rather than a path segment.
+  string space = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/Space"}
+  ];
+
+  // When the working period began.
+  google.protobuf.Timestamp start_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the working period ended, or unset while it is still open.
+  google.protobuf.Timestamp end_time = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Conversations recorded in this session.
+  int32 conversation_count = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session was created.
+  google.protobuf.Timestamp create_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the session was last modified.
+  google.protobuf.Timestamp update_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

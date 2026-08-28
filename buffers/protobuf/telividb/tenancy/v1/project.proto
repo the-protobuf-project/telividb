@@ -1,0 +1,52 @@
+// The Project resource.
+syntax = "proto3";
+
+package telividb.tenancy.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "ProjectProto";
+option java_package = "dev.telividb.tenancy.v1";
+option (buffers.v1.file) = {namespace: "telividb.tenancy.v1"};
+
+// A unit of work within an organization, and the unit at which access is
+// granted.
+//
+// A project is a *predicate*, not a collection. At the scale this is designed
+// for — organizations holding hundreds of projects each — a collection per
+// project would mean thousands of manifests and thousands of graph indexes,
+// most over a handful of conversations. Project membership compiles into the
+// visibility bitmap instead, which is resolved once per query.
+message Project {
+  option (google.api.resource) = {
+    type: "telividb.dev/Project"
+    pattern: "organizations/{organization}/projects/{project}"
+    singular: "project"
+    plural: "projects"
+  };
+
+  // Resource name of the project.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Human-readable name.
+  string display_name = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // When the project was created.
+  google.protobuf.Timestamp create_time = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the project was last modified.
+  google.protobuf.Timestamp update_time = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the project was soft-deleted, or unset while it is live.
+  google.protobuf.Timestamp delete_time = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When a soft-deleted project is purged and becomes unrecoverable.
+  google.protobuf.Timestamp expire_time = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque value for optimistic concurrency on update.
+  string etag = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+}

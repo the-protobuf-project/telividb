@@ -1,0 +1,308 @@
+// The identity services.
+syntax = "proto3";
+
+package telividb.identity.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/field_info.proto";
+import "google/api/resource.proto";
+import "telividb/identity/v1/principal.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "IdentityServiceProto";
+option java_package = "dev.telividb.identity.v1";
+option (buffers.v1.file) = {namespace: "telividb.identity.v1"};
+
+// Manages users, groups and the role bindings that grant over the tree.
+service Identity {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates a user.
+  rpc CreateUser(CreateUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/v1/users"
+      body: "user"
+    };
+    option (google.api.method_signature) = "user,user_id";
+  }
+
+  // Retrieves a single user.
+  rpc GetUser(GetUserRequest) returns (User) {
+    option (google.api.http) = {get: "/v1/{name=users/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists users.
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {get: "/v1/users"};
+  }
+
+  // Soft-deletes a user, cascading to the memory they own.
+  rpc DeleteUser(DeleteUserRequest) returns (User) {
+    option (google.api.http) = {delete: "/v1/{name=users/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Restores a soft-deleted user before they expire.
+  rpc UndeleteUser(UndeleteUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/v1/{name=users/*}:undelete"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name";
+  }
+
+  // Creates a user group.
+  rpc CreateUserGroup(CreateUserGroupRequest) returns (UserGroup) {
+    option (google.api.http) = {
+      post: "/v1/userGroups"
+      body: "user_group"
+    };
+    option (google.api.method_signature) = "user_group,user_group_id";
+  }
+
+  // Retrieves a single group.
+  rpc GetUserGroup(GetUserGroupRequest) returns (UserGroup) {
+    option (google.api.http) = {get: "/v1/{name=userGroups/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists user groups.
+  rpc ListUserGroups(ListUserGroupsRequest) returns (ListUserGroupsResponse) {
+    option (google.api.http) = {get: "/v1/userGroups"};
+  }
+
+  // Soft-deletes a user group.
+  rpc DeleteUserGroup(DeleteUserGroupRequest) returns (UserGroup) {
+    option (google.api.http) = {delete: "/v1/{name=userGroups/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Grants a role to a group over part of the tree.
+  rpc CreateRoleBinding(CreateRoleBindingRequest) returns (RoleBinding) {
+    option (google.api.http) = {
+      post: "/v1/{parent=organizations/*}/roleBindings"
+      body: "role_binding"
+    };
+    option (google.api.method_signature) = "parent,role_binding,role_binding_id";
+  }
+
+  // Retrieves a single role binding.
+  rpc GetRoleBinding(GetRoleBindingRequest) returns (RoleBinding) {
+    option (google.api.http) = {get: "/v1/{name=organizations/*/roleBindings/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists role bindings.
+  rpc ListRoleBindings(ListRoleBindingsRequest) returns (ListRoleBindingsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=organizations/*}/roleBindings"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Revokes a role binding.
+  rpc DeleteRoleBinding(DeleteRoleBindingRequest) returns (RoleBinding) {
+    option (google.api.http) = {delete: "/v1/{name=organizations/*/roleBindings/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Request message for creating a user.
+message CreateUserRequest {
+  // Identifier to use, forming the final path segment.
+  string user_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The user to create.
+  User user = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  string request_id = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving a user.
+message GetUserRequest {
+  // Resource name of the user.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/User"}
+  ];
+}
+
+// Request message for listing users.
+message ListUsersRequest {
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression restricting which users are returned.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to include soft-deleted users.
+  bool show_deleted = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing users.
+message ListUsersResponse {
+  // The users on this page.
+  repeated User users = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a user.
+message DeleteUserRequest {
+  // Resource name of the user to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/User"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether to delete the user even though they still own memory.
+  bool force = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for restoring a soft-deleted user.
+message UndeleteUserRequest {
+  // Resource name of the user to restore.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/User"}
+  ];
+}
+
+// Request message for creating a user group.
+message CreateUserGroupRequest {
+  // Identifier to use, forming the final path segment.
+  string user_group_id = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // The group to create.
+  UserGroup user_group = 2 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  string request_id = 3 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving a user group.
+message GetUserGroupRequest {
+  // Resource name of the group.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/UserGroup"}
+  ];
+}
+
+// Request message for listing user groups.
+message ListUserGroupsRequest {
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression restricting which groups are returned.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing user groups.
+message ListUserGroupsResponse {
+  // The groups on this page.
+  repeated UserGroup user_groups = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a user group.
+message DeleteUserGroupRequest {
+  // Resource name of the group to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/UserGroup"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for creating a role binding.
+message CreateRoleBindingRequest {
+  // Organization the binding belongs to.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/RoleBinding"}
+  ];
+
+  // Identifier to use, forming the final path segment.
+  string role_binding_id = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // The binding to create.
+  RoleBinding role_binding = 3 [(google.api.field_behavior) = REQUIRED];
+
+  // Unique identifier making this request safe to retry.
+  string request_id = 4 [
+    (google.api.field_behavior) = OPTIONAL,
+    (google.api.field_info).format = UUID4
+  ];
+}
+
+// Request message for retrieving a role binding.
+message GetRoleBindingRequest {
+  // Resource name of the binding.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/RoleBinding"}
+  ];
+}
+
+// Request message for listing role bindings.
+message ListRoleBindingsRequest {
+  // Organization to list bindings from.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telividb.dev/RoleBinding"}
+  ];
+
+  // Maximum number to return. Zero selects a server-chosen default.
+  int32 page_size = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous call.
+  string page_token = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Filter expression, such as `scope = "organizations/o/spaces/finance"`.
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing role bindings.
+message ListRoleBindingsResponse {
+  // The bindings on this page.
+  repeated RoleBinding role_bindings = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Token to retrieve the next page, or empty if this is the last.
+  string next_page_token = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Request message for deleting a role binding.
+message DeleteRoleBindingRequest {
+  // Resource name of the binding to delete.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/RoleBinding"}
+  ];
+
+  // Current etag, to refuse a delete racing a concurrent change.
+  string etag = 2 [(google.api.field_behavior) = OPTIONAL];
+}

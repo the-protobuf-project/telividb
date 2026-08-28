@@ -4,7 +4,7 @@
 //! field-by-field mapping.
 
 use telividb_core::{ContentRef, ResourceName, Span};
-use telividb_proto::point::v1::{
+use telividb_buffers::protobuf::point::v1::{
     ContentRef as WireContentRef, NamedVector, Point as WirePoint, Span as WireSpan,
     Vector as WireVector,
 };

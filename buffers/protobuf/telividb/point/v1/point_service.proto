@@ -1,0 +1,94 @@
+// The Points service.
+syntax = "proto3";
+
+package telividb.point.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "telividb/point/v1/point.proto";
+import "telividb/point/v1/point_messages.proto";
+import "telividb/point/v1/point_search.proto";
+
+option java_multiple_files = true;
+option java_outer_classname = "PointServiceProto";
+option java_package = "dev.telividb.point.v1";
+option (buffers.v1.file) = {namespace: "telividb.point.v1"};
+
+// Manages points within a collection.
+//
+// Every standard method is exposed individually as well as in batch form. A
+// caller writing one point should not have to construct a batch, and a caller
+// writing a million should not have to send a million requests — the single
+// and batch forms share their request message so an SDK can collapse them.
+service Points {
+  option (google.api.default_host) = "telividb.dev";
+
+  // Creates a point.
+  rpc CreatePoint(CreatePointRequest) returns (Point) {
+    option (google.api.http) = {
+      post: "/v1/{parent=collections/*}/points"
+      body: "point"
+    };
+    option (google.api.method_signature) = "parent,point,point_id";
+  }
+
+  // Retrieves a single point.
+  rpc GetPoint(GetPointRequest) returns (Point) {
+    option (google.api.http) = {get: "/v1/{name=collections/*/points/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists the points of a collection.
+  rpc ListPoints(ListPointsRequest) returns (ListPointsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=collections/*}/points"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Deletes a point.
+  //
+  // Returns the tombstoned point rather than an empty message. Deletion here
+  // is a soft delete by construction — sealed segments are immutable, so the
+  // point is tombstoned and excluded from queries at once while its bytes
+  // survive until compaction rewrites the segment. Returning the resource is
+  // the form AIP-135 defines for exactly that case, it matches what
+  // `BatchDeletePoints` already does, and it leaves room to add fields later
+  // that an empty return would have foreclosed.
+  rpc DeletePoint(DeletePointRequest) returns (Point) {
+    option (google.api.http) = {delete: "/v1/{name=collections/*/points/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Creates several points in one request.
+  rpc BatchCreatePoints(BatchCreatePointsRequest) returns (BatchCreatePointsResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=collections/*}/points:batchCreate"
+      body: "*"
+    };
+  }
+
+  // Retrieves several points in one request.
+  rpc BatchGetPoints(BatchGetPointsRequest) returns (BatchGetPointsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=collections/*}/points:batchGet"};
+  }
+
+  // Deletes several points in one request.
+  rpc BatchDeletePoints(BatchDeletePointsRequest) returns (BatchDeletePointsResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=collections/*}/points:batchDelete"
+      body: "*"
+    };
+  }
+
+  // Searches a collection for the points nearest a query vector.
+  //
+  // A method on the points collection rather than a service of its own:
+  // searching is an operation over points, and modelling it as one keeps the
+  // resource hierarchy intact.
+  rpc SearchPoints(SearchPointsRequest) returns (SearchPointsResponse) {
+    option (google.api.http) = {
+      post: "/v1/{parent=collections/*}/points:search"
+      body: "*"
+    };
+  }
+}

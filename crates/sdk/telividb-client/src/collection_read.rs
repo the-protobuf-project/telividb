@@ -7,7 +7,7 @@ use crate::collection::Collection;
 use crate::error::{Error, Result};
 use crate::names;
 use crate::record::Record;
-use telividb_proto::point::v1 as wire;
+use telividb_buffers::protobuf::point::v1 as wire;
 
 impl Collection {
     /// Fetch one point.

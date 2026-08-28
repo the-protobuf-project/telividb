@@ -19,7 +19,7 @@ use crate::convert;
 use crate::error::Result;
 use crate::names;
 use crate::search::SearchResults;
-use telividb_proto::point::v1 as wire;
+use telividb_buffers::protobuf::point::v1 as wire;
 
 impl Collection {
     /// Store text, letting the server compute the vector.

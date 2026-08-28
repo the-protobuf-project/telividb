@@ -7,8 +7,8 @@
 
 use std::net::SocketAddr;
 use std::time::Duration;
-use telividb_proto::point::v1::points_client::PointsClient;
-use telividb_proto::point::v1::{
+use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
+use telividb_buffers::protobuf::point::v1::{
     ContentRef, CreatePointRequest, DeletePointRequest, GetPointRequest, ListPointsRequest, Point,
 };
 use telividb_server::{ServerConfig, serve};
@@ -166,10 +166,10 @@ async fn a_point_carrying_vectors_is_accepted_and_echoes_them_back() {
             parent: "collections/media".to_owned(),
             point_id: "with-vectors".to_owned(),
             point: Some(Point {
-                vectors: vec![telividb_proto::point::v1::NamedVector {
+                vectors: vec![telividb_buffers::protobuf::point::v1::NamedVector {
                     text: String::new(),
                     field_id: "text_bge".to_owned(),
-                    vector: Some(telividb_proto::point::v1::Vector {
+                    vector: Some(telividb_buffers::protobuf::point::v1::Vector {
                         data: data.into(),
                         dimensions: 4,
                     }),

@@ -26,7 +26,7 @@ telividb-telemetry.workspace = true
 # The gRPC walkthrough starts a real server so it is one command to run. In a
 # deployment these are separate processes and only the client half is needed.
 telividb-client.workspace = true
-telividb-proto.workspace = true
+telividb-buffers.workspace = true
 telividb-server.workspace = true
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
 tempfile = "3"

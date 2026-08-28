@@ -4,8 +4,8 @@ use crate::convert;
 use crate::error::Result;
 use crate::names;
 use crate::search::SearchResults;
-use telividb_proto::point::v1 as wire;
-use telividb_proto::point::v1::points_client::PointsClient;
+use telividb_buffers::protobuf::point::v1 as wire;
+use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
 use tonic::transport::Channel;
 
 /// A handle to one collection's points.

@@ -11,7 +11,7 @@ use super::vectors::VectorFields;
 use crate::error::{storage_status, to_status};
 use std::sync::Arc;
 use telividb_core::ResourceName;
-use telividb_proto::point::v1::{CreatePointRequest, Point};
+use telividb_buffers::protobuf::point::v1::{CreatePointRequest, Point};
 use telividb_storage::RedbPointStore;
 use telividb_telemetry::{fields, logger, redact};
 use tonic::{Request, Response, Status};

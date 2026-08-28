@@ -10,8 +10,8 @@ use crate::error::storage_status;
 use std::path::PathBuf;
 use std::sync::Arc;
 use telividb_core::ResourceName;
-use telividb_proto::collection::v1::collections_server::Collections;
-use telividb_proto::collection::v1::{
+use telividb_buffers::protobuf::collection::v1::collections_server::Collections;
+use telividb_buffers::protobuf::collection::v1::{
     Collection, CreateCollectionRequest, DeleteCollectionRequest, GetCollectionRequest,
     ListCollectionsRequest, ListCollectionsResponse,
 };
@@ -153,11 +153,21 @@ impl Collections for CollectionSvc {
     async fn delete_collection(
         &self,
         request: Request<DeleteCollectionRequest>,
-    ) -> Result<Response<()>, Status> {
+    ) -> Result<Response<Collection>, Status> {
         let name = parse_name(&request.into_inner().name)?;
         logger::info!("delete collection").with_data(&serde_json::json!({
             fields::COLLECTION: redact::collection_label(name.as_str()),
         }));
+
+        // Read before deleting: once the entry is gone there is nothing left to
+        // describe, and the response has to carry the resource that was removed.
+        let catalogue = Arc::clone(&self.catalogue);
+        let target = name.clone();
+        let deleted = tokio::task::spawn_blocking(move || catalogue.entry(&target))
+            .await
+            .map_err(|e| Status::internal(format!("catalogue task failed: {e}")))?
+            .map_err(|e| storage_status(&e))?
+            .map(|(collection, descriptor_set)| to_wire(&collection, descriptor_set));
 
         let catalogue = Arc::clone(&self.catalogue);
         let dir = self.data_dir.join(name.leaf());
@@ -176,7 +186,11 @@ impl Collections for CollectionSvc {
         .map_err(|e| storage_status(&e))?;
 
         match existed {
-            true => Ok(Response::new(())),
+            // The deleted resource, not an empty message. Returning it is what
+            // AIP-135 asks for when a delete is reversible or deferred, and it
+            // leaves room to report what the delete cascaded to — a question an
+            // empty return can never answer.
+            true => Ok(Response::new(deleted.unwrap_or_default())),
             false => Err(Status::not_found("collection not found")),
         }
     }
