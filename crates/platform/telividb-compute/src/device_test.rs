@@ -62,5 +62,25 @@ fn metal_is_compiled_in_on_macos() {
     // Not behind a feature: it is the only GPU on this platform, and a default
     // that had to be opted into would leave it off for everyone.
     assert!(DeviceKind::compiled().contains(&DeviceKind::Metal));
-    assert_eq!(Device::best().kind(), DeviceKind::Metal);
+
+    // What `best()` selects is only Metal when nothing overrides it. The
+    // override is read rather than set here: a test that mutated the
+    // environment would race every other test in the process, and the two
+    // claims — "Metal is available" and "Metal is chosen by default" — are
+    // separable anyway.
+    if std::env::var_os("TELIVIDB_DEVICE").is_none() {
+        assert_eq!(Device::best().kind(), DeviceKind::Metal);
+    }
+}
+
+#[test]
+fn every_device_name_round_trips() {
+    // `parse` is the inverse of `as_str`, so the names an operator writes in
+    // `TELIVIDB_DEVICE` are exactly the ones telemetry reports back. Tested as
+    // a pure function, with no environment involved.
+    for kind in DeviceKind::compiled() {
+        assert_eq!(DeviceKind::parse(kind.as_str()), Some(*kind));
+    }
+    assert_eq!(DeviceKind::parse("  CPU  "), Some(DeviceKind::Cpu));
+    assert_eq!(DeviceKind::parse("gpu"), None);
 }

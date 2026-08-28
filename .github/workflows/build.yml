@@ -53,6 +53,16 @@ jobs:
           - name: macos · arm64
             os: macos-latest
             target: aarch64-apple-darwin
+            # GitHub's macOS runners are virtualised, and their Metal driver is
+            # missing operations ggml uses — `MUL_MAT` among them. The device is
+            # selected because it compiles in and reports present, then fails
+            # inside a graph computation.
+            #
+            # So this leg pins the host backend. What it is really for is the
+            # Apple-silicon *link*: a different linker, libc++ rather than
+            # libstdc++, and the Metal frameworks. Metal compute itself cannot
+            # be verified on a virtual GPU and is checked on real hardware.
+            device: cpu
     steps:
       # `submodules: recursive` because `telividb-compute` vendors ggml and
       # builds it with CMake. Without it the vendor directory is empty, CMake
@@ -94,8 +104,14 @@ jobs:
       # without `nvcc` on PATH — so on a runner with no CUDA SDK that flag can
       # only ever fail. CUDA is opt-in by design (rule 46) and is not
       # CI-verifiable here; it needs a GPU runner to mean anything.
+      # `TELIVIDB_DEVICE` is empty on the Linux legs, where it selects normally
+      # — and those runners have no GPU, so normal selection is the host anyway.
       - run: cargo test --workspace --target ${{ matrix.target }}
+        env:
+          TELIVIDB_DEVICE: ${{ matrix.device }}
       - run: cargo test --workspace --no-default-features --target ${{ matrix.target }}
+        env:
+          TELIVIDB_DEVICE: ${{ matrix.device }}
 
 
   # Every feature combination of the schema crate, built separately.

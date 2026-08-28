@@ -22,6 +22,25 @@ pub enum DeviceKind {
 }
 
 impl DeviceKind {
+    /// The kind a configuration or environment name refers to, if any.
+    ///
+    /// The inverse of [`DeviceKind::as_str`], so the names an operator writes
+    /// are exactly the ones telemetry reports back. Matching is
+    /// case-insensitive because an environment variable is typed by hand.
+    pub fn parse(name: &str) -> Option<Self> {
+        let lower = name.trim().to_ascii_lowercase();
+        [
+            Self::Cpu,
+            Self::Metal,
+            Self::Cuda,
+            Self::Hip,
+            Self::Vulkan,
+            Self::Sycl,
+        ]
+        .into_iter()
+        .find(|k| k.as_str() == lower)
+    }
+
     /// The name used in configuration and telemetry.
     pub fn as_str(self) -> &'static str {
         match self {
@@ -74,12 +93,31 @@ pub struct Device {
 }
 
 impl Device {
-    /// The fastest device this build can reach.
+    /// The fastest device this build can reach, unless told otherwise.
     ///
     /// The same posture the distance kernels take: detect at runtime, always
     /// have a correct fallback, and never require a particular accelerator to
     /// *run*.
+    ///
+    /// `TELIVIDB_DEVICE` overrides the choice — `cpu`, `metal`, `cuda`, `hip`,
+    /// `vulkan`, `sycl`. It exists because compiled-in is not the same as
+    /// usable: a virtualised host can present a GPU whose driver is missing
+    /// operations, and the failure then arrives deep in a graph computation
+    /// rather than at selection. A build that cannot be told to stay on the
+    /// host has no answer there.
+    ///
+    /// An unset or unrecognised value selects normally, and a named device this
+    /// build does not carry is ignored rather than fatal — an environment
+    /// variable is a hint from an operator, not a contract, and refusing to
+    /// start because of one would be worse than running correctly and slower.
     pub fn best() -> Self {
+        if let Some(kind) = std::env::var("TELIVIDB_DEVICE")
+            .ok()
+            .and_then(|name| DeviceKind::parse(&name))
+            .filter(|k| DeviceKind::compiled().contains(k))
+        {
+            return Self { kind };
+        }
         Self {
             kind: DeviceKind::compiled()
                 .first()
