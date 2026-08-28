@@ -175,7 +175,13 @@ jobs:
       - name: install the schema renderer and its compilers
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends capnproto flatbuffers-compiler
+          # `libcapnp-dev` is not optional: it ships `capnp/c++.capnp`, which
+          # every generated schema imports for the `$Cxx.namespace` annotation.
+          # Without it `capnp compile` fails on the first file with an import
+          # error, which reads like a bug in the schema rather than a missing
+          # package.
+          sudo apt-get install -y --no-install-recommends \
+            capnproto libcapnp-dev flatbuffers-compiler
           go install github.com/the-protobuf-project/buffers/plugin/cmd/buffers@v0.2.0
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
