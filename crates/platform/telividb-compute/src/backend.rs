@@ -46,7 +46,17 @@ impl Backend {
     ///
     /// Falls back to the host rather than failing: a machine without a GPU must
     /// still answer queries, and every backend produces identical results.
+    ///
+    /// The preferred kind comes from [`Device::best`], which is what makes
+    /// `TELIVIDB_DEVICE` mean the same thing everywhere. Deciding it a second
+    /// time here is how the two came to disagree: the announcement at startup
+    /// reported the overridden device while the index quietly initialised
+    /// another, and nothing surfaced the contradiction.
     pub fn best() -> Result<Self> {
+        let preferred = Device::best().kind();
+        if let Ok(backend) = Self::of(preferred) {
+            return Ok(backend);
+        }
         for kind in DeviceKind::compiled() {
             if let Ok(backend) = Self::of(*kind) {
                 return Ok(backend);
