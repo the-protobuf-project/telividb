@@ -36,11 +36,18 @@
   </Card.Header>
 
   <Card.Content class="p-0">
+    <!-- A failed call and an empty catalog are different facts, and only one of
+         them is ever true. Showing both said "this build offers no models" when
+         what actually happened was that the request did not reach a server that
+         could answer it. -->
     {#if state.error}
-      <p class="text-destructive px-4 py-3 text-sm">{state.error}</p>
-    {/if}
-
-    {#if state.loading && state.models.length === 0}
+      <div class="px-4 py-6">
+        <p class="text-destructive text-sm">{state.error}</p>
+        <p class="text-muted-foreground mt-2 text-sm">
+          The catalog could not be read, so what this build offers is unknown.
+        </p>
+      </div>
+    {:else if state.loading && state.models.length === 0}
       <p class="text-muted-foreground px-4 py-6 text-sm">Reading the catalog…</p>
     {:else if state.models.length === 0}
       <p class="text-muted-foreground px-4 py-6 text-sm">

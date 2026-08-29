@@ -5,8 +5,8 @@
 //! that composes several pieces rather than making a single store call.
 
 use super::convert::to_wire;
-use crate::services::vector::VectorFields;
 use crate::error::to_status;
+use crate::services::vector::VectorFields;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};

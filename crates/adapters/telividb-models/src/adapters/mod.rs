@@ -9,6 +9,7 @@ mod net_url;
 
 mod gguf;
 mod gguf_reader;
+mod gguf_skip;
 mod store;
 
 pub mod huggingface;

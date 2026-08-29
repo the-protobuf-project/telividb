@@ -9,6 +9,14 @@
 //! each element separately, which is 768 varint operations per message on the
 //! hot path.
 
+use telividb_buffers::protobuf::point::v1::Vector as WireVector;
+use tonic::Status;
+
+/// Decode a wire vector's raw little-endian `f32` payload.
+///
+/// Refuses a negative or mismatched dimension count rather than trusting the
+/// header: the length is the caller's claim about bytes the caller also sent,
+/// and a wrong one would reinterpret the payload rather than fail.
 pub(crate) fn vector_to_domain(wire: &WireVector) -> Result<Vec<f32>, Status> {
     if wire.dimensions < 0 {
         return Err(Status::invalid_argument(

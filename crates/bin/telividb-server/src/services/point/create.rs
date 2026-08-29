@@ -5,10 +5,10 @@
 //! `redb`, and the point itself to `redb` — in that order, and the order is
 //! the interesting part. See the comment inside.
 
-use super::service::{PointsSvc, parse_name};
 use super::convert::{to_domain, to_wire};
-use crate::services::vector::VectorFields;
+use super::service::{PointsSvc, parse_name};
 use crate::error::{storage_status, to_status};
+use crate::services::vector::VectorFields;
 use std::sync::Arc;
 use telividb_buffers::protobuf::point::v1::{CreatePointRequest, Point};
 use telividb_core::ResourceName;

@@ -3,10 +3,9 @@
 //! Split out of `point.rs` so the RPC handlers read as request handling, not
 //! field-by-field mapping.
 
-use super::super::vector::convert::{vector_to_domain, vector_to_wire};
+use crate::services::vector::convert::{vector_to_domain, vector_to_wire};
 use telividb_buffers::protobuf::point::v1::{
     ContentRef as WireContentRef, NamedVector, Point as WirePoint, Span as WireSpan,
-    Vector as WireVector,
 };
 use telividb_core::{ContentRef, ResourceName, Span};
 use tonic::Status;
@@ -42,13 +41,6 @@ pub(super) fn to_domain(
     }
     Ok(point)
 }
-
-/// Decode a wire vector's raw little-endian `f32` payload.
-///
-/// The bytes are carried as a length-delimited field rather than a repeated
-/// scalar because protobuf encodes the latter element by element — 768 varint
-/// operations per message on the hot path.
-pub(super) 
 
 /// The reverse of [`to_domain`], for responses.
 pub(super) fn to_wire(point: telividb_core::Point) -> WirePoint {
@@ -159,5 +151,5 @@ fn content_ref_to_wire(content_ref: ContentRef) -> WireContentRef {
 }
 
 #[cfg(test)]
-#[path = "point_convert_test.rs"]
+#[path = "convert_test.rs"]
 mod tests;

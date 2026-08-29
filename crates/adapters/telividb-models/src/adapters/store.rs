@@ -144,9 +144,7 @@ impl ModelStore {
         partial: &Path,
         final_path: PathBuf,
     ) -> Result<PathBuf> {
-        let found = Fingerprint::of_reader(std::io::BufReader::new(std::fs::File::open(
-            partial,
-        )?))?;
+        let found = Fingerprint::of_reader(std::io::BufReader::new(std::fs::File::open(partial)?))?;
         if found != entry.digest {
             let _ = std::fs::remove_file(partial);
             return Err(Error::DigestMismatch {

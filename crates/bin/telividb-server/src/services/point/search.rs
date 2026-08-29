@@ -4,9 +4,10 @@
 //! composes the vector state, the index and the row-to-name mapping, where the
 //! others are a single store call each.
 
+use super::convert::to_wire;
 use super::service::{PointsSvc, parse_name};
-use super::convert::{to_wire, vector_to_domain};
 use crate::error::{storage_status, to_status};
+use crate::services::vector::convert::vector_to_domain;
 use std::sync::Arc;
 use telividb_buffers::protobuf::point::v1::{
     SearchPointsRequest, SearchPointsResponse, SearchResult,
