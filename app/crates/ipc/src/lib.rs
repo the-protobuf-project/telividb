@@ -25,9 +25,14 @@
 
 pub mod commands;
 mod dto;
+pub mod presets;
 mod state;
 
-pub use dto::{CollectionSummary, SearchHit, SearchRequest, SearchResponse};
+pub use dto::{
+    Capabilities, CollectionSummary, CreateCollectionRequest, ImportRequest, ImportResponse,
+    ImportRow, PointRow, SearchHit, SearchRequest, SearchResponse,
+};
+pub use presets::{PRESETS, Preset};
 pub use state::AppState;
 
 /// Every command the window may invoke.
@@ -41,6 +46,11 @@ macro_rules! commands {
             $crate::commands::list_collections,
             $crate::commands::search,
             $crate::commands::engine_address,
+            $crate::commands::capabilities,
+            $crate::commands::create_collection,
+            $crate::commands::list_presets,
+            $crate::commands::import_points,
+            $crate::commands::list_points,
         ]
     };
 }

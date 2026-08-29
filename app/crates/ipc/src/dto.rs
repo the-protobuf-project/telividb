@@ -4,7 +4,7 @@
 //! the window's TypeScript. They are kept flat and small for that reason.
 
 use serde::{Deserialize, Serialize};
-use telividb_client::SearchResults;
+use telividb_client::{Record, SearchResults};
 
 /// One collection, as the sidebar needs it.
 #[derive(Debug, Clone, Serialize)]
@@ -95,4 +95,80 @@ impl From<SearchResults> for SearchResponse {
                 .collect(),
         }
     }
+}
+
+/// A request to create a collection from a shipped preset.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateCollectionRequest {
+    /// Which preset supplies the schema.
+    pub preset: String,
+    /// The collection's id, forming the final path segment of its name.
+    pub collection: String,
+}
+
+/// One row on its way in.
+///
+/// Text rather than a vector: a CSV has no vectors in it, and asking a person
+/// to supply 768 floats per row would make import useless. The server encodes
+/// through the field's own model, which is also the only way the vectors end up
+/// with provenance the engine can check.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImportRow {
+    /// The point's id within the collection.
+    pub id: String,
+    /// The text to embed and store.
+    pub text: String,
+}
+
+/// A batch of rows for one collection.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImportRequest {
+    /// Collection to write into.
+    pub collection: String,
+    /// Named vector field the text is encoded for.
+    pub field: String,
+    /// The rows.
+    pub rows: Vec<ImportRow>,
+}
+
+/// What an import wrote.
+#[derive(Debug, Clone, Serialize)]
+pub struct ImportResponse {
+    /// How many points were created.
+    pub written: usize,
+}
+
+/// One stored point, as a table row.
+#[derive(Debug, Clone, Serialize)]
+pub struct PointRow {
+    /// The point's id within its collection.
+    pub id: String,
+    /// Text the point carries inline, when it carries any.
+    pub text: Option<String>,
+}
+
+impl From<Record> for PointRow {
+    fn from(record: Record) -> Self {
+        Self {
+            id: record.name,
+            text: record.text,
+        }
+    }
+}
+
+/// What this engine can currently do.
+///
+/// Small on purpose. It answers the one question the window has to ask before
+/// offering an import: can the server turn text into a vector? Everything else
+/// about the engine belongs to the `SystemInfo` service, which is not served
+/// yet.
+#[derive(Debug, Clone, Serialize)]
+pub struct Capabilities {
+    /// Whether an embedding model is loaded.
+    ///
+    /// False means text is refused — both `add_text` and a text query — and
+    /// only precomputed vectors work.
+    pub has_model: bool,
+    /// Where the engine is listening.
+    pub address: String,
 }

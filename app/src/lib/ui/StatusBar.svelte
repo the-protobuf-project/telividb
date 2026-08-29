@@ -14,13 +14,26 @@
   interface Props {
     /** Where the engine is listening, once the window has asked. */
     address: string | null;
+    /** The bar itself, for the launch sequence to move. */
+    ref?: HTMLElement | null;
+    /** The wordmark, which the sequence brings in first. */
+    markRef?: HTMLElement | null;
   }
 
-  let { address = null }: Props = $props();
+  let {
+    address = null,
+    ref = $bindable(null),
+    markRef = $bindable(null),
+  }: Props = $props();
 </script>
 
-<header class="flex shrink-0 items-center gap-3 border-b px-4 py-2">
-  <span class="text-sm font-medium tracking-tight">telividb</span>
+<header
+  bind:this={ref}
+  class="flex shrink-0 items-center gap-3 border-b px-4 py-2"
+>
+  <span bind:this={markRef} class="text-sm font-medium tracking-tight">
+    telividb
+  </span>
 
   <div class="ml-auto flex items-center gap-3">
     {#if address}

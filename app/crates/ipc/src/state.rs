@@ -15,12 +15,28 @@ use telividb_desktop_engine::Engine;
 pub struct AppState {
     /// Owns the running server and the data-directory claim.
     engine: Engine,
+    /// Whether the engine was started with an embedding model.
+    ///
+    /// Reported rather than inferred. Without one the server refuses text —
+    /// for storage as well as for search — and a window that only discovered
+    /// that after a person had chosen a file and mapped its columns would have
+    /// wasted the work it asked for.
+    ///
+    /// This is the app's own configuration, not a decision about the engine:
+    /// the app is what passes `--model`, so it is the only thing that knows
+    /// before asking.
+    has_model: bool,
 }
 
 impl AppState {
-    /// Wrap a started engine.
-    pub fn new(engine: Engine) -> Self {
-        Self { engine }
+    /// Wrap a started engine, recording whether a model came with it.
+    pub fn new(engine: Engine, has_model: bool) -> Self {
+        Self { engine, has_model }
+    }
+
+    /// Whether text can be embedded, for storage or for search.
+    pub fn has_model(&self) -> bool {
+        self.has_model
     }
 
     /// A client reaching the engine. Cheap to clone; the channel multiplexes.

@@ -23,14 +23,16 @@
   interface Props {
     /** Which panel is showing. */
     active: string;
+    /** The nav itself, for the launch sequence to move. */
+    ref?: HTMLElement | null;
   }
 
-  let { active = $bindable("search") }: Props = $props();
+  let { active = $bindable("search"), ref = $bindable(null) }: Props = $props();
 
   const panels: readonly Panel[] = [
     { id: "search", label: "Search", glyph: "⌕" },
-    { id: "points", label: "Points", glyph: "▤", blocked: "Not built yet." },
-    { id: "schema", label: "Schema", glyph: "⚙", blocked: "Not built yet." },
+    { id: "collections", label: "Collections", glyph: "◳" },
+    { id: "points", label: "Points", glyph: "▤" },
     {
       id: "graph",
       label: "Graph",
@@ -46,7 +48,10 @@
   ];
 </script>
 
-<nav class="bg-sidebar flex w-44 shrink-0 flex-col gap-1 border-r p-2">
+<nav
+  bind:this={ref}
+  class="bg-sidebar flex w-44 shrink-0 flex-col gap-1 border-r p-2"
+>
   {#each panels as panel (panel.id)}
     <Button
       variant={active === panel.id ? "secondary" : "ghost"}

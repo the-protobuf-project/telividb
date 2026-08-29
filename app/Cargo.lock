@@ -4856,6 +4856,7 @@ dependencies = [
  "tauri",
  "telividb-client",
  "telividb-desktop-engine",
+ "tokio",
 ]
 
 [[package]]

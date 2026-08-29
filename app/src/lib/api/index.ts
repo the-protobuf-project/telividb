@@ -8,6 +8,9 @@
 
 export type { CollectionSummary } from "./collection";
 export type { SearchHit, SearchRequest, SearchResponse } from "./search";
+export type { Capabilities } from "./engine";
+export type { CreateCollectionRequest, Preset } from "./preset";
+export type { ImportRequest, ImportResponse, ImportRow, PointRow } from "./import";
 export type { TelividbClient } from "./port";
 
 import { TauriClient } from "./tauri";

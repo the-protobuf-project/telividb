@@ -20,6 +20,7 @@ use telividb_desktop_ipc::AppState;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let settings = Settings::resolve();
+    let has_model = settings.model.is_some();
 
     // A dedicated runtime, started before Tauri.
     //
@@ -45,7 +46,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .manage(AppState::new(engine))
+        .manage(AppState::new(engine, has_model))
         .invoke_handler(telividb_desktop_ipc::commands!())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

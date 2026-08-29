@@ -7,7 +7,10 @@
 //!
 //! Every function here forwards. None of them decide.
 
-use crate::dto::{CollectionSummary, SearchRequest, SearchResponse};
+use crate::dto::{
+    Capabilities, CollectionSummary, CreateCollectionRequest, ImportRequest, ImportResponse,
+    PointRow, SearchRequest, SearchResponse,
+};
 use crate::state::AppState;
 
 /// Collections this engine holds.
@@ -76,6 +79,15 @@ pub fn engine_address(state: tauri::State<'_, AppState>) -> String {
     state.addr().to_string()
 }
 
+/// What this engine can currently do.
+#[tauri::command]
+pub fn capabilities(state: tauri::State<'_, AppState>) -> Capabilities {
+    Capabilities {
+        has_model: state.has_model(),
+        address: state.addr().to_string(),
+    }
+}
+
 /// Render a client error for the window.
 ///
 /// Tauri carries a command failure as a string, so the alternative to this is
@@ -83,4 +95,65 @@ pub fn engine_address(state: tauri::State<'_, AppState>) -> String {
 /// that says why.
 fn say(error: telividb_client::Error) -> String {
     error.to_string()
+}
+
+/// Create a collection from one of the shipped presets.
+///
+/// The preset supplies the compiled descriptor set. A window cannot compile a
+/// `.proto`, and the engine will not accept one — so without presets a fresh
+/// install could search but never create anything to search.
+#[tauri::command]
+pub async fn create_collection(
+    state: tauri::State<'_, AppState>,
+    request: CreateCollectionRequest,
+) -> Result<String, String> {
+    let spec = crate::presets::to_new_collection(&request.preset, &request.collection)
+        .ok_or_else(|| format!("no preset named {:?}", request.preset))?;
+    state.client().create_collection(spec).await.map_err(say)
+}
+
+/// The schemas this build can create a collection from.
+#[tauri::command]
+pub fn list_presets() -> Vec<crate::presets::Preset> {
+    crate::presets::PRESETS.to_vec()
+}
+
+/// Write a batch of text rows into one collection.
+///
+/// One call per import rather than one per row. The rows still take the same
+/// path server-side, but a CSV of ten thousand lines is one request instead of
+/// ten thousand — which for a desktop app is the whole cost.
+#[tauri::command]
+pub async fn import_points(
+    state: tauri::State<'_, AppState>,
+    request: ImportRequest,
+) -> Result<ImportResponse, String> {
+    if request.rows.is_empty() {
+        return Err("nothing to import: the file had no rows with text in them.".to_owned());
+    }
+    let entries: Vec<(String, String)> = request
+        .rows
+        .into_iter()
+        .map(|row| (row.id, row.text))
+        .collect();
+
+    let mut collection = state.client().collection(&request.collection);
+    let written = collection
+        .add_texts(&request.field, &entries)
+        .await
+        .map_err(say)?;
+    Ok(ImportResponse {
+        written: written.len(),
+    })
+}
+
+/// The points of one collection.
+#[tauri::command]
+pub async fn list_points(
+    state: tauri::State<'_, AppState>,
+    collection: String,
+) -> Result<Vec<PointRow>, String> {
+    let mut handle = state.client().collection(&collection);
+    let records = handle.list().await.map_err(say)?;
+    Ok(records.into_iter().map(PointRow::from).collect())
 }
