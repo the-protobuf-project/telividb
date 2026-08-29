@@ -15,6 +15,7 @@ mod point_declare;
 mod point_delete;
 mod point_search;
 mod point_store;
+pub mod tenancy;
 mod vector_search;
 mod vectors;
 

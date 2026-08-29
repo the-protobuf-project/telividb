@@ -1,0 +1,53 @@
+# Advisory policy for the engine workspace.
+#
+# `cargo deny` rather than `cargo audit` because an ignore it carries is a
+# written decision with a reason attached, checked into the repository, instead
+# of a flag on a command line in a CI file. An unfixable advisory will exist
+# eventually; the question is whether the reasoning survives to whoever meets
+# it next.
+
+[graph]
+# Named explicitly, because the default is the host target — which would mean
+# this check walks a different dependency graph on a macOS runner than on a
+# Linux one, and passes or fails accordingly. A result that depends on where it
+# ran is a result nobody trusts. These are the targets `build.yml` compiles;
+# Windows is out of scope.
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+  "aarch64-unknown-linux-gnu",
+]
+
+[advisories]
+yanked = "deny"
+
+# Both of these default to something quieter, and the difference is the whole
+# reason this file exists.
+#
+# `unsound` advisories are informational, and cargo-deny does not report them
+# unless asked. RUSTSEC-2024-0429 — the one that prompted this file — is
+# exactly that kind: a `&p` where a C out-parameter needed `&mut p`, which the
+# compiler stopped honouring under optimization. It is undefined behaviour with
+# no CVE, and a scan that skips the class would have reported "ok" on the day
+# the alert was filed. `all` rather than `workspace` because the crate that
+# carried it was four levels down; nothing in this workspace names it.
+unsound = "all"
+# `workspace` rather than `all`, and the two are not the same judgement.
+#
+# Unmaintained is not a vulnerability — a proc-macro can be finished rather
+# than abandoned. Scoped to `all` this fails today on `paste`, which arrives
+# through `mcap` ← the `telemetry` stack that rule 41 mandates: nothing here
+# names it, no version replaces it, and there is no action to take. A check
+# that fails every day on something unactionable is a check people learn to
+# skip, which costs more than it catches.
+#
+# `workspace` still fires the moment one of our own `Cargo.toml` files names an
+# unmaintained crate, which is the case we can actually do something about.
+unmaintained = "workspace"
+
+# Empty, and it should stay that way. Every crate under `crates/` is meant to
+# be publishable on its own, so an advisory tolerated here is one a downstream
+# consumer inherits without ever having chosen it. The desktop app links a GUI
+# stack the engine does not, and carries its own file: `app/deny.toml`.
+ignore = []

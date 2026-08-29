@@ -1,0 +1,122 @@
+# The curated model catalog.
+#
+# Every entry here has been verified against the file it names: `architecture`,
+# `dimensions`, `context_length` and `pooling` are read out of the GGUF header,
+# not copied from a model card, and `digest` is the file's SHA-256.
+#
+# Curated rather than searched, for a reason that is checkable: the encoder
+# supports exactly the architectures in `telividb-embed`'s `config::SUPPORTED`
+# — `bert` and `nomic-bert`. HuggingFace hosts tens of thousands of GGUFs and
+# almost all of them are chat models this loader cannot read, so a search box
+# over it would mostly offer files that fail at load. HuggingFace is the file
+# host here; the curation is ours.
+#
+# Adding an entry: run `cargo xtask curate-models <repo>`, which reads the
+# header over a range request and prints the block to paste. Never hand-write
+# a digest — a wrong one fails at install with a mismatch, which is safe but
+# looks like a network fault.
+
+[[model]]
+id = "bge-small-en-v1.5"
+display_name = "BGE Small (English)"
+description = "The smallest model here and a good default. 384 dimensions keeps indexes compact and searches fast; quality is close to BGE Base for most English text."
+repository = "CompendiumLabs/bge-small-en-v1.5-gguf"
+file = "bge-small-en-v1.5-q8_0.gguf"
+digest = "ec38e8da142596baa913124ae50550de284b6916bf59577ef2f0cb9660c2f514"
+size_bytes = 36806944
+architecture = "bert"
+dimensions = 384
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = true
+
+[[model]]
+id = "bge-base-en-v1.5"
+display_name = "BGE Base (English)"
+description = "768 dimensions. Noticeably better than BGE Small on longer or more technical English, at roughly three times the file size and twice the vector width."
+repository = "CompendiumLabs/bge-base-en-v1.5-gguf"
+file = "bge-base-en-v1.5-q8_0.gguf"
+digest = "ad1afe72cd6654a558667a3db10878b049a75bfd72912e1dabb91310d671173c"
+size_bytes = 117974304
+architecture = "bert"
+dimensions = 768
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "bge-large-en-v1.5"
+display_name = "BGE Large (English)"
+description = "1024 dimensions, and the best English quality in this catalog. Worth it when recall matters more than index size or query latency."
+repository = "CompendiumLabs/bge-large-en-v1.5-gguf"
+file = "bge-large-en-v1.5-q8_0.gguf"
+digest = "3475a261c0c52536503b8266ea94c6c76a3b282f0ce5d0b12452288ee7eff48a"
+size_bytes = 358235712
+architecture = "bert"
+dimensions = 1024
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "nomic-embed-text-v1.5"
+display_name = "Nomic Embed Text"
+description = "The only model here that reads more than 512 tokens at once — its 2048-token context suits whole documents rather than paragraphs. Uses mean pooling."
+repository = "nomic-ai/nomic-embed-text-v1.5-GGUF"
+file = "nomic-embed-text-v1.5.f16.gguf"
+digest = "f7af6f66802f4df86eda10fe9bbcfc75c39562bed48ef6ace719a251cf1c2fdb"
+size_bytes = 274290560
+architecture = "nomic-bert"
+dimensions = 768
+context_length = 2048
+quantization = "F16"
+license = "apache-2.0"
+recommended = false
+
+[[model]]
+id = "gte-base"
+display_name = "GTE Base"
+description = "A general-purpose alternative to BGE Base at the same width. Worth trying when BGE's results feel off for your text; they rank differently on different corpora."
+repository = "ChristianAzinn/gte-base-gguf"
+file = "gte-base.Q8_0.gguf"
+digest = "e6d1ddd80c0106a17009d401d6a4e46278a497dd92d71f63e98454350fa0fbf4"
+size_bytes = 117974368
+architecture = "bert"
+dimensions = 768
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "e5-base-v2"
+display_name = "E5 Base v2"
+description = "Trained with explicit query and passage prefixes, so it rewards asymmetric search — short questions against longer documents."
+repository = "ChristianAzinn/e5-base-v2-gguf"
+file = "e5-base-v2.Q8_0.gguf"
+digest = "92b10450d6926146c32acc0db60fc951921e88c287455d7d3fecfebc6a3af042"
+size_bytes = 117974400
+architecture = "bert"
+dimensions = 768
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "mxbai-embed-large-v1"
+display_name = "MixedBread Embed Large"
+description = "1024 dimensions, and a strong general-purpose alternative to BGE Large. Trained on a broader mix, which shows on informal or conversational text."
+repository = "ChristianAzinn/mxbai-embed-large-v1-gguf"
+file = "mxbai-embed-large-v1.Q8_0.gguf"
+digest = "bcdebca12aa16c0e51d166d97e4776efd46f905952b0c9acb968976eba2619f3"
+size_bytes = 358235712
+architecture = "bert"
+dimensions = 1024
+context_length = 512
+quantization = "Q8_0"
+license = "apache-2.0"
+recommended = false

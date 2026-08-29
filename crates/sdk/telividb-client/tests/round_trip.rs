@@ -94,6 +94,22 @@ async fn inserting_many_stores_every_point() {
 }
 
 #[tokio::test]
+async fn inserting_nothing_is_a_no_op_rather_than_an_error() {
+    // The server refuses an empty batch, because a request with nothing in it
+    // is a mistake. A caller looping over a slice that happens to be empty is
+    // not making that mistake, so the client answers without a round trip —
+    // otherwise importing a CSV with no rows would fail rather than do nothing.
+    let (mut client, _dir) = connected().await;
+    let mut docs = collection(&mut client, "empty-batch", 2).await;
+
+    let created = docs
+        .insert_many("text", &[])
+        .await
+        .expect("an empty insert");
+    assert!(created.is_empty());
+}
+
+#[tokio::test]
 async fn a_single_node_search_reports_itself_complete() {
     // Rules 27 and 49: a caller must be able to tell "nothing matched" from
     // "nothing you can see matched". With nothing locked, this is `true`.

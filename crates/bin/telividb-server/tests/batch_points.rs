@@ -6,45 +6,14 @@
 //! for a caller to resubmit — not that it is faster, which is not observable
 //! from here.
 
-use std::net::SocketAddr;
-use std::time::Duration;
 use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
 use telividb_buffers::protobuf::point::v1::{
     BatchCreatePointsRequest, CreatePointRequest, ListPointsRequest,
 };
-use telividb_server::{ServerConfig, serve};
 
 mod support;
 
-/// Start a server on an ephemeral port with a fresh data directory.
-async fn start() -> SocketAddr {
-    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("ephemeral port");
-    let addr = listener.local_addr().expect("bound address");
-    drop(listener);
-
-    let data_dir = tempfile::tempdir().expect("temp data dir").keep();
-    tokio::spawn(async move {
-        // Telemetry installs globally and only once per process, so tests
-        // sharing a binary must not each try to install it.
-        let outcome = serve(ServerConfig {
-            environment: telividb_telemetry::Environment::Production,
-            data_dir,
-            ..ServerConfig::at(addr)
-        })
-        .await;
-        if let Err(e) = outcome {
-            eprintln!("SERVE FAILED: {e}");
-        }
-    });
-
-    for _ in 0..100 {
-        if std::net::TcpStream::connect(addr).is_ok() {
-            return addr;
-        }
-        tokio::time::sleep(Duration::from_millis(20)).await;
-    }
-    panic!("server never accepted a connection");
-}
+use support::server::TestServer;
 
 /// One create request for `id`, carrying a vector of the declared width.
 fn item(id: &str, values: &[f32]) -> CreatePointRequest {
@@ -57,7 +26,8 @@ fn item(id: &str, values: &[f32]) -> CreatePointRequest {
 
 #[tokio::test]
 async fn a_batch_writes_every_point_it_was_given() {
-    let addr = start().await;
+    let server = TestServer::start().await;
+    let addr = server.addr();
     support::collections::declare(addr, "media", "text_bge", 4).await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await
@@ -96,7 +66,8 @@ async fn a_batch_writes_every_point_it_was_given() {
 
 #[tokio::test]
 async fn an_empty_batch_is_refused_rather_than_treated_as_a_no_op() {
-    let addr = start().await;
+    let server = TestServer::start().await;
+    let addr = server.addr();
     support::collections::declare(addr, "media", "text_bge", 4).await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await
@@ -114,7 +85,8 @@ async fn an_empty_batch_is_refused_rather_than_treated_as_a_no_op() {
 
 #[tokio::test]
 async fn a_failure_names_the_item_and_how_far_the_batch_got() {
-    let addr = start().await;
+    let server = TestServer::start().await;
+    let addr = server.addr();
     support::collections::declare(addr, "media", "text_bge", 4).await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await
@@ -146,7 +118,8 @@ async fn a_failure_names_the_item_and_how_far_the_batch_got() {
 
 #[tokio::test]
 async fn an_item_naming_another_collection_is_refused() {
-    let addr = start().await;
+    let server = TestServer::start().await;
+    let addr = server.addr();
     support::collections::declare(addr, "media", "text_bge", 4).await;
     let mut client = PointsClient::connect(format!("http://{addr}"))
         .await

@@ -102,10 +102,12 @@ async fn a_missing_endpoint_scheme_is_reported_as_such() {
 }
 
 #[tokio::test]
-async fn the_batch_rpc_is_still_unimplemented() {
-    // Pins why `insert_many` issues one request per point. When this fails,
-    // the server has grown the batch RPC and `insert_many` should switch to
-    // it — which is a change in round trips, not in behaviour.
+async fn an_empty_batch_is_refused_by_the_server() {
+    // The tripwire this replaces asserted the batch RPC was unimplemented, so
+    // that `insert_many` could justify looping. It has landed and `insert_many`
+    // now issues one request, so what is worth pinning is the boundary the
+    // server actually draws: a batch with nothing in it is a caller mistake,
+    // not a no-op, and is refused rather than silently accepted.
     use telividb_buffers::protobuf::point::v1 as wire;
     use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
 
@@ -120,9 +122,9 @@ async fn the_batch_rpc_is_still_unimplemented() {
             requests: Vec::new(),
         })
         .await
-        .expect_err("the batch RPC should still refuse");
+        .expect_err("an empty batch is refused");
 
-    assert_eq!(status.code(), tonic::Code::Unimplemented);
+    assert_eq!(status.code(), tonic::Code::InvalidArgument);
 }
 
 #[tokio::test]

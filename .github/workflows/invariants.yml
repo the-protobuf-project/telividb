@@ -258,3 +258,56 @@ jobs:
           echo "no-default-features build is candle-free"
       - name: Recall gate at 128 dimensions
         run: cargo run --release -p telividb-index --bin recall -- --rows 20000 --dim 128 --ef 64
+
+  # Security advisories, over both workspaces.
+  #
+  # Its own job because it needs no build: `cargo deny` resolves from the
+  # lockfiles, so it finishes in seconds and reports independently of whether
+  # the compile legs are green.
+  #
+  # Both workspaces, because `app/` is excluded from the repository's and would
+  # otherwise never be scanned — which is how a GUI-stack advisory sat unnoticed
+  # until GitHub filed it rather than CI.
+  advisories:
+    name: security advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # No submodules: this reads lockfiles, and ggml is vendored rather than
+      # resolved by cargo, so there is nothing in it for an advisory to match.
+      - uses: taiki-e/install-action@v2
+        with:
+          # Pinned, like every other tool here. A new cargo-deny can add a
+          # check, and CI failing on a commit that changed nothing is
+          # indistinguishable from a real regression.
+          tool: cargo-deny@0.20.2
+
+      # `--all-features` on neither: the configs pin `[graph] targets`, which
+      # is what makes the result the same here as on a developer's macOS
+      # machine. Left to the default, this job would walk a Linux-only graph
+      # and disagree with every local run.
+      - name: engine workspace
+        run: cargo deny --workspace check advisories
+
+      # Excluded from the repository workspace, so `--workspace` above never
+      # reaches it. This is the one that carries a recorded exception.
+      - name: desktop app
+        working-directory: app
+        run: cargo deny --workspace check advisories
+
+      # An ignore that no longer matches anything is a decision that has
+      # expired. cargo-deny warns rather than fails on one, so it is promoted
+      # here: the entries in `app/deny.toml` describe a dependency stack that
+      # will eventually move, and the point of writing them down is to notice
+      # when it does.
+      - name: no ignore has gone stale
+        run: |
+          for dir in . app; do
+            if cargo deny --manifest-path "$dir/Cargo.toml" check advisories 2>&1 \
+                 | grep -q 'advisory-not-detected'; then
+              echo "::error::an ignore in $dir/deny.toml matches nothing any more."
+              echo "The dependency it described has moved. Remove the entry."
+              exit 1
+            fi
+          done
+          echo "every recorded exception still describes something real"

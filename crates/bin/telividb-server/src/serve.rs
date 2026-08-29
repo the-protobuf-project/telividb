@@ -7,6 +7,10 @@ use crate::services::{CollectionSvc, Embeddings, PointsSvc};
 use telividb_buffers::protobuf::FILE_DESCRIPTOR_SET;
 use telividb_buffers::protobuf::collection::v1::collections_server::CollectionsServer;
 use telividb_buffers::protobuf::point::v1::points_server::PointsServer;
+use telividb_buffers::protobuf::tenancy::v1::organizations_server::OrganizationsServer;
+use telividb_buffers::protobuf::tenancy::v1::projects_server::ProjectsServer;
+use telividb_buffers::protobuf::tenancy::v1::sessions_server::SessionsServer;
+use telividb_buffers::protobuf::tenancy::v1::spaces_server::SpacesServer;
 use telividb_telemetry::{Telemetry, TelemetryConfig, fields, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
@@ -46,10 +50,22 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
         .set_serving::<PointsServer<PointsSvc>>()
         .await;
 
+    // Same failure mode as the catalogue, and the same cause worth naming: a
+    // second server pointed at a data directory one already holds.
+    let tenancy = crate::services::tenancy::TenancySvc::open(&config.data_dir)
+        .map_err(|e| Error::Catalogue(e.to_string()))?;
+
     let mut router = tonic::service::Routes::default()
         .add_service(health_service)
         .add_service(CollectionsServer::new(collections))
-        .add_service(PointsServer::new(points));
+        .add_service(PointsServer::new(points))
+        // Four services over one store. They share a `redb` file because they
+        // are one tree, and sharing it is what lets a delete and the read that
+        // follows it agree.
+        .add_service(OrganizationsServer::new(tenancy.clone()))
+        .add_service(ProjectsServer::new(tenancy.clone()))
+        .add_service(SpacesServer::new(tenancy.clone()))
+        .add_service(SessionsServer::new(tenancy));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()

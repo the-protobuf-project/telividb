@@ -54,10 +54,6 @@ impl Collection {
     /// The text travels as `content_ref.inline_text`, so a later search can
     /// hand it straight back — without it, a result is a bare id the caller
     /// has to resolve against their own storage before it means anything.
-    ///
-    /// Inline suits short text. Anything large belongs outside the database
-    /// behind a URI (invariant 19), which is what the rest of `ContentRef`
-    /// describes.
     pub async fn insert_with_text(
         &mut self,
         point_id: &str,
@@ -66,45 +62,71 @@ impl Collection {
         text: &str,
     ) -> Result<String> {
         let mut point = convert::point_with_vector(field, vector);
-        point.content_ref = Some(wire::ContentRef {
-            uri: String::new(),
-            range_start: 0,
-            range_end: 0,
-            sha256: Default::default(),
-            inline_text: text.to_owned(),
-        });
+        point.content_ref = Some(convert::inline_ref(text));
         self.create(point_id, point).await
     }
 
-    /// Store many points.
+    /// Store many points in one request.
     ///
     /// Each entry is `(point_id, vector, text)`; an empty `text` stores no
     /// content reference. All of them share one named field.
     ///
-    /// **Currently one request per point, not one for the batch.** The
-    /// server's `BatchCreatePoints` returns `Unimplemented`, so batching here
-    /// would fail rather than be slow. Said plainly instead of hidden because
-    /// the difference is `n` round trips versus one, which is the whole reason
-    /// a caller would reach for this — when the RPC lands, this becomes a
-    /// single call with no change to the signature.
+    /// One round trip rather than `n`, which is the reason to reach for this
+    /// over a loop of [`insert`](Self::insert). It is not faster on the server
+    /// — each point still takes the same path through the WAL and `redb` — so
+    /// what it saves is the request/response pair per row, which for an import
+    /// of any size is the whole cost.
     ///
     /// Stops at the first failure and returns it, rather than continuing and
-    /// reporting a partial write as success. Bulk ingest that tolerates bad
-    /// records is a *job* with a reject file (invariant 11), not this.
+    /// reporting a partial write as success. The server names which entry
+    /// failed and how many were written before it, so a caller can fix that
+    /// row and resubmit from there. Note the write is *not* atomic: points
+    /// before the failure stay written. Bulk ingest that tolerates bad records
+    /// is a *job* with a reject file (invariant 11), not this.
+    ///
+    /// An empty `entries` is a no-op returning no names, rather than an error.
+    /// The server refuses an empty batch — a request with nothing in it is a
+    /// mistake — but a caller looping over a possibly-empty slice is not making
+    /// that mistake, so the check belongs here rather than as a round trip that
+    /// can only fail.
     pub async fn insert_many(
         &mut self,
         field: &str,
         entries: &[(String, Vec<f32>, String)],
     ) -> Result<Vec<String>> {
-        let mut created = Vec::with_capacity(entries.len());
-        for (id, vector, text) in entries {
-            let name = match text.is_empty() {
-                true => self.insert(id, field, vector).await?,
-                false => self.insert_with_text(id, field, vector, text).await?,
-            };
-            created.push(name);
+        if entries.is_empty() {
+            return Ok(Vec::new());
         }
-        Ok(created)
+
+        let parent = names::collection(&self.id);
+        let requests = entries
+            .iter()
+            .map(|(id, vector, text)| {
+                let mut point = convert::point_with_vector(field, vector);
+                if !text.is_empty() {
+                    point.content_ref = Some(convert::inline_ref(text));
+                }
+                wire::CreatePointRequest {
+                    // Left empty: the batch's `parent` is authoritative, and
+                    // the server refuses an item that disagrees with it.
+                    parent: String::new(),
+                    point_id: id.clone(),
+                    point: Some(point),
+                }
+            })
+            .collect();
+
+        let created = self
+            .points
+            .batch_create_points(wire::BatchCreatePointsRequest { parent, requests })
+            .await?
+            .into_inner();
+
+        Ok(created
+            .points
+            .iter()
+            .map(|p| names::id_of(&p.name).to_owned())
+            .collect())
     }
 
     /// Search the named field for the `k` nearest points.

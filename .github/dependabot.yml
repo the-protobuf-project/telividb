@@ -31,6 +31,42 @@ updates:
       - dependency-name: "rust"
 
   # ---------------------------------------------------------------------------
+  # The desktop app, which is its own cargo workspace
+  # ---------------------------------------------------------------------------
+  #
+  # Listed separately because `directory: "/"` above resolves the repository
+  # workspace only, and `app/` is deliberately excluded from it (see
+  # `app/Cargo.toml`). Without this entry the app's dependencies never receive
+  # an update PR at all — security alerts still arrive, because the advisory
+  # scan reads every lockfile regardless of this file, but nothing would ever
+  # act on them. That asymmetry is how a GUI-stack advisory became a filed
+  # alert rather than a merged bump.
+  - package-ecosystem: cargo
+    directory: "/app"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(app)"
+      include: scope
+    labels: ["dependencies", "rust", "desktop"]
+    groups:
+      app-patch-and-minor:
+        patterns: ["*"]
+        update-types: ["patch", "minor"]
+
+    ignore:
+      - dependency-name: "rust"
+      # Tauri's Linux backend pins the gtk3 bindings, which are closed at 0.18
+      # and will never carry the fix for RUSTSEC-2024-0429. A PR moving them is
+      # not possible, and the reasoning is recorded in `app/deny.toml` rather
+      # than rediscovered each week.
+      - dependency-name: "glib"
+        versions: ["0.18.x"]
+
+  # ---------------------------------------------------------------------------
   # GitHub Actions used by CI
   # ---------------------------------------------------------------------------
   - package-ecosystem: github-actions
