@@ -3,6 +3,11 @@ syntax = "proto3";
 
 package presets.memory.v1;
 
+option java_multiple_files = true;
+option java_outer_classname = "TurnProto";
+option java_package = "app.presets.memory.v1";
+
+
 import "google/protobuf/timestamp.proto";
 
 // A single message in a conversation.
