@@ -29,6 +29,30 @@ pub async fn search(
     state: tauri::State<'_, AppState>,
     request: SearchRequest,
 ) -> Result<SearchResponse, String> {
+    // Exactly one of the two carries the query, and the window must not pick
+    // for the caller. Sending both would silently drop the vector; sending
+    // neither reaches the server as an empty vector, which it refuses in terms
+    // that describe the wire rather than the mistake.
+    //
+    // This refuses rather than decides, which is the line this layer holds: a
+    // shim may reject an ambiguous request, but it may not resolve one.
+    let has_text = request.text.as_ref().is_some_and(|t| !t.is_empty());
+    let has_vector = !request.vector.is_empty();
+    match (has_text, has_vector) {
+        (true, true) => {
+            return Err("give either `text` or `vector`, not both: \
+                        each names a different query, and the server encodes \
+                        text through the field's own model."
+                .to_owned());
+        }
+        (false, false) => {
+            return Err("a search needs either `text` to encode or a `vector` \
+                        to match against."
+                .to_owned());
+        }
+        _ => {}
+    }
+
     let mut collection = state.client().collection(&request.collection);
     let results = match &request.text {
         Some(text) => collection

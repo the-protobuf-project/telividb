@@ -59,12 +59,26 @@
 	<a
 		bind:this={ref}
 		data-slot="button"
-		class={cn(buttonVariants({ variant, size }), className)}
+		class={cn(
+			buttonVariants({ variant, size }),
+			disabled && "pointer-events-none opacity-50",
+			className
+		)}
 		href={disabled ? undefined : href}
 		aria-disabled={disabled}
 		role={disabled ? "link" : undefined}
 		tabindex={disabled ? -1 : undefined}
 		{...restProps}
+		onclick={(event) => {
+			// An anchor has no `disabled`, so removing `href` is the whole of
+			// what the markup can express — a forwarded handler still runs on
+			// click, and on Enter. Spread last so this wins over `restProps`.
+			if (disabled) {
+				event.preventDefault();
+				return;
+			}
+			restProps.onclick?.(event);
+		}}
 	>
 		{@render children?.()}
 	</a>

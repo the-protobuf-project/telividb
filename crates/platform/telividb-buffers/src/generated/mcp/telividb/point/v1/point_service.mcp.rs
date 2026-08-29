@@ -308,6 +308,30 @@ impl<T: PointsMcpServer> ServerHandler for PointsMcpHandler<T> {
                 Ok(CallToolResult::success(vec![ContentBlock::text(text)]).into())
             }
             "points-batch_delete_points_v1" => {
+                if let Ok(schema) = ElicitationSchema::from_json_schema(
+                    serde_json::from_value(json!({
+                        "type": "object",
+                        "properties": {
+                        },
+                        "required": []
+                    }))
+                    .unwrap(),
+                ) {
+                    let params = ElicitRequestParams::FormElicitationParams {
+                        meta: None,
+                        message: "This tombstones every point named in the request. Their bytes survive until compaction rewrites the segment. Confirm?".to_string(),
+                        requested_schema: schema,
+                    };
+                    match context.peer.create_elicitation(params).await {
+                        Ok(result) if result.action != ElicitationAction::Accept => {
+                            return Ok(CallToolResult::success(vec![ContentBlock::text(
+                                "Action cancelled by user.",
+                            )])
+                            .into());
+                        }
+                        _ => {} // proceed (including errors — graceful degradation)
+                    }
+                }
                 let result = self.inner.batch_delete_points(args).await?;
                 let text = serde_json::to_string(&result).map_err(|e| {
                     McpError::internal_error(format!("serialize response: {e}"), None)

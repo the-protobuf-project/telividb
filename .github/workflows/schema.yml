@@ -84,7 +84,12 @@ jobs:
       # and `buf breaking` fails with "had no .proto files" — an absence, not a
       # breakage.
       #
-      # The promise is a release. Until the first `v*` tag exists nothing
+      # The promise is a release, and a release is a tag reachable from `main`
+      # — `--merged origin/main`. A tag on a side branch is a marker on work
+      # that was never shipped, and arming a compatibility check against it
+      # would enforce a promise nobody was made.
+      #
+      # Until the first such tag exists nothing
       # depends on this schema: no tag, no published module, no consumer. A
       # deliberate correction — returning the tombstoned resource from a delete
       # rather than `Empty`, say — would then fail a check that is protecting
@@ -100,7 +105,7 @@ jobs:
           if ! git ls-tree -r origin/main --name-only | grep -q '\.proto$'; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "::notice::No protos on main yet; skipping breaking-change detection."
-          elif [ -z "$(git tag --list 'v*')" ]; then
+          elif [ -z "$(git tag --list 'v*' --merged origin/main)" ]; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Pre-release: no v* tag, so nothing depends on this schema yet. Breaking-change detection arms itself at the first tag."
           else

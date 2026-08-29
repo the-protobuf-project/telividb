@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use telividb_client::Client;
 use telividb_server::ServerConfig;
 use tokio::sync::oneshot;
+use tokio::task::JoinHandle;
 
 /// A running engine and a client that reaches it.
 ///
@@ -14,14 +15,26 @@ use tokio::sync::oneshot;
 /// engine down through the same path a deliberate stop uses, rather than
 /// leaving it orphaned for the process to kill.
 pub struct Engine {
-    /// The claim on the data directory, held for as long as the engine runs.
-    _lock: DataDirLock,
     /// Sending — or dropping — this stops the server.
     stop: Option<oneshot::Sender<()>>,
+    /// The server task, so a caller can wait for it to finish.
+    serving: Option<JoinHandle<()>>,
     /// Where the server is listening, for a second client or an external tool.
     addr: SocketAddr,
     /// A connected client. Cheap to clone; `Channel` multiplexes.
     client: Client,
+    /// The claim on the data directory.
+    ///
+    /// Declared last on purpose: struct fields drop in declaration order, so
+    /// this is released after the shutdown signal above rather than before it.
+    /// The other order hands the directory to a second instance while the first
+    /// is still draining requests and flushing telemetry — which is the one
+    /// thing the claim exists to prevent.
+    ///
+    /// Dropping still does not *wait*. Use [`Engine::shutdown`] where an await
+    /// is possible; this ordering is what makes the synchronous path merely
+    /// racy rather than reliably wrong.
+    _lock: DataDirLock,
 }
 
 impl Engine {
@@ -48,7 +61,7 @@ impl Engine {
         };
 
         let (ready, started) = oneshot::channel();
-        tokio::spawn(async move {
+        let serving = tokio::spawn(async move {
             let outcome = telividb_server::serve(config).await;
             // Only observed when the server stops before anything connects;
             // afterwards the receiver is gone and the send fails harmlessly.
@@ -57,10 +70,11 @@ impl Engine {
 
         let client = connect(addr, started).await?;
         Ok(Self {
-            _lock: lock,
             stop: Some(stop),
+            serving: Some(serving),
             addr,
             client,
+            _lock: lock,
         })
     }
 
@@ -74,10 +88,24 @@ impl Engine {
         self.addr
     }
 
-    /// Stop the engine and wait for the claim to be released.
-    pub fn stop(mut self) {
+    /// Stop the engine and wait for it to finish.
+    ///
+    /// Signals shutdown, waits for the server task to return, and only then
+    /// releases the claim on the data directory — so when this returns, the
+    /// directory is genuinely free and the next instance will not find a
+    /// half-flushed one.
+    ///
+    /// Dropping an `Engine` still stops the server, because dropping the sender
+    /// is itself the signal. What dropping cannot do is wait.
+    pub async fn shutdown(mut self) {
         if let Some(stop) = self.stop.take() {
             let _ = stop.send(());
+        }
+        if let Some(serving) = self.serving.take() {
+            // A panic in the server task is already reported by its own
+            // telemetry; there is nothing useful to do with the error here
+            // except decline to hang on it.
+            let _ = serving.await;
         }
     }
 }
