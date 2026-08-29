@@ -50,6 +50,8 @@ pub mod telividb {
                 pub const VT_CREATE_TIME: ::flatbuffers::VOffsetT = 16;
                 pub const VT_UPDATE_TIME: ::flatbuffers::VOffsetT = 18;
                 pub const VT_ETAG: ::flatbuffers::VOffsetT = 20;
+                pub const VT_DELETE_TIME: ::flatbuffers::VOffsetT = 22;
+                pub const VT_EXPIRE_TIME: ::flatbuffers::VOffsetT = 24;
 
                 #[inline]
                 pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -66,6 +68,12 @@ pub mod telividb {
                     args: &'args SessionArgs<'args>,
                 ) -> ::flatbuffers::WIPOffset<Session<'bldr>> {
                     let mut builder = SessionBuilder::new(_fbb);
+                    if let Some(x) = args.expire_time {
+                        builder.add_expire_time(x);
+                    }
+                    if let Some(x) = args.delete_time {
+                        builder.add_delete_time(x);
+                    }
                     if let Some(x) = args.etag {
                         builder.add_etag(x);
                     }
@@ -223,6 +231,46 @@ pub mod telividb {
                             .get::<::flatbuffers::ForwardsUOffset<&str>>(Session::VT_ETAG, None)
                     }
                 }
+                /// When the session was soft-deleted, or unset while it is live.
+                ///
+                /// Present for the same reason it is on every other resource in this tree:
+                /// `DeleteSession` returns the tombstoned session, and without these there is
+                /// nowhere for it to say that it is one. A delete that returned a resource
+                /// indistinguishable from a live one would make `Undelete` unusable — a caller
+                /// could not tell what needed restoring.
+                #[inline]
+                pub fn delete_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Session::VT_DELETE_TIME,
+                                None,
+                            )
+                    }
+                }
+                /// When a soft-deleted session is purged and becomes unrecoverable.
+                #[inline]
+                pub fn expire_time(
+                    &self,
+                ) -> Option<&'a super::super::super::buffers::wellknown::Timestamp>
+                {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<super::super::super::buffers::wellknown::Timestamp>(
+                                Session::VT_EXPIRE_TIME,
+                                None,
+                            )
+                    }
+                }
             }
 
             impl ::flatbuffers::Verifiable for Session<'_> {
@@ -277,6 +325,16 @@ pub mod telividb {
                             Self::VT_ETAG,
                             false,
                         )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "delete_time",
+                            Self::VT_DELETE_TIME,
+                            false,
+                        )?
+                        .visit_field::<super::super::super::buffers::wellknown::Timestamp>(
+                            "expire_time",
+                            Self::VT_EXPIRE_TIME,
+                            false,
+                        )?
                         .finish();
                     Ok(())
                 }
@@ -291,6 +349,8 @@ pub mod telividb {
                 pub create_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
                 pub update_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
                 pub etag: Option<::flatbuffers::WIPOffset<&'a str>>,
+                pub delete_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
+                pub expire_time: Option<&'a super::super::super::buffers::wellknown::Timestamp>,
             }
             impl<'a> Default for SessionArgs<'a> {
                 #[inline]
@@ -305,6 +365,8 @@ pub mod telividb {
                         create_time: None,
                         update_time: None,
                         etag: None,
+                        delete_time: None,
+                        expire_time: None,
                     }
                 }
             }
@@ -392,6 +454,28 @@ pub mod telividb {
                         .push_slot_always::<::flatbuffers::WIPOffset<_>>(Session::VT_ETAG, etag);
                 }
                 #[inline]
+                pub fn add_delete_time(
+                    &mut self,
+                    delete_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Session::VT_DELETE_TIME,
+                            delete_time,
+                        );
+                }
+                #[inline]
+                pub fn add_expire_time(
+                    &mut self,
+                    expire_time: &super::super::super::buffers::wellknown::Timestamp,
+                ) {
+                    self.fbb_
+                        .push_slot_always::<&super::super::super::buffers::wellknown::Timestamp>(
+                            Session::VT_EXPIRE_TIME,
+                            expire_time,
+                        );
+                }
+                #[inline]
                 pub fn new(
                     _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
                 ) -> SessionBuilder<'a, 'b, A> {
@@ -421,6 +505,8 @@ pub mod telividb {
                     ds.field("create_time", &self.create_time());
                     ds.field("update_time", &self.update_time());
                     ds.field("etag", &self.etag());
+                    ds.field("delete_time", &self.delete_time());
+                    ds.field("expire_time", &self.expire_time());
                     ds.finish()
                 }
             }

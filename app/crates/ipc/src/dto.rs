@@ -128,7 +128,10 @@ pub struct ImportRequest {
     pub collection: String,
     /// Named vector field the text is encoded for.
     pub field: String,
-    /// The rows.
+    /// The rows, already mapped from whatever file they came out of.
+    ///
+    /// Empty is refused rather than treated as a no-op: a file that produced
+    /// no rows is a mapping mistake, and reporting success would hide it.
     pub rows: Vec<ImportRow>,
 }
 

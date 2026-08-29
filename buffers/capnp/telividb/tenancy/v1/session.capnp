@@ -43,4 +43,14 @@ struct Session @0xf924c87681786c52 {
   updateTime @7 :Wellknown.Timestamp;
   # Opaque value for optimistic concurrency on update.
   etag @8 :Text;
+  # When the session was soft-deleted, or unset while it is live.
+  #
+  # Present for the same reason it is on every other resource in this tree:
+  # `DeleteSession` returns the tombstoned session, and without these there is
+  # nowhere for it to say that it is one. A delete that returned a resource
+  # indistinguishable from a live one would make `Undelete` unusable — a caller
+  # could not tell what needed restoring.
+  deleteTime @9 :Wellknown.Timestamp;
+  # When a soft-deleted session is purged and becomes unrecoverable.
+  expireTime @10 :Wellknown.Timestamp;
 }

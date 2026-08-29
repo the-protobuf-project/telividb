@@ -99,6 +99,8 @@ A recorded working period holding several conversations.  A session is a resourc
 | `conversation_count` | `int32` | 6 | `OUTPUT_ONLY` | Conversations recorded in this session. |
 | `create_time` | `google.protobuf.Timestamp` | 7 | `OUTPUT_ONLY` | When the session was created. |
 | `update_time` | `google.protobuf.Timestamp` | 8 | `OUTPUT_ONLY` | When the session was last modified. |
+| `delete_time` | `google.protobuf.Timestamp` | 10 | `OUTPUT_ONLY` | When the session was soft-deleted, or unset while it is live. Present for the same reason it is on every other resource in this tree: `DeleteSession` returns the tombstoned session, and without these there is nowhere for it to say that it is one. A delete that returned a resource indistinguishable from a live one would make `Undelete` unusable — a caller could not tell what needed restoring. |
+| `expire_time` | `google.protobuf.Timestamp` | 11 | `OUTPUT_ONLY` | When a soft-deleted session is purged and becomes unrecoverable. |
 | `etag` | `string` | 9 | `OUTPUT_ONLY` | Opaque value for optimistic concurrency on update. |
 
 ### `Space`

@@ -4,16 +4,16 @@
 //! `mmap`'d, so everything that has to change in place — a catalogue entry, an
 //! edge, a tenancy record — lives here instead.
 //!
-//! One module per resource. Each owns its table definition, its record
-//! encoding, and the tests for both.
+//! One module per resource group. Each owns its table definitions, its record
+//! encodings, and the tests for both.
 
 pub mod collection;
 pub mod cursor;
 pub mod graph;
-pub mod organization;
 pub mod point;
+pub mod tenancy;
 
 pub use collection::store::RedbCollectionStore;
 pub use graph::store::RedbGraphStore;
-pub use organization::store::RedbTenancyStore;
 pub use point::store::RedbPointStore;
+pub use tenancy::store::RedbTenancyStore;

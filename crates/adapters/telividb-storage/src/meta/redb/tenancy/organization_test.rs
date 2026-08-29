@@ -5,6 +5,8 @@
 //! than field by field — a comparison that keeps working when a field is added.
 
 use super::*;
+// `Lifecycle` left the record module when the time helpers were shared.
+use telividb_core::Lifecycle;
 
 /// An organization with every field populated.
 fn full() -> Organization {

@@ -12,7 +12,7 @@
 //! at all, and it is why the protos carry `delete_time` and `expire_time` on
 //! every resource in this tree rather than treating deletion as an absence.
 
-use super::record::{decode, encode};
+use super::organization::{decode, encode};
 use crate::error::Result;
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::path::Path;
@@ -25,6 +25,15 @@ use telividb_telemetry::{fields, logger};
 /// version (rule 4): a future layout is refused rather than misread.
 pub(super) const ORGANIZATIONS: TableDefinition<&str, &[u8]> =
     TableDefinition::new("organizations_v1");
+
+/// `resource name -> encoded project`.
+pub(super) const PROJECTS: TableDefinition<&str, &[u8]> = TableDefinition::new("projects_v1");
+
+/// `resource name -> encoded space`.
+pub(super) const SPACES: TableDefinition<&str, &[u8]> = TableDefinition::new("spaces_v1");
+
+/// `resource name -> encoded session`.
+pub(super) const SESSIONS: TableDefinition<&str, &[u8]> = TableDefinition::new("sessions_v1");
 
 /// How long a soft-deleted resource stays recoverable: thirty days in millis.
 ///
@@ -47,9 +56,15 @@ impl RedbTenancyStore {
             std::fs::create_dir_all(parent)?;
         }
         let db = Database::create(path).map_err(redb::Error::from)?;
+        // Every table is opened once at startup so a later read never has to
+        // create one — a read transaction cannot, and a store that only worked
+        // after its first write would fail on a fresh directory.
         let write = db.begin_write().map_err(redb::Error::from)?;
         {
             write.open_table(ORGANIZATIONS).map_err(redb::Error::from)?;
+            write.open_table(PROJECTS).map_err(redb::Error::from)?;
+            write.open_table(SPACES).map_err(redb::Error::from)?;
+            write.open_table(SESSIONS).map_err(redb::Error::from)?;
         }
         write.commit().map_err(redb::Error::from)?;
 

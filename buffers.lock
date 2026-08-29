@@ -1964,6 +1964,12 @@ messages:
       - number: 9
         ordinal: 8
         name: etag
+      - number: 10
+        ordinal: 9
+        name: delete_time
+      - number: 11
+        ordinal: 10
+        name: expire_time
   - message: telividb.tenancy.v1.Space
     fields:
       - number: 1

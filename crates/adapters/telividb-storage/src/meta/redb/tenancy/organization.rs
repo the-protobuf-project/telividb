@@ -18,11 +18,12 @@
 //! assigned, so a rebuild that would move one fails CI rather than silently
 //! reinterpreting every record already on disk.
 
+use super::time;
 use crate::error::Result;
 use capnp::message::{Builder, HeapAllocator, ReaderOptions};
 use capnp::serialize;
 use telividb_buffers::capnp::tenancy::v1::organization_capnp::organization;
-use telividb_core::{Error as DomainError, Lifecycle, Organization, ResourceName};
+use telividb_core::{Error as DomainError, Organization, ResourceName};
 
 /// Serialize an organization.
 ///
@@ -33,16 +34,16 @@ pub(super) fn encode(org: &Organization) -> Vec<u8> {
     {
         let mut root = message.init_root::<organization::Builder<'_>>();
         root.set_display_name(org.display_name.as_str());
-        write_time(
+        time::write(
             root.reborrow().init_create_time(),
             Some(org.lifecycle.created_at),
         );
-        write_time(
+        time::write(
             root.reborrow().init_update_time(),
             Some(org.lifecycle.updated_at),
         );
-        write_time(root.reborrow().init_delete_time(), org.lifecycle.deleted_at);
-        write_time(root.reborrow().init_expire_time(), org.lifecycle.expires_at);
+        time::write(root.reborrow().init_delete_time(), org.lifecycle.deleted_at);
+        time::write(root.reborrow().init_expire_time(), org.lifecycle.expires_at);
     }
     serialize::write_message_to_words(&message)
 }
@@ -71,36 +72,13 @@ pub(super) fn decode(name: ResourceName, bytes: &[u8]) -> Result<Organization> {
             .to_str()
             .map_err(|_| malformed_str("display_name is not valid UTF-8"))?
             .to_owned(),
-        lifecycle: Lifecycle {
-            created_at: read_time(root.get_create_time().map_err(malformed)?).unwrap_or_default(),
-            updated_at: read_time(root.get_update_time().map_err(malformed)?).unwrap_or_default(),
-            deleted_at: read_time(root.get_delete_time().map_err(malformed)?),
-            expires_at: read_time(root.get_expire_time().map_err(malformed)?),
-        },
+        lifecycle: time::lifecycle(
+            root.get_create_time().map_err(malformed)?,
+            root.get_update_time().map_err(malformed)?,
+            root.get_delete_time().map_err(malformed)?,
+            root.get_expire_time().map_err(malformed)?,
+        ),
     })
-}
-
-/// Write milliseconds into a timestamp, leaving it zero when there is none.
-///
-/// A zero timestamp reads back as `None`, which is how an absent `delete_time`
-/// survives the round trip — Cap'n Proto has no null for a struct field, so
-/// absence has to be a value the schema can hold.
-fn write_time(
-    mut out: telividb_buffers::capnp::buffers::wellknown_capnp::timestamp::Builder<'_>,
-    millis: Option<i64>,
-) {
-    let Some(millis) = millis else { return };
-    out.set_seconds(millis / 1_000);
-    out.set_nanos(((millis % 1_000) * 1_000_000) as i32);
-}
-
-/// Read a timestamp back to milliseconds, treating zero as absent.
-fn read_time(
-    time: telividb_buffers::capnp::buffers::wellknown_capnp::timestamp::Reader<'_>,
-) -> Option<i64> {
-    let seconds = time.get_seconds();
-    let nanos = i64::from(time.get_nanos());
-    (seconds != 0 || nanos != 0).then(|| seconds * 1_000 + nanos / 1_000_000)
 }
 
 /// A record that could not be read as this schema.
@@ -117,5 +95,5 @@ fn malformed_str(reason: &str) -> crate::error::Error {
 }
 
 #[cfg(test)]
-#[path = "record_test.rs"]
+#[path = "organization_test.rs"]
 mod tests;
