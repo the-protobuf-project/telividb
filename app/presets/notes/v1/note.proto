@@ -1,0 +1,24 @@
+// A note: text with a title, and nothing else.
+syntax = "proto3";
+
+package presets.notes.v1;
+
+option java_multiple_files = true;
+option java_outer_classname = "NoteProto";
+option java_package = "app.presets.notes.v1";
+
+// One note.
+//
+// The smallest schema that is still a real one — a title to show in a list and
+// a body to search. A collection created from this preset carries a `text`
+// vector field, so a note becomes searchable the moment it is written.
+message Note {
+  // What the note is called, shown in a listing.
+  string title = 1;
+
+  // The note itself. This is what gets embedded and searched.
+  string body = 2;
+
+  // Free-form labels, for filtering once the planner can filter.
+  repeated string tags = 3;
+}

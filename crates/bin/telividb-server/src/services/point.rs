@@ -144,7 +144,7 @@ impl Points for PointsSvc {
         &self,
         request: Request<BatchCreatePointsRequest>,
     ) -> Result<Response<BatchCreatePointsResponse>, Status> {
-        super::point_batch::create(request)
+        super::point_batch::create(self, request).await
     }
 
     async fn batch_get_points(

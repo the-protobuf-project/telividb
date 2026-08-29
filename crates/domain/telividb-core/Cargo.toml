@@ -6,4 +6,7 @@ license.workspace = true
 
 [dependencies]
 thiserror.workspace = true
+# Resource-name templates. See `domain/resource/keys.rs`.
+resourcename.workspace = true
+serde = { version = "1", features = ["derive"] }
 sha2 = { version = "0.10", default-features = false, features = ["std"] }

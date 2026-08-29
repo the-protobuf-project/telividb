@@ -1,0 +1,17 @@
+[package]
+name = "telividb-desktop-ipc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Tauri commands: a shim between the window and the engine's client."
+
+[dependencies]
+telividb-desktop-engine.workspace = true
+telividb-client.workspace = true
+tauri.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+# The flow test drives a real engine and a real client, which is the only way
+# to find out whether the engine accepts the presets this crate ships.
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

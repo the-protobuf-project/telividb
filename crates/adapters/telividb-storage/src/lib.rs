@@ -34,7 +34,7 @@ pub use format::{Codec, DType, FieldHeader, SegmentHeader};
 pub use manifest::Manifest;
 pub use meta::{
     GraphStoreConfig, PointStoreConfig, RedbCollectionStore, RedbGraphStore, RedbPointStore,
-    open_graph_store, open_point_store,
+    RedbTenancyStore, open_graph_store, open_point_store,
 };
 pub use segment::{SegmentReader, SegmentWriter, field_dir, open_tier};
 pub use tier::{BinaryTier, F16Tier, Int8Tier, PqTier};

@@ -1,0 +1,22 @@
+[package]
+name = "telividb-desktop-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Runs the telividb engine inside the desktop process and hands back a client."
+
+[dependencies]
+telividb-server.workspace = true
+telividb-client.workspace = true
+telividb-compute.workspace = true
+# The environment crosses the bridge as JSON.
+serde.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "sync", "time"] }
+thiserror.workspace = true
+
+# `flock`, for the data-directory claim. Unix only; Windows relies on redb's
+# own exclusive open. This is a C library, but not a C *build* — libc links
+# what the platform already ships and compiles nothing, so it adds no
+# toolchain requirement.
+[target."cfg(unix)".dependencies]
+libc = "0.2"

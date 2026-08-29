@@ -88,6 +88,7 @@ service Points {
       post: "/v1/{parent=collections/*}/points:batchDelete"
       body: "*"
     };
+    option (mcp.elicitation) = {message: "This tombstones every point named in the request. Their bytes survive until compaction rewrites the segment. Confirm?"};
   }
 
   // Searches a collection for the points nearest a query vector.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "telividb-app",
+  "productName": "telividb",
   "version": "0.1.0",
   "identifier": "dev.telivi-db.desktop.app",
   "build": {
@@ -12,9 +12,11 @@
   "app": {
     "windows": [
       {
-        "title": "telividb-app",
-        "width": 800,
-        "height": 600
+        "title": "telividb",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 860,
+        "minHeight": 520
       }
     ],
     "security": {

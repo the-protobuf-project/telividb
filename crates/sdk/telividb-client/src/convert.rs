@@ -67,6 +67,21 @@ pub fn point_with_vector(field: &str, vector: &[f32]) -> wire::Point {
     }
 }
 
+/// A content reference carrying `text` inline.
+///
+/// The write direction; [`inline_text`] is the read. Inline suits short text —
+/// anything large belongs outside the database behind a URI (invariant 19),
+/// which is what the rest of `ContentRef` describes.
+pub fn inline_ref(text: &str) -> wire::ContentRef {
+    wire::ContentRef {
+        uri: String::new(),
+        range_start: 0,
+        range_end: 0,
+        sha256: Default::default(),
+        inline_text: text.to_owned(),
+    }
+}
+
 /// A point whose vector the server will compute from `text`.
 ///
 /// The counterpart to [`point_with_vector`]: exactly one of the two fields is
@@ -83,13 +98,7 @@ pub fn point_from_text(field: &str, text: &str) -> wire::Point {
         // The same text is stored as content as well as sent for embedding.
         // Without it a search result is a bare id, and the caller has to
         // resolve it against their own storage before it means anything.
-        content_ref: Some(wire::ContentRef {
-            uri: String::new(),
-            range_start: 0,
-            range_end: 0,
-            sha256: Default::default(),
-            inline_text: text.to_owned(),
-        }),
+        content_ref: Some(inline_ref(text)),
     }
 }
 

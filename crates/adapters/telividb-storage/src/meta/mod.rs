@@ -1,17 +1,13 @@
-//! Small, mutable, `redb`-backed metadata — today, the graph's edges and the
-//! document service's points.
+//! Small, mutable metadata: the collection catalogue, point records, the
+//! graph's edges, and the tenancy tree.
+//!
+//! One directory per backend, and beneath it one per resource. The store, the
+//! record codec and their tests sit together, so the question "how is a point
+//! stored?" is answered by one folder rather than by five files that share a
+//! prefix.
 
-mod collection_record;
 mod factory;
-mod point_read;
-mod point_record;
-mod record_cursor;
-mod redb_collection_store;
-mod redb_graph_store;
-mod redb_point_store;
-mod row_binding;
+mod redb;
 
 pub use factory::{GraphStoreConfig, PointStoreConfig, open_graph_store, open_point_store};
-pub use redb_collection_store::RedbCollectionStore;
-pub use redb_graph_store::RedbGraphStore;
-pub use redb_point_store::RedbPointStore;
+pub use redb::{RedbCollectionStore, RedbGraphStore, RedbPointStore, RedbTenancyStore};

@@ -131,6 +131,15 @@ fn is_undocumented_item(lines: &[&str], i: usize, path: &Path) -> bool {
         return false;
     }
     // Walk back over attributes and blank lines to reach the doc comment.
+    //
+    // An attribute may span several lines — rustfmt breaks a long one across
+    // them — so a line that is neither a doc comment nor an attribute start is
+    // not necessarily the end of the walk. When one is reached, skip up to the
+    // line that opened it, which is the nearest `#[` above.
+    //
+    // Bracket counting was tried and is wrong here: an attribute value can be a
+    // string containing brackets, so the count never unwinds and every item
+    // below one reads as undocumented.
     let mut j = i;
     while j > 0 {
         let previous = lines[j - 1].trim();
@@ -138,9 +147,44 @@ fn is_undocumented_item(lines: &[&str], i: usize, path: &Path) -> bool {
             j -= 1;
             continue;
         }
-        return !previous.starts_with("///");
+        if previous.starts_with("///") {
+            return false;
+        }
+        // Possibly the tail of a multi-line attribute. Look for its opening
+        // line; if there is one above, resume the walk from there.
+        match attribute_start(lines, j - 1) {
+            Some(open) => j = open,
+            None => return true,
+        }
     }
     true
+}
+
+/// The line that opened the attribute ending at `i`, if there is one.
+///
+/// Walks upward only through lines that are plausibly *inside* an attribute,
+/// and stops at the first `#[`. Searching for the nearest `#[` at any distance
+/// would find a single-line attribute two items up and jump the walk over a
+/// missing doc comment — which is how this check came to pass a struct that had
+/// none.
+///
+/// Bounded as well, because an attribute runs to a handful of lines and an
+/// unbounded search would treat any unrecognised line as continuation.
+fn attribute_start(lines: &[&str], i: usize) -> Option<usize> {
+    const MAX_ATTRIBUTE_LINES: usize = 16;
+    let floor = i.saturating_sub(MAX_ATTRIBUTE_LINES);
+    for k in (floor..i).rev() {
+        let line = lines[k].trim_start();
+        if line.starts_with("#[") {
+            return Some(k);
+        }
+        // A doc comment, a blank line, or another item ends the attribute's
+        // reach: none of them can be its interior.
+        if line.is_empty() || line.starts_with("///") || line.starts_with("//") {
+            return None;
+        }
+    }
+    None
 }
 
 /// Whether the module `pub mod foo;` names carries `//!` documentation.

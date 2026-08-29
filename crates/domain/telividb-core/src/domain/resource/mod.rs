@@ -23,8 +23,10 @@
 //! collection, so it is meaningless — and potentially colliding — in another.
 //! The importer re-interns on the way in.
 
+mod keys;
 mod name;
 mod template;
 
+pub use keys::{ConversationKey, MessageKey, OrganizationKey, ProjectKey, SessionKey, SpaceKey};
 pub use name::ResourceName;
 pub use template::Template;

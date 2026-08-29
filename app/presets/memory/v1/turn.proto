@@ -1,0 +1,45 @@
+// One turn of a conversation, in the shape agent frameworks already use.
+syntax = "proto3";
+
+package presets.memory.v1;
+
+option java_multiple_files = true;
+option java_outer_classname = "TurnProto";
+option java_package = "app.presets.memory.v1";
+
+
+import "google/protobuf/timestamp.proto";
+
+// A single message in a conversation.
+//
+// Modelled on the OpenAI chat message because that vocabulary is universal and
+// round-trips into every agent framework. A collection created from this preset
+// is the smallest thing that can hold an agent's memory and answer questions
+// about it.
+message Turn {
+  // Who produced this turn: `user`, `assistant`, `system`, or `tool`.
+  //
+  // A string rather than an enum so a transcript from any framework imports
+  // without a mapping table — the cost of a preset is that it has to accept
+  // what it is given.
+  string role = 1;
+
+  // What was said. Embedded, and what a search matches against.
+  string content = 2;
+
+  // The conversation this turn belongs to, for grouping a transcript back
+  // together after a search returns turns from several.
+  string conversation_id = 3;
+
+  // When the turn occurred.
+  //
+  // `occur_time`, not `occurred_at`: AIP-140 refuses a preposition in a field
+  // name and AIP-142 asks a timestamp to end in `_time`. A `Timestamp` rather
+  // than epoch millis for the same reason — the type says what the number
+  // means, where an `int64` leaves a reader to guess the unit.
+  //
+  // Time is a ranking signal here rather than only a filter: "what were we
+  // discussing last Tuesday" has a weak semantic signal and a strong temporal
+  // one.
+  google.protobuf.Timestamp occur_time = 4;
+}

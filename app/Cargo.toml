@@ -1,0 +1,49 @@
+# The desktop app's own workspace.
+#
+# Separate from the repository's, and excluded from it, because Tauri drags
+# `cc` in through `tauri-build`, `embed-resource` and `tauri-winres`, and needs
+# GTK/webkit system libraries that CI runners do not carry. Sanctioning a GUI
+# toolchain to keep a workspace glob tidy would gut invariant 1.
+#
+# The crates below still depend on the engine by path. A workspace boundary is
+# not a dependency boundary — it only decides what `cargo build --workspace`
+# reaches from the repository root.
+[workspace]
+resolver = "3"
+members = ["crates/*", "src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+# AGPL, not MIT.
+#
+# `telividb-desktop-engine` links `telividb-server`, so the application is a
+# derivative work of an AGPL engine. The scaffold said MIT because
+# `create-tauri-app` says MIT; nothing about this application ever did.
+license = "AGPL-3.0-or-later"
+
+[workspace.dependencies]
+telividb-desktop-engine = { path = "crates/engine" }
+telividb-desktop-ipc = { path = "crates/ipc" }
+
+# The engine, by path into the repository workspace.
+telividb-server = { path = "../crates/bin/telividb-server" }
+telividb-client = { path = "../crates/sdk/telividb-client" }
+# Layer one, for reporting which backend was actually selected. The app already
+# links it transitively through the server; naming it here is what lets the
+# window ask before the engine has done any work.
+telividb-compute = { path = "../crates/platform/telividb-compute" }
+
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "sync"] }
+thiserror = "2"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

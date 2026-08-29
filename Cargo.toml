@@ -23,7 +23,9 @@ members = [
 #
 # It still builds: `cargo build --manifest-path app/src-tauri/Cargo.toml`, or
 # through the Tauri CLI, which is how a Tauri app is normally driven anyway.
-exclude = ["app/src-tauri"]
+# `app` rather than `app/src-tauri`: the desktop app is now its own workspace
+# with several crates, and every one of them must stay out of this one.
+exclude = ["app"]
 
 # The engine is AGPL-3.0-or-later; commercial licences are available for
 # proprietary use — see LICENSE-COMMERCIAL.md.
@@ -58,6 +60,12 @@ telividb-server     = { path = "crates/bin/telividb-server" }
 # emits telemetry agrees on the version.
 telemetry = { git = "https://github.com/the-protobuf-project/telemetry", tag = "v1.1.0" }
 thiserror = "2"
+# AIP-122 resource-name templates, shared across the ecosystem's languages.
+#
+# By git rather than crates.io because it is not published there. Pinned to a
+# commit rather than a branch: a resource name is an identity, and identity
+# should not change because someone pushed to `main`.
+resourcename = { git = "https://github.com/the-protobuf-project/resourcename", rev = "3e187a5d3da5542ad7f42ded428a413994fc0daf" }
 # Plan A1.1's in-memory graph (CLAUDE.md rule 47). `Graph`, not `GraphMap`: a
 # GraphMap keys nodes by weight and allows at most one edge per pair, and two
 # points can carry more than one edge type between them.

@@ -1,0 +1,52 @@
+# Advisory policy for the desktop app.
+#
+# Separate from the repository's, for the same reason the workspace is: the app
+# links a GUI toolkit the engine does not, and an exception granted to a window
+# must never widen to the crates that get published. The rationale for the
+# settings below is written out in the root `deny.toml`.
+
+[graph]
+# Named explicitly, because the default is the host target — which would mean
+# this check walks a different dependency graph on a macOS runner than on a
+# Linux one, and passes or fails accordingly. A result that depends on where it
+# ran is a result nobody trusts. These are the targets `build.yml` compiles;
+# Windows is out of scope.
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+  "aarch64-unknown-linux-gnu",
+]
+
+[advisories]
+yanked = "deny"
+# See the root `deny.toml`: the advisory this file exists for is informational,
+# and is invisible without these.
+unsound = "all"
+# The gtk3 bindings are finished rather than abandoned — a distinction the
+# advisory database cannot draw — so this warns rather than fails.
+unmaintained = "workspace"
+
+ignore = [
+  # RUSTSEC-2024-0429 / GHSA-wrw7-89jp-8q8g — unsoundness in
+  # `glib::VariantStrIter`'s iterator impls. Real, and not fixable here.
+  #
+  # Reachable only from `app/`, and only on Linux: glib enters through
+  # `gtk` 0.18 ← `tao` / `muda` / `webkit2gtk`, all behind a
+  # `cfg(target_os = "linux")` gate. `cargo tree --target aarch64-apple-darwin
+  # -i glib` prints "nothing to print" — it is absent from the macOS graph
+  # entirely, and macOS is what the app ships on. The engine workspace never
+  # sees it at all.
+  #
+  # There is no version to move to. The fix landed in glib 0.20.0; `gtk` 0.18.2
+  # requires `^0.18`; 0.18.5 is the last 0.18 ever published and 0.18.2 the last
+  # `gtk` — the gtk3 bindings are closed, gtk-rs having moved to gtk4. Tauri
+  # 2.11.5 is current and still builds on them. This is the state of the Linux
+  # GUI stack, not a stale dependency an upgrade fixes.
+  #
+  # What would retire this entry: Tauri moving its Linux backend off gtk3, or a
+  # backport to the 0.18 branch. Either makes it stale, and cargo-deny reports a
+  # stale ignore rather than passing quietly — which is the reason to write it
+  # here instead of dismissing the alert.
+  { id = "RUSTSEC-2024-0429", reason = "Linux-only via gtk3; no published version carries the fix; the app ships on macOS" },
+]

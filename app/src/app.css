@@ -1,0 +1,176 @@
+/* Tokens, typography, and the one utility the rest of the app leans on.
+ *
+ * Fonts are vendored rather than linked. An `@import` from fonts.googleapis.com
+ * fails with no network — which a desktop app must survive — and reports every
+ * launch to a third party. These are the same typefaces as files. */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+@import "tailwindcss";
+/* Lineicons, from the package rather than a CDN — the app has to work with no
+ * network, and a stylesheet fetched at launch is a blank icon set offline. */
+@import "lineicons/dist/lineicons.css";
+
+/* shadcn components ask for `dark:` variants. The app is dark by default rather
+ * than by preference, so the variant is bound to a class that is present unless
+ * something removes it — see `.light` below. */
+@custom-variant dark (&:is(.dark *));
+
+/* Dark is the default, not a media query.
+ *
+ * A database console is read for hours, usually beside a terminal, and the
+ * window should not change character because the OS clock passed sunrise. So
+ * these are the base tokens, and light is an explicit opt-in rather than an
+ * automatic switch.
+ *
+ * The neutrals carry a slight blue cast rather than being a dead grey — at this
+ * lightness a pure neutral reads as unfinished. */
+:root {
+  --radius: 0.5rem;
+
+  --background: oklch(20.5% 0.012 250);
+  --foreground: oklch(93% 0.006 250);
+
+  --card: oklch(24% 0.013 250);
+  --card-foreground: var(--foreground);
+  --popover: oklch(26% 0.013 250);
+  --popover-foreground: var(--foreground);
+
+  /* One accent, spent on the thing that matters most in this window: which
+   * result is nearest, and which backend is live. */
+  --primary: oklch(72% 0.15 195);
+  --primary-foreground: oklch(20% 0.02 250);
+
+  --secondary: oklch(29% 0.014 250);
+  --secondary-foreground: var(--foreground);
+
+  --muted: oklch(27% 0.013 250);
+  --muted-foreground: oklch(70% 0.011 250);
+
+  --accent: oklch(31% 0.015 250);
+  --accent-foreground: var(--foreground);
+
+  /* Semantic, and deliberately not the accent hue — a warning that shared it
+   * would stop reading as a warning. */
+  --destructive: oklch(64% 0.19 25);
+  --destructive-foreground: oklch(97% 0.01 25);
+
+  --border: oklch(31% 0.014 250);
+  --input: oklch(29% 0.014 250);
+  --ring: oklch(72% 0.15 195);
+
+  --chart-1: oklch(72% 0.15 195);
+  --chart-2: oklch(70% 0.14 155);
+  --chart-3: oklch(74% 0.15 85);
+  --chart-4: oklch(68% 0.16 315);
+  --chart-5: oklch(70% 0.17 25);
+
+  --sidebar: oklch(22.5% 0.012 250);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(29% 0.014 250);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+/* Light, for someone who asks for it. Only the tokens move; nothing in the app
+ * names a colour directly, so there is nothing else to change. */
+.light {
+  --background: oklch(98.5% 0.003 250);
+  --foreground: oklch(22% 0.012 250);
+  --card: oklch(100% 0 0);
+  --card-foreground: var(--foreground);
+  --popover: oklch(100% 0 0);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(52% 0.14 195);
+  --primary-foreground: oklch(99% 0.005 195);
+  --secondary: oklch(95% 0.006 250);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(96% 0.005 250);
+  --muted-foreground: oklch(48% 0.012 250);
+  --accent: oklch(94% 0.008 250);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(55% 0.2 25);
+  --destructive-foreground: oklch(99% 0.01 25);
+  --border: oklch(90% 0.008 250);
+  --input: oklch(92% 0.007 250);
+  --ring: oklch(52% 0.14 195);
+  --sidebar: oklch(96.5% 0.005 250);
+  --sidebar-accent: oklch(93% 0.008 250);
+}
+
+/* The bridge from the variables above to Tailwind utilities. `inline` is what
+ * lets `bg-background` resolve through `var(--background)` rather than freezing
+ * the value, so a class swap re-themes the whole window. */
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, Menlo, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* A window, not a document. */
+    overflow: hidden;
+    user-select: none;
+  }
+}
+
+/* Digits that must line up: scores, dimensions, byte counts. */
+@utility tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Text the reader is meant to copy — resource names, errors — opts back in. */
+@utility selectable {
+  user-select: text;
+}
