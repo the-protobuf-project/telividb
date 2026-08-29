@@ -76,7 +76,7 @@ fn user_home() -> Option<PathBuf> {
         &["HOME"]
     };
     keys.iter()
-        .filter_map(|key| std::env::var_os(key))
+        .filter_map(std::env::var_os)
         .find(|value| !value.is_empty())
         .map(PathBuf::from)
 }
