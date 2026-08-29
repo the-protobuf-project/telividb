@@ -2684,6 +2684,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "telividb-models"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "telividb-core",
+ "telividb-telemetry",
+ "tempfile",
+ "thiserror 2.0.20",
+ "toml",
+]
+
+[[package]]
 name = "telividb-query"
 version = "0.1.0"
 dependencies = [

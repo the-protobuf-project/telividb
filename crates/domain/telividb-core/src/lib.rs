@@ -8,8 +8,9 @@ pub mod ports;
 pub mod schema;
 
 pub use domain::{
-    Collection, ContentRef, Dim, Edge, ExternalId, Fingerprint, Lifecycle, Metric, Ordinal,
-    Organization, Point, Project, Protection, ResourceName, Session, Space, Span, Template,
+    Architecture, Collection, ContentRef, Dim, Edge, ExternalId, Fingerprint, Lifecycle, Metric,
+    Modality, Ordinal, Organization, Point, Project, Protection, ResourceName, Session, Space,
+    Span, Template,
 };
 pub use error::{Error, Result};
 pub use ports::{

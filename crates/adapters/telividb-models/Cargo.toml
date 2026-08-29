@@ -1,0 +1,23 @@
+[package]
+name = "telividb-models"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The curated model catalog, and acquiring the files it names."
+
+[dependencies]
+# The ontology: `Architecture` decides what may be downloaded at all, and
+# `Fingerprint` is the digest a download is verified against. Both are shared
+# with the loader rather than restated here — see `Architecture`'s own note.
+telividb-core.workspace = true
+telividb-telemetry.workspace = true
+thiserror.workspace = true
+serde = { version = "1", features = ["derive"] }
+# The HuggingFace API answers in JSON.
+serde_json = "1"
+# The catalog is TOML. `parse` only: this crate reads the manifest and never
+# writes one, and the serializer is a third of the crate's compile time.
+toml = { version = "0.8", default-features = false, features = ["parse"] }
+
+[dev-dependencies]
+tempfile = "3"

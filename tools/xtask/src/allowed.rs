@@ -81,6 +81,14 @@ pub(crate) const ALLOWED: &[(&str, &[&str])] = &[
         "telividb-embed",
         &["telividb-compute", "telividb-core", "telividb-telemetry"],
     ),
+    // The catalog names what the encoder can load, so it shares the ontology
+    // that decides — `Architecture` and `Fingerprint` — and nothing else.
+    //
+    // Note what is absent: `telividb-embed`. The catalog must not reach the
+    // inference server, and does not need to. Both read the same list from
+    // `telividb-core`, which is what keeps "will not download" and "cannot
+    // load" the same answer without one adapter naming the other.
+    ("telividb-models", &["telividb-core", "telividb-telemetry"]),
     // The SDK speaks the wire protocol and nothing else: no storage, no index,
     // no model. That is what keeps one server behaviour rather than one per
     // client, and it is why this list is as short as it is.

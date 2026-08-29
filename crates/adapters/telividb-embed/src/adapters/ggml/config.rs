@@ -13,7 +13,10 @@ use telividb_compute::{Header, Weights};
 ///
 /// Checked rather than assumed: a mismatched architecture finds some of the
 /// tensors it expects and silently misreads the rest.
-pub const SUPPORTED: &[&str] = &["bert", "nomic-bert"];
+/// Defined by [`Architecture`] rather than repeated here. The catalog refuses
+/// to *download* what this refuses to load, and two lists would eventually
+/// disagree — with the symptom being a gigabyte fetched before the refusal.
+pub const SUPPORTED: &[&str] = telividb_core::Architecture::NAMES;
 
 /// One model's shape.
 #[derive(Debug, Clone)]

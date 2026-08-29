@@ -59,6 +59,33 @@ impl Fingerprint {
         self.0 == [0u8; 32]
     }
 
+    /// The full 64-character lowercase hex digest.
+    ///
+    /// [`Display`](std::fmt::Display) deliberately prints the short form
+    /// instead, because a log line wants twelve characters. This is the form
+    /// that goes into a catalog file or gets compared against a model host's
+    /// API, where the whole digest is the point.
+    pub fn to_hex(&self) -> String {
+        self.0.iter().map(|b| format!("{b:02x}")).collect()
+    }
+
+    /// Parse a 64-character hex digest.
+    ///
+    /// Returns `None` for anything that is not exactly 64 hex characters,
+    /// rather than accepting a short or malformed digest and silently
+    /// comparing against a value that can never match — which would present as
+    /// a corrupt download rather than as the typo it is.
+    pub fn from_hex(hex: &str) -> Option<Self> {
+        if hex.len() != Self::BYTES * 2 {
+            return None;
+        }
+        let mut out = [0u8; Self::BYTES];
+        for (i, byte) in out.iter_mut().enumerate() {
+            *byte = u8::from_str_radix(hex.get(i * 2..i * 2 + 2)?, 16).ok()?;
+        }
+        Some(Self(out))
+    }
+
     /// Short prefix for logs and error messages.
     ///
     /// Twelve hex characters — enough to tell two fingerprints apart at a

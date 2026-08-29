@@ -45,3 +45,22 @@ fn debug_does_not_dump_all_32_bytes() {
     assert!(rendered.starts_with("Fingerprint("));
     assert!(rendered.len() < 30, "too long for a log line: {rendered}");
 }
+
+#[test]
+fn hex_round_trips_and_rejects_malformed_input() {
+    let fp = Fingerprint::of(b"a gguf file");
+    let hex = fp.to_hex();
+    assert_eq!(hex.len(), 64);
+    assert_eq!(Fingerprint::from_hex(&hex), Some(fp));
+
+    // A truncated or mistyped digest must not parse. Accepting one would
+    // produce a value that can never match the file, which presents as a
+    // corrupt download rather than as the typo in a catalog entry it is.
+    assert_eq!(Fingerprint::from_hex(&hex[..63]), None, "too short");
+    assert_eq!(Fingerprint::from_hex(&format!("{hex}0")), None, "too long");
+    assert_eq!(
+        Fingerprint::from_hex(&("g".repeat(64))),
+        None,
+        "not hex at all"
+    );
+}
