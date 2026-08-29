@@ -83,7 +83,7 @@ impl Embeddings {
         let vectors = self.embed(Task::Document, texts).await?;
 
         for ((index, _), vector) in pending.into_iter().zip(vectors) {
-            point.vectors[index].vector = Some(super::point_convert::vector_to_wire(&vector));
+            point.vectors[index].vector = Some(super::convert::vector_to_wire(&vector));
             // Cleared so the stored point does not also claim to be unresolved
             // text, which a later reader would try to embed again.
             point.vectors[index].text = String::new();

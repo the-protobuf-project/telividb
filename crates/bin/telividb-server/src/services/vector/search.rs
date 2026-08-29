@@ -4,7 +4,7 @@
 //! this one about querying it — the write path and the read path have almost
 //! nothing in common beyond the map they share.
 
-use super::vectors::VectorFields;
+use super::fields::VectorFields;
 use telividb_core::{Dim, ResourceName, Result};
 use telividb_index::VectorIndex;
 use telividb_index::adapters::{FlatIndex, GpuFlatIndex};

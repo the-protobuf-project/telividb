@@ -49,13 +49,25 @@ impl ModelStore {
     ///
     /// Checks the digest rather than merely the path, because the interesting
     /// failure is a file that exists and is wrong — truncated by a full disk,
-    /// or replaced. Reads the whole file, so callers that only need to know
-    /// whether to show a download button should cache the answer.
+    /// or replaced.
+    ///
+    /// Streamed rather than read whole. The catalog calls this once per entry
+    /// every time it is listed, and a listing is what the window does on open —
+    /// so reading the files into memory would allocate gigabytes to answer a
+    /// question about a directory. It still walks every byte, so it is not free;
+    /// it is merely bounded.
     pub fn is_installed(&self, entry: &CatalogEntry) -> bool {
-        let path = self.path_of(&entry.id);
-        std::fs::read(&path)
-            .map(|bytes| Fingerprint::of(&bytes) == entry.digest)
-            .unwrap_or(false)
+        self.digest_of(&self.path_of(&entry.id))
+            .is_some_and(|found| found == entry.digest)
+    }
+
+    /// The digest of a file, or `None` if it cannot be read.
+    ///
+    /// Absence and failure are deliberately the same answer here: both mean
+    /// "not usable", and the callers cannot act differently on the difference.
+    fn digest_of(&self, path: &Path) -> Option<Fingerprint> {
+        let file = std::fs::File::open(path).ok()?;
+        Fingerprint::of_reader(std::io::BufReader::new(file)).ok()
     }
 
     /// Download and verify a model, returning where it landed.
@@ -132,8 +144,9 @@ impl ModelStore {
         partial: &Path,
         final_path: PathBuf,
     ) -> Result<PathBuf> {
-        let bytes = std::fs::read(partial)?;
-        let found = Fingerprint::of(&bytes);
+        let found = Fingerprint::of_reader(std::io::BufReader::new(std::fs::File::open(
+            partial,
+        )?))?;
         if found != entry.digest {
             let _ = std::fs::remove_file(partial);
             return Err(Error::DigestMismatch {
@@ -155,8 +168,15 @@ impl ModelStore {
     /// By filename rather than by digest, so this stays cheap; use
     /// [`is_installed`](Self::is_installed) when correctness matters.
     pub fn installed_ids(&self) -> Result<Vec<String>> {
-        let Ok(entries) = std::fs::read_dir(&self.root) else {
-            return Ok(Vec::new());
+        // A missing directory means nothing is installed, which is the normal
+        // state of a fresh data directory. Anything else — a permissions
+        // failure, a file where the directory should be — is reported rather
+        // than flattened into "nothing", because that would present as an empty
+        // catalog and offer downloads that then fail for the same reason.
+        let entries = match std::fs::read_dir(&self.root) {
+            Ok(entries) => entries,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(e) => return Err(e.into()),
         };
         let mut ids = Vec::new();
         for entry in entries.flatten() {

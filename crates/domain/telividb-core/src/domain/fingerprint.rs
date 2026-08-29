@@ -35,6 +35,28 @@ impl Fingerprint {
         Self(hasher.finalize().into())
     }
 
+    /// Fingerprint a stream, without holding it in memory.
+    ///
+    /// The counterpart to [`of`](Self::of), and the one to reach for on a file.
+    /// A model is hundreds of megabytes and the catalog checks every installed
+    /// one each time it is listed — reading them whole would allocate gigabytes
+    /// to answer a question about a directory.
+    ///
+    /// The buffer is 64 KiB: large enough that the syscall cost disappears,
+    /// small enough to stay off the heap's slow path.
+    pub fn of_reader(mut source: impl std::io::Read) -> std::io::Result<Self> {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        let mut buffer = vec![0u8; 64 * 1024];
+        loop {
+            let read = source.read(&mut buffer)?;
+            if read == 0 {
+                return Ok(Self(hasher.finalize().into()));
+            }
+            hasher.update(&buffer[..read]);
+        }
+    }
+
     /// Wrap a digest already computed elsewhere, such as one read from a header.
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self(bytes)

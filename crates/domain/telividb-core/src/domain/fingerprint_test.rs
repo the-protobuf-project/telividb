@@ -64,3 +64,21 @@ fn hex_round_trips_and_rejects_malformed_input() {
         "not hex at all"
     );
 }
+
+#[test]
+fn streaming_and_whole_buffer_hashing_agree() {
+    // They must, or an installed model would verify one way and fail the other
+    // depending on which path happened to check it.
+    let bytes: Vec<u8> = (0..200_000u32).map(|i| (i % 251) as u8).collect();
+    assert_eq!(
+        Fingerprint::of_reader(bytes.as_slice()).expect("reads"),
+        Fingerprint::of(&bytes),
+        "a stream longer than one buffer must hash the same as the whole slice"
+    );
+
+    // And the empty case, which is the boundary the read loop exits on.
+    assert_eq!(
+        Fingerprint::of_reader(&[][..]).expect("reads"),
+        Fingerprint::of(&[])
+    );
+}

@@ -17,6 +17,14 @@ pub enum Reference {
     File {
         /// Which repository the file lives in, as `owner/name`.
         repo: String,
+        /// Which revision — a branch, a tag or a commit.
+        ///
+        /// Kept rather than dropped. An earlier version normalised every link
+        /// to `main` on the grounds that the catalog pins it; that reasoning
+        /// covered catalog entries and not pasted links, where discarding the
+        /// revision silently fetches a *different file* than the one the person
+        /// asked for.
+        revision: String,
         /// Which file, chosen already — so no quantization prompt is needed.
         file: String,
     },
@@ -81,11 +89,12 @@ impl Reference {
         };
         let repo = format!("{owner}/{name}");
         // `.../resolve/<ref>/<file>` and `.../blob/<ref>/<file>` both name one
-        // file; the branch in the middle is dropped because the catalog pins
-        // `main`, and a pasted branch would silently disagree with the digest.
+        // file at one revision, and the revision is carried through: a link to a
+        // tag or a commit means that revision, not whatever `main` holds today.
         match rest {
-            ["resolve" | "blob", _reference, file @ ..] if !file.is_empty() => Self::File {
+            ["resolve" | "blob", reference, file @ ..] if !file.is_empty() => Self::File {
                 repo,
+                revision: (*reference).to_owned(),
                 file: file.join("/"),
             },
             _ => Self::Repository { repo },

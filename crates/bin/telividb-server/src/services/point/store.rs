@@ -8,7 +8,7 @@
 //! lock**, so two concurrent requests against one collection cannot each open
 //! their own handle — the second fails with "Database already open".
 
-use super::point::PointsSvc;
+use super::service::PointsSvc;
 use crate::error::storage_status;
 use std::path::PathBuf;
 use std::sync::Arc;

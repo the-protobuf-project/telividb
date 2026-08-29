@@ -4,8 +4,8 @@
 //! optimization pass. Search lives in `point_search.rs`: it is the one handler
 //! that composes several pieces rather than making a single store call.
 
-use super::point_convert::to_wire;
-use super::vectors::VectorFields;
+use super::convert::to_wire;
+use crate::services::vector::VectorFields;
 use crate::error::to_status;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -45,7 +45,7 @@ pub struct PointsSvc {
     /// Default-constructed means no model: such a request is refused with a
     /// message naming the flag that would enable it, rather than accepted and
     /// silently storing nothing.
-    pub(super) embeddings: super::embed::Embeddings,
+    pub(super) embeddings: crate::services::vector::Embeddings,
     /// The collection catalogue, shared with the collection service.
     ///
     /// `None` only in tests that exercise the point path directly. In a served
@@ -63,7 +63,7 @@ impl PointsSvc {
             vectors: Arc::new(VectorFields::new(data_dir.clone())),
             stores: Mutex::new(HashMap::new()),
             data_dir,
-            embeddings: super::embed::Embeddings::default(),
+            embeddings: crate::services::vector::Embeddings::default(),
             catalogue: None,
         }
     }
@@ -75,7 +75,7 @@ impl PointsSvc {
     }
 
     /// Serve text-to-vector requests with `embeddings`.
-    pub fn with_embeddings(mut self, embeddings: super::embed::Embeddings) -> Self {
+    pub fn with_embeddings(mut self, embeddings: crate::services::vector::Embeddings) -> Self {
         self.embeddings = embeddings;
         self
     }
@@ -87,7 +87,7 @@ impl Points for PointsSvc {
         &self,
         request: Request<CreatePointRequest>,
     ) -> Result<Response<Point>, Status> {
-        super::point_create::create_point(self, request).await
+        super::create::create_point(self, request).await
     }
 
     async fn get_point(
@@ -137,35 +137,35 @@ impl Points for PointsSvc {
         &self,
         request: Request<DeletePointRequest>,
     ) -> Result<Response<Point>, Status> {
-        super::point_delete::delete_point(self, request).await
+        super::delete::delete_point(self, request).await
     }
 
     async fn batch_create_points(
         &self,
         request: Request<BatchCreatePointsRequest>,
     ) -> Result<Response<BatchCreatePointsResponse>, Status> {
-        super::point_batch::create(self, request).await
+        super::batch::create(self, request).await
     }
 
     async fn batch_get_points(
         &self,
         request: Request<BatchGetPointsRequest>,
     ) -> Result<Response<BatchGetPointsResponse>, Status> {
-        super::point_batch::get(request)
+        super::batch::get(request)
     }
 
     async fn batch_delete_points(
         &self,
         request: Request<BatchDeletePointsRequest>,
     ) -> Result<Response<BatchDeletePointsResponse>, Status> {
-        super::point_batch::delete(request)
+        super::batch::delete(request)
     }
 
     async fn search_points(
         &self,
         request: Request<SearchPointsRequest>,
     ) -> Result<Response<SearchPointsResponse>, Status> {
-        super::point_search::search_points(self, request).await
+        super::search::search_points(self, request).await
     }
 }
 

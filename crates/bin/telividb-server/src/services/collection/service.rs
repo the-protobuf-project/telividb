@@ -5,7 +5,7 @@
 //! that matters: a field's width, metric and model are bound here, so a later
 //! point that disagrees is refused instead of quietly widening the field.
 
-use super::collection_convert::{to_domain, to_wire};
+use super::convert::{to_domain, to_wire};
 use crate::error::storage_status;
 use std::path::PathBuf;
 use std::sync::Arc;

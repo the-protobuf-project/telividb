@@ -49,8 +49,14 @@ impl RemoteFile {
 }
 
 /// The API endpoint listing a repository's files.
+///
+/// `recursive=true` because a repository may keep its quantizations in
+/// subdirectories rather than at the root — a layout several publishers use for
+/// multi-part files. Without it those repositories list as having no GGUF at
+/// all, which reads as "this model is unavailable" rather than "the listing did
+/// not descend".
 fn tree_url(repo: &str) -> String {
-    format!("https://huggingface.co/api/models/{repo}/tree/main")
+    format!("https://huggingface.co/api/models/{repo}/tree/main?recursive=true")
 }
 
 /// Every GGUF file in a repository, largest last.

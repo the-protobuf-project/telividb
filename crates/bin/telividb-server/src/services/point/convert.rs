@@ -3,6 +3,7 @@
 //! Split out of `point.rs` so the RPC handlers read as request handling, not
 //! field-by-field mapping.
 
+use super::super::vector::convert::{vector_to_domain, vector_to_wire};
 use telividb_buffers::protobuf::point::v1::{
     ContentRef as WireContentRef, NamedVector, Point as WirePoint, Span as WireSpan,
     Vector as WireVector,
@@ -47,44 +48,7 @@ pub(super) fn to_domain(
 /// The bytes are carried as a length-delimited field rather than a repeated
 /// scalar because protobuf encodes the latter element by element — 768 varint
 /// operations per message on the hot path.
-pub(super) fn vector_to_domain(wire: &WireVector) -> Result<Vec<f32>, Status> {
-    if wire.dimensions < 0 {
-        return Err(Status::invalid_argument(
-            "vector dimensions must not be negative",
-        ));
-    }
-    let declared = wire.dimensions as usize;
-    // Checked: a large declared width would otherwise wrap and accidentally
-    // match a short payload.
-    let expected = declared
-        .checked_mul(4)
-        .ok_or_else(|| Status::invalid_argument("vector dimensions overflow"))?;
-    if wire.data.len() != expected {
-        return Err(Status::invalid_argument(format!(
-            "vector declares {declared} dimensions but carries {} bytes; expected {expected}",
-            wire.data.len(),
-        )));
-    }
-    Ok(wire
-        .data
-        .as_chunks::<4>()
-        .0
-        .iter()
-        .map(|c| f32::from_le_bytes(*c))
-        .collect())
-}
-
-/// The reverse of [`vector_to_domain`].
-pub(super) fn vector_to_wire(vector: &[f32]) -> WireVector {
-    let mut data = Vec::with_capacity(vector.len() * 4);
-    for value in vector {
-        data.extend_from_slice(&value.to_le_bytes());
-    }
-    WireVector {
-        data: data.into(),
-        dimensions: vector.len() as i32,
-    }
-}
+pub(super) 
 
 /// The reverse of [`to_domain`], for responses.
 pub(super) fn to_wire(point: telividb_core::Point) -> WirePoint {

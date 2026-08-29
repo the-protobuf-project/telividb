@@ -46,6 +46,21 @@ impl Catalog {
 
         let manifest: Manifest =
             toml::from_str(source).map_err(|e| Error::Catalog(e.to_string()))?;
+
+        // The architecture gate runs during deserialization; this is the other
+        // half of the same promise. An entry whose modality has no encoder
+        // behind it would be offered, downloaded, and then found unusable — so
+        // it is refused where the catalog is built rather than where it is
+        // shown. Enforced rather than merely tested, because a manifest is data
+        // and the test only covers the one committed here.
+        if let Some(bad) = manifest.model.iter().find(|e| !e.is_usable()) {
+            return Err(Error::Catalog(format!(
+                "{}: {} models cannot be run by this engine, so the catalog \
+                 must not offer one",
+                bad.id, bad.modality
+            )));
+        }
+
         Ok(Self {
             entries: manifest.model,
         })

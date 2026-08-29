@@ -28,6 +28,7 @@ fn a_link_to_one_file_keeps_the_filename() {
         parsed,
         Some(Reference::File {
             repo: "CompendiumLabs/bge-small-en-v1.5-gguf".to_owned(),
+            revision: "main".to_owned(),
             file: "bge-small-en-v1.5-q8_0.gguf".to_owned(),
         })
     );
@@ -61,4 +62,18 @@ fn input_with_no_plausible_reading_is_refused() {
     for nonsense in ["", "   ", "bge-small", "a/b/c"] {
         assert_eq!(Reference::parse(nonsense), None, "{nonsense:?}");
     }
+}
+
+#[test]
+fn a_link_to_a_tag_or_commit_keeps_that_revision() {
+    // Normalising this to `main` would fetch a different file than the one the
+    // person pasted, silently — the link names a revision precisely because the
+    // contents of `main` move.
+    let Some(Reference::File { revision, file, .. }) = Reference::parse(
+        "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF/resolve/refs%2Fpr%2F3/Qwen3-Embedding-0.6B-Q8_0.gguf",
+    ) else {
+        panic!("a resolve link should name a file");
+    };
+    assert_eq!(revision, "refs%2Fpr%2F3");
+    assert_eq!(file, "Qwen3-Embedding-0.6B-Q8_0.gguf");
 }

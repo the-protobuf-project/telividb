@@ -21,7 +21,7 @@
 //! points written before it. Rather than claim otherwise, the failure names how
 //! far it got — see [`create`].
 
-use super::point::PointsSvc;
+use super::service::PointsSvc;
 use telividb_buffers::protobuf::point::v1::{
     BatchCreatePointsRequest, BatchCreatePointsResponse, BatchDeletePointsRequest,
     BatchDeletePointsResponse, BatchGetPointsRequest, BatchGetPointsResponse,
@@ -72,7 +72,7 @@ pub(super) async fn create(
         }
         item.parent = req.parent.clone();
 
-        let created = super::point_create::create_point(svc, Request::new(item))
+        let created = super::create::create_point(svc, Request::new(item))
             .await
             .map_err(|status| annotate(index, points.len(), status))?;
         points.push(created.into_inner());

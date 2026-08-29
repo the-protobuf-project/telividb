@@ -9,7 +9,7 @@
 //!
 //! Declaring up front turns all of that into a rejection at the boundary.
 
-use super::point::PointsSvc;
+use super::service::PointsSvc;
 use crate::error::storage_status;
 use telividb_core::{Collection, ResourceName};
 use tonic::Status;
