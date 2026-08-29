@@ -14,7 +14,15 @@
   import { ModelsState } from "./state.svelte";
   import ModelRow from "./ModelRow.svelte";
 
-  const state = new ModelsState(client);
+  interface Props {
+    /** Called when a model becomes resident, so the window can re-check what
+     *  the engine can now do. Text search is refused without one. */
+    oninstalled?: () => void;
+  }
+
+  let { oninstalled }: Props = $props();
+
+  const state = new ModelsState(client, () => oninstalled?.());
 
   $effect(() => {
     state.load();
@@ -66,10 +74,10 @@
   </Card.Content>
 
   <Card.Footer class="text-muted-foreground border-border block border-t pt-4 text-xs">
-    <!-- Said plainly rather than discovered. The engine loads its models at
-         startup and holds them resident, so a freshly installed one is not live
-         until it restarts. Implying otherwise would leave someone searching
-         against a model that is on disk and not loaded. -->
-    A newly installed model is used after the engine restarts.
+    <!-- This used to say a restart was needed. It was worse than that: nothing
+         looked in the model directory at all, so a restart changed nothing
+         either. The engine now loads a model as its download finishes, and
+         finds an installed one at startup. -->
+    A model is loaded as soon as it finishes installing — no restart.
   </Card.Footer>
 </Card.Root>

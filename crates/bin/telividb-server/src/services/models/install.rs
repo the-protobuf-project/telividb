@@ -77,8 +77,9 @@ impl ModelsSvc {
     fn spawn(&self, name: String, entry: CatalogEntry) {
         let store = self.store.clone();
         let installs = self.installs.clone();
+        let embeddings = self.embeddings.clone();
         tokio::task::spawn_blocking(move || {
-            let outcome = install(&store, &entry, &name, &installs);
+            let outcome = install(&store, &entry, &name, &installs, &embeddings);
             let mut guard = match installs.lock() {
                 Ok(guard) => guard,
                 Err(_) => return,
@@ -159,6 +160,7 @@ fn install(
     entry: &CatalogEntry,
     name: &str,
     installs: &super::Registry,
+    embeddings: &crate::services::vector::Embeddings,
 ) -> Result<(), telividb_models::Error> {
     logger::info!("model install started").with_data(&serde_json::json!({
         "telividb.model.id": entry.id,
@@ -166,7 +168,7 @@ fn install(
     }));
 
     let fetcher = HttpFetcher::new()?;
-    store
+    let path = store
         .install(entry, &fetcher, &mut |written| {
             let Ok(mut guard) = installs.lock() else {
                 return false;
@@ -182,6 +184,23 @@ fn install(
             record.state = InstallationState::Downloading as i32;
             record.progress_bytes = written as i64;
             true
-        })
-        .map(|_| ())
+        })?;
+
+    // Load it now rather than at the next start. Reading several hundred
+    // megabytes of weights takes seconds, so this happens here — on the
+    // blocking thread that just finished the download — and the installation
+    // stays `DOWNLOADING` until it is done. Reporting success before the model
+    // could answer a query would be the same lie as the restart notice this
+    // replaces.
+    if let Err(e) = embeddings.install(&path, &entry.id) {
+        logger::warn!("a model installed but could not be loaded").with_data(&serde_json::json!({
+            "telividb.model.id": entry.id,
+            "error": e.to_string(),
+        }));
+    }
+
+    logger::info!("model resident").with_data(&serde_json::json!({
+        "telividb.model.id": entry.id,
+    }));
+    Ok(())
 }

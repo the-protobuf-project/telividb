@@ -38,7 +38,14 @@
   // The engine is already running by the time the window opens — the app
   // refuses to start otherwise — so this only fails if the bridge itself is
   // broken, which is not something to render a banner for.
-  $effect(() => {
+  /**
+   * Re-read what the engine can do.
+   *
+   * Called on open and again whenever a model becomes resident: installing one
+   * changes whether text can be embedded, and nothing else would tell the
+   * window.
+   */
+  function refreshCapabilities() {
     client
       .capabilities()
       .then((c) => {
@@ -46,6 +53,10 @@
         canEmbed = c.has_model;
       })
       .catch(() => (address = null));
+  }
+
+  $effect(() => {
+    refreshCapabilities();
   });
 
   // Every part has to be mounted before the sequence can move it, and none of
@@ -101,7 +112,7 @@
       <Points {collection} {canEmbed} />
     {:else if active === "models"}
       <div class="p-4">
-        <Models />
+        <Models oninstalled={refreshCapabilities} />
       </div>
     {:else}
       <Placeholder

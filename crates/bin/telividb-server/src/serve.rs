@@ -39,7 +39,10 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
     // service consults it, so the two cannot disagree about what exists.
     let collections = CollectionSvc::open(config.data_dir.clone())
         .map_err(|e| Error::Catalogue(e.to_string()))?;
-    let points = build_points(&config)?.with_catalogue(collections.catalogue());
+    // One slot, shared: the point service reads it and the models service
+    // replaces it, so an install takes effect without a restart.
+    let embeddings = Embeddings::default();
+    let points = build_points(&config, embeddings.clone())?.with_catalogue(collections.catalogue());
 
     // Health reports SERVING once the router is up. A load balancer needs this
     // to distinguish "starting" from "broken", and it costs one service.
@@ -69,9 +72,10 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
         .add_service(SessionsServer::new(tenancy))
         // The catalog. Stateless apart from the model directory, so it is
         // built here rather than opened — nothing to lock, nothing to fail.
-        .add_service(ModelsServer::new(crate::services::models::ModelsSvc::new(
-            &config.data_dir,
-        )));
+        .add_service(ModelsServer::new(
+            crate::services::models::ModelsSvc::new(&config.data_dir)
+                .with_embeddings(embeddings),
+        ));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()
@@ -174,17 +178,47 @@ async fn ctrl_c() {
 /// indistinguishable from one that has hung. A failure to load is fatal for
 /// the same reason — a server that started without the model it was told to
 /// serve would refuse every text request while looking healthy.
-fn build_points(config: &ServerConfig) -> Result<PointsSvc> {
-    let svc = PointsSvc::new(config.data_dir.clone());
+fn build_points(config: &ServerConfig, embeddings: Embeddings) -> Result<PointsSvc> {
+    let svc = PointsSvc::new(config.data_dir.clone()).with_embeddings(embeddings.clone());
 
-    let Some(path) = &config.model_path else {
+    // An explicitly configured model wins: someone who named a path meant that
+    // file, and quietly preferring an installed one would ignore them.
+    if let Some(path) = &config.model_path {
+        embeddings
+            .install(path, &config.model_name)
+            .map_err(|e| Error::Model(format!("{}: {e}", path.display())))?;
+        return Ok(svc);
+    }
+
+    // Otherwise, load whatever the catalog says is installed. Without this an
+    // installed model was never found at all — not on the next request, and not
+    // after a restart either, because nothing but `TELIVIDB_MODEL` was ever
+    // consulted. Installing one appeared to succeed and changed nothing.
+    let store = telividb_models::ModelStore::new(config.data_dir.join("models"));
+    let catalog = telividb_models::Catalog::builtin();
+    let Some(entry) = store.resident_choice(&catalog) else {
         logger::info!("no embedding model configured").with_data(&serde_json::json!({
             fields::STRATEGY: "vectors-only",
         }));
         return Ok(svc);
     };
 
-    let embeddings = Embeddings::load(path, &config.model_name)
-        .map_err(|e| Error::Model(format!("{}: {e}", path.display())))?;
-    Ok(svc.with_embeddings(embeddings))
+    let path = store.path_of(&entry.id);
+    // Not fatal, unlike a configured path. A model that was installed and has
+    // since become unreadable should leave a server that still serves vectors,
+    // with the reason in the log — refusing to start would take the whole
+    // window down over a file the person can simply install again.
+    match embeddings.install(&path, &entry.id) {
+        Ok(()) => {
+            logger::info!("loaded an installed model").with_data(&serde_json::json!({
+                fields::MODEL: entry.id,
+            }));
+        }
+        Err(e) => {
+            logger::warn!("an installed model could not be loaded").with_data(
+                &serde_json::json!({ fields::MODEL: entry.id, "error": e.to_string() }),
+            );
+        }
+    }
+    Ok(svc)
 }

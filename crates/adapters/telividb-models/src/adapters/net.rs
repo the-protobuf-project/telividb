@@ -32,9 +32,21 @@ pub struct HttpFetcher {
 
 /// Bytes per ranged request.
 ///
-/// Large enough that the per-request overhead is noise against the transfer,
-/// small enough that an interruption loses little and progress moves visibly.
-const CHUNK: u64 = 8 * 1024 * 1024;
+/// Measured, not guessed. Against the model host each request costs about
+/// **1.3 s before a byte arrives** — redirect to the CDN, TLS, then time to
+/// first byte — after which it transfers at roughly 23 MB/s. That overhead is
+/// per request and independent of size: 2 MB took 1.45 s, 8 MB took 1.67 s,
+/// 32 MB took 2.73 s.
+///
+/// So the chunk size is almost entirely a choice about how many times to pay
+/// 1.3 s. At 8 MB a 639 MB model spends 104 s in overhead against 28 s of
+/// transfer — the download is then mostly waiting. At 64 MB it is 13 s, which
+/// is roughly a threefold speed-up on the largest model in the catalog.
+///
+/// The cost is a 64 MB buffer held per download and up to 64 MB re-fetched
+/// after an interruption. Both are small against a file measured in hundreds of
+/// megabytes, and the second only matters on a connection that drops often.
+const CHUNK: u64 = 64 * 1024 * 1024;
 
 /// How many times a single chunk is retried before the download fails.
 const RETRIES: usize = 3;

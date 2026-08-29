@@ -81,16 +81,26 @@ pub fn engine_address(state: tauri::State<'_, AppState>) -> String {
 
 /// What this engine can currently do.
 #[tauri::command]
-pub fn capabilities(state: tauri::State<'_, AppState>) -> Capabilities {
-    Capabilities {
-        has_model: state.has_model(),
+pub async fn capabilities(state: tauri::State<'_, AppState>) -> Result<Capabilities, String> {
+    // Asked of the engine rather than read from a startup flag. A model can now
+    // be installed while the window is open, and a cached "no model" would go on
+    // refusing text against a server that had one — which is what it did.
+    let mut client = state.client();
+    let installed = client
+        .list_models()
+        .await
+        .map(|models| models.iter().any(|m| m.installed))
+        .unwrap_or(false);
+
+    Ok(Capabilities {
+        has_model: installed || state.has_model(),
         address: state.addr().to_string(),
         // Detected here rather than at startup so the window shows what is
         // true now — a device that disappeared would otherwise be reported
         // from a cache taken before it did.
         environment: telividb_desktop_engine::Environment::detect(),
         data_dir: state.data_dir().to_owned(),
-    }
+    })
 }
 
 /// Render a client error for the window.

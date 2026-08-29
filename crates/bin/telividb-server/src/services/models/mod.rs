@@ -35,6 +35,12 @@ pub struct ModelsSvc {
     catalog: Catalog,
     /// Where model files live.
     store: ModelStore,
+    /// The model slot to load into once an install finishes.
+    ///
+    /// Shared with the point service rather than owned, which is what makes a
+    /// freshly installed model usable on the next request instead of after a
+    /// restart.
+    pub(super) embeddings: crate::services::vector::Embeddings,
     /// Installations by resource name.
     ///
     /// A `Mutex` rather than a channel because every access is a short read or
@@ -49,8 +55,15 @@ impl ModelsSvc {
         Self {
             catalog: Catalog::builtin(),
             store: ModelStore::new(data_dir.join("models")),
+            embeddings: crate::services::vector::Embeddings::default(),
             installs: Arc::new(Mutex::new(HashMap::new())),
         }
+    }
+
+    /// Load installed models into `embeddings` as they arrive.
+    pub fn with_embeddings(mut self, embeddings: crate::services::vector::Embeddings) -> Self {
+        self.embeddings = embeddings;
+        self
     }
 
     /// The installation registry, or a message if a panic poisoned it.

@@ -1,6 +1,6 @@
 //! Where installed models live on disk.
 
-use crate::{CatalogEntry, Error, Fetcher, Result};
+use crate::{Catalog, CatalogEntry, Error, Fetcher, Result};
 use std::path::{Path, PathBuf};
 use telividb_core::Fingerprint;
 use telividb_telemetry::logger;
@@ -159,6 +159,22 @@ impl ModelStore {
             "telividb.model.digest": entry.digest.short(),
         }));
         Ok(final_path)
+    }
+
+    /// An installed model to load, and where its file is.
+    ///
+    /// Prefers the catalog's recommendation, then falls back to whichever entry
+    /// is installed — so a first run that installed the default gets it, and a
+    /// run that installed something else still gets a model rather than none.
+    ///
+    /// Verifies the digest, because loading a truncated file fails deep in the
+    /// GGUF reader with a message about tensors rather than about the download.
+    pub fn resident_choice<'c>(&self, catalog: &'c Catalog) -> Option<&'c CatalogEntry> {
+        let installed = |e: &&'c CatalogEntry| self.is_installed(e);
+        catalog
+            .recommended()
+            .filter(|e| self.is_installed(e))
+            .or_else(|| catalog.entries().iter().find(installed))
     }
 
     /// The ids currently installed, in no particular order.

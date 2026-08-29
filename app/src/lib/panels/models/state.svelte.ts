@@ -34,7 +34,11 @@ export class ModelsState {
   /** Timers for the installations being polled, so they can be stopped. */
   private timers = new Map<string, ReturnType<typeof setInterval>>();
 
-  public constructor(private readonly client: TelividbClient) {}
+  public constructor(
+    private readonly client: TelividbClient,
+    /** Called once a model becomes resident. */
+    private readonly oninstalled?: () => void,
+  ) {}
 
   /** Read the catalog. */
   public async load(): Promise<void> {
@@ -91,7 +95,13 @@ export class ModelsState {
           // A finished install changes `installed` on the row, and only the
           // engine knows whether the digest verified — so the catalog is
           // re-read rather than the row being marked locally.
-          if (current.state === "succeeded") await this.load();
+          if (current.state === "succeeded") {
+            await this.load();
+            // The engine loads the model as the download finishes, so what the
+            // window can do has changed — text search and text import are
+            // refused without one, and nothing else would tell it.
+            this.oninstalled?.();
+          }
         }
       } catch (cause) {
         this.error = String(cause);
