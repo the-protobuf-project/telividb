@@ -9,7 +9,29 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+
+    // Beyond `strict`. Each of these turns a class of silent mistake into a
+    // compile error, and every one of them is a mistake this codebase can
+    // actually make.
+    //
+    // An index lookup returns `T | undefined` — `hits[0]` on an empty array is
+    // the exact shape of a search that matched nothing.
+    "noUncheckedIndexedAccess": true,
+    // A member without a modifier is ambiguous about whether it is API. This
+    // makes the question unavoidable rather than answered by omission.
+    "noImplicitOverride": true,
+    // A `case` that falls through is almost always a missing `break`.
+    "noFallthroughCasesInSwitch": true,
+    // An unused local is usually the remains of a change that is half finished.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    // `obj.foo` where `foo` was never declared, on an index-signature type.
+    "noPropertyAccessFromIndexSignature": true,
+    // `exactOptionalPropertyTypes` is deliberately absent: Tauri sends absent
+    // fields as absent and `undefined` as absent, so the distinction it
+    // enforces cannot survive the bridge and would only add casts.
+    "verbatimModuleSyntax": true
   }
   // Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
   // except $lib which is handled by https://svelte.dev/docs/kit/configuration#files

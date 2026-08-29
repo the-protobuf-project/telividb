@@ -1,0 +1,12 @@
+[package]
+name = "telividb-desktop-ipc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Tauri commands: a shim between the window and the engine's client."
+
+[dependencies]
+telividb-desktop-engine.workspace = true
+telividb-client.workspace = true
+tauri.workspace = true
+serde.workspace = true

@@ -1,0 +1,121 @@
+//! Starting the engine, and stopping it again.
+
+use crate::{DataDirLock, Error, Result};
+use std::net::SocketAddr;
+use std::path::PathBuf;
+use telividb_client::Client;
+use telividb_server::ServerConfig;
+use tokio::sync::oneshot;
+
+/// A running engine and a client that reaches it.
+///
+/// Dropping this stops the server: the shutdown sender goes with it, and
+/// `serve` treats a dropped sender as a stop. So quitting the window shuts the
+/// engine down through the same path a deliberate stop uses, rather than
+/// leaving it orphaned for the process to kill.
+pub struct Engine {
+    /// The claim on the data directory, held for as long as the engine runs.
+    _lock: DataDirLock,
+    /// Sending — or dropping — this stops the server.
+    stop: Option<oneshot::Sender<()>>,
+    /// Where the server is listening, for a second client or an external tool.
+    addr: SocketAddr,
+    /// A connected client. Cheap to clone; `Channel` multiplexes.
+    client: Client,
+}
+
+impl Engine {
+    /// Claim `data_dir`, start the engine on `addr`, and connect to it.
+    ///
+    /// Call once per process. Telemetry installs globally and exactly once, and
+    /// a failed install is fatal by design — a server whose telemetry silently
+    /// did not start is one nobody can debug afterwards.
+    pub async fn start(
+        data_dir: PathBuf,
+        addr: SocketAddr,
+        model: Option<PathBuf>,
+    ) -> Result<Self> {
+        // Before the engine opens anything. A busy directory should be a
+        // sentence about another window, not a storage error.
+        let lock = DataDirLock::acquire(&data_dir)?;
+
+        let (stop, shutdown) = oneshot::channel();
+        let config = ServerConfig {
+            data_dir,
+            model_path: model,
+            shutdown: Some(shutdown),
+            ..ServerConfig::at(addr)
+        };
+
+        let (ready, started) = oneshot::channel();
+        tokio::spawn(async move {
+            let outcome = telividb_server::serve(config).await;
+            // Only observed when the server stops before anything connects;
+            // afterwards the receiver is gone and the send fails harmlessly.
+            let _ = ready.send(outcome.err().map(|e| e.to_string()));
+        });
+
+        let client = connect(addr, started).await?;
+        Ok(Self {
+            _lock: lock,
+            stop: Some(stop),
+            addr,
+            client,
+        })
+    }
+
+    /// A client reaching this engine.
+    pub fn client(&self) -> Client {
+        self.client.clone()
+    }
+
+    /// Where the engine is listening.
+    pub fn addr(&self) -> SocketAddr {
+        self.addr
+    }
+
+    /// Stop the engine and wait for the claim to be released.
+    pub fn stop(mut self) {
+        if let Some(stop) = self.stop.take() {
+            let _ = stop.send(());
+        }
+    }
+}
+
+/// Connect once the server is accepting, or report why it never did.
+///
+/// The server binds its listener inside `serve`, so a client that connects the
+/// instant the task is spawned can beat it. Retrying briefly is what makes
+/// startup deterministic; racing the failure channel is what turns "connection
+/// refused" into the server's own reason for stopping.
+async fn connect(
+    addr: SocketAddr,
+    mut started: oneshot::Receiver<Option<String>>,
+) -> Result<Client> {
+    let endpoint = format!("http://{addr}");
+    let mut last = None;
+
+    for _ in 0..RETRIES {
+        if let Ok(Some(reason)) = started.try_recv() {
+            return Err(Error::Startup(reason));
+        }
+        match Client::connect(endpoint.clone()).await {
+            Ok(client) => return Ok(client),
+            Err(err) => last = Some(err),
+        }
+        tokio::time::sleep(RETRY_DELAY).await;
+    }
+
+    match started.try_recv() {
+        Ok(Some(reason)) => Err(Error::Startup(reason)),
+        _ => Err(last.map(Error::Connect).unwrap_or_else(|| {
+            Error::Startup("the engine never accepted a connection".to_owned())
+        })),
+    }
+}
+
+/// How many times to retry the first connection.
+const RETRIES: usize = 50;
+
+/// How long to wait between attempts — 50 × 20 ms is a second of patience.
+const RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(20);

@@ -23,7 +23,9 @@ members = [
 #
 # It still builds: `cargo build --manifest-path app/src-tauri/Cargo.toml`, or
 # through the Tauri CLI, which is how a Tauri app is normally driven anyway.
-exclude = ["app/src-tauri"]
+# `app` rather than `app/src-tauri`: the desktop app is now its own workspace
+# with several crates, and every one of them must stay out of this one.
+exclude = ["app"]
 
 # The engine is AGPL-3.0-or-later; commercial licences are available for
 # proprietary use — see LICENSE-COMMERCIAL.md.
