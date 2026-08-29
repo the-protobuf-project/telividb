@@ -26,6 +26,19 @@ impl Header {
         Some(unsafe { sys::gguf_get_val_u32(self.raw(), id) })
     }
 
+    /// A `bool` from the header.
+    ///
+    /// Sparse in practice, and every use of it so far is a tokenizer flag —
+    /// `add_bos_token`, `add_eos_token` — which decide whether a sequence is
+    /// terminated. That matters more than it sounds: a model pooling its last
+    /// token reads the position *after* the text, so a missing terminator
+    /// silently pools the final word instead of the summary state.
+    pub fn bool_meta(&self, key: &str) -> Option<bool> {
+        let id = self.key_id(key)?;
+        // SAFETY: `gguf` is live and `id` was returned by `find_key` for it.
+        Some(unsafe { sys::gguf_get_val_bool(self.raw(), id) })
+    }
+
     /// An `f32` from the header — layer-norm epsilon, rotary base.
     pub fn f32_meta(&self, key: &str) -> Option<f32> {
         let id = self.key_id(key)?;

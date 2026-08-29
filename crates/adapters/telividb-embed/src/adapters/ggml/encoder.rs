@@ -6,7 +6,7 @@
 //! referencing a weight in a graph copies nothing.
 
 use super::block::Block;
-use super::config::Config;
+use super::config::{Config, Family};
 use crate::domain::Pooling;
 use crate::error::{Error, Result};
 use std::path::Path;
@@ -95,13 +95,23 @@ impl Encoder {
         // Shaped (width, width, 1, rows): one key axis, one query axis, and a
         // row axis that ggml broadcasts over heads. Every query in a row sees
         // the same key mask, and no query sees another row at all.
+        //
+        // The causal family additionally hides every key *after* the query.
+        // These models are decoders: each position was trained having seen only
+        // what precedes it, and letting a query attend forwards runs the model
+        // in a regime it has never been in. Nothing fails — the vectors stay
+        // finite and correctly shaped — but they stop separating related text
+        // from unrelated text, which is what `tests/qwen3.rs` exists to catch.
+        // It caught exactly this.
+        let causal = self.config.family == Family::Causal;
         let mut values = Vec::with_capacity(width * width * rows);
         for row in 0..rows {
-            for _query in 0..width {
+            for query in 0..width {
                 for key in 0..width {
-                    values.push(match attention[row * width + key] {
-                        0 => -1e9,
-                        _ => 0.0,
+                    let hidden = attention[row * width + key] == 0 || (causal && key > query);
+                    values.push(match hidden {
+                        true => -1e9,
+                        false => 0.0,
                     });
                 }
             }
@@ -159,7 +169,30 @@ impl Encoder {
 
         for i in 0..self.config.layers {
             let block = Block::new(&self.weights, i);
-            xs = block.forward(ctx, &xs, &mask, positions.as_ref(), &self.config, width)?;
+            xs = match self.config.family {
+                Family::Bert => {
+                    block.forward(ctx, &xs, &mask, positions.as_ref(), &self.config, width)?
+                }
+                Family::Causal => block.forward_causal(
+                    ctx,
+                    &xs,
+                    &mask,
+                    positions.as_ref(),
+                    &self.config,
+                    width,
+                )?,
+            };
+        }
+
+        // A final norm after the last block, which pre-norm architectures need
+        // and post-norm ones do not: with the norms moved to each sublayer's
+        // input, nothing has normalized the residual stream on the way out.
+        // Pooling an unnormalized stream is not an error — it is vectors whose
+        // scale drifts with depth, which shows up as degraded recall rather
+        // than as a failure. BERT files carry no such tensor, so its absence is
+        // the architecture speaking.
+        if let Ok(weight) = ctx.weight(&self.weights, "output_norm.weight") {
+            xs = xs.rms_norm(&weight, self.config.eps)?;
         }
         Ok(xs)
     }

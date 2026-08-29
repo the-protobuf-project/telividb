@@ -151,3 +151,44 @@ fn the_mask_broadcasts_over_the_batch_axis() {
     assert!(got[1].abs() < 1e-6, "row 0 key 1 kept weight: {got:?}");
     assert!(got[11].abs() < 1e-6, "row 1 key 2 kept weight: {got:?}");
 }
+
+#[test]
+fn rms_norm_divides_by_the_root_mean_square_and_subtracts_no_mean() {
+    // The distinction that matters against `layer_norm`, and the reason the
+    // two are not interchangeable: this subtracts no mean and adds no bias.
+    // For [1,2,3,4] the mean square is (1+4+9+16)/4 = 7.5, so every element is
+    // divided by sqrt(7.5) = 2.7386.
+    let backend = cpu();
+    let ctx = Context::new(&backend, 64).unwrap();
+    let x = ctx.input_f32(&[1.0, 2.0, 3.0, 4.0], [4, 1]).unwrap();
+    let ones = ctx.input_f32(&[1.0, 1.0, 1.0, 1.0], [4, 1]).unwrap();
+
+    let got = ctx.compute(&x.rms_norm(&ones, 1e-6).unwrap()).unwrap();
+
+    let rms = 7.5f32.sqrt();
+    for (got, expected) in got.iter().zip([1.0, 2.0, 3.0, 4.0]) {
+        assert!(
+            (got - expected / rms).abs() < 1e-5,
+            "{got} vs {}",
+            expected / rms
+        );
+    }
+    // A mean-subtracting norm would centre these on zero, so the sum being
+    // clearly positive is what proves the right one ran.
+    assert!(got.iter().sum::<f32>() > 3.0);
+}
+
+#[test]
+fn rms_norm_applies_its_weight() {
+    let backend = cpu();
+    let ctx = Context::new(&backend, 64).unwrap();
+    let x = ctx.input_f32(&[3.0, 4.0], [2, 1]).unwrap();
+    // Mean square is (9+16)/2 = 12.5, so the divisor is sqrt(12.5).
+    let weight = ctx.input_f32(&[2.0, 0.0], [2, 1]).unwrap();
+
+    let got = ctx.compute(&x.rms_norm(&weight, 1e-6).unwrap()).unwrap();
+
+    let rms = 12.5f32.sqrt();
+    assert!((got[0] - 2.0 * 3.0 / rms).abs() < 1e-5, "{got:?}");
+    assert!(got[1].abs() < 1e-6, "a zero weight must zero its channel");
+}

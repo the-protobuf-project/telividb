@@ -10,7 +10,10 @@
 mod attention;
 mod batch;
 mod block;
+mod causal;
+mod causal_attention;
 mod config;
+mod config_parse;
 mod encoder;
 mod inferencer;
 mod pipeline;
@@ -18,6 +21,7 @@ mod pool;
 mod resident;
 mod schedule;
 mod vocab;
+mod vocab_bpe;
 mod vocab_rules;
 
 pub use config::{Config, SUPPORTED};

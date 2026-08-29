@@ -133,6 +133,26 @@ impl<'c, 'b> Tensor<'c, 'b> {
         normed.mul(weight)?.add(bias)
     }
 
+    /// Normalize over `ne[0]` by root-mean-square, then scale by `weight`.
+    ///
+    /// The normalization every current transformer uses in place of
+    /// [`layer_norm`](Self::layer_norm), and the difference is not only
+    /// cosmetic: RMS norm subtracts no mean and adds no bias, so the two are
+    /// not interchangeable. Applying the wrong one produces activations that
+    /// are finite and correctly shaped, and a model that quietly returns worse
+    /// vectors — the failure mode this crate's shape checks cannot catch.
+    ///
+    /// No bias parameter, because these architectures have none. A weight is
+    /// still required: ggml's `rms_norm` does the normalization only, and the
+    /// scale is a separate node.
+    pub fn rms_norm(&self, weight: &Self, eps: f32) -> Result<Self> {
+        // SAFETY: every node belongs to this context, which is live.
+        let normed = self.wrap("rms_norm", unsafe {
+            sys::ggml_rms_norm(self.ctx.raw, self.raw, eps)
+        })?;
+        normed.mul(weight)
+    }
+
     /// Softmax over `ne[0]`.
     pub fn softmax(&self) -> Result<Self> {
         // SAFETY: `raw` is a live node in this context.

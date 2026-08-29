@@ -137,3 +137,19 @@ context_length = 512
 quantization = "Q8_0"
 license = "apache-2.0"
 recommended = false
+
+[[model]]
+id = "qwen3-embedding-0.6b"
+display_name = "Qwen3 Embedding 0.6B"
+description = "A decoder-derived embedder with a 32k context — far longer than the BERT models here, which stop at 512 tokens. Larger and slower than BGE Base at the same 1024 width, and the one to reach for when whole documents matter more than throughput."
+repository = "Qwen/Qwen3-Embedding-0.6B-GGUF"
+file = "Qwen3-Embedding-0.6B-Q8_0.gguf"
+digest = "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439"
+size_bytes = 639150592
+modality = "text"
+architecture = "qwen3"
+dimensions = 1024
+context_length = 32768
+quantization = "Q8_0"
+license = "apache-2.0"
+recommended = false

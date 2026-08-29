@@ -54,7 +54,7 @@ impl<'w> Block<'w> {
     }
 
     /// `down(gelu(up(x)))`, or the gated form when a gate is present.
-    fn feed_forward<'c, 'b>(
+    pub(super) fn feed_forward<'c, 'b>(
         &self,
         ctx: &'c Context<'b>,
         xs: &Tensor<'c, 'b>,

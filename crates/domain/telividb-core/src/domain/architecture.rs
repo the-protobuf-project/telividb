@@ -23,13 +23,26 @@ pub enum Architecture {
     Bert,
     /// Nomic's BERT variant, which extends the context window past 512 tokens.
     NomicBert,
+    /// Qwen3, including the Qwen3-Embedding family.
+    ///
+    /// Decoder-derived: pre-norm, RMSNorm, grouped-query attention, a gated
+    /// feed-forward network, and per-head query and key normalization. It also
+    /// pools its **last** token rather than its first, which is the part most
+    /// easily got wrong — the result is a worse vector, never an error.
+    Qwen3,
+    /// Llama, and the embedding models built on it such as E5-Mistral.
+    ///
+    /// The same forward pass as [`Qwen3`](Self::Qwen3) minus the per-head
+    /// norms, which the loader takes from the file rather than the name: the
+    /// tensors are absent, and absence is the architecture speaking.
+    Llama,
 }
 
 impl Architecture {
     /// Every architecture the encoder implements, by GGUF name.
     ///
     /// The order is stable so error messages read the same way twice.
-    pub const NAMES: &'static [&'static str] = &["bert", "nomic-bert"];
+    pub const NAMES: &'static [&'static str] = &["bert", "nomic-bert", "qwen3", "llama"];
 
     /// Recognise an architecture by the name a GGUF header carries.
     ///
@@ -42,6 +55,8 @@ impl Architecture {
         match name {
             "bert" => Some(Self::Bert),
             "nomic-bert" => Some(Self::NomicBert),
+            "qwen3" => Some(Self::Qwen3),
+            "llama" => Some(Self::Llama),
             _ => None,
         }
     }
@@ -51,6 +66,8 @@ impl Architecture {
         match self {
             Self::Bert => "bert",
             Self::NomicBert => "nomic-bert",
+            Self::Qwen3 => "qwen3",
+            Self::Llama => "llama",
         }
     }
 }

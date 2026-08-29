@@ -1319,6 +1319,134 @@ messages:
       - number: 2
         ordinal: 1
         name: dimensions
+  - message: telividb.models.v1.CatalogModel
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: display_name
+      - number: 3
+        ordinal: 2
+        name: description
+      - number: 4
+        ordinal: 3
+        name: repository_uri
+      - number: 5
+        ordinal: 4
+        name: digest
+      - number: 6
+        ordinal: 5
+        name: size_bytes
+      - number: 7
+        ordinal: 6
+        name: modality
+      - number: 8
+        ordinal: 7
+        name: architecture
+      - number: 9
+        ordinal: 8
+        name: dimensions
+      - number: 10
+        ordinal: 9
+        name: context_length
+      - number: 11
+        ordinal: 10
+        name: quantization
+      - number: 12
+        ordinal: 11
+        name: license
+      - number: 13
+        ordinal: 12
+        name: recommended
+      - number: 14
+        ordinal: 13
+        name: installed
+  - message: telividb.models.v1.CreateModelInstallationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: model_installation
+      - number: 2
+        ordinal: 1
+        name: model_installation_id
+  - message: telividb.models.v1.DeleteModelInstallationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.models.v1.GetCatalogModelRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.models.v1.GetModelInstallationRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+  - message: telividb.models.v1.ListCatalogModelsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: page_size
+      - number: 2
+        ordinal: 1
+        name: page_token
+      - number: 3
+        ordinal: 2
+        name: filter
+  - message: telividb.models.v1.ListCatalogModelsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: catalog_models
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.models.v1.ListModelInstallationsRequest
+    fields:
+      - number: 1
+        ordinal: 0
+        name: page_size
+      - number: 2
+        ordinal: 1
+        name: page_token
+  - message: telividb.models.v1.ListModelInstallationsResponse
+    fields:
+      - number: 1
+        ordinal: 0
+        name: model_installations
+      - number: 2
+        ordinal: 1
+        name: next_page_token
+  - message: telividb.models.v1.ModelInstallation
+    fields:
+      - number: 1
+        ordinal: 0
+        name: name
+      - number: 2
+        ordinal: 1
+        name: catalog_model
+      - number: 3
+        ordinal: 2
+        name: state
+      - number: 4
+        ordinal: 3
+        name: progress_bytes
+      - number: 5
+        ordinal: 4
+        name: total_bytes
+      - number: 6
+        ordinal: 5
+        name: error
+      - number: 7
+        ordinal: 6
+        name: create_time
+      - number: 8
+        ordinal: 7
+        name: update_time
   - message: telividb.point.v1.BatchCreatePointsRequest
     fields:
       - number: 1
@@ -2142,6 +2270,46 @@ enums:
       - number: 2
         ordinal: 2
         name: TASK_QUERY
+  - enum: telividb.models.v1.InstallationState
+    values:
+      - number: 0
+        ordinal: 0
+        name: INSTALLATION_STATE_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: INSTALLATION_STATE_PENDING
+      - number: 2
+        ordinal: 2
+        name: INSTALLATION_STATE_DOWNLOADING
+      - number: 3
+        ordinal: 3
+        name: INSTALLATION_STATE_VERIFYING
+      - number: 4
+        ordinal: 4
+        name: INSTALLATION_STATE_SUCCEEDED
+      - number: 5
+        ordinal: 5
+        name: INSTALLATION_STATE_FAILED
+      - number: 6
+        ordinal: 6
+        name: INSTALLATION_STATE_CANCELLED
+  - enum: telividb.models.v1.Modality
+    values:
+      - number: 0
+        ordinal: 0
+        name: MODALITY_UNSPECIFIED
+      - number: 1
+        ordinal: 1
+        name: MODALITY_TEXT
+      - number: 2
+        ordinal: 2
+        name: MODALITY_IMAGE
+      - number: 3
+        ordinal: 3
+        name: MODALITY_AUDIO
+      - number: 4
+        ordinal: 4
+        name: MODALITY_VIDEO
   - enum: telividb.policy.v1.Effect
     values:
       - number: 0
@@ -2307,6 +2475,20 @@ services:
         ordinal: 1
       - name: EmbedText
         ordinal: 2
+  - service: telividb.models.v1.Models
+    methods:
+      - name: ListCatalogModels
+        ordinal: 0
+      - name: GetCatalogModel
+        ordinal: 1
+      - name: CreateModelInstallation
+        ordinal: 2
+      - name: GetModelInstallation
+        ordinal: 3
+      - name: ListModelInstallations
+        ordinal: 4
+      - name: DeleteModelInstallation
+        ordinal: 5
   - service: telividb.point.v1.Points
     methods:
       - name: CreatePoint

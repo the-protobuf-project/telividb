@@ -1,0 +1,88 @@
+// The ModelInstallation resource.
+syntax = "proto3";
+
+package telividb.models.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/models/v1;modelsv1";
+option java_multiple_files = true;
+option java_outer_classname = "ModelInstallationProto";
+option java_package = "dev.telividb.models.v1";
+option (buffers.v1.file) = {namespace: "telividb.models.v1"};
+
+// One attempt to install a catalog model.
+//
+// A resource rather than a blocking call, because a model file is hundreds of
+// megabytes: an install outlives any request deadline, has to survive a restart,
+// and has to be cancellable. Creating this returns immediately with a handle;
+// progress is read back by getting it.
+message ModelInstallation {
+  option (google.api.resource) = {
+    type: "telividb.dev/ModelInstallation"
+    pattern: "modelInstallations/{model_installation}"
+    singular: "modelInstallation"
+    plural: "modelInstallations"
+  };
+
+  // Resource name of the installation.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // The catalog model being installed.
+  string catalog_model = 2 [
+    (google.api.field_behavior) = IMMUTABLE,
+    (google.api.resource_reference) = {type: "telividb.dev/CatalogModel"}
+  ];
+
+  // How far it has got.
+  InstallationState state = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Bytes written so far, including any resumed from an earlier attempt.
+  //
+  // Cumulative rather than per-attempt, so a resumed install shows a bar that
+  // continues instead of restarting.
+  int64 progress_bytes = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Total bytes expected, copied from the catalog entry.
+  int64 total_bytes = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Why it failed, when `state` is `FAILED`.
+  //
+  // A digest mismatch is reported here rather than as a transport error: the
+  // file arrived intact and is not the file the catalog names, which is a
+  // different problem with a different remedy.
+  string error = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When the installation was created.
+  google.protobuf.Timestamp create_time = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // When its state last changed.
+  google.protobuf.Timestamp update_time = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// How far an installation has got.
+enum InstallationState {
+  // Unspecified. Never returned by the server.
+  INSTALLATION_STATE_UNSPECIFIED = 0;
+
+  // Accepted and waiting to start.
+  INSTALLATION_STATE_PENDING = 1;
+
+  // Transferring bytes.
+  INSTALLATION_STATE_DOWNLOADING = 2;
+
+  // Transferred; the digest is being checked against the catalog.
+  INSTALLATION_STATE_VERIFYING = 3;
+
+  // Installed, verified, and ready once the engine next starts.
+  INSTALLATION_STATE_SUCCEEDED = 4;
+
+  // Stopped without installing. `error` says why.
+  INSTALLATION_STATE_FAILED = 5;
+
+  // Cancelled by a caller deleting the installation.
+  INSTALLATION_STATE_CANCELLED = 6;
+}

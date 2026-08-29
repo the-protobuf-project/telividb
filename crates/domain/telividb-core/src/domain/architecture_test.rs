@@ -18,11 +18,10 @@ fn architectures_this_engine_cannot_read_are_refused() {
     // string because the point is that *plausible* input is refused: the first
     // three are encoders whose output would look entirely reasonable.
     for unsupported in [
-        "gemma-embedding", // EmbeddingGemma
-        "qwen3",           // Qwen3-Embedding
-        "llama",           // E5-Mistral, and every generative model
-        "clip",            // image towers
-        "whisper",         // audio
+        "gemma-embedding", // EmbeddingGemma: RMS-normed, but softcapped and
+        // with alternating local/global attention
+        "clip",    // image towers
+        "whisper", // audio
     ] {
         assert_eq!(Architecture::from_gguf(unsupported), None, "{unsupported}");
     }
