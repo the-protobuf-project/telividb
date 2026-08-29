@@ -68,7 +68,25 @@ impl Engine {
             let _ = ready.send(outcome.err().map(|e| e.to_string()));
         });
 
-        let client = connect(addr, started).await?;
+        // Not `?`. Returning here would drop `stop` and `lock` together with
+        // the frame: the shutdown signal would be sent and the claim on the
+        // data directory released in the same instant, while the server is
+        // still unwinding. A caller that retried immediately — which is the
+        // obvious thing to do when a connection fails — would meet a directory
+        // that looks free and is not.
+        //
+        // So the failure path waits for the same thing the success path does.
+        // `lock` is still live here and drops at the end of this function,
+        // after the await.
+        let client = match connect(addr, started).await {
+            Ok(client) => client,
+            Err(error) => {
+                let _ = stop.send(());
+                let _ = serving.await;
+                return Err(error);
+            }
+        };
+
         Ok(Self {
             stop: Some(stop),
             serving: Some(serving),

@@ -54,7 +54,10 @@ pub async fn search(
     }
 
     let mut collection = state.client().collection(&request.collection);
-    let results = match &request.text {
+    // Dispatched on the same reading of the request the check above used. On
+    // `request.text` directly, a present-but-empty string would pass validation
+    // as a vector search and then be sent as a text query of "".
+    let results = match request.text.as_deref().filter(|_| has_text) {
         Some(text) => collection
             .search_text(&request.field, text, request.k)
             .await
