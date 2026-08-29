@@ -85,6 +85,11 @@ pub fn capabilities(state: tauri::State<'_, AppState>) -> Capabilities {
     Capabilities {
         has_model: state.has_model(),
         address: state.addr().to_string(),
+        // Detected here rather than at startup so the window shows what is
+        // true now — a device that disappeared would otherwise be reported
+        // from a cache taken before it did.
+        environment: telividb_desktop_engine::Environment::detect(),
+        data_dir: state.data_dir().to_owned(),
     }
 }
 

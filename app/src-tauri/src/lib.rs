@@ -21,6 +21,7 @@ use telividb_desktop_ipc::AppState;
 pub fn run() {
     let settings = Settings::resolve();
     let has_model = settings.model.is_some();
+    let data_dir = settings.data_dir.display().to_string();
 
     // A dedicated runtime, started before Tauri.
     //
@@ -46,7 +47,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .manage(AppState::new(engine, has_model))
+        .manage(AppState::new(engine, has_model, data_dir))
         .invoke_handler(telividb_desktop_ipc::commands!())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

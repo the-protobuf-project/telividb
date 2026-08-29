@@ -7,6 +7,7 @@
 -->
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
+  import Icon from "./Icon.svelte";
 
   /** One entry in the switcher. */
   interface Panel {
@@ -14,8 +15,8 @@
     readonly id: string;
     /** What the reader sees. */
     readonly label: string;
-    /** A glyph, kept to one character so the column stays even. */
-    readonly glyph: string;
+    /** The Lineicons name, without the `lni-` prefix. */
+    readonly icon: string;
     /** Absent when the panel is ready; the reason it is not, otherwise. */
     readonly blocked?: string;
   }
@@ -30,19 +31,19 @@
   let { active = $bindable("search"), ref = $bindable(null) }: Props = $props();
 
   const panels: readonly Panel[] = [
-    { id: "search", label: "Search", glyph: "⌕" },
-    { id: "collections", label: "Collections", glyph: "◳" },
-    { id: "points", label: "Points", glyph: "▤" },
+    { id: "search", label: "Search", icon: "search-1" },
+    { id: "collections", label: "Collections", icon: "database-1" },
+    { id: "points", label: "Points", icon: "list-1" },
     {
       id: "graph",
       label: "Graph",
-      glyph: "⬡",
+      icon: "network-1",
       blocked: "The Graph service is not served yet.",
     },
     {
       id: "system",
       label: "System",
-      glyph: "◈",
+      icon: "bolt",
       blocked: "The SystemInfo service is not served yet.",
     },
   ];
@@ -61,7 +62,7 @@
       onclick={() => (active = panel.id)}
       class="justify-start gap-2.5"
     >
-      <span class="text-muted-foreground w-3 text-center">{panel.glyph}</span>
+      <Icon name={panel.icon} class="text-muted-foreground" />
       {panel.label}
     </Button>
   {/each}

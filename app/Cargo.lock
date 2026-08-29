@@ -4842,7 +4842,9 @@ name = "telividb-desktop-engine"
 version = "0.1.0"
 dependencies = [
  "libc",
+ "serde",
  "telividb-client",
+ "telividb-compute",
  "telividb-server",
  "thiserror 2.0.20",
  "tokio",

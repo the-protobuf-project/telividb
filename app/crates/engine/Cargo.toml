@@ -8,6 +8,9 @@ description = "Runs the telividb engine inside the desktop process and hands bac
 [dependencies]
 telividb-server.workspace = true
 telividb-client.workspace = true
+telividb-compute.workspace = true
+# The environment crosses the bridge as JSON.
+serde.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "sync", "time"] }
 thiserror.workspace = true
 

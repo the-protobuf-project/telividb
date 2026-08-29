@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 use telividb_client::{Record, SearchResults};
+use telividb_desktop_engine::Environment;
 
 /// One collection, as the sidebar needs it.
 #[derive(Debug, Clone, Serialize)]
@@ -171,4 +172,8 @@ pub struct Capabilities {
     pub has_model: bool,
     /// Where the engine is listening.
     pub address: String,
+    /// The compute environment, as this process found it.
+    pub environment: Environment,
+    /// The directory holding segments, the write-ahead log and metadata.
+    pub data_dir: String,
 }

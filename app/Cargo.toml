@@ -29,6 +29,10 @@ telividb-desktop-ipc = { path = "crates/ipc" }
 # The engine, by path into the repository workspace.
 telividb-server = { path = "../crates/bin/telividb-server" }
 telividb-client = { path = "../crates/sdk/telividb-client" }
+# Layer one, for reporting which backend was actually selected. The app already
+# links it transitively through the server; naming it here is what lets the
+# window ask before the engine has done any work.
+telividb-compute = { path = "../crates/platform/telividb-compute" }
 
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"

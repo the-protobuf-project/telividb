@@ -6,6 +6,9 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/jetbrains-mono";
 @import "tailwindcss";
+/* Lineicons, from the package rather than a CDN — the app has to work with no
+ * network, and a stylesheet fetched at launch is a blank icon set offline. */
+@import "lineicons/dist/lineicons.css";
 
 /* shadcn components ask for `dark:` variants. The app is dark by default rather
  * than by preference, so the variant is bound to a class that is present unless

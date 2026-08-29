@@ -14,7 +14,12 @@
   import Collections from "$lib/panels/collections/Collections.svelte";
   import Points from "$lib/panels/points/Points.svelte";
   import { Intro } from "$lib/motion/intro";
+  import Onboarding from "$lib/onboarding/Onboarding.svelte";
+  import { OnboardingState } from "$lib/onboarding/state.svelte";
 
+  // Shown until this machine has been through it once. Read synchronously so
+  // the app does not flash the shell before deciding.
+  let onboarding = $state(!OnboardingState.seen());
   let active = $state("collections");
   let address = $state<string | null>(null);
   // Assumed false until the engine says otherwise: offering an import that
@@ -42,9 +47,10 @@
       .catch(() => (address = null));
   });
 
-  // Every part has to be mounted before the sequence can move it.
+  // Every part has to be mounted before the sequence can move it, and none of
+  // them exist while onboarding is on screen.
   $effect(() => {
-    if (markRef && barRef && sidebarRef && panelRef) {
+    if (!onboarding && markRef && barRef && sidebarRef && panelRef) {
       intro.play({
         mark: markRef,
         bar: barRef,
@@ -64,12 +70,23 @@
   };
 </script>
 
-<StatusBar {address} bind:ref={barRef} bind:markRef />
+{#if onboarding}
+  <Onboarding
+    ondone={(created) => {
+      if (created) {
+        collection = created;
+        active = "points";
+      }
+      onboarding = false;
+    }}
+  />
+{:else}
+  <StatusBar {address} bind:ref={barRef} bind:markRef />
 
-<div class="flex min-h-0 flex-1">
-  <Sidebar bind:active bind:ref={sidebarRef} />
+  <div class="flex min-h-0 flex-1">
+    <Sidebar bind:active bind:ref={sidebarRef} />
 
-  <main bind:this={panelRef} class="min-w-0 flex-1">
+    <main bind:this={panelRef} class="min-w-0 flex-1">
     {#if active === "search"}
       <Search />
     {:else if active === "collections"}
@@ -87,5 +104,6 @@
         waiting={waiting[active] ?? "Not built yet."}
       />
     {/if}
-  </main>
-</div>
+    </main>
+  </div>
+{/if}

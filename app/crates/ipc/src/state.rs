@@ -15,6 +15,9 @@ use telividb_desktop_engine::Engine;
 pub struct AppState {
     /// Owns the running server and the data-directory claim.
     engine: Engine,
+    /// Where the data directory is, for the window to show and an operator to
+    /// find. The app chose it, so the app is what can report it.
+    data_dir: String,
     /// Whether the engine was started with an embedding model.
     ///
     /// Reported rather than inferred. Without one the server refuses text —
@@ -29,9 +32,18 @@ pub struct AppState {
 }
 
 impl AppState {
-    /// Wrap a started engine, recording whether a model came with it.
-    pub fn new(engine: Engine, has_model: bool) -> Self {
-        Self { engine, has_model }
+    /// Wrap a started engine, recording what the app configured it with.
+    pub fn new(engine: Engine, has_model: bool, data_dir: String) -> Self {
+        Self {
+            engine,
+            data_dir,
+            has_model,
+        }
+    }
+
+    /// The directory this engine owns.
+    pub fn data_dir(&self) -> &str {
+        &self.data_dir
     }
 
     /// Whether text can be embedded, for storage or for search.
