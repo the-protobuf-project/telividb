@@ -20,6 +20,7 @@ mod catalog;
 mod convert;
 mod install;
 mod service;
+mod transfer;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

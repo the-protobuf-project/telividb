@@ -34,8 +34,14 @@ pub struct CatalogModel {
     pub license: String,
     /// Whether this is the default offer.
     pub recommended: bool,
-    /// Whether the file is present locally and matches its digest.
+    /// Whether the file is on disk at its full length.
     pub installed: bool,
+    /// Whether its weights are loaded and able to embed right now.
+    ///
+    /// Separate from [`installed`](Self::installed) because the gap between the
+    /// two is seconds on a large model, and it is the window in which text is
+    /// refused.
+    pub resident: bool,
 }
 
 /// How far an installation has got.
@@ -82,6 +88,7 @@ impl CatalogModel {
             license: source.license.clone(),
             recommended: source.recommended,
             installed: source.installed,
+            resident: source.resident,
         }
     }
 }

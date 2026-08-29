@@ -11,6 +11,7 @@ mod gguf;
 mod gguf_reader;
 mod gguf_skip;
 mod store;
+mod store_install;
 
 pub mod huggingface;
 

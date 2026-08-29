@@ -1363,6 +1363,9 @@ messages:
       - number: 14
         ordinal: 13
         name: installed
+      - number: 15
+        ordinal: 14
+        name: resident
   - message: telividb.models.v1.CreateModelInstallationRequest
     fields:
       - number: 1

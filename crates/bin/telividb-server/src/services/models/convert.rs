@@ -7,11 +7,16 @@ use telividb_models::{CatalogEntry, ModelStore};
 
 /// One catalog entry, as the API describes it.
 ///
-/// `installed` is computed rather than stored, and it verifies the digest
-/// rather than checking that a path exists: the interesting failure is a file
-/// that is present and wrong — truncated by a full disk, or replaced — and
-/// reporting that as installed would offer a model that fails at load.
-pub(super) fn entry(source: &CatalogEntry, store: &ModelStore) -> wire::CatalogModel {
+/// `installed` and `resident` are both computed rather than stored, and they
+/// answer different questions: whether the file is on disk, and whether its
+/// weights are loaded and able to serve a request. The gap between them is
+/// seconds on a large model, and a caller that conflates them sends text into
+/// that window and is refused.
+pub(super) fn entry(
+    source: &CatalogEntry,
+    store: &ModelStore,
+    resident: Option<&str>,
+) -> wire::CatalogModel {
     wire::CatalogModel {
         name: catalog_name(&source.id),
         display_name: source.display_name.clone(),
@@ -27,6 +32,10 @@ pub(super) fn entry(source: &CatalogEntry, store: &ModelStore) -> wire::CatalogM
         license: source.license.clone(),
         recommended: source.recommended,
         installed: store.is_installed(source),
+        // Named rather than counted: several models can be installed and only
+        // one is loaded, and a caller deciding whether it can send text needs
+        // to know which.
+        resident: resident == Some(source.id.as_str()),
     }
 }
 

@@ -42,9 +42,10 @@
     <p
       class="border-destructive/40 bg-destructive/10 text-destructive rounded-md border px-2.5 py-2 text-xs"
     >
-      This engine has no embedding model, so it cannot accept text. Start it
-      with <span class="selectable font-mono">TELIVIDB_MODEL</span> pointing at
-      a GGUF file to import.
+      No embedding model is loaded yet, so this engine cannot accept text.
+      Install one from <span class="font-medium">Models</span> — or wait a
+      moment if you just started the app, since a model is read into memory in
+      the background and is not ready the instant the window opens.
     </p>
   {/if}
 

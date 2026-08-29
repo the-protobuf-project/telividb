@@ -162,6 +162,7 @@ pub mod telividb {
                 pub const VT_LICENSE: ::flatbuffers::VOffsetT = 26;
                 pub const VT_RECOMMENDED: ::flatbuffers::VOffsetT = 28;
                 pub const VT_INSTALLED: ::flatbuffers::VOffsetT = 30;
+                pub const VT_RESIDENT: ::flatbuffers::VOffsetT = 32;
 
                 #[inline]
                 pub unsafe fn init_from_table(table: ::flatbuffers::Table<'a>) -> Self {
@@ -206,6 +207,7 @@ pub mod telividb {
                     if let Some(x) = args.name {
                         builder.add_name(x);
                     }
+                    builder.add_resident(args.resident);
                     builder.add_installed(args.installed);
                     builder.add_recommended(args.recommended);
                     builder.finish()
@@ -392,7 +394,11 @@ pub mod telividb {
                             .unwrap()
                     }
                 }
-                /// Whether the file is present locally and matches its digest.
+                /// Whether the file is present locally at its full length.
+                ///
+                /// Cheap to answer, and deliberately not a digest check: a listing asks this
+                /// once per model every time it is shown. The digest is verified before the
+                /// model is loaded, which is the moment it matters.
                 #[inline]
                 pub fn installed(&self) -> bool {
                     // Safety:
@@ -401,6 +407,23 @@ pub mod telividb {
                     unsafe {
                         self._tab
                             .get::<bool>(CatalogModel::VT_INSTALLED, Some(false))
+                            .unwrap()
+                    }
+                }
+                /// Whether the model is loaded and able to serve requests now.
+                ///
+                /// Distinct from `installed`, and the distinction is the useful one: a model
+                /// is downloaded seconds before it is resident, because reading several
+                /// hundred megabytes of weights onto a device takes time. A caller that treats
+                /// "installed" as "ready" sends text during that window and is refused.
+                #[inline]
+                pub fn resident(&self) -> bool {
+                    // Safety:
+                    // Created from valid Table for this object
+                    // which contains a valid value in this slot
+                    unsafe {
+                        self._tab
+                            .get::<bool>(CatalogModel::VT_RESIDENT, Some(false))
                             .unwrap()
                     }
                 }
@@ -459,6 +482,7 @@ pub mod telividb {
                         )?
                         .visit_field::<bool>("recommended", Self::VT_RECOMMENDED, false)?
                         .visit_field::<bool>("installed", Self::VT_INSTALLED, false)?
+                        .visit_field::<bool>("resident", Self::VT_RESIDENT, false)?
                         .finish();
                     Ok(())
                 }
@@ -478,6 +502,7 @@ pub mod telividb {
                 pub license: Option<::flatbuffers::WIPOffset<&'a str>>,
                 pub recommended: bool,
                 pub installed: bool,
+                pub resident: bool,
             }
             impl<'a> Default for CatalogModelArgs<'a> {
                 #[inline]
@@ -497,6 +522,7 @@ pub mod telividb {
                         license: None,
                         recommended: false,
                         installed: false,
+                        resident: false,
                     }
                 }
             }
@@ -608,6 +634,11 @@ pub mod telividb {
                         .push_slot::<bool>(CatalogModel::VT_INSTALLED, installed, false);
                 }
                 #[inline]
+                pub fn add_resident(&mut self, resident: bool) {
+                    self.fbb_
+                        .push_slot::<bool>(CatalogModel::VT_RESIDENT, resident, false);
+                }
+                #[inline]
                 pub fn new(
                     _fbb: &'b mut ::flatbuffers::FlatBufferBuilder<'a, A>,
                 ) -> CatalogModelBuilder<'a, 'b, A> {
@@ -641,6 +672,7 @@ pub mod telividb {
                     ds.field("license", &self.license());
                     ds.field("recommended", &self.recommended());
                     ds.field("installed", &self.installed());
+                    ds.field("resident", &self.resident());
                     ds.finish()
                 }
             }

@@ -24,4 +24,13 @@ export interface CreateCollectionRequest {
   preset: string;
   /** The collection's id, forming the final segment of its name. */
   collection: string;
+  /**
+   * Width to declare for the text field.
+   *
+   * Must match the model that will embed into it — a field is bound to one
+   * model identity, and a mismatch is refused on the first write. Omitted falls
+   * back to the BERT-family width, which is right only if that is what is
+   * loaded: Qwen3-Embedding is 1024.
+   */
+  dimensions?: number;
 }

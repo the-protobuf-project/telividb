@@ -8,7 +8,8 @@
 pub(crate) mod convert;
 mod embed;
 mod fields;
+mod resident;
 mod search;
 
-pub use embed::Embeddings;
 pub(crate) use fields::VectorFields;
+pub use resident::Embeddings;

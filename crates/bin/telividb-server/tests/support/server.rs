@@ -31,7 +31,17 @@ impl TestServer {
     /// Panics rather than returning an error: a harness that could not start
     /// has nothing useful to say to a test, and the failure is the test's.
     pub async fn start() -> Self {
+        Self::start_with(|_| {}).await
+    }
+
+    /// The same, after `prepare` has arranged the data directory.
+    ///
+    /// For tests about what the server *finds* rather than what it is told —
+    /// an installed model, say, which is discovered from the directory rather
+    /// than configured.
+    pub async fn start_with(prepare: impl FnOnce(&std::path::Path)) -> Self {
         let dir = tempfile::tempdir().expect("temp data dir");
+        prepare(dir.path());
 
         // Bound and released to reserve a free port. A race with another
         // process is possible in principle and has not been worth a retry

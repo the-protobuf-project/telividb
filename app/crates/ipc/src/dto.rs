@@ -105,6 +105,14 @@ pub struct CreateCollectionRequest {
     pub preset: String,
     /// The collection's id, forming the final path segment of its name.
     pub collection: String,
+    /// Width to declare for the text field.
+    ///
+    /// Must match the model that will embed into it — a field is bound to one
+    /// model identity, and a mismatch is refused on the first write. `None`
+    /// falls back to the BERT-family width, which is right only if that is what
+    /// is loaded.
+    #[serde(default)]
+    pub dimensions: Option<usize>,
 }
 
 /// One row on its way in.

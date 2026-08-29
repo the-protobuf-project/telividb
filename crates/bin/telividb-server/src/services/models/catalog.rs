@@ -23,12 +23,15 @@ impl ModelsSvc {
             .filter(|(key, _)| key.trim() == "modality")
             .map(|(_, value)| value.trim().trim_matches('"').to_owned());
 
+        // Read once for the whole listing rather than per entry: it takes a
+        // lock, and the answer cannot change between two rows of one response.
+        let resident = self.embeddings.model_name();
         let catalog_models = self
             .catalog
             .entries()
             .iter()
             .filter(|e| wanted.as_deref().is_none_or(|m| e.modality.as_str() == m))
-            .map(|e| convert::entry(e, &self.store))
+            .map(|e| convert::entry(e, &self.store, resident.as_deref()))
             .collect();
 
         Ok(Response::new(ListCatalogModelsResponse {
@@ -47,6 +50,10 @@ impl ModelsSvc {
             .catalog
             .get(catalog_id(&name))
             .ok_or_else(|| Status::not_found(format!("no catalog model called {name:?}")))?;
-        Ok(Response::new(convert::entry(entry, &self.store)))
+        Ok(Response::new(convert::entry(
+            entry,
+            &self.store,
+            self.embeddings.model_name().as_deref(),
+        )))
     }
 }

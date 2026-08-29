@@ -24,6 +24,7 @@
 //! Closing that gap later means `serve` handing back service handles instead of
 //! consuming them. Callers of this crate would not notice.
 
+mod connect;
 mod environment;
 mod error;
 mod handle;

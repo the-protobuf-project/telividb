@@ -62,9 +62,21 @@ pub struct CatalogModel {
     /// a recommendation, which leaves the caller no better off.
     #[prost(bool, tag = "13")]
     pub recommended: bool,
-    /// Whether the file is present locally and matches its digest.
+    /// Whether the file is present locally at its full length.
+    ///
+    /// Cheap to answer, and deliberately not a digest check: a listing asks this
+    /// once per model every time it is shown. The digest is verified before the
+    /// model is loaded, which is the moment it matters.
     #[prost(bool, tag = "14")]
     pub installed: bool,
+    /// Whether the model is loaded and able to serve requests now.
+    ///
+    /// Distinct from `installed`, and the distinction is the useful one: a model
+    /// is downloaded seconds before it is resident, because reading several
+    /// hundred megabytes of weights onto a device takes time. A caller that treats
+    /// "installed" as "ready" sends text during that window and is refused.
+    #[prost(bool, tag = "15")]
+    pub resident: bool,
 }
 /// What a model turns into vectors.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]

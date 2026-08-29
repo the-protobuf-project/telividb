@@ -98,7 +98,7 @@
             <span>
               No embedding model is loaded, so the engine cannot turn text into
               a vector — for storage as much as for search. Point
-              <span class="font-mono">TELIVIDB_MODEL</span> at a GGUF file to
+              the Models panel at a GGUF file to
               enable both. Everything else works without one.
             </span>
           </p>

@@ -78,6 +78,17 @@ struct CatalogModel @0x99279b04238057b3 {
   # Exactly one catalog model sets this. Two defaults is a choice presented as
   # a recommendation, which leaves the caller no better off.
   recommended @12 :Bool;
-  # Whether the file is present locally and matches its digest.
+  # Whether the file is present locally at its full length.
+  #
+  # Cheap to answer, and deliberately not a digest check: a listing asks this
+  # once per model every time it is shown. The digest is verified before the
+  # model is loaded, which is the moment it matters.
   installed @13 :Bool;
+  # Whether the model is loaded and able to serve requests now.
+  #
+  # Distinct from `installed`, and the distinction is the useful one: a model
+  # is downloaded seconds before it is resident, because reading several
+  # hundred megabytes of weights onto a device takes time. A caller that treats
+  # "installed" as "ready" sends text during that window and is refused.
+  resident @14 :Bool;
 }

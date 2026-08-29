@@ -1,5 +1,6 @@
 //! Starting the engine, and stopping it again.
 
+use crate::connect::connect;
 use crate::{DataDirLock, Error, Result};
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -151,41 +152,3 @@ impl Engine {
         }
     }
 }
-
-/// Connect once the server is accepting, or report why it never did.
-///
-/// The server binds its listener inside `serve`, so a client that connects the
-/// instant the task is spawned can beat it. Retrying briefly is what makes
-/// startup deterministic; racing the failure channel is what turns "connection
-/// refused" into the server's own reason for stopping.
-async fn connect(
-    addr: SocketAddr,
-    mut started: oneshot::Receiver<Option<String>>,
-) -> Result<Client> {
-    let endpoint = format!("http://{addr}");
-    let mut last = None;
-
-    for _ in 0..RETRIES {
-        if let Ok(Some(reason)) = started.try_recv() {
-            return Err(Error::Startup(reason));
-        }
-        match Client::connect(endpoint.clone()).await {
-            Ok(client) => return Ok(client),
-            Err(err) => last = Some(err),
-        }
-        tokio::time::sleep(RETRY_DELAY).await;
-    }
-
-    match started.try_recv() {
-        Ok(Some(reason)) => Err(Error::Startup(reason)),
-        _ => Err(last.map(Error::Connect).unwrap_or_else(|| {
-            Error::Startup("the engine never accepted a connection".to_owned())
-        })),
-    }
-}
-
-/// How many times to retry the first connection.
-const RETRIES: usize = 50;
-
-/// How long to wait between attempts — 50 × 20 ms is a second of patience.
-const RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(20);

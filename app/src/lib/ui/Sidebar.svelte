@@ -31,6 +31,7 @@
   let { active = $bindable("search"), ref = $bindable(null) }: Props = $props();
 
   const panels: readonly Panel[] = [
+    { id: "ask", label: "Ask", icon: "comment-1-text" },
     { id: "search", label: "Search", icon: "search-1" },
     { id: "collections", label: "Collections", icon: "database-2" },
     { id: "points", label: "Points", icon: "menu-hamburger-1" },

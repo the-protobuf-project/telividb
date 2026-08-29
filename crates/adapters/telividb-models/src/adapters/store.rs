@@ -1,9 +1,8 @@
 //! Where installed models live on disk.
 
-use crate::{Catalog, CatalogEntry, Error, Fetcher, Result};
+use crate::{Catalog, CatalogEntry, Result};
 use std::path::{Path, PathBuf};
 use telividb_core::Fingerprint;
-use telividb_telemetry::logger;
 
 /// The directory holding downloaded model files.
 ///
@@ -41,22 +40,34 @@ impl ModelStore {
     /// finished one — the engine loads what [`path_of`](Self::path_of) names,
     /// and a truncated GGUF there would fail at load with a confusing error
     /// rather than resume.
-    fn partial_of(&self, id: &str) -> PathBuf {
+    pub(super) fn partial_of(&self, id: &str) -> PathBuf {
         self.root.join(format!("{id}.gguf.part"))
     }
 
-    /// Whether this model is installed and intact.
+    /// Whether this model's file is present at its full length.
     ///
-    /// Checks the digest rather than merely the path, because the interesting
-    /// failure is a file that exists and is wrong — truncated by a full disk,
-    /// or replaced.
+    /// **Cheap on purpose — one `stat`, no reading.** This is what a listing
+    /// asks, once per entry, every time the catalog is shown. Hashing here
+    /// instead meant a 639 MB file was read and digested every time the window
+    /// opened the models page, which is exactly the delay that made the page
+    /// feel broken.
     ///
-    /// Streamed rather than read whole. The catalog calls this once per entry
-    /// every time it is listed, and a listing is what the window does on open —
-    /// so reading the files into memory would allocate gigabytes to answer a
-    /// question about a directory. It still walks every byte, so it is not free;
-    /// it is merely bounded.
+    /// Length rather than mere existence, because the failure that actually
+    /// happens is a partial file: an interrupted download leaves a `.part`, but
+    /// a disk that filled mid-rename can leave a short one under the real name.
+    /// A file of the right length that is nevertheless the wrong bytes is not
+    /// caught here — [`is_verified`](Self::is_verified) is, and it runs before
+    /// the model is ever loaded.
     pub fn is_installed(&self, entry: &CatalogEntry) -> bool {
+        std::fs::metadata(self.path_of(&entry.id))
+            .is_ok_and(|meta| meta.is_file() && meta.len() == entry.size_bytes)
+    }
+
+    /// Whether the file is byte-for-byte the one the catalog names.
+    ///
+    /// Reads the whole file, so it is for the moments that justify it: before
+    /// loading a model, and after a download. Never for a listing.
+    pub fn is_verified(&self, entry: &CatalogEntry) -> bool {
         self.digest_of(&self.path_of(&entry.id))
             .is_some_and(|found| found == entry.digest)
     }
@@ -70,97 +81,6 @@ impl ModelStore {
         Fingerprint::of_reader(std::io::BufReader::new(file)).ok()
     }
 
-    /// Download and verify a model, returning where it landed.
-    ///
-    /// Idempotent: an install that is already present and intact returns
-    /// immediately without fetching. An interrupted one resumes from the
-    /// partial file rather than starting over.
-    ///
-    /// `progress` receives cumulative bytes written, including bytes already
-    /// on disk from a previous attempt, so a resumed download reports a bar
-    /// that continues rather than one that restarts.
-    pub fn install(
-        &self,
-        entry: &CatalogEntry,
-        fetcher: &dyn Fetcher,
-        progress: &mut dyn FnMut(u64) -> bool,
-    ) -> Result<PathBuf> {
-        let final_path = self.path_of(&entry.id);
-        if self.is_installed(entry) {
-            progress(entry.size_bytes);
-            return Ok(final_path);
-        }
-
-        logger::info!("installing a model").with_data(&serde_json::json!({
-            "telividb.model.id": entry.id,
-            "telividb.model.architecture": entry.architecture.as_str(),
-            "telividb.model.bytes": entry.size_bytes,
-        }));
-
-        std::fs::create_dir_all(&self.root)?;
-        let partial = self.partial_of(&entry.id);
-        let resume_from = std::fs::metadata(&partial).map(|m| m.len()).unwrap_or(0);
-
-        // A partial larger than the expected file is not a resumable download:
-        // it is a leftover from a different file under the same id. Start over
-        // rather than append to it.
-        let resume_from = if resume_from >= entry.size_bytes {
-            let _ = std::fs::remove_file(&partial);
-            0
-        } else {
-            resume_from
-        };
-
-        let mut sink = std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&partial)?;
-        fetcher.stream(&entry.download_url(), resume_from, &mut sink, progress)?;
-        drop(sink);
-
-        // A cancelled transfer leaves a short file. Verifying it would report a
-        // digest mismatch and delete the partial, which is exactly wrong — the
-        // bytes are good, there are simply fewer of them than the whole file.
-        let written = std::fs::metadata(&partial).map(|m| m.len()).unwrap_or(0);
-        if written < entry.size_bytes {
-            return Err(Error::Cancelled {
-                name: entry.id.clone(),
-                written,
-            });
-        }
-
-        self.promote(entry, &partial, final_path)
-    }
-
-    /// Verify a completed download and move it into place.
-    ///
-    /// The digest is checked before the rename, so the path the engine loads
-    /// from never holds unverified bytes — not even briefly. A mismatch
-    /// removes the file rather than leaving it to be resumed, because a
-    /// resumed download of the wrong file converges on the wrong file.
-    fn promote(
-        &self,
-        entry: &CatalogEntry,
-        partial: &Path,
-        final_path: PathBuf,
-    ) -> Result<PathBuf> {
-        let found = Fingerprint::of_reader(std::io::BufReader::new(std::fs::File::open(partial)?))?;
-        if found != entry.digest {
-            let _ = std::fs::remove_file(partial);
-            return Err(Error::DigestMismatch {
-                name: entry.id.clone(),
-                expected: entry.digest,
-                found,
-            });
-        }
-        std::fs::rename(partial, &final_path)?;
-        logger::info!("model installed").with_data(&serde_json::json!({
-            "telividb.model.id": entry.id,
-            "telividb.model.digest": entry.digest.short(),
-        }));
-        Ok(final_path)
-    }
-
     /// An installed model to load, and where its file is.
     ///
     /// Prefers the catalog's recommendation, then falls back to whichever entry
@@ -170,11 +90,14 @@ impl ModelStore {
     /// Verifies the digest, because loading a truncated file fails deep in the
     /// GGUF reader with a message about tensors rather than about the download.
     pub fn resident_choice<'c>(&self, catalog: &'c Catalog) -> Option<&'c CatalogEntry> {
-        let installed = |e: &&'c CatalogEntry| self.is_installed(e);
+        // Verified, not merely present. This is the one caller that is about to
+        // hand the file to the loader, and a truncated GGUF fails deep inside
+        // it with a message about tensors rather than about the download.
+        let verified = |e: &&'c CatalogEntry| self.is_verified(e);
         catalog
             .recommended()
-            .filter(|e| self.is_installed(e))
-            .or_else(|| catalog.entries().iter().find(installed))
+            .filter(|e| self.is_verified(e))
+            .or_else(|| catalog.entries().iter().find(verified))
     }
 
     /// The ids currently installed, in no particular order.

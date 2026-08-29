@@ -12,7 +12,7 @@ use telividb_buffers::protobuf::tenancy::v1::organizations_server::Organizations
 use telividb_buffers::protobuf::tenancy::v1::projects_server::ProjectsServer;
 use telividb_buffers::protobuf::tenancy::v1::sessions_server::SessionsServer;
 use telividb_buffers::protobuf::tenancy::v1::spaces_server::SpacesServer;
-use telividb_telemetry::{Telemetry, TelemetryConfig, fields, logger};
+use telividb_telemetry::{Telemetry, TelemetryConfig, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
 ///
@@ -42,7 +42,9 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
     // One slot, shared: the point service reads it and the models service
     // replaces it, so an install takes effect without a restart.
     let embeddings = Embeddings::default();
-    let points = build_points(&config, embeddings.clone())?.with_catalogue(collections.catalogue());
+    let points = PointsSvc::new(config.data_dir.clone())
+        .with_embeddings(embeddings.clone())
+        .with_catalogue(collections.catalogue());
 
     // Health reports SERVING once the router is up. A load balancer needs this
     // to distinguish "starting" from "broken", and it costs one service.
@@ -74,7 +76,7 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
         // built here rather than opened — nothing to lock, nothing to fail.
         .add_service(ModelsServer::new(
             crate::services::models::ModelsSvc::new(&config.data_dir)
-                .with_embeddings(embeddings),
+                .with_embeddings(embeddings.clone()),
         ));
 
     if config.reflection {
@@ -99,6 +101,25 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
 
     let stop = config.shutdown.take();
     announce(&config);
+
+    // The model is loaded *after* the listener is bound, and deliberately so.
+    //
+    // Reading a model takes real time — 47 s for a 639 MB one on an M3 Max,
+    // most of it verifying the file and uploading weights to the device. Doing
+    // that before binding made the port appear that much later, and the desktop
+    // app, which waits about a second for its engine, gave up and shut the
+    // whole thing down. Startup blocked on work no caller was waiting for.
+    //
+    // The slot is shared and swappable, so this is not a workaround: the server
+    // serves vectors immediately, text requests are refused with a reason until
+    // the model lands, and callers that ask are told. That is the same state a
+    // freshly installed model passes through.
+    tokio::spawn(crate::model_loader::load_model(
+        config.model_path.clone(),
+        config.model_name.clone(),
+        config.data_dir.clone(),
+        embeddings.clone(),
+    ));
 
     let incoming = tokio_stream::wrappers::TcpListenerStream::new(listener);
 
@@ -169,56 +190,4 @@ async fn ctrl_c() {
             std::future::pending::<()>().await;
         }
     }
-}
-
-/// Build the point service, loading an embedding model if one was configured.
-///
-/// Loaded here, at startup, rather than on first use: rule 45 holds models
-/// resident, and a first request that blocks for several seconds on a load is
-/// indistinguishable from one that has hung. A failure to load is fatal for
-/// the same reason — a server that started without the model it was told to
-/// serve would refuse every text request while looking healthy.
-fn build_points(config: &ServerConfig, embeddings: Embeddings) -> Result<PointsSvc> {
-    let svc = PointsSvc::new(config.data_dir.clone()).with_embeddings(embeddings.clone());
-
-    // An explicitly configured model wins: someone who named a path meant that
-    // file, and quietly preferring an installed one would ignore them.
-    if let Some(path) = &config.model_path {
-        embeddings
-            .install(path, &config.model_name)
-            .map_err(|e| Error::Model(format!("{}: {e}", path.display())))?;
-        return Ok(svc);
-    }
-
-    // Otherwise, load whatever the catalog says is installed. Without this an
-    // installed model was never found at all — not on the next request, and not
-    // after a restart either, because nothing but `TELIVIDB_MODEL` was ever
-    // consulted. Installing one appeared to succeed and changed nothing.
-    let store = telividb_models::ModelStore::new(config.data_dir.join("models"));
-    let catalog = telividb_models::Catalog::builtin();
-    let Some(entry) = store.resident_choice(&catalog) else {
-        logger::info!("no embedding model configured").with_data(&serde_json::json!({
-            fields::STRATEGY: "vectors-only",
-        }));
-        return Ok(svc);
-    };
-
-    let path = store.path_of(&entry.id);
-    // Not fatal, unlike a configured path. A model that was installed and has
-    // since become unreadable should leave a server that still serves vectors,
-    // with the reason in the log — refusing to start would take the whole
-    // window down over a file the person can simply install again.
-    match embeddings.install(&path, &entry.id) {
-        Ok(()) => {
-            logger::info!("loaded an installed model").with_data(&serde_json::json!({
-                fields::MODEL: entry.id,
-            }));
-        }
-        Err(e) => {
-            logger::warn!("an installed model could not be loaded").with_data(
-                &serde_json::json!({ fields::MODEL: entry.id, "error": e.to_string() }),
-            );
-        }
-    }
-    Ok(svc)
 }

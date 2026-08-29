@@ -38,8 +38,15 @@ export interface CatalogModel {
   license: string;
   /** Whether this is the default offer for someone with no preference. */
   recommended: boolean;
-  /** Whether the file is present locally and matches its digest. */
+  /** Whether the file is on disk at its full length. */
   installed: boolean;
+  /**
+   * Whether its weights are loaded and able to embed right now.
+   *
+   * Separate from {@link installed}: a large model is downloaded seconds before
+   * it is resident, and text is refused in between.
+   */
+  resident: boolean;
 }
 
 /**
