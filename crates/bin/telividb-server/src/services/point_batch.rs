@@ -24,7 +24,7 @@
 use super::point::PointsSvc;
 use telividb_buffers::protobuf::point::v1::{
     BatchCreatePointsRequest, BatchCreatePointsResponse, BatchDeletePointsRequest,
-    BatchDeletePointsResponse, BatchGetPointsRequest, BatchGetPointsResponse, CreatePointRequest,
+    BatchDeletePointsResponse, BatchGetPointsRequest, BatchGetPointsResponse,
 };
 use telividb_telemetry::{fields, logger, redact};
 use tonic::{Request, Response, Status};
