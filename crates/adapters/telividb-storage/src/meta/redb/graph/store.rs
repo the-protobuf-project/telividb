@@ -173,5 +173,5 @@ fn graph_store_err(reason: String) -> telividb_core::Error {
 }
 
 #[cfg(test)]
-#[path = "redb_graph_store_test.rs"]
+#[path = "store_test.rs"]
 mod tests;

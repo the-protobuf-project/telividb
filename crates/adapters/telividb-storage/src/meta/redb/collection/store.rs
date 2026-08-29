@@ -5,7 +5,7 @@
 //! could only answer that by looking for itself — which is how a typo becomes
 //! a new collection instead of an error.
 
-use super::collection_record::{decode, encode};
+use super::record::{decode, encode};
 use crate::error::Result;
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::path::Path;

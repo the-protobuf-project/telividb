@@ -137,5 +137,5 @@ impl Cursor<'_> {
 }
 
 #[cfg(test)]
-#[path = "point_record_test.rs"]
+#[path = "record_test.rs"]
 mod tests;

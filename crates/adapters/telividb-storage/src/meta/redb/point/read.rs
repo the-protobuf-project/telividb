@@ -6,8 +6,8 @@
 //! speaking storage errors. Keeping them in one file meant every method paid
 //! attention to which error vocabulary it was in.
 
-use super::point_record::decode;
-use super::redb_point_store::{POINTS, RedbPointStore};
+use super::record::decode;
+use super::store::{POINTS, RedbPointStore};
 use redb::ReadableDatabase;
 use telividb_core::{Point, PointStore, ResourceName};
 

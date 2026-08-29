@@ -2116,6 +2116,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "resourcename"
+version = "0.1.0"
+source = "git+https://github.com/the-protobuf-project/resourcename?rev=3e187a5d3da5542ad7f42ded428a413994fc0daf#3e187a5d3da5542ad7f42ded428a413994fc0daf"
+dependencies = [
+ "regex",
+ "resourcename-macros",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "resourcename-macros"
+version = "0.1.0"
+source = "git+https://github.com/the-protobuf-project/resourcename?rev=3e187a5d3da5542ad7f42ded428a413994fc0daf#3e187a5d3da5542ad7f42ded428a413994fc0daf"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "rmcp"
 version = "3.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2589,6 +2611,8 @@ dependencies = [
 name = "telividb-core"
 version = "0.1.0"
 dependencies = [
+ "resourcename",
+ "serde",
  "sha2",
  "thiserror 2.0.20",
 ]
@@ -2697,11 +2721,13 @@ dependencies = [
 name = "telividb-storage"
 version = "0.1.0"
 dependencies = [
+ "capnp",
  "crc32fast",
  "half",
  "redb",
  "serde_json",
  "telemetry",
+ "telividb-buffers",
  "telividb-core",
  "telividb-distance",
  "telividb-graph",

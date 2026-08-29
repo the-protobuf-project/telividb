@@ -39,7 +39,24 @@ pub(crate) const ALLOWED: &[(&str, &[&str])] = &[
     ("telividb-distance", &["telividb-core", "telividb-compute"]),
     (
         "telividb-storage",
-        &["telividb-core", "telividb-distance", "telividb-telemetry"],
+        &[
+            // The schema, for records that reach `redb` as Cap'n Proto rather
+            // than as a hand-written byte layout.
+            //
+            // This is the wire schema becoming the storage format, which is
+            // worth stating rather than assuming. The alternative is a stored
+            // `Organization` and a wire `Organization` defined separately —
+            // two definitions that must agree, which is the failure mode this
+            // codebase warns about everywhere else. One definition, rendered
+            // twice by one generator, cannot drift.
+            //
+            // The direction still points inward: `telividb-buffers` depends on
+            // nothing at all.
+            "telividb-buffers",
+            "telividb-core",
+            "telividb-distance",
+            "telividb-telemetry",
+        ],
     ),
     (
         "telividb-index",

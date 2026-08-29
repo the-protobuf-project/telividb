@@ -8,7 +8,7 @@
 //! widens that to a field-wide row; this turns the row into the only identity
 //! allowed to cross a process boundary — the point's resource name.
 
-use super::redb_point_store::{ROWS, RedbPointStore};
+use super::store::{ROWS, RedbPointStore};
 use crate::error::Result;
 use redb::ReadableDatabase;
 use telividb_core::ResourceName;

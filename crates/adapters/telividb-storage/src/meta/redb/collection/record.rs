@@ -6,7 +6,7 @@
 //! collection declaring the wrong widths — which is exactly the failure the
 //! declaration exists to prevent.
 
-use super::record_cursor::Cursor;
+use super::super::cursor::Cursor;
 use telividb_core::{Collection, Dim, Error, Fingerprint, IndexKind, Metric, Result};
 use telividb_core::{ResourceName, VectorFieldSpec};
 

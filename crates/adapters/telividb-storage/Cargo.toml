@@ -6,6 +6,17 @@ license.workspace = true
 
 [dependencies]
 telividb-core.workspace = true
+# The schema, for records encoded as Cap'n Proto.
+#
+# By path rather than `workspace = true`: cargo forbids a member narrowing the
+# workspace's `default-features`, and only the capnp rendering belongs here.
+# Taking the default would pull tonic and prost into a crate that reads and
+# writes records and serves nothing.
+telividb-buffers = { path = "../../platform/telividb-buffers", default-features = false, features = [
+  "capnp",
+] }
+# The reader and builder the generated code is written against.
+capnp = "0.27"
 telividb-distance.workspace = true
 telividb-telemetry.workspace = true
 # The pipeline itself, not a facade in front of it — CLAUDE.md rule 41.

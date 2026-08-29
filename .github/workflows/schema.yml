@@ -187,7 +187,7 @@ jobs:
       # compile each emitted schema into Rust — there is no schema-only mode.
       # Their *output* is still not compared, for the reason above; they are
       # installed so the command can complete, not so its Rust can be checked.
-      - name: install the schema renderer and its compilers
+      - name: install the generators and their compilers
         run: |
           sudo apt-get update -qq
           # `libcapnp-dev` is not optional: it ships `capnp/c++.capnp`, which
@@ -198,6 +198,16 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             capnproto libcapnp-dev flatbuffers-compiler
           go install github.com/the-protobuf-project/buffers/plugin/cmd/buffers@v0.2.0
+          # The MCP server generator, which `buf.gen.yaml` names as a third
+          # plugin. `buf generate` resolves a `local:` plugin off PATH, so a
+          # missing one fails the whole run — including the prost and tonic
+          # plugins, which report `context canceled` rather than anything about
+          # the plugin that was actually absent.
+          #
+          # Pinned to the version whose output is committed, like every other
+          # generator here: `@latest` would let an upstream release rewrite this
+          # repository's code without a commit saying so.
+          go install github.com/the-protobuf-project/mcp/plugin/cmd/protoc-gen-mcp@v1.7.1
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
       # One command, because ordering matters and duplicating it here is how

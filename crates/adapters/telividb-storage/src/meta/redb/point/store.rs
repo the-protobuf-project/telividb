@@ -10,7 +10,7 @@
 //! edge table's does — CLAUDE.md rule 4, a redb table treated the way a
 //! segment header already is.
 
-use super::point_record::encode;
+use super::record::encode;
 use crate::error::Result;
 use redb::{Database, ReadableDatabase, ReadableTable, TableDefinition};
 use std::path::Path;
@@ -171,5 +171,5 @@ impl RedbPointStore {
 }
 
 #[cfg(test)]
-#[path = "redb_point_store_test.rs"]
+#[path = "store_test.rs"]
 mod tests;
