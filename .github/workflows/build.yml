@@ -137,6 +137,13 @@ jobs:
             args: "--no-default-features --features protobuf"
           - name: capnp only
             args: "--no-default-features --features capnp"
+          # The MCP servers. Built on its own rather than only alongside the
+          # defaults, because it is the one feature that pulls a server runtime
+          # — rmcp, axum, tokio — and a crate that only compiles when something
+          # else happens to enable a dependency is a crate that breaks for the
+          # first consumer who asks for it alone.
+          - name: mcp only
+            args: "--no-default-features --features mcp"
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
@@ -154,8 +161,9 @@ jobs:
         run: |
           if grep -rn --include='*.rs' -E '^\s*unsafe\b' \
                crates/platform/telividb-buffers/src/generated/protobuf \
-               crates/platform/telividb-buffers/src/generated/capnp 2>/dev/null; then
+               crates/platform/telividb-buffers/src/generated/capnp \
+               crates/platform/telividb-buffers/src/generated/mcp 2>/dev/null; then
             echo "::error::unsafe reached a configuration that forbids it"
             exit 1
           fi
-          echo "protobuf and capnp renderings are unsafe-free"
+          echo "protobuf, capnp and mcp renderings are unsafe-free"

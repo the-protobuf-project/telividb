@@ -7,3 +7,6 @@ deps:
   - name: buf.build/the-protobuf-project/buffers
     commit: ae728c88ce86433685f83d331549a78a
     digest: b5:eee16c3c0c537b4194c59c03864baa7d5f54beb1cc4ea2b8402233aa51aff8e9501dbfd2d1fcd7d1c6230211d207f71c79877f17e30acd8be3934da5834f0cde
+  - name: buf.build/the-protobuf-project/mcp
+    commit: d8286d36a0cc4df5bf65e342195ab82d
+    digest: b5:8355c7cb9f258ad16c9be3641ded547acaa1717243cd11c345c370b242f092c2e573f55d82c9a81a6a852421d0e84ccee8881dca73f15660eed7044ef0e24ac5

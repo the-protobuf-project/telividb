@@ -9,8 +9,10 @@ import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/field_info.proto";
 import "google/api/resource.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/context/v1/context_template.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/context/v1;contextv1";
 option java_multiple_files = true;
 option java_outer_classname = "ContextServiceProto";
 option java_package = "dev.telividb.context.v1";
@@ -30,6 +32,13 @@ option (buffers.v1.file) = {namespace: "telividb.context.v1"};
 // every time a template changed.
 service ContextTemplates {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb context"
+      version: "0.1.0"
+      description: "Retrieval context assembled from similarity, the graph and the summary tier."
+    }
+  };
 
   // Creates a context template.
   rpc CreateContextTemplate(CreateContextTemplateRequest) returns (ContextTemplate) {
@@ -56,6 +65,7 @@ service ContextTemplates {
   rpc DeleteContextTemplate(DeleteContextTemplateRequest) returns (ContextTemplate) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/contextTemplates/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the context template. Confirm?"};
   }
 
   // Searches, expands along the graph, deduplicates, ranks and fits a budget.

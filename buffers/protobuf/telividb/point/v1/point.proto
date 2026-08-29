@@ -8,6 +8,7 @@ import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/duration.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/point/v1;pointv1";
 option java_multiple_files = true;
 option java_outer_classname = "PointProto";
 option java_package = "dev.telividb.point.v1";

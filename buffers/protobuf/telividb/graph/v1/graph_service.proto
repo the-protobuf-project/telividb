@@ -6,10 +6,12 @@ package telividb.graph.v1;
 import "buffers/v1/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/graph/v1/edge.proto";
 import "telividb/graph/v1/graph_messages.proto";
 import "telividb/graph/v1/traversal.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/graph/v1;graphv1";
 option java_multiple_files = true;
 option java_outer_classname = "GraphServiceProto";
 option java_package = "dev.telividb.graph.v1";
@@ -22,6 +24,13 @@ option (buffers.v1.file) = {namespace: "telividb.graph.v1"};
 // could reach it until this service existed.
 service Graph {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb graph"
+      version: "0.1.0"
+      description: "Typed relationships between resources, and bounded traversal over them."
+    }
+  };
 
   // Creates an edge.
   rpc CreateEdge(CreateEdgeRequest) returns (Edge) {
@@ -60,6 +69,7 @@ service Graph {
   rpc DeleteEdge(DeleteEdgeRequest) returns (Edge) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/edges/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the edge. An edge is often the only record that two things were related. Confirm?"};
   }
 
   // Traverses the graph outward from a set of seeds.
@@ -100,5 +110,6 @@ service Graph {
   rpc DeleteEdgeType(DeleteEdgeTypeRequest) returns (EdgeType) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/edgeTypes/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the edge type. Confirm?"};
   }
 }

@@ -43,6 +43,10 @@ pub struct Modules {
     pub flatbuffers: Vec<GeneratedModule>,
     /// Packages rendered from protobuf by `buf`, nested rather than flattened.
     pub protobuf: Vec<ProtoPackage>,
+    /// MCP servers, one per service. Nested for the same reason as protobuf:
+    /// the generated code is self-contained and names no sibling, so nothing
+    /// forces it to the crate root.
+    pub mcp: Vec<ProtoPackage>,
 }
 
 /// Normalise both targets' output and report what was found.
@@ -50,7 +54,8 @@ pub fn discover(generated: &Path) -> std::io::Result<Modules> {
     Ok(Modules {
         capnp: normalise(&generated.join("capnp"), "_capnp.rs")?,
         flatbuffers: normalise(&generated.join("flatbuffers"), "_generated.rs")?,
-        protobuf: protobuf(&generated.join("protobuf"))?,
+        protobuf: nested(&generated.join("protobuf"), ".rs")?,
+        mcp: nested(&generated.join("mcp"), ".mcp.rs")?,
     })
 }
 
@@ -146,14 +151,15 @@ fn prune(dir: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Index the protobuf output by package.
+/// Index a generator's output by package, preserving the tree it wrote.
 ///
-/// `buf` writes one directory per package holding a message file and a service
-/// file, both of which are included into the same module — splitting them would
-/// put a service in a different module from the types it names.
-fn protobuf(base: &Path) -> std::io::Result<Vec<ProtoPackage>> {
+/// Used for the targets whose generated code addresses nothing by an absolute
+/// path — protobuf and MCP. Those nest under a module per package, which is
+/// what a reader expects; the flat formats cannot, and `normalise` handles
+/// them instead.
+fn nested(base: &Path, suffix: &str) -> std::io::Result<Vec<ProtoPackage>> {
     let mut files = vec![];
-    collect(base, ".rs", &mut files)?;
+    collect(base, suffix, &mut files)?;
     let mut by_dir: std::collections::BTreeMap<PathBuf, Vec<String>> = Default::default();
     for f in files {
         let dir = f.parent().expect("file has a parent").to_path_buf();

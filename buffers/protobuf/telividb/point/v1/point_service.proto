@@ -6,10 +6,12 @@ package telividb.point.v1;
 import "buffers/v1/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/point/v1/point.proto";
 import "telividb/point/v1/point_messages.proto";
 import "telividb/point/v1/point_search.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/point/v1;pointv1";
 option java_multiple_files = true;
 option java_outer_classname = "PointServiceProto";
 option java_package = "dev.telividb.point.v1";
@@ -23,6 +25,13 @@ option (buffers.v1.file) = {namespace: "telividb.point.v1"};
 // and batch forms share their request message so an SDK can collapse them.
 service Points {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb points"
+      version: "0.1.0"
+      description: "Search and manage the points of a collection."
+    }
+  };
 
   // Creates a point.
   rpc CreatePoint(CreatePointRequest) returns (Point) {
@@ -57,6 +66,7 @@ service Points {
   rpc DeletePoint(DeletePointRequest) returns (Point) {
     option (google.api.http) = {delete: "/v1/{name=collections/*/points/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the point. Its bytes survive until compaction rewrites the segment. Confirm?"};
   }
 
   // Creates several points in one request.
@@ -89,6 +99,16 @@ service Points {
     option (google.api.http) = {
       post: "/v1/{parent=collections/*}/points:search"
       body: "*"
+    };
+    option (mcp.tool) = {
+      description:
+        "Finds the points nearest a query within one collection. Give `parent` "
+        "(collections/NAME), the `field_id` to search, and either `query_text` "
+        "for the server to encode or a precomputed `query` vector. `page_size` "
+        "is the k of a nearest-neighbour search and decides how much work the "
+        "index does, not merely how much is displayed. The response reports "
+        "`complete`: when false, a source could not be read and the results are "
+        "partial rather than exhaustive."
     };
   }
 }

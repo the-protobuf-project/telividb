@@ -6,12 +6,14 @@ package telividb.conversation.v1;
 import "buffers/v1/annotations.proto";
 import "google/api/annotations.proto";
 import "google/api/client.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/conversation/v1/conversation.proto";
 import "telividb/conversation/v1/conversation_messages.proto";
 import "telividb/conversation/v1/message.proto";
 import "telividb/conversation/v1/summary.proto";
 import "telividb/conversation/v1/tool_invocation.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/conversation/v1;conversationv1";
 option java_multiple_files = true;
 option java_outer_classname = "ConversationServiceProto";
 option java_package = "dev.telividb.conversation.v1";
@@ -20,6 +22,13 @@ option (buffers.v1.file) = {namespace: "telividb.conversation.v1"};
 // Manages conversations and the messages within them.
 service Conversations {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb conversations"
+      version: "0.1.0"
+      description: "Conversations, their messages, tool invocations and summaries."
+    }
+  };
 
   // Creates a conversation.
   rpc CreateConversation(CreateConversationRequest) returns (Conversation) {
@@ -57,6 +66,7 @@ service Conversations {
       post: "/v1/{name=organizations/*/conversations/*}:move"
       body: "*"
     };
+    option (mcp.elicitation) = {message: "This moves the conversation into another session, and so into another space. Summaries on both sides go stale. Confirm?"};
   }
 
   // Excludes a conversation from ordinary recall without deleting it.
@@ -77,6 +87,7 @@ service Conversations {
       body: "*"
     };
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This excludes the conversation from ordinary recall. It stays reachable to its owner deliberately. Confirm?"};
   }
 
   // Returns a suppressed conversation to ordinary recall.
@@ -86,12 +97,14 @@ service Conversations {
       body: "*"
     };
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This returns the conversation to ordinary recall. Confirm?"};
   }
 
   // Soft-deletes a conversation and the messages beneath it.
   rpc DeleteConversation(DeleteConversationRequest) returns (Conversation) {
     option (google.api.http) = {delete: "/v1/{name=organizations/*/conversations/*}"};
     option (google.api.method_signature) = "name";
+    option (mcp.elicitation) = {message: "This tombstones the conversation and the messages beneath it. Confirm?"};
   }
 
   // Appends a message, branching where the request says to.

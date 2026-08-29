@@ -12,6 +12,7 @@ import "telividb/conversation/v1/message.proto";
 import "telividb/conversation/v1/summary.proto";
 import "telividb/conversation/v1/tool_invocation.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/conversation/v1;conversationv1";
 option java_multiple_files = true;
 option java_outer_classname = "ConversationMessagesProto";
 option java_package = "dev.telividb.conversation.v1";

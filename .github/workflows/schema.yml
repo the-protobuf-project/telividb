@@ -77,19 +77,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Breaking-change detection needs a baseline. Before the protos first
-      # land on `main` there is none, and `buf breaking` fails with "had no
-      # .proto files" — which is not a breakage, only an absence.
+      # Breaking-change detection needs two things, and neither is hard-coded:
+      # a baseline to compare against, and a promise worth keeping.
       #
-      # Checked rather than hard-coded so this enables itself on the commit
-      # after the protos merge, instead of waiting for someone to notice.
+      # The baseline is protos on `main`. Before they first land there is none,
+      # and `buf breaking` fails with "had no .proto files" — an absence, not a
+      # breakage.
+      #
+      # The promise is a release. Until the first `v*` tag exists nothing
+      # depends on this schema: no tag, no published module, no consumer. A
+      # deliberate correction — returning the tombstoned resource from a delete
+      # rather than `Empty`, say — would then fail a check that is protecting
+      # nobody, and the ways through are all worse than the problem: weaken the
+      # rule permanently, or override by hand and learn to ignore a red check.
+      #
+      # This is a real limit, stated rather than hidden: between the first proto
+      # on `main` and the first tag, the schema is not protected against itself.
+      # That window is exactly when it should still be free to change shape, and
+      # it closes the moment a tag says otherwise.
       - id: baseline
         run: |
-          if git ls-tree -r origin/main --name-only | grep -q '\.proto$'; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
+          if ! git ls-tree -r origin/main --name-only | grep -q '\.proto$'; then
             echo "exists=false" >> "$GITHUB_OUTPUT"
             echo "::notice::No protos on main yet; skipping breaking-change detection."
+          elif [ -z "$(git tag --list 'v*')" ]; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Pre-release: no v* tag, so nothing depends on this schema yet. Breaking-change detection arms itself at the first tag."
+          else
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: bufbuild/buf-action@v1

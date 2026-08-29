@@ -727,8 +727,6 @@ pub mod projects_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
-        /** Creates a project.
-        */
         pub async fn create_project(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateProjectRequest>,
@@ -746,8 +744,6 @@ pub mod projects_client {
             ));
             self.inner.unary(req, path, codec).await
         }
-        /** Retrieves a single project.
-        */
         pub async fn get_project(
             &mut self,
             request: impl tonic::IntoRequest<super::GetProjectRequest>,
@@ -765,8 +761,6 @@ pub mod projects_client {
             ));
             self.inner.unary(req, path, codec).await
         }
-        /** Lists the projects of an organization.
-        */
         pub async fn list_projects(
             &mut self,
             request: impl tonic::IntoRequest<super::ListProjectsRequest>,
@@ -819,20 +813,14 @@ pub mod projects_server {
     /// Generated trait containing gRPC methods that should be implemented for use with ProjectsServer.
     #[async_trait]
     pub trait Projects: std::marker::Send + std::marker::Sync + 'static {
-        /** Creates a project.
-        */
         async fn create_project(
             &self,
             request: tonic::Request<super::CreateProjectRequest>,
         ) -> std::result::Result<tonic::Response<super::Project>, tonic::Status>;
-        /** Retrieves a single project.
-        */
         async fn get_project(
             &self,
             request: tonic::Request<super::GetProjectRequest>,
         ) -> std::result::Result<tonic::Response<super::Project>, tonic::Status>;
-        /** Lists the projects of an organization.
-        */
         async fn list_projects(
             &self,
             request: tonic::Request<super::ListProjectsRequest>,
@@ -1200,6 +1188,13 @@ pub mod spaces_client {
             self.inner = self.inner.max_encoding_message_size(limit);
             self
         }
+        /** Creates a space with a declared protection state.
+
+         Protection is fixed at creation because it determines segment routing: an
+         encrypted space writes into its own segments so unlocking decrypts a
+         region rather than a row at a time. Changing it later is a rewrite, not a
+         field update.
+        */
         pub async fn create_space(
             &mut self,
             request: impl tonic::IntoRequest<super::CreateSpaceRequest>,
@@ -1299,6 +1294,13 @@ pub mod spaces_server {
     /// Generated trait containing gRPC methods that should be implemented for use with SpacesServer.
     #[async_trait]
     pub trait Spaces: std::marker::Send + std::marker::Sync + 'static {
+        /** Creates a space with a declared protection state.
+
+         Protection is fixed at creation because it determines segment routing: an
+         encrypted space writes into its own segments so unlocking decrypts a
+         region rather than a row at a time. Changing it later is a rewrite, not a
+         field update.
+        */
         async fn create_space(
             &self,
             request: tonic::Request<super::CreateSpaceRequest>,
@@ -1736,6 +1738,8 @@ pub mod sessions_client {
             ));
             self.inner.unary(req, path, codec).await
         }
+        /** Retrieves a single session.
+        */
         pub async fn get_session(
             &mut self,
             request: impl tonic::IntoRequest<super::GetSessionRequest>,
@@ -1811,6 +1815,8 @@ pub mod sessions_server {
             &self,
             request: tonic::Request<super::CreateSessionRequest>,
         ) -> std::result::Result<tonic::Response<super::Session>, tonic::Status>;
+        /** Retrieves a single session.
+        */
         async fn get_session(
             &self,
             request: tonic::Request<super::GetSessionRequest>,

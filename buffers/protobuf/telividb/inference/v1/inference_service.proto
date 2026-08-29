@@ -9,8 +9,10 @@ import "google/api/client.proto";
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";
 import "google/protobuf/duration.proto";
+import "mcp/protobuf/annotations.proto";
 import "telividb/inference/v1/model.proto";
 
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/inference/v1;inferencev1";
 option java_multiple_files = true;
 option java_outer_classname = "InferenceServiceProto";
 option java_package = "dev.telividb.inference.v1";
@@ -24,6 +26,13 @@ option (buffers.v1.file) = {namespace: "telividb.inference.v1"};
 // is what makes a permission check before a model runs possible at all.
 service Inference {
   option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb inference"
+      version: "0.1.0"
+      description: "Embedding models, and the single compute boundary that serves them."
+    }
+  };
 
   // Retrieves a single model.
   rpc GetModel(GetModelRequest) returns (Model) {

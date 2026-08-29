@@ -83,7 +83,18 @@ pub fn lib_rs(preamble: &str, m: &Modules) -> String {
         s.push('\n');
     }
 
-    s.push_str(&protobuf(&m.protobuf));
+    s.push_str(&nested(
+        &m.protobuf,
+        "protobuf",
+        "Protobuf views and the gRPC service stubs, the wire protocol the\n         /// server speaks. Nested directly: `prost` addresses siblings\n         /// relatively, so unlike the flat formats these need no root layer.",
+        true,
+    ));
+    s.push_str(&nested(
+        &m.mcp,
+        "mcp",
+        "Model Context Protocol servers, one per gRPC service.\n         ///\n         /// Generated from the same annotations the gRPC surface carries, so\n         /// the tools an agent sees cannot drift from the API they call. An\n         /// agent reaching a server here takes the same authorization path as\n         /// any other client — there is no MCP-privileged route.",
+        false,
+    ));
     s.push_str("// The documented surface: one module per format, nested by package.\n\n");
     for (_, feature, doc, mods) in &targets {
         let mut root = Node::default();
@@ -99,19 +110,22 @@ pub fn lib_rs(preamble: &str, m: &Modules) -> String {
     s
 }
 
-/// Render the protobuf tree, which nests directly with no facade.
-fn protobuf(packages: &[ProtoPackage]) -> String {
+/// Render one nested tree: a module per package, no crate-root layer.
+///
+/// Used for the targets whose generated code names no sibling by an absolute
+/// path — protobuf and MCP. They nest the way a reader expects, and only the
+/// flat formats need the hidden-root treatment above.
+fn nested(packages: &[ProtoPackage], feature: &str, doc: &str, descriptor: bool) -> String {
     if packages.is_empty() {
         return String::new();
     }
-    let mut s = String::from(
-        "/// Protobuf views and the gRPC service stubs, the wire protocol the
-         /// server speaks. Nested directly: `prost` addresses siblings
-         /// relatively, so unlike the flat formats these need no root layer.
-         #[cfg(feature = \"protobuf\")]
-pub mod protobuf {
-",
-    );
+    let mut s = String::new();
+    for line in doc.lines() {
+        s.push_str(&format!("/// {line}\n"));
+    }
+    s.push_str(&format!(
+        "#[cfg(feature = \"{feature}\")]\npub mod {feature} {{\n"
+    ));
     for p in packages {
         let indent = "    ".repeat(p.package.len());
         for (depth, seg) in p.package.iter().enumerate() {
@@ -125,16 +139,16 @@ pub mod protobuf {
             s.push_str(&format!("{}}}\n", "    ".repeat(depth + 1)));
         }
     }
-    s.push_str(
-        "    /// Serialized `FileDescriptorSet` for every service here.
-         ///
-         /// Served over gRPC reflection so generic clients can introspect the
-         /// API without being shipped the protos first.
-         pub const FILE_DESCRIPTOR_SET: &[u8] =
-         \x20       include_bytes!(\"generated/protobuf/descriptor.bin\");
-}
-
-",
-    );
+    if descriptor {
+        s.push_str(concat!(
+            "    /// Serialized `FileDescriptorSet` for every service here.\n",
+            "    ///\n",
+            "    /// Served over gRPC reflection so generic clients can introspect\n",
+            "    /// the API without being shipped the protos first.\n",
+            "    pub const FILE_DESCRIPTOR_SET: &[u8] =\n",
+            "        include_bytes!(\"generated/protobuf/descriptor.bin\");\n",
+        ));
+    }
+    s.push_str("}\n\n");
     s
 }

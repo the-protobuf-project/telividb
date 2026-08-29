@@ -37,6 +37,15 @@ protobuf = ["dep:tonic", "dep:tonic-prost", "dep:prost", "dep:prost-types", "dep
 # `unsafe` and the crate keeps `forbid(unsafe_code)`.
 capnp = ["dep:capnp"]
 
+# Model Context Protocol servers, one per service. Not default, for the same
+# reason FlatBuffers is not: it pulls a server runtime — `rmcp`, async-trait,
+# serde_json — into a crate whose whole claim is that it is the wire format and
+# nothing else. A plugin author who wants the schema should not have to take an
+# MCP runtime with it.
+#
+# The composition root that actually serves MCP turns this on.
+mcp = ["dep:rmcp", "dep:async-trait", "dep:serde_json", "dep:axum", "dep:tokio"]
+
 # FlatBuffers. Deliberately NOT default: its accessors are `unsafe` by
 # construction, and admitting 1066 unsafe blocks to the default build would
 # widen the workspace's unsafe surface for a path nothing wires yet.
@@ -50,3 +59,11 @@ prost-types = { version = "0.14", optional = true }
 bytes = { version = "1", optional = true }
 capnp = { version = "0.27", optional = true }
 flatbuffers = { version = "25", optional = true }
+rmcp = { version = "3.1", features = ["server", "elicitation", "transport-io", "transport-streamable-http-server"], optional = true }
+async-trait = { version = "0.1", optional = true }
+serde_json = { version = "1", optional = true }
+# The generated servers mount their streamable-HTTP transport on an axum
+# router and await it on tokio. Both arrive only with the `mcp` feature —
+# nothing in the default build pulls a web server or a runtime.
+axum = { version = "0.8", optional = true }
+tokio = { version = "1", features = ["net", "rt", "macros"], optional = true }

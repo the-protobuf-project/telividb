@@ -7,6 +7,7 @@ deps:
   # The buffers.v1 facet vocabulary — namespace, layout, ordinals — read by
   # protoc-gen-buffers when rendering the flat IDLs.
   - buf.build/the-protobuf-project/buffers
+  - buf.build/the-protobuf-project/mcp
 
 modules:
   - path: buffers/protobuf
