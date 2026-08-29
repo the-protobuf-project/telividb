@@ -54,6 +54,18 @@ pub enum Error {
         found: Fingerprint,
     },
 
+    /// The caller stopped the transfer.
+    ///
+    /// Not a failure: the partial file is kept deliberately, so installing
+    /// again continues from where this stopped.
+    #[error("{name}: cancelled after {written} bytes; installing again resumes")]
+    Cancelled {
+        /// The model that was being installed.
+        name: String,
+        /// How much had been written when it stopped.
+        written: u64,
+    },
+
     /// A GGUF header could not be read.
     #[error("could not read the GGUF header: {0}")]
     Gguf(String),

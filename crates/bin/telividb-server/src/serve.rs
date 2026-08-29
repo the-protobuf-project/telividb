@@ -6,6 +6,7 @@ use crate::error::{Error, Result};
 use crate::services::{CollectionSvc, Embeddings, PointsSvc};
 use telividb_buffers::protobuf::FILE_DESCRIPTOR_SET;
 use telividb_buffers::protobuf::collection::v1::collections_server::CollectionsServer;
+use telividb_buffers::protobuf::models::v1::models_server::ModelsServer;
 use telividb_buffers::protobuf::point::v1::points_server::PointsServer;
 use telividb_buffers::protobuf::tenancy::v1::organizations_server::OrganizationsServer;
 use telividb_buffers::protobuf::tenancy::v1::projects_server::ProjectsServer;
@@ -65,7 +66,12 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
         .add_service(OrganizationsServer::new(tenancy.clone()))
         .add_service(ProjectsServer::new(tenancy.clone()))
         .add_service(SpacesServer::new(tenancy.clone()))
-        .add_service(SessionsServer::new(tenancy));
+        .add_service(SessionsServer::new(tenancy))
+        // The catalog. Stateless apart from the model directory, so it is
+        // built here rather than opened — nothing to lock, nothing to fail.
+        .add_service(ModelsServer::new(crate::services::models::ModelsSvc::new(
+            &config.data_dir,
+        )));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()

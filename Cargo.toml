@@ -50,6 +50,7 @@ telividb-query      = { path = "crates/domain/telividb-query" }
 telividb-distance   = { path = "crates/adapters/telividb-distance" }
 telividb-embed      = { path = "crates/adapters/telividb-embed" }
 telividb-index      = { path = "crates/adapters/telividb-index" }
+telividb-models     = { path = "crates/adapters/telividb-models" }
 telividb-storage    = { path = "crates/adapters/telividb-storage" }
 telividb-telemetry  = { path = "crates/platform/telividb-telemetry" }
 telividb-buffers    = { path = "crates/platform/telividb-buffers" }

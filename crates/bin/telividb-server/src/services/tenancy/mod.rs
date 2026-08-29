@@ -11,6 +11,7 @@ mod projects;
 mod sessions;
 mod spaces;
 
+use crate::services::clock::now_millis;
 use std::path::Path;
 use std::sync::Arc;
 use telividb_storage::RedbTenancyStore;
@@ -35,18 +36,6 @@ impl TenancySvc {
             store: Arc::new(store),
         })
     }
-}
-
-/// Now, in milliseconds since the Unix epoch.
-///
-/// Taken from the system clock at the moment of the write rather than from the
-/// request. A client-supplied time would let one machine's clock skew decide
-/// when another's data expires.
-fn now_millis() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as i64)
-        .unwrap_or_default()
 }
 
 /// Parse a resource name, or refuse with the reason.

@@ -71,7 +71,7 @@ impl ModelStore {
         &self,
         entry: &CatalogEntry,
         fetcher: &dyn Fetcher,
-        progress: &mut dyn FnMut(u64),
+        progress: &mut dyn FnMut(u64) -> bool,
     ) -> Result<PathBuf> {
         let final_path = self.path_of(&entry.id);
         if self.is_installed(entry) {
@@ -105,6 +105,17 @@ impl ModelStore {
             .open(&partial)?;
         fetcher.stream(&entry.download_url(), resume_from, &mut sink, progress)?;
         drop(sink);
+
+        // A cancelled transfer leaves a short file. Verifying it would report a
+        // digest mismatch and delete the partial, which is exactly wrong — the
+        // bytes are good, there are simply fewer of them than the whole file.
+        let written = std::fs::metadata(&partial).map(|m| m.len()).unwrap_or(0);
+        if written < entry.size_bytes {
+            return Err(Error::Cancelled {
+                name: entry.id.clone(),
+                written,
+            });
+        }
 
         self.promote(entry, &partial, final_path)
     }

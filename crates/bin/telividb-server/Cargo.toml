@@ -8,6 +8,14 @@ license.workspace = true
 telividb-core.workspace = true
 telividb-embed.workspace = true
 telividb-index.workspace = true
+# The model catalog, with `network` on.
+#
+# This is where rule 1's native surface widens in the shipped binary rather
+# than in a test: the feature pulls a TLS stack, and TLS means `aws-lc-sys`,
+# which builds with both `cc` and CMake. It is on here and nowhere else — the
+# catalog crate itself stays default-free so anything embedding it takes none
+# of that, and the CI guard's default-feature walk is unaffected.
+telividb-models = { workspace = true, features = ["network"] }
 telividb-buffers.workspace = true
 telividb-storage.workspace = true
 telividb-telemetry.workspace = true

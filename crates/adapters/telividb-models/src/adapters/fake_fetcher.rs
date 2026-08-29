@@ -17,6 +17,9 @@ pub(super) struct FakeFetcher {
 }
 
 impl FakeFetcher {
+    /// Bytes per write, small so a test can stop a transfer part-way.
+    const CHUNK: usize = 4;
+
     /// A host serving `body`.
     pub(super) fn serving(body: impl Into<Vec<u8>>) -> Self {
         Self {
@@ -54,11 +57,24 @@ impl Fetcher for FakeFetcher {
         _url: &str,
         offset: u64,
         sink: &mut dyn std::io::Write,
-        progress: &mut dyn FnMut(u64),
+        progress: &mut dyn FnMut(u64) -> bool,
     ) -> Result<()> {
         self.offsets.lock().expect("not poisoned").push(offset);
-        sink.write_all(&self.body[at(&self.body, offset)..])?;
-        progress(self.body.len() as u64);
+
+        // Chunked, like the real client. Writing the whole body in one go
+        // would make this fake unable to express a cancel — the transfer would
+        // already be complete by the time the caller was asked whether to
+        // continue — and a test double that cannot reach a state the real
+        // implementation reaches is worse than none.
+        let mut at = at(&self.body, offset);
+        while at < self.body.len() {
+            let end = (at + Self::CHUNK).min(self.body.len());
+            sink.write_all(&self.body[at..end])?;
+            at = end;
+            if !progress(at as u64) {
+                return Ok(());
+            }
+        }
         Ok(())
     }
 }

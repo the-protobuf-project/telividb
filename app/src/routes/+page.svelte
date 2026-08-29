@@ -13,6 +13,7 @@
   import Search from "$lib/panels/search/Search.svelte";
   import Collections from "$lib/panels/collections/Collections.svelte";
   import Points from "$lib/panels/points/Points.svelte";
+  import Models from "$lib/panels/models/Models.svelte";
   import { Intro } from "$lib/motion/intro";
   import Onboarding from "$lib/onboarding/Onboarding.svelte";
   import { OnboardingState } from "$lib/onboarding/state.svelte";
@@ -98,6 +99,10 @@
       />
     {:else if active === "points"}
       <Points {collection} {canEmbed} />
+    {:else if active === "models"}
+      <div class="p-4">
+        <Models />
+      </div>
     {:else}
       <Placeholder
         title={active.charAt(0).toUpperCase() + active.slice(1)}

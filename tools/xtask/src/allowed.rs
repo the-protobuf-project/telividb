@@ -100,6 +100,10 @@ pub(crate) const ALLOWED: &[(&str, &[&str])] = &[
             "telividb-distance",
             "telividb-embed",
             "telividb-index",
+            // The catalog, so a model can be offered and installed through the
+            // same API as everything else — and so the window has no privileged
+            // path of its own (rule 16).
+            "telividb-models",
             "telividb-buffers",
             "telividb-storage",
             "telividb-telemetry",

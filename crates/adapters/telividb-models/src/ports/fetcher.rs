@@ -40,12 +40,17 @@ pub trait Fetcher: Send + Sync {
     /// model file is large enough that the difference is the product working
     /// on a bad connection or not.
     ///
-    /// `progress` is called with the total bytes written so far, not a delta.
+    /// `progress` is called with the total bytes written so far, not a delta,
+    /// and **returns whether to continue**. Answering `false` stops the
+    /// transfer and returns `Ok`: the bytes already written stay on disk, so a
+    /// cancelled install resumes rather than starting over. That is the only
+    /// way a caller can cancel — the transfer is a blocking loop, and without
+    /// a signal on this path an abandoned download would run to completion.
     fn stream(
         &self,
         url: &str,
         offset: u64,
         sink: &mut dyn std::io::Write,
-        progress: &mut dyn FnMut(u64),
+        progress: &mut dyn FnMut(u64) -> bool,
     ) -> Result<()>;
 }

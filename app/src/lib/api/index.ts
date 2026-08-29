@@ -26,3 +26,4 @@ export { TauriClient } from "./tauri";
  * instead and every panel would be unchanged.
  */
 export const client: TelividbClient = new TauriClient();
+export * from "./model";

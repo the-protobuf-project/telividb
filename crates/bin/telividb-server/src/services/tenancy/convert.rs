@@ -4,25 +4,9 @@
 //! — how a lifecycle becomes four timestamps, how absence is spelled — and
 //! splitting them would put those rules in four places to disagree.
 
+use crate::services::clock::{maybe, stamp};
 use telividb_buffers::protobuf::tenancy::v1 as wire;
 use telividb_core::{Lifecycle, Organization, Project, Protection, Session, Space};
-
-/// Milliseconds as a protobuf timestamp.
-fn stamp(millis: i64) -> prost_types::Timestamp {
-    prost_types::Timestamp {
-        seconds: millis / 1_000,
-        nanos: ((millis % 1_000) * 1_000_000) as i32,
-    }
-}
-
-/// An optional time, absent when there is none.
-///
-/// `None` rather than a zero timestamp: on the wire an unset field is how
-/// "never deleted" is said, and a zero would read as the epoch — a real time,
-/// and a wrong one.
-fn maybe(millis: Option<i64>) -> Option<prost_types::Timestamp> {
-    millis.map(stamp)
-}
 
 /// An organization on the wire.
 pub(super) fn organization(value: &Organization) -> wire::Organization {

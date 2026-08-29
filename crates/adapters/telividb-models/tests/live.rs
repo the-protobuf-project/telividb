@@ -118,6 +118,7 @@ fn the_smallest_model_installs_and_verifies() {
                 println!("    {:>6.1} MB", written as f64 / 1e6);
                 last = written;
             }
+            true
         })
         .expect("install");
 

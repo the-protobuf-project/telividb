@@ -4,9 +4,11 @@
 //! make no access decisions of their own — that lives in the query planner so
 //! the embedded path cannot bypass it.
 
+mod clock;
 mod collection;
 mod collection_convert;
 mod embed;
+pub mod models;
 mod point;
 mod point_batch;
 mod point_convert;

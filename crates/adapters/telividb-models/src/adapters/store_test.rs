@@ -25,7 +25,8 @@ fn a_verified_download_lands_at_the_expected_path() {
     let mut seen = 0;
     let path = store
         .install(&entry, &FakeFetcher::serving(body.clone()), &mut |n| {
-            seen = n
+            seen = n;
+            true
         })
         .expect("install");
 
@@ -50,7 +51,7 @@ fn bytes_that_do_not_match_the_digest_never_reach_the_load_path() {
         .install(
             &entry,
             &FakeFetcher::serving(b"what the host actually served".to_vec()),
-            &mut |_| {},
+            &mut |_| true,
         )
         .unwrap_err();
 
@@ -74,9 +75,11 @@ fn installing_twice_does_not_fetch_twice() {
     let entry = entry_for(&body);
     let fetcher = FakeFetcher::serving(body);
 
-    store.install(&entry, &fetcher, &mut |_| {}).expect("first");
     store
-        .install(&entry, &fetcher, &mut |_| {})
+        .install(&entry, &fetcher, &mut |_| true)
+        .expect("first");
+    store
+        .install(&entry, &fetcher, &mut |_| true)
         .expect("second");
 
     assert_eq!(
@@ -100,7 +103,7 @@ fn an_interrupted_download_resumes_rather_than_restarting() {
 
     let fetcher = FakeFetcher::serving(body.clone());
     store
-        .install(&entry, &fetcher, &mut |_| {})
+        .install(&entry, &fetcher, &mut |_| true)
         .expect("install");
 
     assert_eq!(
@@ -133,7 +136,7 @@ fn a_partial_larger_than_the_file_is_discarded_rather_than_appended_to() {
 
     let fetcher = FakeFetcher::serving(body.clone());
     store
-        .install(&entry, &fetcher, &mut |_| {})
+        .install(&entry, &fetcher, &mut |_| true)
         .expect("install");
 
     assert_eq!(fetcher.offsets(), vec![0], "did not start over");
@@ -141,4 +144,37 @@ fn a_partial_larger_than_the_file_is_discarded_rather_than_appended_to() {
         std::fs::read(store.path_of("test-model")).expect("read"),
         body
     );
+}
+
+#[test]
+fn a_cancelled_install_keeps_its_partial_so_the_next_one_resumes() {
+    // The point of cancelling rather than failing: the bytes already fetched
+    // are good. Deleting them would make "stop" and "start over" the same
+    // thing, which on a 600 MB model is the difference between a pause and an
+    // hour.
+    let dir = tempfile::tempdir().expect("temp dir");
+    let store = ModelStore::new(dir.path());
+    let body = b"0123456789abcdef".to_vec();
+    let entry = entry_for(&body);
+
+    let err = store
+        .install(&entry, &FakeFetcher::serving(body.clone()), &mut |_| false)
+        .unwrap_err();
+
+    assert!(matches!(err, Error::Cancelled { .. }), "{err}");
+    assert!(
+        !store.path_of("test-model").exists(),
+        "a partial was promoted"
+    );
+    let partial = dir.path().join("test-model.gguf.part");
+    assert!(
+        partial.exists(),
+        "the partial was discarded, so nothing can resume"
+    );
+
+    // And installing again finishes it.
+    store
+        .install(&entry, &FakeFetcher::serving(body.clone()), &mut |_| true)
+        .expect("the second attempt completes");
+    assert!(store.is_installed(&entry));
 }

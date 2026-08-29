@@ -3193,6 +3193,7 @@ dependencies = [
  "telividb-core",
  "telividb-embed",
  "telividb-index",
+ "telividb-models",
  "telividb-storage",
  "telividb-telemetry",
  "tempfile",

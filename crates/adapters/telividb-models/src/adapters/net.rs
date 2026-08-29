@@ -131,7 +131,7 @@ impl Fetcher for HttpFetcher {
         url: &str,
         offset: u64,
         sink: &mut dyn std::io::Write,
-        progress: &mut dyn FnMut(u64),
+        progress: &mut dyn FnMut(u64) -> bool,
     ) -> Result<()> {
         let mut at = offset;
         loop {
@@ -143,7 +143,12 @@ impl Fetcher for HttpFetcher {
             }
             sink.write_all(&chunk)?;
             at += chunk.len() as u64;
-            progress(at);
+            // A chunk boundary is the only place a cancel can be honoured, and
+            // it is enough: the partial file is kept, so resuming continues
+            // from here rather than from zero.
+            if !progress(at) {
+                return Ok(());
+            }
 
             // A short chunk means the range ran past the end, so this was the
             // last one. Asking again would cost a round trip to learn nothing.

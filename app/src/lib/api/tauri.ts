@@ -13,6 +13,7 @@ import type { SearchRequest, SearchResponse } from "./search";
 import type { CreateCollectionRequest, Preset } from "./preset";
 import type { ImportRequest, ImportResponse, PointRow } from "./import";
 import type { Capabilities } from "./engine";
+import type { CatalogModel, Installation } from "./model";
 import type { TelividbClient } from "./port";
 
 /** Names the Rust side registers. A typo here is a runtime failure, so they
@@ -26,6 +27,10 @@ const enum Command {
   CreateCollection = "create_collection",
   ImportPoints = "import_points",
   ListPoints = "list_points",
+  ListModels = "list_models",
+  InstallModel = "install_model",
+  Installation = "installation",
+  CancelInstallation = "cancel_installation",
 }
 
 /** A client reaching the engine this window supervises. */
@@ -78,5 +83,38 @@ export class TauriClient implements TelividbClient {
   /** The points of one collection. */
   public async listPoints(collection: string): Promise<PointRow[]> {
     return await invoke<PointRow[]>(Command.ListPoints, { collection });
+  }
+
+  /** Models the engine offers to install. */
+  public async listModels(): Promise<CatalogModel[]> {
+    return await invoke<CatalogModel[]>(Command.ListModels);
+  }
+
+  /**
+   * Begin installing a model.
+   *
+   * Returns as soon as the work is accepted, not when it finishes — a model
+   * file is hundreds of megabytes. Poll {@link installation} to follow it.
+   *
+   * Safe to call twice: the engine returns the running installation rather than
+   * starting a second transfer, so the button needs no guard of its own.
+   */
+  public async installModel(id: string): Promise<Installation> {
+    return await invoke<Installation>(Command.InstallModel, { id });
+  }
+
+  /** How far an installation has got. */
+  public async installation(name: string): Promise<Installation> {
+    return await invoke<Installation>(Command.Installation, { name });
+  }
+
+  /**
+   * Stop an installation.
+   *
+   * The partial file is kept, so installing again resumes rather than starting
+   * over.
+   */
+  public async cancelInstallation(name: string): Promise<Installation> {
+    return await invoke<Installation>(Command.CancelInstallation, { name });
   }
 }
