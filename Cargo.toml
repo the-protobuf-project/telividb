@@ -70,6 +70,25 @@ resourcename = { git = "https://github.com/the-protobuf-project/resourcename", r
 # GraphMap keys nodes by weight and allows at most one edge per pair, and two
 # points can carry more than one edge type between them.
 petgraph = "0.8"
+# Pinned exactly, and it is a workaround rather than a preference.
+#
+# `tpp-network` asks reqwest for a `webpki-roots` feature. That was an optional
+# dependency of reqwest 0.13.1, which made it an implicit feature; reqwest
+# removed it in 0.13.4 in favour of `rustls-platform-verifier`. Our tree
+# otherwise resolves 0.13.4 through `opentelemetry-otlp`, and Cargo allows one
+# version per major — so without this pin the workspace does not resolve at all
+# once the `network` feature is on.
+#
+# The real fix is one line upstream in `runtime-rs`: drop `webpki-roots` from
+# its reqwest features. When that lands, delete this pin and the `rev` above
+# moves forward together. Verified: the workspace builds and tests clean at
+# 0.13.1, so this costs nothing today beyond being pinned to an older client.
+reqwest = "=0.13.1"
+# HTTP for model downloads, from the ecosystem's runtime. Pinned by revision
+# because the repository publishes no tags and the crate is not on crates.io —
+# the same treatment `resourcename` gets above, and for the same reason: a
+# moving `main` is not a dependency, it is a subscription.
+tpp-network = { git = "https://github.com/the-protobuf-project/runtime-rs", rev = "299a9c11a88a", package = "tpp-network" }
 # Small mutable metadata — the graph's persisted edges today, meta.redb's
 # other tables later. Pure Rust, ACID, no C dependency (CLAUDE.md invariant 1).
 redb = "4"

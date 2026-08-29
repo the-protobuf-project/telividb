@@ -19,5 +19,22 @@ serde_json = "1"
 # writes one, and the serializer is a third of the crate's compile time.
 toml = { version = "0.8", default-features = false, features = ["parse"] }
 
+# The HTTP client, behind a feature. See the `network` feature below.
+tpp-network = { workspace = true, optional = true }
+tokio = { version = "1", features = ["rt"], optional = true }
+reqwest = { workspace = true, optional = true }
+
+[features]
+default = []
+# Reach the network for real.
+#
+# Off by default, and that is the whole point. `tpp-network` brings reqwest and
+# a TLS stack, and TLS means a native crypto provider — which is a rule-1
+# decision rather than a dependency bump. Keeping it opt-in means the default
+# workspace build stays free of it, the catalog and every guarantee above the
+# port stay testable without it, and a consumer who wants only the catalog
+# takes none of it.
+network = ["dep:tpp-network", "dep:tokio", "dep:reqwest"]
+
 [dev-dependencies]
 tempfile = "3"

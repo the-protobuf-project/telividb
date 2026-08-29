@@ -25,6 +25,8 @@ mod domain;
 mod error;
 mod ports;
 
+#[cfg(feature = "network")]
+pub use adapters::HttpFetcher;
 pub use adapters::{GgufHeader, ModelStore, huggingface};
 pub use domain::{Catalog, CatalogEntry};
 pub use error::{Error, Result};
