@@ -1,5 +1,6 @@
 //! Starting the engine, and stopping it again.
 
+use crate::connect::connect;
 use crate::{DataDirLock, Error, Result};
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -51,6 +52,30 @@ impl Engine {
         // Before the engine opens anything. A busy directory should be a
         // sentence about another window, not a storage error.
         let lock = DataDirLock::acquire(&data_dir)?;
+
+        // Claim the port before starting anything.
+        //
+        // `serve` binds internally, so a bind failure arrives asynchronously —
+        // and `connect` below would already have succeeded against whatever
+        // else was listening. The window is real and it was hit: a five-day-old
+        // build of this project held the port, the app connected to it, and
+        // every call went to a server missing half the services.
+        //
+        // Binding and releasing leaves a race of microseconds, against a
+        // failure mode measured in days. It converts the common case from a
+        // baffling wrong answer into a sentence naming the port.
+        match std::net::TcpListener::bind(addr) {
+            Ok(probe) => drop(probe),
+            Err(e) if e.kind() == std::io::ErrorKind::AddrInUse => {
+                return Err(Error::PortBusy {
+                    addr,
+                    port: addr.port(),
+                });
+            }
+            // Anything else — a permission problem, an address that is not on
+            // this machine — is the server's to report, with its own context.
+            Err(_) => {}
+        }
 
         let (stop, shutdown) = oneshot::channel();
         let config = ServerConfig {
@@ -127,41 +152,3 @@ impl Engine {
         }
     }
 }
-
-/// Connect once the server is accepting, or report why it never did.
-///
-/// The server binds its listener inside `serve`, so a client that connects the
-/// instant the task is spawned can beat it. Retrying briefly is what makes
-/// startup deterministic; racing the failure channel is what turns "connection
-/// refused" into the server's own reason for stopping.
-async fn connect(
-    addr: SocketAddr,
-    mut started: oneshot::Receiver<Option<String>>,
-) -> Result<Client> {
-    let endpoint = format!("http://{addr}");
-    let mut last = None;
-
-    for _ in 0..RETRIES {
-        if let Ok(Some(reason)) = started.try_recv() {
-            return Err(Error::Startup(reason));
-        }
-        match Client::connect(endpoint.clone()).await {
-            Ok(client) => return Ok(client),
-            Err(err) => last = Some(err),
-        }
-        tokio::time::sleep(RETRY_DELAY).await;
-    }
-
-    match started.try_recv() {
-        Ok(Some(reason)) => Err(Error::Startup(reason)),
-        _ => Err(last.map(Error::Connect).unwrap_or_else(|| {
-            Error::Startup("the engine never accepted a connection".to_owned())
-        })),
-    }
-}
-
-/// How many times to retry the first connection.
-const RETRIES: usize = 50;
-
-/// How long to wait between attempts — 50 × 20 ms is a second of patience.
-const RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(20);

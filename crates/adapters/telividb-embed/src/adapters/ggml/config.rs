@@ -1,25 +1,39 @@
 //! The architecture parameters, read out of the GGUF header.
-//!
-//! **Every value here is read, never defaulted.** Layer count, head count,
-//! epsilon and rotary base all vary between models of the same family, and a
-//! wrong one produces finite, correctly-shaped, wrong vectors — the failure
-//! mode with no symptom. A missing key is an error at load time, which is the
-//! only place it can still be caught cheaply.
 
-use crate::error::{Error, Result};
+use crate::error::Result;
 use telividb_compute::{Header, Weights};
 
-/// Architectures whose tensor layout this encoder understands.
+/// Architectures the encoder implements a forward pass for.
 ///
-/// Checked rather than assumed: a mismatched architecture finds some of the
-/// tensors it expects and silently misreads the rest.
-pub const SUPPORTED: &[&str] = &["bert", "nomic-bert"];
+/// Defined by [`Architecture`](telividb_core::Architecture) rather than
+/// repeated here. The catalog refuses to *download* what this refuses to load,
+/// and two lists would eventually disagree — with the symptom being a gigabyte
+/// fetched before the refusal.
+pub const SUPPORTED: &[&str] = telividb_core::Architecture::NAMES;
+
+/// Which forward pass a model needs.
+///
+/// Two families, and the split is not cosmetic: they differ in where the norms
+/// sit, which norm it is, and whether keys are shared across heads. Running one
+/// family's pass over the other's weights produces finite, correctly shaped,
+/// wrong vectors — so the family is decided once, from the header, rather than
+/// inferred per block.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Family {
+    /// BERT and nomic-bert: post-norm, LayerNorm with bias, one key per head.
+    Bert,
+    /// Qwen3, Llama and their relatives: pre-norm, RMSNorm without bias,
+    /// grouped-query attention, and a gated feed-forward network.
+    Causal,
+}
 
 /// One model's shape.
 #[derive(Debug, Clone)]
 pub struct Config {
     /// Metadata key prefix, which is the architecture name.
     pub arch: String,
+    /// Which forward pass this model needs.
+    pub family: Family,
     /// How many transformer blocks the forward pass runs.
     ///
     /// Every declared block must exist as tensors; a count larger than the file
@@ -27,9 +41,25 @@ pub struct Config {
     pub layers: usize,
     /// Width of every activation, and of the vector this model produces.
     pub hidden: usize,
-    /// Attention heads; `hidden` must divide by this.
+    /// Query heads, each attending over its own score matrix.
+    ///
+    /// Not necessarily `hidden / head_dim`: several models widen their heads
+    /// past the residual stream, so the two are read separately.
     pub heads: usize,
-    /// Layer-norm epsilon, as the model was trained with it.
+    /// Key and value heads, which may be fewer than [`heads`](Self::heads).
+    ///
+    /// Grouped-query attention shares one key head across several query heads —
+    /// eight-to-two is typical. Equal to `heads` for a model without it, so the
+    /// forward pass reads this rather than branching on whether it applies.
+    pub kv_heads: usize,
+    /// Width of one attention head.
+    ///
+    /// Read from the header rather than derived, because `hidden / heads` is
+    /// **wrong** for several current models: Qwen3-Embedding-0.6B is 1024 wide
+    /// with 16 heads of 128, so the heads are deliberately wider than the model.
+    /// Deriving it there yields 64 and every reshape downstream is misaligned.
+    pub head_dim: usize,
+    /// Normalization epsilon, as the model was trained with it.
     pub eps: f32,
     /// Longest sequence the position scheme covers.
     pub context: usize,
@@ -48,47 +78,17 @@ impl Config {
         Self::from_header(weights.header())
     }
 
-    /// The same, from a header parsed on its own.
-    pub fn from_header(weights: &Header) -> Result<Self> {
-        let arch =
-            weights
-                .str_meta("general.architecture")
-                .ok_or_else(|| Error::MissingFromGguf {
-                    what: "general.architecture".to_owned(),
-                })?;
-        if !SUPPORTED.contains(&arch.as_str()) {
-            return Err(Error::UnsupportedArchitecture {
-                found: arch,
-                supported: SUPPORTED,
-            });
-        }
-
-        let hidden = Self::u32(weights, &format!("{arch}.embedding_length"))? as usize;
-        let heads = Self::u32(weights, &format!("{arch}.attention.head_count"))? as usize;
-        if heads == 0 || !hidden.is_multiple_of(heads) {
-            return Err(Error::MissingFromGguf {
-                what: format!("a head count that divides {hidden}; found {heads}"),
-            });
-        }
-
-        Ok(Self {
-            layers: Self::u32(weights, &format!("{arch}.block_count"))? as usize,
-            hidden,
-            heads,
-            eps: weights
-                .f32_meta(&format!("{arch}.attention.layer_norm_epsilon"))
-                .ok_or_else(|| Error::MissingFromGguf {
-                    what: format!("{arch}.attention.layer_norm_epsilon"),
-                })?,
-            context: Self::u32(weights, &format!("{arch}.context_length"))? as usize,
-            rope_base: weights.f32_meta(&format!("{arch}.rope.freq_base")),
-            arch,
-        })
-    }
-
     /// Width of one attention head.
     pub fn head_dim(&self) -> usize {
-        self.hidden / self.heads
+        self.head_dim
+    }
+
+    /// How many query heads share each key head.
+    ///
+    /// One for ordinary multi-head attention. Above one, keys and values are
+    /// tiled up to the query head count before the scores matmul.
+    pub fn heads_per_kv(&self) -> usize {
+        self.heads / self.kv_heads.max(1)
     }
 
     /// `1/sqrt(head_dim)` — the attention scale.
@@ -106,9 +106,11 @@ impl Config {
     }
 
     /// Read a required `u32`, naming the key when it is absent.
-    fn u32(weights: &Header, key: &str) -> Result<u32> {
-        weights.u32_meta(key).ok_or_else(|| Error::MissingFromGguf {
-            what: key.to_owned(),
-        })
+    pub(super) fn u32(weights: &Header, key: &str) -> Result<u32> {
+        weights
+            .u32_meta(key)
+            .ok_or_else(|| crate::error::Error::MissingFromGguf {
+                what: key.to_owned(),
+            })
     }
 }

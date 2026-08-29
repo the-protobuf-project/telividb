@@ -14,6 +14,7 @@ One package per resource, each in its own versioned directory. Files within a pa
 | [Graph](telividb/graph/README.md) | `telividb.graph.v1` | 1 | 18 | 0 |
 | [Identity](telividb/identity/README.md) | `telividb.identity.v1` | 1 | 19 | 0 |
 | [Inference](telividb/inference/README.md) | `telividb.inference.v1` | 1 | 7 | 1 |
+| [Models](telividb/models/README.md) | `telividb.models.v1` | 1 | 10 | 2 |
 | [Point](telividb/point/README.md) | `telividb.point.v1` | 1 | 20 | 0 |
 | [Policy](telividb/policy/README.md) | `telividb.policy.v1` | 1 | 9 | 1 |
 | [System](telividb/system/README.md) | `telividb.system.v1` | 1 | 2 | 1 |

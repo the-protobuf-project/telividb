@@ -27,20 +27,37 @@ pub fn from_gguf(path: &Path) -> Result<Tokenizer> {
 }
 
 /// Build the tokenizer from an already-parsed header.
+///
+/// Dispatches on `tokenizer.ggml.model`, which is the file's own statement of
+/// which scheme it was trained with. Guessing instead would be the quiet
+/// failure this module exists to prevent: a BPE vocabulary read as WordPiece
+/// matches almost nothing, and every text collapses to the same few ids.
 pub fn from_header(weights: &Header) -> Result<Tokenizer> {
     let raw = weights
         .str_array("tokenizer.ggml.tokens")
         .ok_or_else(|| Error::MissingFromGguf {
             what: "tokenizer.ggml.tokens".to_owned(),
         })?;
+
+    // `gpt2` is GGUF's name for byte-level BPE, whatever the model above it —
+    // Qwen3 and Llama both write it. `bert` and an absent key take WordPiece,
+    // which is what every model this loader supported before them used.
+    if weights.str_meta("tokenizer.ggml.model").as_deref() == Some("gpt2") {
+        return super::vocab_bpe::build(weights, &raw);
+    }
+    wordpiece(weights, &raw)
+}
+
+/// The WordPiece pipeline, for the BERT family.
+fn wordpiece(weights: &Header, raw: &[String]) -> Result<Tokenizer> {
     let types: Option<Vec<u32>> = weights
         .i32_array("tokenizer.ggml.token_type")
         .map(|v| v.into_iter().map(|t| t as u32).collect());
-    let tokens = super::vocab_rules::to_wordpiece(&raw, types.as_deref());
+    let tokens = super::vocab_rules::to_wordpiece(raw, types.as_deref());
 
     let model = WordPiece::builder()
         .vocab(build_vocab(&tokens)?)
-        .unk_token(special(&raw, weights, "tokenizer.ggml.unknown_token_id"))
+        .unk_token(special(raw, weights, "tokenizer.ggml.unknown_token_id"))
         .continuing_subword_prefix("##".to_owned())
         .build()
         .map_err(|e| Error::Tokenizer(e.to_string()))?;
@@ -64,14 +81,14 @@ pub fn from_header(weights: &Header) -> Result<Tokenizer> {
             // `None` defers to `lowercase`, which is what an uncased model wants
             // and is harmless for a cased one that never sees an accent stripped.
             None,
-            super::vocab_rules::is_lowercase(&raw, types.as_deref()),
+            super::vocab_rules::is_lowercase(raw, types.as_deref()),
         )))
         .map_err(|e| Error::Tokenizer(e.to_string()))?;
     tokenizer.with_pre_tokenizer(Some(BertPreTokenizer));
 
-    let cls = special(&raw, weights, "tokenizer.ggml.bos_token_id");
-    let sep = special(&raw, weights, "tokenizer.ggml.eos_token_id");
-    if let (Some(cls_id), Some(sep_id)) = (id_of(&raw, &cls), id_of(&raw, &sep)) {
+    let cls = special(raw, weights, "tokenizer.ggml.bos_token_id");
+    let sep = special(raw, weights, "tokenizer.ggml.eos_token_id");
+    if let (Some(cls_id), Some(sep_id)) = (id_of(raw, &cls), id_of(raw, &sep)) {
         // Registered as special so they survive normalization and are never
         // split into subwords — a `[CLS]` tokenized as `[`, `cls`, `]` would
         // put three wrong ids where the model expects one.

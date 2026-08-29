@@ -38,7 +38,7 @@ async fn a_fresh_install_can_create_a_collection_from_a_preset() {
 
     // The preset's descriptor set is compiled bytes committed with the app.
     // If they were not a real `FileDescriptorSet`, this is where it shows.
-    let spec = to_new_collection("notes", "my-notes").expect("notes is a preset");
+    let spec = to_new_collection("notes", "my-notes", None).expect("notes is a preset");
     // The client returns the id rather than the full resource name — that is
     // what every other method on the handle takes, so returning a name here
     // would make the one thing a caller has to reformat before using.
@@ -63,7 +63,7 @@ async fn every_shipped_preset_is_one_the_engine_accepts() {
     // A preset that compiled but that the engine refuses would be a broken
     // choice in a picker — visible, selectable, and failing only on use.
     for preset in PRESETS {
-        let spec = to_new_collection(preset.id, preset.id).expect("a shipped preset");
+        let spec = to_new_collection(preset.id, preset.id, None).expect("a shipped preset");
         client
             .create_collection(spec)
             .await
@@ -79,7 +79,7 @@ async fn text_is_refused_when_no_model_is_loaded() {
     let (engine, dir) = engine("nomodel").await;
     let mut client = engine.client();
     client
-        .create_collection(to_new_collection("notes", "notes").expect("a preset"))
+        .create_collection(to_new_collection("notes", "notes", None).expect("a preset"))
         .await
         .expect("create");
 

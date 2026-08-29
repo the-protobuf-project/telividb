@@ -38,7 +38,7 @@ fn every_preset_builds_a_collection() {
     // which is what a picker depends on.
     for preset in PRESETS {
         assert!(
-            to_new_collection(preset.id, "anything").is_some(),
+            to_new_collection(preset.id, "anything", None).is_some(),
             "{} did not build a collection",
             preset.id
         );
@@ -49,5 +49,5 @@ fn every_preset_builds_a_collection() {
 fn an_unknown_preset_is_refused_rather_than_defaulted() {
     // A schema is permanent once points are written under it, so a typo must
     // not quietly produce a collection shaped like something else.
-    assert!(to_new_collection("notez", "oops").is_none());
+    assert!(to_new_collection("notez", "oops", None).is_none());
 }

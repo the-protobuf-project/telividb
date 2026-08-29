@@ -14,6 +14,8 @@ import type { ImportRequest, ImportResponse, PointRow } from "./import";
 import type { Capabilities } from "./engine";
 
 /** An engine this window can reach. */
+import type { CatalogModel, Installation } from "./model";
+
 export interface TelividbClient {
   /** Collections this engine holds. */
   listCollections(): Promise<CollectionSummary[]>;
@@ -23,6 +25,18 @@ export interface TelividbClient {
   engineAddress(): Promise<string>;
   /** What the engine can currently do. */
   capabilities(): Promise<Capabilities>;
+
+  /** Models the engine offers to install. */
+  listModels(): Promise<CatalogModel[]>;
+
+  /** Begin installing a model, returning the handle to follow it by. */
+  installModel(id: string): Promise<Installation>;
+
+  /** How far an installation has got. */
+  installation(name: string): Promise<Installation>;
+
+  /** Stop an installation, keeping its partial file so a retry resumes. */
+  cancelInstallation(name: string): Promise<Installation>;
   /** The schemas this build can create a collection from. */
   listPresets(): Promise<Preset[]>;
   /** Create a collection from a preset. Resolves to its resource name. */

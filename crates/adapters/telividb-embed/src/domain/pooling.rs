@@ -14,6 +14,18 @@ pub enum Pooling {
     /// Take the first token's state. What models with a trained `[CLS]`
     /// objective expect.
     Cls,
+    /// Take the last real token's state, ignoring padding.
+    ///
+    /// What decoder-derived embedders are trained for — Qwen3-Embedding among
+    /// them. Attention is causal there, so only the final position has seen the
+    /// whole sequence; the first token has seen nothing but itself, which is
+    /// why reading one of these with [`Cls`](Self::Cls) is not a near miss but
+    /// a vector built from a single word.
+    ///
+    /// "Last real" rather than "last": the state at a padding position is not
+    /// part of the text, and taking it would make a vector depend on how much
+    /// padding its batch happened to need.
+    Last,
 }
 
 impl Pooling {
@@ -24,14 +36,15 @@ impl Pooling {
     /// because a caller who guesses wrong gets vectors of the right width in
     /// the right range that simply rank badly — there is no error to notice.
     ///
-    /// `None` when the key is absent or names a mode that is not a pooled
-    /// embedding (`0` is "no pooling", `3` and `4` are last-token and rerank).
-    /// The caller then has to decide, which is the honest outcome — better
-    /// than defaulting quietly to whichever mode is more common.
+    /// `None` when the key is absent or names something that is not a pooled
+    /// embedding: `0` is "no pooling" and `4` is a reranker's score head. The
+    /// caller then has to decide, which is the honest outcome — better than
+    /// defaulting quietly to whichever mode is more common.
     pub fn from_declared(value: u32) -> Option<Self> {
         match value {
             1 => Some(Pooling::Mean),
             2 => Some(Pooling::Cls),
+            3 => Some(Pooling::Last),
             _ => None,
         }
     }
@@ -41,6 +54,7 @@ impl Pooling {
         match self {
             Pooling::Mean => "mean",
             Pooling::Cls => "cls",
+            Pooling::Last => "last",
         }
     }
 }

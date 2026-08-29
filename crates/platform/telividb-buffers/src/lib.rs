@@ -66,6 +66,10 @@
 // modules below are the surface a caller is meant to find.
 
 #[cfg(feature = "capnp")]
+#[path = "generated/capnp/telividb/models/v1/catalog_model_capnp.rs"]
+#[doc(hidden)]
+pub mod catalog_model_capnp;
+#[cfg(feature = "capnp")]
 #[path = "generated/capnp/telividb/collection/v1/collection_capnp.rs"]
 #[doc(hidden)]
 pub mod collection_capnp;
@@ -133,6 +137,14 @@ pub mod message_capnp;
 #[path = "generated/capnp/telividb/inference/v1/model_capnp.rs"]
 #[doc(hidden)]
 pub mod model_capnp;
+#[cfg(feature = "capnp")]
+#[path = "generated/capnp/telividb/models/v1/model_installation_capnp.rs"]
+#[doc(hidden)]
+pub mod model_installation_capnp;
+#[cfg(feature = "capnp")]
+#[path = "generated/capnp/telividb/models/v1/models_service_capnp.rs"]
+#[doc(hidden)]
+pub mod models_service_capnp;
 #[cfg(feature = "capnp")]
 #[path = "generated/capnp/telividb/tenancy/v1/organization_capnp.rs"]
 #[doc(hidden)]
@@ -211,6 +223,10 @@ pub mod traversal_capnp;
 pub mod wellknown_capnp;
 
 #[cfg(feature = "flatbuffers")]
+#[path = "generated/flatbuffers/telividb/models/v1/catalog_model_generated.rs"]
+#[doc(hidden)]
+pub mod catalog_model_generated;
+#[cfg(feature = "flatbuffers")]
 #[path = "generated/flatbuffers/telividb/collection/v1/collection_generated.rs"]
 #[doc(hidden)]
 pub mod collection_generated;
@@ -266,6 +282,14 @@ pub mod message_generated;
 #[path = "generated/flatbuffers/telividb/inference/v1/model_generated.rs"]
 #[doc(hidden)]
 pub mod model_generated;
+#[cfg(feature = "flatbuffers")]
+#[path = "generated/flatbuffers/telividb/models/v1/model_installation_generated.rs"]
+#[doc(hidden)]
+pub mod model_installation_generated;
+#[cfg(feature = "flatbuffers")]
+#[path = "generated/flatbuffers/telividb/models/v1/models_service_generated.rs"]
+#[doc(hidden)]
+pub mod models_service_generated;
 #[cfg(feature = "flatbuffers")]
 #[path = "generated/flatbuffers/telividb/tenancy/v1/organization_generated.rs"]
 #[doc(hidden)]
@@ -398,6 +422,14 @@ pub mod protobuf {
             include!("generated/protobuf/telividb/inference/v1/telividb.inference.v1.tonic.rs");
         }
     }
+    /// `models`.
+    pub mod models {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/protobuf/telividb/models/v1/telividb.models.v1.rs");
+            include!("generated/protobuf/telividb/models/v1/telividb.models.v1.tonic.rs");
+        }
+    }
     /// `point`.
     pub mod point {
         /// `v1`.
@@ -492,6 +524,13 @@ pub mod mcp {
         /// `v1`.
         pub mod v1 {
             include!("generated/mcp/telividb/inference/v1/inference_service.mcp.rs");
+        }
+    }
+    /// `models`.
+    pub mod models {
+        /// `v1`.
+        pub mod v1 {
+            include!("generated/mcp/telividb/models/v1/models_service.mcp.rs");
         }
     }
     /// `point`.
@@ -589,6 +628,13 @@ pub mod capnp {
             pub use crate::{inference_service_capnp, model_capnp};
         }
     }
+    /// `models` schemas.
+    pub mod models {
+        /// `v1` schemas.
+        pub mod v1 {
+            pub use crate::{catalog_model_capnp, model_installation_capnp, models_service_capnp};
+        }
+    }
     /// `point` schemas.
     pub mod point {
         /// `v1` schemas.
@@ -681,6 +727,15 @@ pub mod flatbuffers {
         /// `v1` schemas.
         pub mod v1 {
             pub use crate::{inference_service_generated, model_generated};
+        }
+    }
+    /// `models` schemas.
+    pub mod models {
+        /// `v1` schemas.
+        pub mod v1 {
+            pub use crate::{
+                catalog_model_generated, model_installation_generated, models_service_generated,
+            };
         }
     }
     /// `point` schemas.

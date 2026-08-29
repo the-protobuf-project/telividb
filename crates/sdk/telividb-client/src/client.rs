@@ -6,6 +6,7 @@ use crate::names;
 use crate::new_collection::NewCollection;
 use telividb_buffers::protobuf::collection::v1 as wire;
 use telividb_buffers::protobuf::collection::v1::collections_client::CollectionsClient;
+use telividb_buffers::protobuf::models::v1::models_client::ModelsClient;
 use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
 use tonic::transport::Channel;
 
@@ -18,6 +19,8 @@ use tonic::transport::Channel;
 pub struct Client {
     collections: CollectionsClient<Channel>,
     points: PointsClient<Channel>,
+    /// The model catalog. See `models.rs` for what it offers.
+    pub(crate) models: ModelsClient<Channel>,
 }
 
 impl std::fmt::Debug for Client {
@@ -61,7 +64,8 @@ impl Client {
 
         Ok(Self {
             collections: CollectionsClient::new(channel.clone()),
-            points: PointsClient::new(channel),
+            points: PointsClient::new(channel.clone()),
+            models: ModelsClient::new(channel),
         })
     }
 

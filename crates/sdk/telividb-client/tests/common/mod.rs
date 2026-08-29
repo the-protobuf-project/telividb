@@ -119,16 +119,39 @@ pub async fn model_server() -> Option<(Client, tempfile::TempDir)> {
         }
     });
 
-    // Longer than the vector-only wait: the server loads the model before it
-    // binds, which on a cold page cache is seconds rather than milliseconds.
+    // Two waits, because there are two events. The server binds quickly, and
+    // *then* loads the model — reading several hundred megabytes and uploading
+    // them to a device takes seconds. Loading after binding is deliberate:
+    // blocking startup on it made the desktop app give up waiting for its own
+    // engine and shut down.
+    //
+    // So a caller that writes text the instant it connects is refused, which is
+    // correct and is what a real client sees too. Waiting for residency here is
+    // what every test below would otherwise have to do itself.
+    let mut client = None;
     for _ in 0..600 {
         if std::net::TcpStream::connect(addr).is_ok() {
-            let client = Client::connect(format!("http://{addr}"))
-                .await
-                .expect("connect");
-            return Some((client, dir));
+            client = Some(
+                Client::connect(format!("http://{addr}"))
+                    .await
+                    .expect("connect"),
+            );
+            break;
         }
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
-    panic!("server with a model did not start on {addr}");
+    let mut client = client.unwrap_or_else(|| panic!("server did not start on {addr}"));
+
+    for _ in 0..600 {
+        let resident = client
+            .list_models()
+            .await
+            .map(|models| models.iter().any(|m| m.resident))
+            .unwrap_or(false);
+        if resident {
+            return Some((client, dir));
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    panic!("the configured model never became resident on {addr}");
 }

@@ -50,14 +50,23 @@ mod collection_read;
 mod collection_text;
 mod convert;
 mod error;
+mod models;
 mod names;
 mod new_collection;
 mod record;
 mod search;
 
 pub use client::Client;
+
 pub use collection::Collection;
 pub use error::{Error, Result};
 pub use new_collection::{Metric, NewCollection};
 pub use record::Record;
 pub use search::{Hit, SearchResults};
+/// The generated wire types.
+///
+/// Re-exported because several methods return them directly — a caller that
+/// receives a `CatalogModel` has to be able to name one, and requiring it to
+/// depend on `telividb-buffers` separately would let the two drift to different
+/// versions of the same schema.
+pub use telividb_buffers::protobuf as wire;

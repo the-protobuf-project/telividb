@@ -3,17 +3,23 @@
 
   A build that quietly fell back to the CPU passes every correctness test while
   delivering none of the speed, so the selected backend is stated rather than
-  inferred. Until the SystemInfo service is served, this says the backend is not
-  readable — which is true — instead of guessing at one, because a wrong badge
-  here would be worse than an absent one.
+  inferred.
+
+  This said "backend unknown" while the answer was already on screen's doorstep:
+  the engine reports its selection through `capabilities().environment`, and the
+  badge simply never read it. `unknown` is now reserved for the case it was
+  written for — the window has not managed to ask yet.
 -->
 <script lang="ts">
   import { Badge } from "$lib/components/ui/badge";
   import { Separator } from "$lib/components/ui/separator";
+  import type { Environment } from "$lib/api";
 
   interface Props {
     /** Where the engine is listening, once the window has asked. */
     address: string | null;
+    /** The compute environment the engine selected, once it has been asked. */
+    environment?: Environment | null;
     /** The bar itself, for the launch sequence to move. */
     ref?: HTMLElement | null;
     /** The wordmark, which the sequence brings in first. */
@@ -22,6 +28,7 @@
 
   let {
     address = null,
+    environment = null,
     ref = $bindable(null),
     markRef = $bindable(null),
   }: Props = $props();
@@ -45,10 +52,24 @@
     <Badge
       variant="outline"
       class="text-muted-foreground gap-1.5 font-normal"
-      title="Reported by the SystemInfo service, which is not served yet."
+      title={environment
+        ? environment.overridden
+          ? "Pinned by TELIVIDB_DEVICE rather than detected."
+          : "The backend this engine selected."
+        : "The window has not been able to ask the engine yet."}
     >
-      <span class="bg-muted-foreground/60 size-1.5 rounded-full"></span>
-      backend unknown
+      <!-- Green only for an accelerator. A host fallback is not a fault, but it
+           is the thing worth noticing, so it does not get the same dot as a
+           device that was actually found. -->
+      <span
+        class="size-1.5 rounded-full {environment && environment.backend !== 'cpu'
+          ? 'bg-emerald-500'
+          : 'bg-muted-foreground/60'}"
+      ></span>
+      {environment ? environment.backend : "backend unknown"}
+      {#if environment?.overridden}
+        <span class="text-muted-foreground/70">pinned</span>
+      {/if}
     </Badge>
   </div>
 </header>

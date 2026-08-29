@@ -31,19 +31,21 @@
   let { active = $bindable("search"), ref = $bindable(null) }: Props = $props();
 
   const panels: readonly Panel[] = [
+    { id: "ask", label: "Ask", icon: "comment-1-text" },
     { id: "search", label: "Search", icon: "search-1" },
-    { id: "collections", label: "Collections", icon: "database-1" },
-    { id: "points", label: "Points", icon: "list-1" },
+    { id: "collections", label: "Collections", icon: "database-2" },
+    { id: "points", label: "Points", icon: "menu-hamburger-1" },
+    { id: "models", label: "Models", icon: "cloud-download" },
     {
       id: "graph",
       label: "Graph",
-      icon: "network-1",
+      icon: "hierarchy-1",
       blocked: "The Graph service is not served yet.",
     },
     {
       id: "system",
       label: "System",
-      icon: "bolt",
+      icon: "bolt-2",
       blocked: "The SystemInfo service is not served yet.",
     },
   ];

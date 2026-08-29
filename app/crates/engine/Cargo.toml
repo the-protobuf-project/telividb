@@ -20,3 +20,7 @@ thiserror.workspace = true
 # toolchain requirement.
 [target."cfg(unix)".dependencies]
 libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

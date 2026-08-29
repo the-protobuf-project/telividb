@@ -6,12 +6,13 @@ use crate::error::{Error, Result};
 use crate::services::{CollectionSvc, Embeddings, PointsSvc};
 use telividb_buffers::protobuf::FILE_DESCRIPTOR_SET;
 use telividb_buffers::protobuf::collection::v1::collections_server::CollectionsServer;
+use telividb_buffers::protobuf::models::v1::models_server::ModelsServer;
 use telividb_buffers::protobuf::point::v1::points_server::PointsServer;
 use telividb_buffers::protobuf::tenancy::v1::organizations_server::OrganizationsServer;
 use telividb_buffers::protobuf::tenancy::v1::projects_server::ProjectsServer;
 use telividb_buffers::protobuf::tenancy::v1::sessions_server::SessionsServer;
 use telividb_buffers::protobuf::tenancy::v1::spaces_server::SpacesServer;
-use telividb_telemetry::{Telemetry, TelemetryConfig, fields, logger};
+use telividb_telemetry::{Telemetry, TelemetryConfig, logger};
 
 /// Install telemetry, build the router, and serve until shutdown.
 ///
@@ -38,7 +39,12 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
     // service consults it, so the two cannot disagree about what exists.
     let collections = CollectionSvc::open(config.data_dir.clone())
         .map_err(|e| Error::Catalogue(e.to_string()))?;
-    let points = build_points(&config)?.with_catalogue(collections.catalogue());
+    // One slot, shared: the point service reads it and the models service
+    // replaces it, so an install takes effect without a restart.
+    let embeddings = Embeddings::default();
+    let points = PointsSvc::new(config.data_dir.clone())
+        .with_embeddings(embeddings.clone())
+        .with_catalogue(collections.catalogue());
 
     // Health reports SERVING once the router is up. A load balancer needs this
     // to distinguish "starting" from "broken", and it costs one service.
@@ -65,7 +71,13 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
         .add_service(OrganizationsServer::new(tenancy.clone()))
         .add_service(ProjectsServer::new(tenancy.clone()))
         .add_service(SpacesServer::new(tenancy.clone()))
-        .add_service(SessionsServer::new(tenancy));
+        .add_service(SessionsServer::new(tenancy))
+        // The catalog. Stateless apart from the model directory, so it is
+        // built here rather than opened — nothing to lock, nothing to fail.
+        .add_service(ModelsServer::new(
+            crate::services::models::ModelsSvc::new(&config.data_dir)
+                .with_embeddings(embeddings.clone()),
+        ));
 
     if config.reflection {
         let reflection = tonic_reflection::server::Builder::configure()
@@ -89,6 +101,25 @@ pub async fn serve(mut config: ServerConfig) -> Result<()> {
 
     let stop = config.shutdown.take();
     announce(&config);
+
+    // The model is loaded *after* the listener is bound, and deliberately so.
+    //
+    // Reading a model takes real time — 47 s for a 639 MB one on an M3 Max,
+    // most of it verifying the file and uploading weights to the device. Doing
+    // that before binding made the port appear that much later, and the desktop
+    // app, which waits about a second for its engine, gave up and shut the
+    // whole thing down. Startup blocked on work no caller was waiting for.
+    //
+    // The slot is shared and swappable, so this is not a workaround: the server
+    // serves vectors immediately, text requests are refused with a reason until
+    // the model lands, and callers that ask are told. That is the same state a
+    // freshly installed model passes through.
+    tokio::spawn(crate::model_loader::load_model(
+        config.model_path.clone(),
+        config.model_name.clone(),
+        config.data_dir.clone(),
+        embeddings.clone(),
+    ));
 
     let incoming = tokio_stream::wrappers::TcpListenerStream::new(listener);
 
@@ -159,26 +190,4 @@ async fn ctrl_c() {
             std::future::pending::<()>().await;
         }
     }
-}
-
-/// Build the point service, loading an embedding model if one was configured.
-///
-/// Loaded here, at startup, rather than on first use: rule 45 holds models
-/// resident, and a first request that blocks for several seconds on a load is
-/// indistinguishable from one that has hung. A failure to load is fatal for
-/// the same reason — a server that started without the model it was told to
-/// serve would refuse every text request while looking healthy.
-fn build_points(config: &ServerConfig) -> Result<PointsSvc> {
-    let svc = PointsSvc::new(config.data_dir.clone());
-
-    let Some(path) = &config.model_path else {
-        logger::info!("no embedding model configured").with_data(&serde_json::json!({
-            fields::STRATEGY: "vectors-only",
-        }));
-        return Ok(svc);
-    };
-
-    let embeddings = Embeddings::load(path, &config.model_name)
-        .map_err(|e| Error::Model(format!("{}: {e}", path.display())))?;
-    Ok(svc.with_embeddings(embeddings))
 }

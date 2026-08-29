@@ -28,6 +28,20 @@ impl Encoder {
                 let base = row * width;
                 match pooling {
                     Pooling::Cls => raw[base * hidden..(base + 1) * hidden].to_vec(),
+                    Pooling::Last => {
+                        // The last position whose mask bit is set. Scanning
+                        // back from the end rather than trusting a length,
+                        // because padding is the only thing that marks where
+                        // the text stopped — and a row that is somehow all
+                        // padding falls back to position zero rather than
+                        // indexing out of the batch.
+                        let last = (0..width)
+                            .rev()
+                            .find(|t| attention[base + t] != 0)
+                            .unwrap_or(0);
+                        let at = (base + last) * hidden;
+                        raw[at..at + hidden].to_vec()
+                    }
                     Pooling::Mean => {
                         let mut sum = vec![0f32; hidden];
                         let mut kept = 0f32;

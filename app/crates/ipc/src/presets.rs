@@ -16,13 +16,14 @@
 use serde::Serialize;
 use telividb_client::{Metric, NewCollection};
 
-/// Dimensions every preset's text field declares.
+/// Width to declare when the caller does not know the model's.
 ///
-/// 768 is what the encoder-style models this engine loads produce — bge, e5,
-/// gte and nomic all land there. A field is bound to one model identity, so
-/// this is not a default so much as a commitment, and a preset that guessed
-/// wrong would produce a collection nothing could write to.
-const TEXT_DIMENSIONS: usize = 768;
+/// 768 is what the BERT-family encoders produce — bge, e5, gte and nomic all
+/// land there. It is a fallback and nothing more: a field is bound to one model
+/// identity, so guessing wrong produces a collection nothing can write to. That
+/// is not hypothetical — Qwen3-Embedding is 1024 wide, and every collection made
+/// from a preset while this was a constant rejected its vectors.
+const FALLBACK_DIMENSIONS: usize = 768;
 
 /// A schema the app can create a collection from without a toolchain.
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -72,12 +73,16 @@ fn descriptor_set(id: &str) -> Option<&'static [u8]> {
 /// Returns `None` for an unknown preset rather than defaulting to one — a typo
 /// should not quietly create a collection with a schema the caller did not ask
 /// for, because the schema is permanent once points are written under it.
-pub fn to_new_collection(preset_id: &str, collection_id: &str) -> Option<NewCollection> {
+pub fn to_new_collection(
+    preset_id: &str,
+    collection_id: &str,
+    dimensions: Option<usize>,
+) -> Option<NewCollection> {
     let preset = PRESETS.iter().find(|p| p.id == preset_id)?;
     let bytes = descriptor_set(preset_id)?;
     Some(NewCollection::new(collection_id, bytes.to_vec()).field(
         preset.field,
-        TEXT_DIMENSIONS,
+        dimensions.unwrap_or(FALLBACK_DIMENSIONS),
         // Cosine, because it is what text embedding models are trained for.
         // L2 here would be a quiet accuracy loss rather than an error.
         Metric::Cosine,

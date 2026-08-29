@@ -45,3 +45,40 @@ fn debug_does_not_dump_all_32_bytes() {
     assert!(rendered.starts_with("Fingerprint("));
     assert!(rendered.len() < 30, "too long for a log line: {rendered}");
 }
+
+#[test]
+fn hex_round_trips_and_rejects_malformed_input() {
+    let fp = Fingerprint::of(b"a gguf file");
+    let hex = fp.to_hex();
+    assert_eq!(hex.len(), 64);
+    assert_eq!(Fingerprint::from_hex(&hex), Some(fp));
+
+    // A truncated or mistyped digest must not parse. Accepting one would
+    // produce a value that can never match the file, which presents as a
+    // corrupt download rather than as the typo in a catalog entry it is.
+    assert_eq!(Fingerprint::from_hex(&hex[..63]), None, "too short");
+    assert_eq!(Fingerprint::from_hex(&format!("{hex}0")), None, "too long");
+    assert_eq!(
+        Fingerprint::from_hex(&("g".repeat(64))),
+        None,
+        "not hex at all"
+    );
+}
+
+#[test]
+fn streaming_and_whole_buffer_hashing_agree() {
+    // They must, or an installed model would verify one way and fail the other
+    // depending on which path happened to check it.
+    let bytes: Vec<u8> = (0..200_000u32).map(|i| (i % 251) as u8).collect();
+    assert_eq!(
+        Fingerprint::of_reader(bytes.as_slice()).expect("reads"),
+        Fingerprint::of(&bytes),
+        "a stream longer than one buffer must hash the same as the whole slice"
+    );
+
+    // And the empty case, which is the boundary the read loop exits on.
+    assert_eq!(
+        Fingerprint::of_reader(&[][..]).expect("reads"),
+        Fingerprint::of(&[])
+    );
+}

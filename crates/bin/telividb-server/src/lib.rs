@@ -21,7 +21,8 @@ mod announce;
 pub mod args;
 pub mod config;
 pub mod error;
-pub mod serve;
+pub mod model_loader;
+mod serve;
 pub mod services;
 
 pub use config::ServerConfig;

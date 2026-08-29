@@ -1,0 +1,168 @@
+// The models service.
+syntax = "proto3";
+
+package telividb.models.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "mcp/protobuf/annotations.proto";
+import "telividb/models/v1/catalog_model.proto";
+import "telividb/models/v1/model_installation.proto";
+
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/models/v1;modelsv1";
+option java_multiple_files = true;
+option java_outer_classname = "ModelsServiceProto";
+option java_package = "dev.telividb.models.v1";
+option (buffers.v1.file) = {namespace: "telividb.models.v1"};
+
+// Offers a curated set of embedding models, and installs them.
+//
+// Separate from `telividb.inference.v1`, which is about models already resident
+// and the vectors they produce. This is about acquiring the files: what is on
+// offer, what is present locally, and how far a download has got.
+//
+// Curated rather than searchable. The encoder implements a fixed set of GGUF
+// architectures, and a model host carries tens of thousands of files that are
+// mostly generative models it cannot read — so a search would mostly return
+// downloads that fail after several hundred megabytes.
+service Models {
+  option (google.api.default_host) = "telividb.dev";
+  option (mcp.service) = {
+    app: {
+      name: "telividb models"
+      version: "0.1.0"
+      description: "The curated embedding-model catalog, and installing from it."
+    }
+  };
+
+  // Lists the models on offer.
+  rpc ListCatalogModels(ListCatalogModelsRequest) returns (ListCatalogModelsResponse) {
+    option (google.api.http) = {get: "/v1/catalogModels"};
+  }
+
+  // Retrieves one catalog model.
+  rpc GetCatalogModel(GetCatalogModelRequest) returns (CatalogModel) {
+    option (google.api.http) = {get: "/v1/{name=catalogModels/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Starts installing a catalog model.
+  //
+  // Returns as soon as the work is accepted, not when it finishes. A model file
+  // is hundreds of megabytes, so the transfer outlives any request deadline;
+  // poll the returned installation to follow it.
+  //
+  // Installing something already present and intact succeeds immediately
+  // without transferring anything.
+  rpc CreateModelInstallation(CreateModelInstallationRequest) returns (ModelInstallation) {
+    option (google.api.http) = {
+      post: "/v1/modelInstallations"
+      body: "model_installation"
+    };
+    option (google.api.method_signature) = "model_installation,model_installation_id";
+  }
+
+  // Retrieves an installation, with its progress.
+  rpc GetModelInstallation(GetModelInstallationRequest) returns (ModelInstallation) {
+    option (google.api.http) = {get: "/v1/{name=modelInstallations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Lists installations, most recent first.
+  rpc ListModelInstallations(ListModelInstallationsRequest) returns (ListModelInstallationsResponse) {
+    option (google.api.http) = {get: "/v1/modelInstallations"};
+  }
+
+  // Cancels an installation, or forgets a finished one.
+  //
+  // Cancelling leaves the partial file in place, so installing again resumes
+  // rather than starting over.
+  rpc DeleteModelInstallation(DeleteModelInstallationRequest) returns (ModelInstallation) {
+    option (google.api.http) = {delete: "/v1/{name=modelInstallations/*}"};
+    option (google.api.method_signature) = "name";
+  }
+}
+
+// Request message for listing catalog models.
+message ListCatalogModelsRequest {
+  // Maximum number to return. The server may return fewer.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous response.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Restricts the results, using the standard filter grammar.
+  //
+  // `modality = "text"` is the one worth knowing: every other modality is
+  // empty today, because no encoder exists for it.
+  string filter = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing catalog models.
+message ListCatalogModelsResponse {
+  // The models on offer, in catalog order.
+  repeated CatalogModel catalog_models = 1;
+
+  // Token for the next page, empty when there are no more.
+  string next_page_token = 2;
+}
+
+// Request message for retrieving a catalog model.
+message GetCatalogModelRequest {
+  // Resource name of the catalog model.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/CatalogModel"}
+  ];
+}
+
+// Request message for starting an installation.
+message CreateModelInstallationRequest {
+  // The installation to create. Only `catalog_model` is read.
+  ModelInstallation model_installation = 1 [(google.api.field_behavior) = REQUIRED];
+
+  // Client-chosen identifier for the installation.
+  //
+  // Supplying one makes the call idempotent: repeating it returns the existing
+  // installation rather than starting a second transfer of the same file.
+  string model_installation_id = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Request message for retrieving an installation.
+message GetModelInstallationRequest {
+  // Resource name of the installation.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/ModelInstallation"}
+  ];
+}
+
+// Request message for listing installations.
+message ListModelInstallationsRequest {
+  // Maximum number to return. The server may return fewer.
+  int32 page_size = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Page token from a previous response.
+  string page_token = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response message for listing installations.
+message ListModelInstallationsResponse {
+  // The installations, most recent first.
+  repeated ModelInstallation model_installations = 1;
+
+  // Token for the next page, empty when there are no more.
+  string next_page_token = 2;
+}
+
+// Request message for cancelling or forgetting an installation.
+message DeleteModelInstallationRequest {
+  // Resource name of the installation.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telividb.dev/ModelInstallation"}
+  ];
+}

@@ -81,16 +81,31 @@ pub fn engine_address(state: tauri::State<'_, AppState>) -> String {
 
 /// What this engine can currently do.
 #[tauri::command]
-pub fn capabilities(state: tauri::State<'_, AppState>) -> Capabilities {
-    Capabilities {
-        has_model: state.has_model(),
+pub async fn capabilities(state: tauri::State<'_, AppState>) -> Result<Capabilities, String> {
+    // Asked of the engine rather than read from a startup flag. A model can now
+    // be installed while the window is open, and a cached "no model" would go on
+    // refusing text against a server that had one — which is what it did.
+    //
+    // `resident`, not `installed`: the engine loads a model in the background
+    // after binding, so a downloaded model is on disk for seconds before it can
+    // embed. Keying on `installed` would offer text import during that window
+    // and have every row refused.
+    let mut client = state.client();
+    let resident = client
+        .list_models()
+        .await
+        .map(|models| models.iter().any(|m| m.resident))
+        .unwrap_or(false);
+
+    Ok(Capabilities {
+        has_model: resident,
         address: state.addr().to_string(),
         // Detected here rather than at startup so the window shows what is
         // true now — a device that disappeared would otherwise be reported
         // from a cache taken before it did.
         environment: telividb_desktop_engine::Environment::detect(),
         data_dir: state.data_dir().to_owned(),
-    }
+    })
 }
 
 /// Render a client error for the window.
@@ -112,8 +127,9 @@ pub async fn create_collection(
     state: tauri::State<'_, AppState>,
     request: CreateCollectionRequest,
 ) -> Result<String, String> {
-    let spec = crate::presets::to_new_collection(&request.preset, &request.collection)
-        .ok_or_else(|| format!("no preset named {:?}", request.preset))?;
+    let spec =
+        crate::presets::to_new_collection(&request.preset, &request.collection, request.dimensions)
+            .ok_or_else(|| format!("no preset named {:?}", request.preset))?;
     state.client().create_collection(spec).await.map_err(say)
 }
 

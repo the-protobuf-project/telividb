@@ -24,7 +24,9 @@
 //! that is the moment to switch, not before.
 
 pub mod commands;
+pub mod commands_models;
 mod dto;
+pub mod dto_models;
 pub mod presets;
 mod state;
 
@@ -51,6 +53,10 @@ macro_rules! commands {
             $crate::commands::list_presets,
             $crate::commands::import_points,
             $crate::commands::list_points,
+            $crate::commands_models::list_models,
+            $crate::commands_models::install_model,
+            $crate::commands_models::installation,
+            $crate::commands_models::cancel_installation,
         ]
     };
 }

@@ -1,0 +1,40 @@
+[package]
+name = "telividb-models"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "The curated model catalog, and acquiring the files it names."
+
+[dependencies]
+# The ontology: `Architecture` decides what may be downloaded at all, and
+# `Fingerprint` is the digest a download is verified against. Both are shared
+# with the loader rather than restated here — see `Architecture`'s own note.
+telividb-core.workspace = true
+telividb-telemetry.workspace = true
+thiserror.workspace = true
+serde = { version = "1", features = ["derive"] }
+# The HuggingFace API answers in JSON.
+serde_json = "1"
+# The catalog is TOML. `parse` only: this crate reads the manifest and never
+# writes one, and the serializer is a third of the crate's compile time.
+toml = { version = "0.8", default-features = false, features = ["parse"] }
+
+# The HTTP client, behind a feature. See the `network` feature below.
+tpp-network = { workspace = true, optional = true }
+tokio = { version = "1", features = ["rt"], optional = true }
+reqwest = { workspace = true, optional = true }
+
+[features]
+default = []
+# Reach the network for real.
+#
+# Off by default, and that is the whole point. `tpp-network` brings reqwest and
+# a TLS stack, and TLS means a native crypto provider — which is a rule-1
+# decision rather than a dependency bump. Keeping it opt-in means the default
+# workspace build stays free of it, the catalog and every guarantee above the
+# port stay testable without it, and a consumer who wants only the catalog
+# takes none of it.
+network = ["dep:tpp-network", "dep:tokio", "dep:reqwest"]
+
+[dev-dependencies]
+tempfile = "3"

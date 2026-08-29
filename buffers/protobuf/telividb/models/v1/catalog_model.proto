@@ -1,0 +1,116 @@
+// The CatalogModel resource.
+syntax = "proto3";
+
+package telividb.models.v1;
+
+import "buffers/v1/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+
+option go_package = "github.com/the-protobuf-project/telividb/gen/go/telividb/models/v1;modelsv1";
+option java_multiple_files = true;
+option java_outer_classname = "CatalogModelProto";
+option java_package = "dev.telividb.models.v1";
+option (buffers.v1.file) = {namespace: "telividb.models.v1"};
+
+// A model the server offers to install, verified against the file it names.
+//
+// Curated rather than searched. The encoder implements a fixed set of GGUF
+// architectures, and model hosts carry tens of thousands of files that are
+// mostly generative models it cannot read — so a search would mostly return
+// downloads that fail. Every field here was read from the actual file or from
+// the host's API, never copied from a model card.
+message CatalogModel {
+  option (google.api.resource) = {
+    type: "telividb.dev/CatalogModel"
+    pattern: "catalogModels/{catalog_model}"
+    singular: "catalogModel"
+    plural: "catalogModels"
+  };
+
+  // Resource name of the catalog model.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Name shown to a person choosing.
+  string display_name = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // What this model is good for, in terms someone can act on.
+  //
+  // Bigger is not simply better: width costs index size and query latency, so
+  // the description says what the trade buys.
+  string description = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Page for these weights, for checking licence and provenance at the source.
+  string repository_uri = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // SHA-256 of the model file, as sixty-four lowercase hex characters.
+  //
+  // The identity, not the label. Two files under one name produce different
+  // vectors, and mixing them into one index degrades recall with nothing
+  // reporting it. Verified after download; a mismatch is refused.
+  string digest = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Exact size of the file in bytes.
+  //
+  // Exact rather than rounded, because a progress indicator divides by it.
+  int64 size_bytes = 6 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // What this model embeds.
+  Modality modality = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // GGUF architecture, read from the file's own header.
+  string architecture = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Components in the vectors it produces.
+  //
+  // A vector field bound to this model must declare the same width.
+  int32 dimensions = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Maximum input length in tokens; longer input is truncated.
+  int32 context_length = 10 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Quantization the file carries, such as `Q8_0`.
+  string quantization = 11 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // SPDX identifier for the weights' licence.
+  string license = 12 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether this is the default offer for a caller with no preference.
+  //
+  // Exactly one catalog model sets this. Two defaults is a choice presented as
+  // a recommendation, which leaves the caller no better off.
+  bool recommended = 13 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the file is present locally at its full length.
+  //
+  // Cheap to answer, and deliberately not a digest check: a listing asks this
+  // once per model every time it is shown. The digest is verified before the
+  // model is loaded, which is the moment it matters.
+  bool installed = 14 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Whether the model is loaded and able to serve requests now.
+  //
+  // Distinct from `installed`, and the distinction is the useful one: a model
+  // is downloaded seconds before it is resident, because reading several
+  // hundred megabytes of weights onto a device takes time. A caller that treats
+  // "installed" as "ready" sends text during that window and is refused.
+  bool resident = 15 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// What a model turns into vectors.
+enum Modality {
+  // Unspecified. Never returned by the server.
+  MODALITY_UNSPECIFIED = 0;
+
+  // Natural-language text, and the only modality with an encoder behind it.
+  MODALITY_TEXT = 1;
+
+  // Still images. No loadable architecture yet.
+  MODALITY_IMAGE = 2;
+
+  // Speech or general audio. No loadable architecture yet.
+  MODALITY_AUDIO = 3;
+
+  // Video. No loadable architecture yet.
+  MODALITY_VIDEO = 4;
+}

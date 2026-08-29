@@ -35,6 +35,28 @@ impl Fingerprint {
         Self(hasher.finalize().into())
     }
 
+    /// Fingerprint a stream, without holding it in memory.
+    ///
+    /// The counterpart to [`of`](Self::of), and the one to reach for on a file.
+    /// A model is hundreds of megabytes and the catalog checks every installed
+    /// one each time it is listed — reading them whole would allocate gigabytes
+    /// to answer a question about a directory.
+    ///
+    /// The buffer is 64 KiB: large enough that the syscall cost disappears,
+    /// small enough to stay off the heap's slow path.
+    pub fn of_reader(mut source: impl std::io::Read) -> std::io::Result<Self> {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        let mut buffer = vec![0u8; 64 * 1024];
+        loop {
+            let read = source.read(&mut buffer)?;
+            if read == 0 {
+                return Ok(Self(hasher.finalize().into()));
+            }
+            hasher.update(&buffer[..read]);
+        }
+    }
+
     /// Wrap a digest already computed elsewhere, such as one read from a header.
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self(bytes)
@@ -57,6 +79,33 @@ impl Fingerprint {
     /// Whether this is the all-zero "not recorded" fingerprint.
     pub fn is_unset(&self) -> bool {
         self.0 == [0u8; 32]
+    }
+
+    /// The full 64-character lowercase hex digest.
+    ///
+    /// [`Display`](std::fmt::Display) deliberately prints the short form
+    /// instead, because a log line wants twelve characters. This is the form
+    /// that goes into a catalog file or gets compared against a model host's
+    /// API, where the whole digest is the point.
+    pub fn to_hex(&self) -> String {
+        self.0.iter().map(|b| format!("{b:02x}")).collect()
+    }
+
+    /// Parse a 64-character hex digest.
+    ///
+    /// Returns `None` for anything that is not exactly 64 hex characters,
+    /// rather than accepting a short or malformed digest and silently
+    /// comparing against a value that can never match — which would present as
+    /// a corrupt download rather than as the typo it is.
+    pub fn from_hex(hex: &str) -> Option<Self> {
+        if hex.len() != Self::BYTES * 2 {
+            return None;
+        }
+        let mut out = [0u8; Self::BYTES];
+        for (i, byte) in out.iter_mut().enumerate() {
+            *byte = u8::from_str_radix(hex.get(i * 2..i * 2 + 2)?, 16).ok()?;
+        }
+        Some(Self(out))
     }
 
     /// Short prefix for logs and error messages.
