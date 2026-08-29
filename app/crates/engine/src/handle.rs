@@ -52,6 +52,30 @@ impl Engine {
         // sentence about another window, not a storage error.
         let lock = DataDirLock::acquire(&data_dir)?;
 
+        // Claim the port before starting anything.
+        //
+        // `serve` binds internally, so a bind failure arrives asynchronously —
+        // and `connect` below would already have succeeded against whatever
+        // else was listening. The window is real and it was hit: a five-day-old
+        // build of this project held the port, the app connected to it, and
+        // every call went to a server missing half the services.
+        //
+        // Binding and releasing leaves a race of microseconds, against a
+        // failure mode measured in days. It converts the common case from a
+        // baffling wrong answer into a sentence naming the port.
+        match std::net::TcpListener::bind(addr) {
+            Ok(probe) => drop(probe),
+            Err(e) if e.kind() == std::io::ErrorKind::AddrInUse => {
+                return Err(Error::PortBusy {
+                    addr,
+                    port: addr.port(),
+                });
+            }
+            // Anything else — a permission problem, an address that is not on
+            // this machine — is the server's to report, with its own context.
+            Err(_) => {}
+        }
+
         let (stop, shutdown) = oneshot::channel();
         let config = ServerConfig {
             data_dir,

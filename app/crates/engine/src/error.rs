@@ -38,6 +38,29 @@ pub enum Error {
     #[error("the engine did not start: {0}")]
     Startup(String),
 
+    /// Something else already holds the port this engine was told to serve on.
+    ///
+    /// Checked before the server is started, and the reason is a real failure
+    /// this replaced: the engine would spawn, fail to bind, and the client would
+    /// meanwhile connect to *whoever else* was on the port — reporting nothing,
+    /// and answering every later call from a stranger's server. That surfaced
+    /// hours later as `Unimplemented` on a service this build definitely has.
+    ///
+    /// A leftover from an earlier build is the usual cause, so the message says
+    /// how to find it rather than only that it happened.
+    #[error(
+        "{addr} is already in use, so this engine did not start. Something else \
+         is serving there — often a previous build still running. Find it with \
+         `lsof -nP -iTCP:{port} -sTCP:LISTEN` and stop it, or set TELIVIDB_ADDR \
+         to a free port."
+    )]
+    PortBusy {
+        /// The address that could not be claimed.
+        addr: std::net::SocketAddr,
+        /// Its port, repeated so the suggested command can name it.
+        port: u16,
+    },
+
     /// The client could not reach the server that was just started.
     #[error("could not reach the engine: {0}")]
     Connect(#[from] telividb_client::Error),

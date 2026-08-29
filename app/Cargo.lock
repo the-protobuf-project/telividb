@@ -5256,6 +5256,7 @@ dependencies = [
  "telividb-client",
  "telividb-compute",
  "telividb-server",
+ "tempfile",
  "thiserror 2.0.20",
  "tokio",
 ]
