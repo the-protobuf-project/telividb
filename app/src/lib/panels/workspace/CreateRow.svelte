@@ -6,6 +6,7 @@
   of the resource name. Creation is the only moment a person can still object.
 -->
 <script lang="ts">
+  import { Button, Input } from "$lib/ui";
   import { suggestId } from "$lib/api";
 
   interface Props {
@@ -16,9 +17,9 @@
     /**
      * Called with the id and the display name.
      *
-     * Resolves to whether the resource was actually created. The field is only
-     * cleared on `true`: a refused name that vanished from the box left the
-     * person retyping something the server had already rejected once.
+     * Resolves to whether the resource was created. The field is only cleared on
+     * `true`: a refused name that vanished from the box left the person retyping
+     * something the server had already rejected once.
      */
     create: (id: string, displayName: string) => Promise<boolean> | boolean;
   }
@@ -36,13 +37,12 @@
   }
 </script>
 
-<div style="display: flex; gap: 0.5rem; align-items: center">
-  <input
-    class="input"
-    style="width: 14rem"
+<div style="display: flex; gap: calc(var(--u) * 2); align-items: center">
+  <Input
     bind:value={displayName}
     placeholder="New {noun}…"
     aria-label="New {noun} name"
+    style="width: 14rem"
     onkeydown={(e) => {
       if (e.key === "Enter") submit();
     }}
@@ -52,7 +52,5 @@
       {id}
     </span>
   {/if}
-  <button class="btn sm" type="button" disabled={!ready} onclick={submit}>
-    Create
-  </button>
+  <Button size="sm" disabled={!ready} loading={busy} onclick={submit}>Create</Button>
 </div>

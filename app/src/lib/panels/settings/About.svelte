@@ -7,6 +7,7 @@
   someone is running.
 -->
 <script lang="ts">
+  import { Kv, SettingGroup } from "$lib/ui";
   import type { SettingsState } from "./state.svelte";
 
   interface Props {
@@ -26,26 +27,23 @@
   ] as const);
 </script>
 
-<div>
-  <div class="set-group">
-    <div class="set-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem">
-      <div class="about">
-        <div style="display: flex; align-items: baseline; gap: 0.5rem">
-          <span class="wordmark" style="font-size: 1.0625rem">telivi<span>db</span></span>
-          <span class="mono faint" style="font-size: 0.75rem">0.1.0</span>
-        </div>
-        <p class="lede" style="margin: 0">
-          A single-node vector and graph database with a window on top. Bring your
-          own embedding model, bring your own search algorithm — the engine runs
-          in this process, and retrieval never leaves this machine.
-        </p>
-        <dl>
-          {#each facts as [term, value] (term)}
-            <dt>{term}</dt>
-            <dd class="selectable">{value}</dd>
-          {/each}
-        </dl>
-      </div>
+<SettingGroup>
+  <div class="set-row" style="flex-direction: column; align-items: flex-start; gap: calc(var(--u) * 3)">
+    <div style="display: flex; align-items: baseline; gap: calc(var(--u) * 2)">
+      <span class="wordmark" style="font-size: 1.0625rem">telivi<span>db</span></span>
+      <span class="mono faint" style="font-size: 0.75rem">0.1.0</span>
+    </div>
+
+    <p class="lede" style="margin: 0">
+      A single-node vector and graph database with a window on top. Bring your own
+      embedding model, bring your own search algorithm — the engine runs in this
+      process, and retrieval never leaves this machine.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: var(--u); width: 100%; max-width: 26rem">
+      {#each facts as [term, value] (term)}
+        <Kv label={term} {value} />
+      {/each}
     </div>
   </div>
-</div>
+</SettingGroup>

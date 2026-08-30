@@ -26,8 +26,21 @@ export class WorkspaceState {
   public busy = $state(false);
   /** Which kind of thing the create form is for, or null when it is closed. */
   public creating = $state<"organization" | "project" | "space" | null>(null);
+  /**
+   * The space being worked in, which is what the centre column shows.
+   *
+   * Separate from `selected`, which is the organization: opening an
+   * organization to see what it holds and opening a space to work in it are
+   * different acts, and one selection could not express both.
+   */
+  public space = $state<Space | null>(null);
 
   public constructor(private readonly client: TelividbClient) {}
+
+  /** Work in one space, or step back out to the organization. */
+  public openSpace(space: Space | null): void {
+    this.space = space;
+  }
 
   /** Open the create form for one kind of resource. */
   public startCreating(kind: "organization" | "project" | "space"): void {
@@ -62,6 +75,9 @@ export class WorkspaceState {
     // leave them there permanently.
     this.projects = [];
     this.spaces = [];
+    // A space belongs to an organization, so it cannot outlive a change of one —
+    // leaving it would show one organization's name above another's contents.
+    this.space = null;
     if (!organization) return;
 
     // Through `guard` because this is also called directly from the rail, where

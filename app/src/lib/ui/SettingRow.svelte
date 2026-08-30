@@ -1,40 +1,66 @@
 <!--
   One setting: what it is, what it means, and the control that changes it.
 
-  The description is not optional decoration. Most of these settings are choices
-  about where data goes, and a label alone ("Redact before embedding") tells a
-  reader what the switch is called rather than what happens if they touch it.
+  The description is not decoration. Most settings here decide where data goes,
+  and a label alone ("Redact before embedding") tells a reader what the switch is
+  called rather than what happens if they touch it.
 -->
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import Tag from "./Tag.svelte";
+  import type { TagTone } from "./Tag.svelte";
 
   interface Props {
     /** What the setting is called. */
     label: string;
     /** What it means, or what breaks without it. */
     description?: string;
-    /** Shown beside the label — "local", "not wired", and so on. */
+    /** A badge beside the label — "not built", "sample data". */
     tag?: string;
-    /** The control itself. */
-    control: Snippet;
+    /** What the badge asserts. */
+    tone?: TagTone;
+    /**
+     * A coloured rule at the row's leading edge.
+     *
+     * For a property that is true of the whole row rather than of one control —
+     * where a provider runs, say. It costs no horizontal space, which a badge
+     * does, and a column of them is scannable in one pass: the transit-map
+     * approach of colouring the line rather than labelling every stop.
+     *
+     * Colour alone is never the only signal. Pair it with a legend above the
+     * group, and give it a `markTitle` so it is reachable on hover.
+     */
+    mark?: TagTone;
+    /** What the leading rule means, for its tooltip. */
+    markTitle?: string;
+    /**
+     * The control.
+     *
+     * Optional, because a row is also how an empty state is written — "No
+     * projects yet" is a row with nothing on its right, and requiring a snippet
+     * there would mean passing an empty one at every call site.
+     */
+    control?: Snippet;
   }
 
-  let { label, description, tag, control }: Props = $props();
+  let {
+    label,
+    description,
+    tag,
+    tone = "plain",
+    mark,
+    markTitle,
+    control,
+  }: Props = $props();
 </script>
 
-<div class="border-border flex items-center justify-between gap-6 border-b px-4 py-3 last:border-b-0">
-  <div class="flex min-w-0 flex-col gap-0.5">
-    <span class="text-foreground flex items-center gap-2 text-sm font-medium">
+<div class="set-row" data-mark={mark} title={markTitle}>
+  <div class="txt">
+    <b>
       {label}
-      {#if tag}
-        <span class="border-border text-muted-foreground border px-1.5 py-0.5 text-[0.6875rem]">
-          {tag}
-        </span>
-      {/if}
-    </span>
-    {#if description}
-      <span class="text-muted-foreground text-xs">{description}</span>
-    {/if}
+      {#if tag}<Tag {tone}>{tag}</Tag>{/if}
+    </b>
+    {#if description}<span>{description}</span>{/if}
   </div>
-  <div class="flex shrink-0 items-center gap-2">{@render control()}</div>
+  {#if control}<div class="ctl">{@render control()}</div>{/if}
 </div>

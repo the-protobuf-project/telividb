@@ -6,6 +6,7 @@
   daemon cannot. Both now read the same answer.
 -->
 <script lang="ts">
+  import { Tile, Tiles } from "$lib/ui";
   import type { MetricsState } from "./state.svelte";
 
   interface Props {
@@ -23,46 +24,24 @@
   }
 </script>
 
-<div class="tiles">
-  <div class="tile">
-    <span class="k">Backend</span>
-    <span class="v">{env?.backend ?? "—"}</span>
-    <!-- A host fallback is not a fault, but it is the thing worth noticing: it
-         passes every correctness test while delivering none of the speed. -->
-    <span class="n">
-      {env ? (env.backend === "cpu" ? "host — no accelerator" : "accelerated") : ""}
-    </span>
-  </div>
-
-  <div class="tile">
-    <span class="k">Device</span>
-    <span class="v" style="font-size: 0.9375rem" title={env?.device}>
-      {env?.device ?? "—"}
-    </span>
-    <span class="n">what ggml opened</span>
-  </div>
-
-  <div class="tile">
-    <span class="k">Memory budget</span>
-    <span class="v">
-      {env ? gigabytes(env.budgetLimitBytes) : "—"}<small>GB</small>
-    </span>
-    <!-- An estimate on a discrete card overshoots, so which kind of number this
-         is matters as much as the number. -->
-    <span class="n">{env?.budgetSource ?? ""}</span>
-  </div>
-
-  <div class="tile">
-    <span class="k">Resident</span>
-    <span class="v">
-      {env ? gigabytes(env.budgetUsedBytes) : "—"}<small>GB</small>
-    </span>
-    <span class="n">held by indexes and models</span>
-  </div>
-
-  <div class="tile">
-    <span class="k">Engine</span>
-    <span class="v" style="font-size: 1rem">{env?.version ?? "—"}</span>
-    <span class="n">build that answered</span>
-  </div>
-</div>
+<Tiles>
+  <Tile
+    label="Backend"
+    value={env?.backend ?? "—"}
+    note={env ? (env.backend === "cpu" ? "host — no accelerator" : "accelerated") : ""}
+  />
+  <Tile label="Device" value={env?.device ?? "—"} note="what ggml opened" compact />
+  <Tile
+    label="Memory budget"
+    value={env ? gigabytes(env.budgetLimitBytes) : "—"}
+    unit={env && env.budgetLimitBytes > 0 ? "GB" : undefined}
+    note={env?.budgetSource ?? ""}
+  />
+  <Tile
+    label="Resident"
+    value={env ? gigabytes(env.budgetUsedBytes) : "—"}
+    unit={env && env.budgetUsedBytes > 0 ? "GB" : undefined}
+    note="held by indexes and models"
+  />
+  <Tile label="Engine" value={env?.version ?? "—"} note="build that answered" compact />
+</Tiles>

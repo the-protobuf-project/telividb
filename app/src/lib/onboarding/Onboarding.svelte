@@ -1,105 +1,70 @@
 <!--
-  The first run, start to finish.
+  The first run: four steps on one card.
 
-  Three steps, and the count is a consequence rather than a design. A setup
-  wizard would normally also ask about encryption, about who the people are, and
-  which project this belongs to — none of which have a service behind them yet.
-  Collecting answers the app cannot act on would be theatre, so those steps
-  arrive with the services rather than ahead of them.
+  Replaces a version that created an organization and dropped straight into the
+  app — which looked finished while three of the four steps had never run. Each
+  step here does its work and only advances if that work succeeded.
 -->
 <script lang="ts">
+  import { Button, Card, Notice, Stage, Steps } from "$lib/ui";
   import { client } from "$lib/api";
-  import { Button } from "$lib/components/ui/button";
-  import Collections from "$lib/panels/collections/Collections.svelte";
-  import Icon from "$lib/ui/Icon.svelte";
-  import Environment from "./Environment.svelte";
-  import Welcome from "./Welcome.svelte";
-  import { OnboardingState, STEPS } from "./state.svelte";
+  import { step as slide } from "$lib/motion/motion";
+  import { Flow, STEPS } from "./flow.svelte";
+  import StepPanes from "./Steps.svelte";
 
   interface Props {
-    /** Called once, with the collection created here if there was one. */
-    ondone: (collection: string) => void;
+    /** Called once all four steps have completed. */
+    ondone: () => void;
   }
 
   let { ondone }: Props = $props();
 
-  const flow = new OnboardingState(client);
-  let created = $state("");
+  const flow = new Flow(client);
+  void flow.load();
 
-  // Asked as the sequence begins rather than when its step is reached, so the
-  // environment is on screen the moment a person gets there.
+  // `done` is set by the flow rather than by the button, so a failed final call
+  // cannot close the window on a space that was never created.
   $effect(() => {
-    flow.detect();
+    if (flow.done) ondone();
   });
 
+  /** The pane, so a step change can move it. */
+  let pane = $state<HTMLElement | null>(null);
+  let seen = $state(0);
+
+  // Direction carries meaning: forward slides in from the right, Back from the
+  // left, so the flow has a spatial sense rather than merely swapping contents.
   $effect(() => {
-    if (flow.step === "done") ondone(created);
+    const at = flow.step;
+    if (pane && at !== seen) {
+      slide(pane, at > seen ? "forward" : "back");
+      seen = at;
+    }
   });
 </script>
 
-<div class="flex h-full flex-col">
-  <header class="flex items-center gap-3 border-b px-4 py-3">
-    <span class="text-sm font-medium tracking-tight">telividb</span>
+<Stage>
+  <div style="width: 100%; max-width: 30rem">
+    <Card>
+      {#snippet head()}
+        <Steps labels={STEPS} current={flow.step} />
+      {/snippet}
 
-    <!-- Position, not percentage: three steps is few enough to show as dots,
-         and a bar implies a duration nobody can predict. -->
-    <div class="ml-auto flex items-center gap-1.5">
-      {#each STEPS as step, index (step)}
-        <span
-          class="size-1.5 rounded-full transition-colors
-                 {index <= flow.position ? 'bg-primary' : 'bg-muted-foreground/30'}"
-        ></span>
-      {/each}
-    </div>
+      <div bind:this={pane}><StepPanes {flow} /></div>
 
-    <Button variant="ghost" size="sm" onclick={() => flow.finish()}>
-      Skip
-    </Button>
-  </header>
+      {#if flow.error}
+        <Notice tone="error">{flow.error}</Notice>
+      {/if}
 
-  {#if flow.error}
-    <p
-      class="selectable border-destructive/40 bg-destructive/10 text-destructive m-4 rounded-lg border px-3 py-2 text-sm"
-    >
-      {flow.error}
-    </p>
-  {/if}
-
-  {#if flow.step === "welcome"}
-    <Welcome onnext={() => flow.advance()} />
-  {:else if flow.step === "environment"}
-    <Environment
-      capabilities={flow.capabilities}
-      onnext={() => flow.advance()}
-    />
-  {:else if flow.step === "collection"}
-    <div class="flex min-h-0 flex-1 flex-col">
-      <div class="space-y-1 px-8 pt-8">
-        <h2 class="text-lg font-semibold tracking-tight">
-          Somewhere to put things
-        </h2>
-        <p class="text-muted-foreground text-sm">
-          A collection is a set of points sharing one schema. Pick a shape to
-          start with — you can make more later, and these are the ones this
-          build ships compiled.
-        </p>
-      </div>
-
-      <div class="min-h-0 flex-1">
-        <Collections
-          oncreated={(collection) => {
-            created = collection;
-            flow.advance();
-          }}
-        />
-      </div>
-
-      <div class="flex justify-end border-t px-8 py-3">
-        <Button variant="ghost" onclick={() => flow.advance()} class="gap-2">
-          Later
-          <Icon name="arrow-right" />
+      {#snippet foot()}
+        <Button variant="ghost" disabled={flow.step === 0} onclick={() => flow.back()}>
+          Back
         </Button>
-      </div>
-    </div>
-  {/if}
-</div>
+        <div style="flex: 1"></div>
+        <Button disabled={!flow.ready} loading={flow.busy} onclick={() => flow.next()}>
+          {flow.step === STEPS.length - 1 ? "Open the workspace" : "Continue"}
+        </Button>
+      {/snippet}
+    </Card>
+  </div>
+</Stage>

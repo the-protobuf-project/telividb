@@ -30,4 +30,3 @@ pub(crate) fn advance(seen: &mut Vec<String>, token: String) -> Result<String> {
     seen.push(token.clone());
     Ok(token)
 }
-

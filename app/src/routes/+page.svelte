@@ -18,9 +18,11 @@
   import Settings from "$lib/panels/settings/Settings.svelte";
   import Workspace from "$lib/panels/workspace/Workspace.svelte";
   import Metrics from "$lib/panels/metrics/Metrics.svelte";
+  import Graph from "$lib/panels/graph/Graph.svelte";
+  import People from "$lib/panels/people/People.svelte";
   import { Intro } from "$lib/motion/intro";
+  import { enter } from "$lib/motion/motion";
   import Onboarding from "$lib/onboarding/Onboarding.svelte";
-  import FirstOrganization from "$lib/onboarding/FirstOrganization.svelte";
   import { OnboardingState } from "$lib/onboarding/state.svelte";
 
   // Shown until this machine has been through it once. Read synchronously so
@@ -45,9 +47,37 @@
   let markRef = $state<HTMLElement | null>(null);
   let barRef = $state<HTMLElement | null>(null);
   let dockRef = $state<HTMLElement | null>(null);
-  let panelRef = $state<HTMLElement | null>(null);
+  /**
+   * Whether the rail shows names.
+   *
+   * Remembered across launches: it is a preference about how this person reads
+   * the app, and re-collapsing it every morning would be the window forgetting
+   * something it was told.
+   */
+  let dockOpen = $state(
+    typeof localStorage !== "undefined" && localStorage.getItem("dock") === "open",
+  );
+
+  $effect(() => {
+    localStorage.setItem("dock", dockOpen ? "open" : "closed");
+  });
 
   const intro = new Intro();
+
+  // The panel animates when the dock switches, not on first paint — the launch
+  // sequence owns that moment, and two entrances on the same element would
+  // interpolate from wherever the first one had reached.
+  let entered = $state(false);
+  $effect(() => {
+    // Read so the effect re-runs on a switch; the value itself is not needed.
+    void active;
+    if (!entered) {
+      entered = true;
+      return;
+    }
+    const panel = document.querySelector<HTMLElement>(".app > .view");
+    if (panel) enter(panel);
+  });
 
   // The engine is already running by the time the window opens — the app
   // refuses to start otherwise — so this only fails if the bridge itself is
@@ -81,13 +111,13 @@
   // Every part has to be mounted before the sequence can move it, and none of
   // them exist while onboarding is on screen.
   $effect(() => {
-    if (!onboarding && markRef && barRef && dockRef && panelRef) {
-      intro.play({
-        mark: markRef,
-        bar: barRef,
-        sidebar: dockRef,
-        panel: panelRef,
-      });
+    if (!onboarding && markRef && barRef && dockRef) {
+      // Queried rather than bound: the panel is whichever `.view` the dock is
+      // showing, and it is a direct child of `.app` with nothing to bind to.
+      const panel = document.querySelector<HTMLElement>(".app > .view");
+      if (panel) {
+        intro.play({ mark: markRef, bar: barRef, sidebar: dockRef, panel });
+      }
     }
   });
 
@@ -103,22 +133,10 @@
 
 {#if onboarding}
   <Onboarding
-    ondone={(created) => {
-      if (created) {
-        collection = created;
-        active = "points";
-      }
+    ondone={() => {
       onboarding = false;
-    }}
-  />
-{:else if engine.hasOrganization === false}
-  <!-- Nothing is reachable before an organization exists: every other resource
-       is named inside one, so the dock would only offer panels that say
-       "nothing yet". -->
-  <FirstOrganization
-    oncreated={() => {
       engine.refreshOrganizations();
-      active = "workspace";
+      engine.refresh();
     }}
   />
 {:else}
@@ -130,19 +148,28 @@
     bind:markRef
   />
 
-  <!-- The design's shell: a pinned rail beside one pane that owns its scroll.
-       `.app` is a `3.25rem 1fr` grid under a `--nav-h` bar — which is what keeps
-       the dock in place and the frame itself from ever scrolling. -->
-  <div class="app">
-    <Dock bind:active bind:ref={dockRef} />
+  <!-- `.app` is a `3.25rem 1fr` grid under a `--nav-h` bar: the dock, then the
+       view itself as the second column.
+       
+       No wrapper between them. There was one — a `<main class="main">` — and it
+       is what made every panel look cut off: `.main` is `grid-template-rows:
+       auto 1fr auto` because in the design it is the *workspace view's centre
+       column*, holding the space head, the thread and the composer. Given a
+       single child it put it in the first `auto` row and clipped the rest with
+       its own `overflow: hidden`. -->
+  <div class="app" data-dock={dockOpen ? "open" : "closed"}>
+    <Dock bind:active bind:open={dockOpen} bind:ref={dockRef} />
 
-    <main class="main" bind:this={panelRef}>
       {#if active === "workspace"}
-        <Workspace />
+        <Workspace canEmbed={engine.canEmbed} />
       {:else if active === "data"}
         <Points {collection} canEmbed={engine.canEmbed} />
       {:else if active === "models"}
         <Models oninstalled={refreshCapabilities} />
+      {:else if active === "graph"}
+        <Graph />
+      {:else if active === "people"}
+        <People />
       {:else if active === "metrics"}
         <Metrics />
       {:else if active === "settings"}
@@ -164,6 +191,5 @@
           waiting={waiting[active] ?? "Not built yet."}
         />
       {/if}
-    </main>
   </div>
 {/if}

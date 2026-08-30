@@ -18,7 +18,7 @@ fn entry_for(body: &[u8]) -> CatalogEntry {
 #[test]
 fn a_verified_download_lands_at_the_expected_path() {
     let dir = tempfile::tempdir().expect("temp dir");
-    let store = ModelStore::new(dir.path());
+    let store = ModelStore::new(dir.path().to_path_buf());
     let body = b"pretend this is a gguf".to_vec();
     let entry = entry_for(&body);
 
@@ -44,7 +44,7 @@ fn bytes_that_do_not_match_the_digest_never_reach_the_load_path() {
     // width, context, quality — is unverified. So it must not be loadable, and
     // it must not be left to be resumed into the same wrong file again.
     let dir = tempfile::tempdir().expect("temp dir");
-    let store = ModelStore::new(dir.path());
+    let store = ModelStore::new(dir.path().to_path_buf());
     let entry = entry_for(b"what the catalog promises");
 
     let err = store
@@ -70,7 +70,7 @@ fn bytes_that_do_not_match_the_digest_never_reach_the_load_path() {
 #[test]
 fn installing_twice_does_not_fetch_twice() {
     let dir = tempfile::tempdir().expect("temp dir");
-    let store = ModelStore::new(dir.path());
+    let store = ModelStore::new(dir.path().to_path_buf());
     let body = b"already here".to_vec();
     let entry = entry_for(&body);
     let fetcher = FakeFetcher::serving(body);
@@ -94,7 +94,7 @@ fn an_interrupted_download_resumes_rather_than_restarting() {
     // A model file is large enough that this is the difference between the
     // product working on a bad connection and not (invariant 10).
     let dir = tempfile::tempdir().expect("temp dir");
-    let store = ModelStore::new(dir.path());
+    let store = ModelStore::new(dir.path().to_path_buf());
     let body = b"0123456789abcdef".to_vec();
     let entry = entry_for(&body);
 
@@ -123,7 +123,7 @@ fn a_partial_larger_than_the_file_is_discarded_rather_than_appended_to() {
     // produces a file that can only fail its digest, having spent the whole
     // download to get there.
     let dir = tempfile::tempdir().expect("temp dir");
-    let store = ModelStore::new(dir.path());
+    let store = ModelStore::new(dir.path().to_path_buf());
     let body = b"the real file".to_vec();
     let entry = entry_for(&body);
 
@@ -153,7 +153,7 @@ fn a_cancelled_install_keeps_its_partial_so_the_next_one_resumes() {
     // thing, which on a 600 MB model is the difference between a pause and an
     // hour.
     let dir = tempfile::tempdir().expect("temp dir");
-    let store = ModelStore::new(dir.path());
+    let store = ModelStore::new(dir.path().to_path_buf());
     let body = b"0123456789abcdef".to_vec();
     let entry = entry_for(&body);
 

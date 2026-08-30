@@ -6,6 +6,7 @@
   that hides them behind a details view is a row that gets clicked blind.
 -->
 <script lang="ts">
+  import { Bar, Button, Dot, Row, Tag } from "$lib/ui";
   import { isFinished } from "$lib/api";
   import type { CatalogModel, Installation } from "$lib/api";
 
@@ -23,10 +24,8 @@
   let { model, install, onInstall, onCancel }: Props = $props();
 
   const running = $derived(install !== undefined && !isFinished(install.state));
-  const percent = $derived(
-    install && install.totalBytes > 0
-      ? Math.min(100, (install.progressBytes / install.totalBytes) * 100)
-      : 0,
+  const fraction = $derived(
+    install && install.totalBytes > 0 ? install.progressBytes / install.totalBytes : 0,
   );
 
   /** Bytes as a person reads them. */
@@ -37,52 +36,48 @@
   }
 </script>
 
-<div class="row">
-  <div class="row-main">
-    <div class="row-title">
-      <span class="row-name">{model.displayName}</span>
-      {#if model.resident}
-        <span class="tag green">in memory</span>
-      {:else if model.installed}
-        <span class="tag">installed</span>
-      {/if}
-      {#if model.recommended}
-        <span class="tag blue">recommended</span>
-      {/if}
-    </div>
+<Row name={model.displayName}>
+  {#snippet badges()}
+    {#if model.resident}
+      <Tag tone="green">in memory</Tag>
+    {:else if model.installed}
+      <Tag>installed</Tag>
+    {/if}
+    {#if model.recommended}<Tag tone="blue">recommended</Tag>{/if}
+  {/snippet}
+
+  {#snippet meta()}
     <div class="row-meta">{model.description}</div>
     <div class="row-meta mono">
       {model.dimensions} dim · {model.contextLength.toLocaleString()} tokens ·
       {megabytes(model.sizeBytes)} · {model.license}
     </div>
-
     {#if running}
-      <!-- A determinate bar only once a total is known: a bar that fills from
+      <!-- A determinate bar only once a total is known: one that fills from
            nothing to nothing reads as a stall rather than as a start. -->
-      <div class="bar" style="margin-top: 0.5rem">
-        <i style="width: {percent}%"></i>
-      </div>
+      <div style="margin-top: calc(var(--u) * 2)"><Bar value={fraction} /></div>
       <div class="row-meta mono">
         {install?.state} · {megabytes(install?.progressBytes ?? 0)} of
         {megabytes(install?.totalBytes ?? 0)}
       </div>
     {/if}
-  </div>
+  {/snippet}
 
-  <div style="display: flex; gap: 0.5rem; align-items: center; flex: none">
+  {#snippet action()}
     <a class="btn ghost sm" href={model.repositoryUri} target="_blank" rel="noreferrer">
       Source
     </a>
     {#if model.installed}
-      <span class="dot live" title="On disk"></span>
+      <!-- The word as well as the mark: a green dot was the only thing saying
+           this model is on disk, which is unreadable without colour. -->
+      <span style="display: inline-flex; align-items: center; gap: calc(var(--u) * 1.5)">
+        <Dot state="live" decorative />
+        <span class="faint" style="font-size: 0.75rem">on disk</span>
+      </span>
     {:else if running}
-      <button class="btn ghost sm" type="button" onclick={() => onCancel(model.id)}>
-        Cancel
-      </button>
+      <Button variant="ghost" size="sm" onclick={() => onCancel(model.id)}>Cancel</Button>
     {:else}
-      <button class="btn sm" type="button" onclick={() => onInstall(model.id)}>
-        Install
-      </button>
+      <Button size="sm" onclick={() => onInstall(model.id)}>Install</Button>
     {/if}
-  </div>
-</div>
+  {/snippet}
+</Row>

@@ -24,16 +24,28 @@
   interface Props {
     /** Which panel is showing. */
     active: string;
+    /**
+     * Whether the rail is expanded to show names.
+     *
+     * Bindable and owned by the shell, because the grid column it sizes lives
+     * there — the rail cannot widen itself without the layout agreeing.
+     */
+    open?: boolean;
     /** The dock itself, for the launch sequence to move. */
     ref?: HTMLElement | null;
   }
 
-  let { active = $bindable("workspace"), ref = $bindable(null) }: Props = $props();
+  let {
+    active = $bindable("workspace"),
+    open = $bindable(false),
+    ref = $bindable(null),
+  }: Props = $props();
 
   const entries: readonly Entry[] = [
     { id: "workspace", label: "Workspace", path: `<path d="M2.5 3.5h13v9h-7l-3.5 3v-3h-2.5z"/>` },
     { id: "data", label: "Data", path: `<ellipse cx="9" cy="4.5" rx="6" ry="2.2"/><path d="M3 4.5v9c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2v-9"/><path d="M3 9c0 1.2 2.7 2.2 6 2.2s6-1 6-2.2"/>` },
     { id: "models", label: "Models", path: `<path d="M9 2.5v9M5.5 8L9 11.5 12.5 8"/><path d="M3 12.5v2h12v-2"/>` },
+    { id: "graph", label: "Graph", path: `<circle cx="4.5" cy="4.5" r="2"/><circle cx="13.5" cy="6.5" r="2"/><circle cx="7.5" cy="13.5" r="2"/><path d="M6.3 5.4l5.5 1M5.4 6.3l1.4 5.4"/>` },
     { id: "people", label: "People", path: `<circle cx="6.8" cy="6" r="2.6"/><path d="M2 15c0-2.7 2.2-4.4 4.8-4.4S11.6 12.3 11.6 15"/><path d="M12 4.2a2.6 2.6 0 0 1 0 5"/><path d="M13 10.8c2.1.3 3.6 1.9 3.6 4.2"/>` },
     { id: "metrics", label: "Metrics", path: `<path d="M2.5 14.5v-4M6.8 14.5v-8M11.2 14.5v-5.5M15.5 14.5v-11"/>` },
     { id: "settings", label: "Settings", path: `<circle cx="9" cy="9" r="2.4"/><path d="M9 1.8v1.9M9 14.3v1.9M16.2 9h-1.9M3.7 9H1.8M14.1 3.9l-1.3 1.3M5.2 12.8l-1.3 1.3M14.1 14.1l-1.3-1.3M5.2 5.2L3.9 3.9"/>` }
@@ -61,7 +73,25 @@
       >
         {@html entry.path}
       </svg>
+      <span class="dock-label">{entry.label}</span>
       <span class="tip">{entry.blocked ?? entry.label}</span>
     </button>
   {/each}
+
+  <!-- Pinned to the foot rather than the head: collapsing is a rare action, and
+       at the top it would sit where the eye goes first for navigation. -->
+  <button
+    class="dock-btn dock-toggle"
+    type="button"
+    aria-label={open ? "Collapse the sidebar" : "Expand the sidebar"}
+    aria-expanded={open}
+    onclick={() => (open = !open)}
+  >
+    <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3">
+      <path d="M11 5l-4 4 4 4" />
+      <path d="M14.5 3.5v11" />
+    </svg>
+    <span class="dock-label">Collapse</span>
+    <span class="tip">{open ? "Collapse" : "Expand"}</span>
+  </button>
 </nav>

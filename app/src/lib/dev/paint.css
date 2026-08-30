@@ -1,0 +1,55 @@
+/* The layout inspector's own styling.
+ *
+ * Modelled on Flutter's paint debugging and Chrome's box model: every box gets
+ * an outline, the hovered one gets its content, padding and margin drawn as
+ * distinct regions, and a readout states the numbers rather than leaving them to
+ * be judged by eye. Judging by eye is what let a toggle ship with 1px above its
+ * knob and 3px below.
+ */
+
+/* Every box, faintly. Outline rather than border so nothing moves when it is
+ * switched on — an inspector that changes the layout it inspects is useless. */
+[data-paint="on"] *:not(#paint-layer):not(#paint-layer *) {
+  outline: 1px solid #4186f533;
+  outline-offset: -1px;
+}
+
+/* The grid, so alignment can be read against the module rather than guessed. */
+[data-paint="grid"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, #4186f51f 1px, transparent 1px),
+    linear-gradient(to bottom, #4186f51f 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+#paint-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* The three regions of the box model, in the colours the tooling convention
+ * uses — so anyone who has opened DevTools already knows how to read this. */
+.paint-margin { position: absolute; background: #f9cc9d40; }
+.paint-border { position: absolute; background: #fdd83540; }
+.paint-content { position: absolute; background: #4186f540; outline: 1px solid #4186f5; }
+
+.paint-tip {
+  position: absolute;
+  background: #0a0a0a;
+  border: 1px solid #4186f5;
+  color: #f4f5f5;
+  padding: 4px 6px;
+  white-space: pre;
+  max-width: 22rem;
+}
+
+.paint-tip b { color: #4186f5; font-weight: 500; }
+.paint-tip span { color: #8a8a8a; }

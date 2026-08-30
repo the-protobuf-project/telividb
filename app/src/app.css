@@ -119,6 +119,17 @@
   --color-green-text: #0c7f48;
   --color-red-text: #c93c31;
   --color-blue-text: #356dc8;
+  /* Amber needs the same darkening the three above get, and did not have it.
+   *
+   * `#fcc005` reads 11.96:1 on the dark ground and **1.52:1** on the light one
+   * — invisible, not merely weak. It carries the honesty vocabulary: `sample
+   * data`, `not enforced`, `not built`, `locked`. Those marks exist to stop
+   * someone believing People enforces permissions or that the graph is live, so
+   * losing them in light mode loses the one thing they are for.
+   *
+   * `#8a5d00` is the closest value to amber clearing AA on both light surfaces:
+   * 5.27:1 on the ground, 5.76:1 on white. */
+  --color-amber: #8a5d00;
 
   --btn-bg: #151515;
   --btn-fg: #f4f5f5;

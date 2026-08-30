@@ -11,3 +11,7 @@ vite.config.ts.timestamp-*
 
 # Storybook's built output — a build artifact, reproducible from the stories.
 storybook-static/
+
+# Screenshots taken by `bun run shot` — a working aid for comparing the app
+# against the mock, never an artefact worth committing.
+.shots/

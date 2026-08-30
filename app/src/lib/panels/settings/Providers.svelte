@@ -7,6 +7,7 @@
   not render it.
 -->
 <script lang="ts">
+  import { Button, Dot, Input, Notice, SettingGroup, SettingRow } from "$lib/ui";
   import { MASK, type SettingsState } from "./state.svelte";
 
   interface Props {
@@ -17,33 +18,31 @@
   let { state }: Props = $props();
 </script>
 
-<div>
-  <p class="hint" style="margin: 0.5rem 0 0.625rem">
+<div style="display: flex; flex-direction: column; gap: calc(var(--u) * 3)">
+  <Notice>
     Retrieval happens on this machine either way. A provider is only what writes
     the answer — and everything it is given is listed on the turn, so nothing is
-    sent that you cannot see.
-  </p>
+    sent that you cannot see. A green edge marks one that runs here.
+  </Notice>
 
-  <div class="set-group">
+  <SettingGroup>
     {#each state.providers as provider (provider.id)}
-      <div class="set-row">
-        <div class="txt">
-          <b>
-            {provider.displayName}
-            {#if provider.locality === "local"}
-              <span class="tag green">local</span>
-            {/if}
-          </b>
-          <span>{provider.note}</span>
-        </div>
-        <div class="ctl" style="display: flex; gap: 0.5rem; align-items: center">
-          <input
-            class="input mono"
-            style="width: 13rem; font-size: 0.75rem"
+      <SettingRow
+        label={provider.displayName}
+        description={provider.note}
+        mark={provider.locality === "local" ? "green" : undefined}
+        markTitle={provider.locality === "local"
+          ? "Runs on this machine — the only kind a vault will use"
+          : undefined}
+      >
+        {#snippet control()}
+          <Input
+            mono
             type={provider.locality === "local" ? "text" : "password"}
             placeholder={provider.credentialHint}
             value={state.shown(provider)}
             aria-label="{provider.displayName} credential"
+            style="width: 13rem; font-size: 0.75rem"
             oninput={(e) => (state.drafts[provider.id] = e.currentTarget.value)}
             onfocus={(e) => {
               // The mask is not a value. Clearing it stops someone editing a row
@@ -52,31 +51,31 @@
             }}
           />
           {#if state.dirty(provider.id)}
-            <button
-              class="btn sm"
-              type="button"
-              disabled={state.saving === provider.id}
+            <Button
+              size="sm"
+              loading={state.saving === provider.id}
               onclick={() => state.save(provider.id)}
             >
-              {state.saving === provider.id ? "Saving…" : "Save"}
-            </button>
+              Save
+            </Button>
           {:else if provider.configured && provider.locality === "remote"}
-            <button
-              class="btn ghost sm"
-              type="button"
-              disabled={state.saving === provider.id}
+            <Button
+              size="sm"
+              variant="ghost"
+              loading={state.saving === provider.id}
               onclick={() => state.forget(provider.id)}
             >
               Forget
-            </button>
+            </Button>
           {/if}
-          <span
-            class="dot"
-            class:live={provider.configured}
-            title={provider.configured ? "Ready" : "Not configured"}
-          ></span>
-        </div>
-      </div>
+          <Dot
+            state={provider.configured ? "live" : "idle"}
+            title={provider.configured
+              ? `${provider.displayName} is ready`
+              : `${provider.displayName} is not configured`}
+          />
+        {/snippet}
+      </SettingRow>
     {/each}
-  </div>
+  </SettingGroup>
 </div>

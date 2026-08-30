@@ -11,6 +11,7 @@
 -->
 <script lang="ts">
   import { client } from "$lib/api";
+  import { Notice, TreeNode } from "$lib/ui";
   import { SECTIONS, SettingsState } from "./state.svelte";
   import Engine from "./Engine.svelte";
   import Providers from "./Providers.svelte";
@@ -32,16 +33,13 @@
       <div class="rail-label">Settings</div>
       <div class="tree">
         {#each SECTIONS as section (section.id)}
-          <button
-            class="node org"
-            type="button"
-            aria-current={state.section === section.id}
+          <TreeNode
+            name={section.label}
+            kind="org"
+            count={section.summary}
+            current={state.section === section.id}
             onclick={() => (state.section = section.id)}
-            style="flex-direction: column; align-items: flex-start; gap: 0.125rem; height: auto; padding-top: 0.5rem; padding-bottom: 0.5rem"
-          >
-            <span class="name">{section.label}</span>
-            <span class="count">{section.summary}</span>
-          </button>
+          />
         {/each}
       </div>
     </div>
@@ -57,7 +55,7 @@
     <div class="page-scroll">
       <div class="page-inner">
         {#if state.error}
-          <p class="selectable" style="color: var(--red-text)">{state.error}</p>
+          <Notice tone="error">{state.error}</Notice>
         {/if}
 
         {#if state.section === "engine"}

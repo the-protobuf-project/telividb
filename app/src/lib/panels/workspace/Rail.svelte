@@ -1,13 +1,13 @@
 <!--
   The tenancy tree, as the design's left rail.
 
-  Indentation carries the hierarchy — `.node.org`, `.node.project`, `.node.space`
-  differ only by left padding — and a space sits at the same depth as a project
-  rather than beneath one, because that is what it is: a sibling under the
-  organization that *references* projects. Nesting it would draw a parent that
-  does not exist.
+  Indentation carries the hierarchy, and a space sits at the same depth as a
+  project rather than beneath one — because that is what it is: a sibling under
+  the organization that *references* projects. Nesting it would draw a parent
+  that does not exist.
 -->
 <script lang="ts">
+  import { IconButton, Lock, PanelLabel, TreeNode } from "$lib/ui";
   import { resourceId } from "$lib/api";
   import type { WorkspaceState } from "./state.svelte";
 
@@ -21,60 +21,51 @@
 
 <nav class="rail">
   <div>
-    <div class="rail-label">
+    <PanelLabel>
       Structure
-      <button
-        class="rail-add"
-        type="button"
-        title="New organization"
-        onclick={() => tree.startCreating("organization")}
-      >
-        +
-      </button>
-    </div>
+      {#snippet action()}
+        <IconButton label="New organization" onclick={() => tree.startCreating("organization")}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M6 2v8M2 6h8" />
+          </svg>
+        </IconButton>
+      {/snippet}
+    </PanelLabel>
 
     <div class="tree">
       {#each tree.organizations as organization (organization.name)}
-        <button
-          class="node org"
-          type="button"
-          aria-current={tree.selected?.name === organization.name}
-          style={organization.deleted ? "opacity:.5" : ""}
+        <TreeNode
+          name={organization.displayName}
+          kind="org"
+          count="{organization.projectCount}p · {organization.spaceCount}s"
+          current={tree.selected?.name === organization.name}
+          muted={organization.deleted}
           onclick={() => tree.open(organization)}
-        >
-          <span class="name">{organization.displayName}</span>
-          <span class="count">{organization.projectCount}p · {organization.spaceCount}s</span>
-        </button>
+        />
 
         {#if tree.selected?.name === organization.name}
           {#each tree.projects as project (project.name)}
-            <div class="node project" style={project.deleted ? "opacity:.5" : ""}>
-              <span class="name">{project.displayName}</span>
-              <span class="count">{resourceId(project.name)}</span>
-            </div>
+            <TreeNode
+              name={project.displayName}
+              kind="project"
+              count={resourceId(project.name)}
+              muted={project.deleted}
+            />
           {/each}
 
           {#each tree.spaces as space (space.name)}
-            <div class="node space" style={space.deleted ? "opacity:.5" : ""}>
-              <span class="name">{space.displayName}</span>
-              <!-- The lock is the protection, not a state: an open padlock and a
-                   sealed one are different promises, and rule 25 exists because
-                   it is tempting to draw them the same. -->
-              <span
-                class="lock {space.protection === 'sealed'
-                  ? 'lock-sealed'
-                  : space.protection === 'vault'
-                    ? 'lock-shut'
-                    : 'lock-open'}"
-                title={space.protection}
-              >
-                {space.protection === "none" ? "○" : space.locked ? "●" : "◐"}
-              </span>
-            </div>
+            <TreeNode
+              name={space.displayName}
+              kind="space"
+              protection={space.protection}
+              current={tree.space?.name === space.name}
+              muted={space.deleted}
+              onclick={() => tree.openSpace(space)}
+            />
           {/each}
         {/if}
       {:else}
-        <p class="hint" style="padding: 0 0.875rem">
+        <p class="hint" style="padding: 0 calc(var(--u) * 3.5)">
           No organizations yet. Everything else lives inside one.
         </p>
       {/each}
@@ -82,11 +73,11 @@
   </div>
 
   <div>
-    <div class="rail-label">Legend</div>
+    <PanelLabel>Legend</PanelLabel>
     <div class="legend">
-      <div><span class="lock lock-open">○</span> Open · role grants</div>
-      <div><span class="lock lock-shut">◐</span> Vault · key-wrapped</div>
-      <div><span class="lock lock-sealed">●</span> Sealed · client key</div>
+      <div><Lock protection="none" decorative /> Open · role grants</div>
+      <div><Lock protection="vault" decorative /> Vault · key-wrapped</div>
+      <div><Lock protection="sealed" decorative /> Sealed · client key</div>
     </div>
   </div>
 </nav>

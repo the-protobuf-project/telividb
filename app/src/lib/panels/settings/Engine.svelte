@@ -7,6 +7,7 @@
   rather than inferred from how slow things feel.
 -->
 <script lang="ts">
+  import { SettingGroup, SettingRow, Tag } from "$lib/ui";
   import type { SettingsState } from "./state.svelte";
 
   interface Props {
@@ -24,57 +25,53 @@
   }
 </script>
 
-<div>
-  <div class="set-group">
-    <div class="set-row">
-      <div class="txt">
-        <b>Data directory</b>
-        <span>Segments, the write-ahead log, models and metadata.</span>
-      </div>
-      <div class="ctl">
-        <span class="mono faint selectable" style="font-size: 0.75rem">
-          {state.capabilities?.data_dir ?? "—"}
-        </span>
-      </div>
-    </div>
+<SettingGroup>
+  <SettingRow
+    label="Data directory"
+    description="Segments, the write-ahead log, models and metadata."
+  >
+    {#snippet control()}
+      <span class="mono faint selectable" style="font-size: 0.75rem">
+        {state.capabilities?.data_dir ?? "—"}
+      </span>
+    {/snippet}
+  </SettingRow>
 
-    <div class="set-row">
-      <div class="txt">
-        <b>Compute backend</b>
-        <span>
-          {env?.budgetSource === "configured"
-            ? "Pinned by TELIVIDB_DEVICE rather than detected."
-            : "Chosen by detection when the process started."}
-        </span>
-      </div>
-      <div class="ctl" style="display: flex; gap: 0.5rem; align-items: center">
-        <span class="mono" style="font-size: 0.75rem">{env?.backend ?? "—"}</span>
-        <span class="faint mono" style="font-size: 0.75rem">
-          {env ? gigabytes(env.budgetLimitBytes) : ""}
-        </span>
-      </div>
-    </div>
+  <SettingRow
+    label="Compute backend"
+    description={env?.budgetSource === "configured"
+      ? "Pinned by TELIVIDB_DEVICE rather than detected."
+      : "Chosen by detection when the process started."}
+    tag={env?.budgetSource === "configured" ? "pinned" : undefined}
+    tone="amber"
+  >
+    {#snippet control()}
+      <span class="mono" style="font-size: 0.75rem">{env?.backend ?? "—"}</span>
+      <span class="mono faint" style="font-size: 0.75rem">
+        {env ? gigabytes(env.budgetLimitBytes) : ""}
+      </span>
+    {/snippet}
+  </SettingRow>
 
-    <div class="set-row">
-      <div class="txt">
-        <b>Listen on</b>
-        <span>The address the engine serves on, for this machine only.</span>
-      </div>
-      <div class="ctl mono faint selectable" style="font-size: 0.75rem">
+  <SettingRow
+    label="Listen on"
+    description="The address the engine serves on, for this machine only."
+  >
+    {#snippet control()}
+      <span class="mono faint selectable" style="font-size: 0.75rem">
         {state.capabilities?.address ?? "—"}
-      </div>
-    </div>
+      </span>
+    {/snippet}
+  </SettingRow>
 
-    <div class="set-row">
-      <div class="txt">
-        <b>Embedding model</b>
-        <span>Text can only be stored or searched while one is resident.</span>
-      </div>
-      <div class="ctl">
-        <span class="tag" class:green={state.capabilities?.has_model}>
-          {state.capabilities?.has_model ? "loaded" : "none loaded"}
-        </span>
-      </div>
-    </div>
-  </div>
-</div>
+  <SettingRow
+    label="Embedding model"
+    description="Text can only be stored or searched while one is resident."
+  >
+    {#snippet control()}
+      <Tag tone={state.capabilities?.has_model ? "green" : "plain"}>
+        {state.capabilities?.has_model ? "loaded" : "none loaded"}
+      </Tag>
+    {/snippet}
+  </SettingRow>
+</SettingGroup>

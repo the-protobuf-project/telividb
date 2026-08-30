@@ -34,3 +34,759 @@
 .tiles {
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
 }
+
+/* ── The unit grid ─────────────────────────────────────────────────────────
+ *
+ * Every control snaps to a multiple of 4px, and there are three tiers rather
+ * than a size per component. This is the largest deliberate departure from the
+ * ported mock, and it is a correction rather than a preference: measured, the
+ * mock puts a 42px input beside a 32px button, a 34px segmented control, a 29.5px
+ * tree node and a 28px chip. Nothing shared a unit, so nothing lined up, and no
+ * amount of per-component nudging fixes a system with no module.
+ *
+ * The reference is the NYCTA Graphics Standards Manual: one grid, a small set of
+ * sizes, and alignment doing the work that decoration usually does. A control
+ * that needs a size not on this scale is a control that needs rethinking.
+ */
+:root {
+  /* The module. Every dimension below is a whole number of these. */
+  --u: 0.25rem;
+
+  /* Form controls — buttons, inputs, segmented controls, selects. 8u. */
+  --control-h: 2rem;
+  /* Toolbar and nav controls — small buttons, icon buttons, chips. 7u. */
+  --control-h-sm: 1.75rem;
+  /* Marks that sit inside text — tags, toggles, step numbers. 5u. */
+  --mark-h: 1.25rem;
+
+  /* Horizontal rhythm, so padding is drawn from the same scale as height. */
+  --pad-x: calc(var(--u) * 3); /* 12px */
+  --pad-x-sm: calc(var(--u) * 2.5); /* 10px */
+}
+
+/* Form tier: all exactly --control-h, so a button beside a field aligns on both
+ * edges rather than only the top. */
+.btn,
+.input,
+.seg {
+  height: var(--control-h);
+}
+
+/* Inside the group's own border, not equal to it. Setting both to
+ * `--control-h` overflowed the segment by a pixel top and bottom — the sort of
+ * thing that reads as a slightly wrong edge rather than as a bug, and survives
+ * because nobody measures it. */
+.seg button {
+  height: calc(var(--control-h) - 2px);
+}
+
+.input {
+  /* Padding rather than line-height does the centring, so a monospace value and
+   * a proportional one sit on the same baseline. */
+  padding: 0 var(--pad-x);
+  line-height: var(--control-h);
+}
+
+.textarea {
+  /* Multi-line, so height is content — but its padding is on the grid and its
+   * first line starts where a single-line input's would. */
+  height: auto;
+  padding: calc(var(--u) * 1.5) var(--pad-x);
+  line-height: 1.5;
+}
+
+/* Compact tier. */
+.btn.sm,
+.icon-btn,
+.chip {
+  height: var(--control-h-sm);
+}
+
+.btn.sm {
+  padding: 0 var(--pad-x-sm);
+}
+
+/* Mark tier: things that sit in a line of text and must not disturb it. */
+.tag,
+.toggle,
+.step .n {
+  height: var(--mark-h);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 calc(var(--u) * 1.5);
+}
+
+/* Rows and nodes are 8u like a form control, so a tree lines up with the panel
+ * beside it rather than drifting a pixel and a half per row. */
+.node {
+  height: var(--control-h);
+}
+
+/* Containers on the same module.
+ *
+ * The mock pads these with 0.875rem (14px) and 0.3125rem (5px) — neither is a
+ * multiple of the unit, which is why rows measured 91px and 68.5px and why
+ * stacking them drifted half a pixel at a time. Padding comes from the same
+ * scale as height or the grid is decorative. */
+.row,
+.set-row,
+.tile {
+  padding: calc(var(--u) * 3) calc(var(--u) * 4);
+}
+
+.card-body,
+.card-head,
+.card-foot {
+  padding: calc(var(--u) * 5) calc(var(--u) * 5);
+}
+
+.chart-head {
+  padding: calc(var(--u) * 3) calc(var(--u) * 4) 0;
+}
+
+.chart-body {
+  padding: calc(var(--u) * 2) calc(var(--u) * 4) calc(var(--u) * 4);
+}
+
+/* The gutter itself, so page padding is on the grid rather than beside it. */
+:root {
+  --gutter: calc(var(--u) * 5);
+}
+
+/* ── The baseline ──────────────────────────────────────────────────────────
+ *
+ * A 20px line on 14px text — five units, where the mock's `line-height: 1.5`
+ * gives 21 and puts every stacked paragraph a pixel off the module. This is
+ * what makes a two-line row measure 68 rather than 68.5, and it is the half of
+ * a grid that controls alone cannot supply: heights snap the boxes, a baseline
+ * snaps what is inside them.
+ */
+:root {
+  --line: 1.25rem;
+}
+
+body {
+  line-height: var(--line);
+}
+
+/* Small text keeps the same baseline rather than computing its own, so a label
+ * and the value beside it sit on one line even at different sizes. */
+.row-meta,
+.row-name,
+.row-title,
+.hint,
+.set-row .txt b,
+.set-row .txt span,
+.tile .n,
+.tile .k,
+.node .count,
+.kv {
+  line-height: var(--line);
+}
+
+/* Headings are whole multiples too, so a card's title block is a predictable
+ * height rather than whatever the font happened to want. */
+h1 {
+  line-height: calc(var(--u) * 7);
+}
+
+h2,
+h3 {
+  line-height: calc(var(--u) * 5);
+}
+
+.lede {
+  line-height: calc(var(--u) * 5);
+}
+
+/* The gaps *inside* a row, which are what was leaving containers on a half
+ * pixel: 0.125rem and 0.25rem margins between lines that are themselves on the
+ * baseline. Snapped to the unit so a row's height is a whole number of modules. */
+/* A column, so its height is the sum of two 20px lines and nothing else.
+ *
+ * The mock leaves `.txt` as a block containing a `display:block` label and an
+ * inline description. An inline box contributes its *line box* to the parent's
+ * height but reports its smaller *content box* when measured, and the two
+ * disagreeing left the row at 41px — an odd number, in which a 32px control
+ * cannot be centred. The segmented control sat 16.5px from the top and 17.5 from
+ * the bottom, which is exactly the half-pixel that reads as "not quite right"
+ * without being obviously wrong.
+ *
+ * Blockifying both children makes the height 20 + 20 = 40, the row 64, and the
+ * centring exact. */
+.set-row .txt {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* The direct child only.
+ *
+ * `.set-row .txt span` also matched a `Tag` nested inside the label, turning an
+ * `inline-flex` badge into a full-width block — "NOT ENFORCED" rendered as a
+ * bar across the row. The description is the one span that should blockify. */
+.set-row .txt > span {
+  display: block;
+}
+
+.row-meta {
+  margin-top: var(--u);
+}
+
+.row-title {
+  gap: calc(var(--u) * 2);
+}
+
+/* ── States the mock does not define ───────────────────────────────────────
+ *
+ * Validation, loading and refusal. The mock is a happy-path drawing: every
+ * field is filled, every list has rows, nothing is in flight. A real window
+ * spends much of its time in one of these, and a design system that has no
+ * answer for them gets one invented per panel.
+ *
+ * Drawn the way the rest of this is drawn — a border changes, a rule appears —
+ * rather than with glows or rounded pills. A red edge on a square field reads at
+ * a glance without becoming a different shape. */
+.input.invalid,
+.textarea.invalid {
+  border-color: var(--red);
+}
+
+.input.invalid:focus,
+.textarea.invalid:focus {
+  border-color: var(--red-text);
+}
+
+/* The message under a field. Shares the hint's baseline so a field does not
+ * change height when it becomes invalid — a form that reflows as you type is
+ * harder to fill than one that does not. */
+.hint.error {
+  color: var(--red-text);
+}
+
+/* In flight. The label stays and the control dims, rather than being replaced
+ * by a spinner — a button whose text vanishes loses the only clue about what is
+ * being waited for. */
+.btn[data-loading="true"],
+.row[data-loading="true"] {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn[data-loading="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 1.5px solid var(--btn-fg);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.btn.ghost[data-loading="true"]::after {
+  border-color: var(--ink-dim);
+  border-top-color: transparent;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* A placeholder for a row that has not arrived. Blocked out at the height it
+ * will occupy, so the list does not jump when it does. */
+.skeleton {
+  background: var(--rule);
+  height: var(--line);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.85; }
+}
+
+/* A message block: refusal, warning, or a fact worth stating before an action.
+ * A left rule rather than a filled panel — the colour is the whole signal. */
+.notice {
+  border-left: 2px solid var(--rule-strong);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3);
+  font-size: 0.8125rem;
+  line-height: var(--line);
+  color: var(--ink-dim);
+  background: var(--sunken);
+}
+
+.notice.error { border-left-color: var(--red); color: var(--red-text); }
+.notice.warn { border-left-color: var(--amber); }
+.notice.ok { border-left-color: var(--green); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn[data-loading="true"]::after,
+  .skeleton { animation: none; }
+}
+
+/* The graph's own toolbar, on the same module as everything else. */
+.graph-bar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  height: var(--control-h);
+  padding: 0 calc(var(--u) * 3);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+/* The canvas fills its cell by being taken out of flow, exactly as the mock's
+ * own `#graph-canvas` does. `height: 100%` cannot work here: the grid row is
+ * auto-sized from its content and the content sizes from the row, so the pair
+ * resolve to zero and the graph renders its nodes into a 1120x0 box. */
+/* Absolute inside a positioned, definitely-sized parent.
+ *
+ * Neither `height: 100%` nor a grid row worked: the row was auto-sized from its
+ * content while the content sized from the row, and the pair settled on zero —
+ * the graph rendered all seven nodes into a 1120x0 box and looked like a
+ * rendering failure. Taking the canvas out of flow makes the height come from
+ * one direction only. The caller supplies the box. */
+.graph-view {
+  position: absolute;
+  inset: 0;
+}
+
+/* A range input drawn as a rule with a square handle, rather than the platform's
+ * rounded pill — the one native control that would otherwise give the game away. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 6rem;
+  height: 2px;
+  background: var(--rule-strong);
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: var(--mark-h);
+  background: var(--ink);
+  border: 0;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 8px;
+  height: var(--mark-h);
+  background: var(--ink);
+  border: 0;
+  border-radius: 0;
+}
+
+/* ── The toggle: a 24px target drawing a 20px switch ──────────────────────
+ *
+ * Two sizes, because they answer different questions. The *drawn* switch is
+ * 20px, the mark tier, so it sits in a line of text without disturbing it. The
+ * *target* is 24px, which is what WCAG 2.2 AA asks of a pointer target.
+ *
+ * The button is the target and paints nothing; a `::before` draws the track
+ * inside it. The first attempt at this extended the button with an `::after`
+ * and was measured to be **dead** — a pseudo-element that overflows a button
+ * does not enlarge the button's hit box, it only paints outside it. Clicking
+ * two pixels above the switch did nothing, which is worse than the original
+ * problem: a target that looks bigger than it is.
+ *
+ * The mock's own geometry does not centre either — a 14px knob offset 1px in a
+ * 20px track leaves 1px above and 3px below, and its 15px travel does not
+ * mirror its start. Redrawn from the inside out: an 18px interior takes a 12px
+ * knob with 3px clear on every side, and the travel is exactly what remains. */
+.toggle {
+  width: calc(var(--u) * 9); /* 36px */
+  height: calc(var(--u) * 6); /* 24px — the target */
+  position: relative;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* The track: 20px, centred in the 24px target. */
+.toggle::before {
+  content: "";
+  position: absolute;
+  inset: 2px 0;
+  background: var(--sunken);
+  border: 1px solid var(--rule);
+}
+
+.toggle i {
+  position: absolute;
+  /* 2 (track inset) + 1 (border) + 3 (clearance) */
+  top: 6px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  background: var(--ink-faint);
+  transition: transform 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+/* 34 inside − 12 knob − 3 left − 3 right = 16. */
+.toggle[aria-pressed="true"] i {
+  transform: translateX(16px);
+  background: var(--green);
+}
+
+.toggle[aria-pressed="true"]::before {
+  border-color: var(--green);
+}
+
+.toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── A setting's controls stay on one line ─────────────────────────────────
+ *
+ * The mock declares `.ctl { flex: none }` and then writes
+ * `style="display:flex; gap:.5rem; align-items:center"` inline at every call
+ * site that needs more than one control. A component cannot inherit an inline
+ * style, so the moment `SettingRow` became a component the Ollama row stacked
+ * its field, its button and its dot down three lines.
+ *
+ * The rule belongs here rather than at each call site: a row of controls is what
+ * `.ctl` is *for*, and a container that only behaves correctly when every caller
+ * remembers to restyle it is not a container. */
+.set-row .ctl {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  flex: none;
+  /* Never wraps. A control that drops to a second line breaks the row's height
+   * off the module and puts the switch somewhere the eye is not looking. */
+  flex-wrap: nowrap;
+}
+
+/* The field inside gives way first, because it is the only part with slack —
+ * a button that shrank would clip its label. */
+.set-row .ctl .input {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+
+/* ── A row's leading rule ──────────────────────────────────────────────────
+ *
+ * Where a property belongs to the whole row rather than to one control — which
+ * machine a provider runs on, say — a boxed tag beside the label eats width and
+ * has to be read one row at a time. A coloured edge costs nothing and reads down
+ * the column in a single pass, which is what transit signage does with line
+ * colours rather than labelling every stop.
+ *
+ * Never the only signal: the group carries a legend, and the row carries a
+ * title. Colour alone is unreadable to a third of people with a red deficiency
+ * and to anyone not looking. */
+.set-row[data-mark] {
+  border-left: 2px solid transparent;
+  padding-left: calc(var(--u) * 4 - 2px);
+}
+
+.set-row[data-mark="green"] { border-left-color: var(--green); }
+.set-row[data-mark="amber"] { border-left-color: var(--amber); }
+.set-row[data-mark="blue"] { border-left-color: var(--blue); }
+
+/* The chart's own readout, under the plot rather than floating over it.
+ *
+ * The mock positions a tooltip at the cursor. A fixed row below the axis is
+ * steadier to read while moving along a series, and it cannot cover the very
+ * points it describes — which a floating box does exactly when the line rises. */
+.chart-readout {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 4);
+  height: var(--mark-h);
+  margin-top: calc(var(--u) * 2);
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+
+.chart-readout .r {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.5);
+}
+
+.chart-readout b {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.chart-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+/* ── The dock, collapsible ─────────────────────────────────────────────────
+ *
+ * The design's rail is icon-only at 3.25rem, which is compact but cryptic until
+ * the six glyphs have been learned. Expanded it names them; collapsed it is the
+ * design's own rail. The width is a token so the grid and the rail cannot
+ * disagree — the app's column and the nav's width are the same number, and a
+ * transition that animated only one of them would tear.
+ */
+:root {
+  --dock-w: 3.25rem;
+  --dock-w-open: 11rem;
+}
+
+.app {
+  grid-template-columns: var(--dock-w) 1fr;
+  transition: grid-template-columns 0.18s var(--ease);
+}
+
+.app[data-dock="open"] {
+  grid-template-columns: var(--dock-w-open) 1fr;
+}
+
+.dock {
+  overflow: hidden;
+}
+
+/* Expanded, a dock button is a row: icon, then name. Collapsed, the name is
+ * still in the DOM for a screen reader but takes no space. */
+.dock-btn {
+  width: 100%;
+  justify-content: flex-start;
+  padding-left: calc((var(--dock-w) - 1.0625rem) / 2);
+  gap: calc(var(--u) * 3);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  height: var(--control-h);
+}
+
+/* The icon never gives way.
+ *
+ * Collapsed, the label is still in the DOM at `opacity: 0` — it must be, for a
+ * screen reader — and a flex item defaults to shrinking. A 66px label inside a
+ * 51px button squeezed the 17px glyph to *zero*, so the collapsed rail rendered
+ * six invisible buttons. The icon is fixed; the label is what disappears. */
+.dock-btn svg {
+  flex: none;
+}
+
+.dock-btn .dock-label {
+  flex: none;
+  font-size: 0.8125rem;
+  opacity: 0;
+  /* Taken out of the flow entirely when collapsed, so it cannot compete for
+   * width with the one thing that has to stay visible. */
+  width: 0;
+  overflow: hidden;
+  transition: opacity 0.12s var(--ease);
+}
+
+.app[data-dock="open"] .dock-btn .dock-label {
+  width: auto;
+}
+
+.app[data-dock="open"] .dock-btn .dock-label {
+  opacity: 1;
+}
+
+/* The tip is the collapsed state's only affordance, so it is suppressed the
+ * moment the label is visible — two names for one control is noise. */
+.app[data-dock="open"] .dock-btn .tip {
+  display: none;
+}
+
+/* The control that does the collapsing, pinned to the foot of the rail. */
+.dock-toggle {
+  margin-top: auto;
+  color: var(--ink-faint);
+}
+
+.dock-toggle svg {
+  transition: transform 0.18s var(--ease);
+}
+
+.app[data-dock="open"] .dock-toggle svg {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app,
+  .dock-btn .dock-label,
+  .dock-toggle svg {
+    transition: none;
+  }
+}
+
+/* The cursor that shows an answer is still arriving.
+ *
+ * A block that pulses rather than a spinner: the answer is text, and the thing
+ * a reader is waiting for is the next word — a spinner beside a paragraph says
+ * "something is happening somewhere", which is less. */
+.answer-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--ink);
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .answer-cursor {
+    animation: none;
+  }
+}
+
+/* ── The retrieval row's score column ──────────────────────────────────────
+ *
+ * The mock fixes it at 3.5rem, which does not fit what it holds: a citation
+ * mark (17px), a meter (2px), two gaps (12px) and a five-character monospace
+ * score (~40px) come to about 71. At 56 the number ran straight into the
+ * passage beside it — `0.920Sealed segments…`.
+ *
+ * Widened to fit its contents rather than shrinking the number, because the
+ * score is the one thing on the row a reader compares between rows, and
+ * dropping a digit to save 24px would cost the comparison. */
+.hit {
+  grid-template-columns: 5rem 1fr;
+}
+
+/* A meter with no height reads as a missing element rather than as a low score,
+ * so it is anchored to the foot of the column and grows upward — which is also
+ * the direction a bar chart is read in. */
+.meter {
+  align-self: stretch;
+  display: flex;
+  align-items: flex-end;
+  min-height: var(--line);
+}
+
+
+/* ── The focus ring ────────────────────────────────────────────────────────
+ *
+ * The mock states this once, inside its reset block — and that block was
+ * deliberately not ported, because Tailwind's preflight owns the reset. Correct
+ * for the reset; this was the one rule in there that was not one, and it went
+ * with the rest.
+ *
+ * What remained was Tailwind's `outline-ring/50`: 1px, `style: auto`, at half
+ * alpha. A ring, but the weakest indicator in a window whose entire visual
+ * language is a 1px rule at full strength — and below the 3:1 state contrast a
+ * focus indicator is asked for.
+ *
+ * Restored globally rather than per component, which is why the toggle no
+ * longer carries its own copy. */
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+/* ── Scaling up ────────────────────────────────────────────────────────────
+ *
+ * The mock is drawn at about 1440 and has only two breakpoints, both
+ * `max-width` — so it degrades gracefully below its design size and does
+ * nothing at all above it. Measured on a 2560-wide window: the thread column
+ * stayed at 736px and **1824px of the screen went unused**, 71% of the width.
+ *
+ * A desktop app is judged on a large monitor. These rules give the layout
+ * somewhere to go.
+ */
+
+/* The reading column grows with the window, to a limit.
+ *
+ * Not unbounded: a line of prose past roughly 90 characters is measurably
+ * harder to track back from, so the thread keeps a measure. But 46rem on a
+ * 27-inch display is a column of text in a field of nothing. */
+.thread-inner,
+.composer-inner {
+  max-width: min(68rem, 100%);
+}
+
+/* The rail and the side panel take a share of the extra rather than none.
+ *
+ * `clamp` rather than a breakpoint so it is continuous — a panel that jumps
+ * width at one specific pixel draws attention to the resize rather than to the
+ * content. The lower bounds are the mock's own figures, so nothing changes at
+ * or below its design size. */
+@media (min-width: 90rem) {
+  .view.workspace {
+    grid-template-columns:
+      clamp(16rem, 14vw, 22rem)
+      1fr
+      clamp(20rem, 17vw, 26rem);
+  }
+
+  .view.two {
+    grid-template-columns: clamp(17rem, 15vw, 24rem) 1fr;
+  }
+}
+
+/* Tiles and cards fill the wider page rather than stretching to absurd widths:
+ * more columns, same tile size. */
+@media (min-width: 90rem) {
+  .tiles {
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  }
+}
+
+/* ── The thread sits above the composer, not at the top of a void ──────────
+ *
+ * The mock's `.thread-inner` is a plain top-aligned column, so a young
+ * conversation renders two turns at the top of the pane with several hundred
+ * pixels of nothing between the last answer and the box you type into. It reads
+ * as an empty screen with some text stranded in it.
+ *
+ * Every chat surface bottom-aligns for the same reason: the newest turn is the
+ * one being read, and it belongs next to the thing that produced it. Long
+ * threads still scroll normally — `min-height: 100%` only matters while the
+ * content is shorter than the pane. */
+.thread-inner {
+  min-height: 100%;
+  justify-content: flex-end;
+}
+
+/* The answer lines up with the passages it came from.
+ *
+ * `.answer` carries `max-width: 92%` in the mock, so it ended 87px short of the
+ * retrieval block directly above it — same left edge, ragged right. Two blocks
+ * about the same turn should share both edges; the eye reads the mismatch as a
+ * mistake long before it works out what differs. */
+.answer {
+  max-width: 100%;
+}
+
+/* The space head stops stretching once it has the room it needs.
+ *
+ * At 1920 the name sat hard against the left edge and the mode toggle hard
+ * against the right, with a metre of nothing between them. Bounded to the same
+ * column the thread uses, so the header sits over its own content. */
+.space-head {
+  padding-left: max(var(--gutter), calc((100% - 68rem) / 2));
+  padding-right: max(var(--gutter), calc((100% - 68rem) / 2));
+}
+
+/* The controls under an answer.
+ *
+ * Aligned with the answer's own left edge, so they read as belonging to it
+ * rather than to the turn below. Reserved height, so the row does not appear
+ * and shift the thread the moment streaming ends. */
+.answer-tools {
+  display: flex;
+  gap: calc(var(--u) * 2);
+  min-height: var(--control-h-sm);
+  margin-top: var(--u);
+  padding-left: calc(var(--u) * 3);
+}

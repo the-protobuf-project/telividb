@@ -1,13 +1,12 @@
 <!--
-  What a space's protection actually promises.
+  What a space's protection promises, and whether its key is available.
 
-  The wording is deliberately unequal, because the guarantees are. "Private" is
-  an owner predicate the server enforces and anyone who compromises the server
-  defeats; "vault" and "sealed" are cryptographic. Rule 25 exists because it is
-  tempting to call all three the same reassuring word.
+  Two separate facts: `Lock` says what kind of protection this is, the `locked`
+  tag says whether it can be read right now. Collapsing them would lose the
+  difference between "encrypted" and "encrypted and currently unopenable".
 -->
 <script lang="ts">
-  import type { Protection } from "@telividb/answer";
+  import { Lock, Tag, type Protection } from "$lib/ui";
 
   interface Props {
     /** The protection to describe. */
@@ -17,38 +16,17 @@
   }
 
   let { protection, locked = false }: Props = $props();
-
-  const described: Record<Protection, { label: string; title: string }> = {
-    none: {
-      label: "open",
-      title: "Visible according to ordinary role grants on its projects.",
-    },
-    private: {
-      label: "private",
-      title:
-        "Readable only by its owner, enforced by a visibility predicate. Access control, not cryptography.",
-    },
-    vault: {
-      label: "vault",
-      title: "Encrypted with a key the server wraps and holds.",
-    },
-    sealed: {
-      label: "sealed",
-      title:
-        "Encrypted with a key only the client holds. The server cannot read it even when compromised.",
-    },
-  };
-
-  let it = $derived(described[protection]);
 </script>
 
-<span style="display:flex;align-items:center;gap:0.375rem">
-  <span class="tag" title={it.title}>
-    {it.label}
-  </span>
+<span style="display: flex; align-items: center; gap: calc(var(--u) * 1.5)">
+  <Lock {protection} decorative />
+  <span class="faint" style="font-size: 0.6875rem">{protection}</span>
   {#if locked}
-    <span class="tag amber" title="Its key is unavailable, so nothing in it is searchable.">
+    <Tag
+      tone="amber"
+      title="Its key is unavailable, so nothing in it is searchable. A search elsewhere reports that results may be incomplete rather than quietly leaving it out."
+    >
       locked
-    </span>
+    </Tag>
   {/if}
 </span>

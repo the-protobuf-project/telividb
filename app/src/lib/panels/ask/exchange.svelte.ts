@@ -18,6 +18,15 @@ export class Exchange {
   public streaming = $state(false);
   /** What went wrong, phrased by whoever refused. */
   public error = $state<string | null>(null);
+  /**
+   * Whether the reader asked it to stop.
+   *
+   * Checked in the streaming loop rather than aborting the request: the tokens
+   * already received are kept, because a half-written answer that was stopped
+   * on purpose is usually the part that was wanted. Throwing them away would
+   * make Stop indistinguishable from a failure.
+   */
+  private cancelled = $state(false);
 
   public constructor(
     /** What was typed. */
@@ -25,6 +34,16 @@ export class Exchange {
     /** What the collection returned, best first. */
     public readonly hits: readonly SearchHit[],
   ) {}
+
+  /** Stop writing, keeping what has arrived. */
+  public stop(): void {
+    this.cancelled = true;
+  }
+
+  /** Whether there is an answer worth copying. */
+  public get copyable(): boolean {
+    return this.text.trim().length > 0;
+  }
 
   /** The hits that carry text, numbered as the prompt will number them. */
   public get passages(): Passage[] {
@@ -53,6 +72,7 @@ export class Exchange {
   ): Promise<void> {
     if (this.streaming) return;
     this.streaming = true;
+    this.cancelled = false;
     this.error = null;
     this.text = "";
 
@@ -68,6 +88,10 @@ export class Exchange {
         credential,
       });
       for await (const chunk of stream) {
+        // Checked here rather than aborting the request: the tokens already
+        // received are kept, because a half-written answer stopped on purpose
+        // is usually the part that was wanted.
+        if (this.cancelled) break;
         this.text += chunk.text;
       }
     } catch (cause) {

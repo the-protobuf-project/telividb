@@ -2,11 +2,12 @@
   The right-hand detail column: what the selected organization actually holds.
 
   Counts come from the engine rather than from the length of what this window
-  happened to fetch — a project a caller cannot see still counts, so recomputing
-  here would quietly disagree with the server.
+  happened to fetch — a project the caller cannot see still counts, so
+  recomputing here would quietly disagree with the server.
 -->
 <script lang="ts">
-  import type { Protection } from "@telividb/answer";
+  import { Kv, PanelLabel, Seg, SideTab } from "$lib/ui";
+  import type { Protection } from "$lib/ui";
   import type { WorkspaceState } from "./state.svelte";
 
   interface Props {
@@ -21,39 +22,22 @@
 
 <aside class="side">
   <div class="side-tabs">
-    <div class="side-tab" aria-current="true">Detail</div>
+    <SideTab label="Detail" current />
   </div>
 
   <div class="side-body">
     {#if tree.selected}
-      <div>
-        <div class="panel-label">Organization</div>
-        <div class="kv"><span>Name</span><span class="mono">{tree.selected.name}</span></div>
-        <div class="kv"><span>Projects</span><span class="mono">{tree.selected.projectCount}</span></div>
-        <div class="kv"><span>Spaces</span><span class="mono">{tree.selected.spaceCount}</span></div>
-        <div class="kv">
-          <span>State</span>
-          <span class="mono">{tree.selected.deleted ? "deleted" : "live"}</span>
-        </div>
-      </div>
+      <PanelLabel>Organization</PanelLabel>
+      <Kv label="Name" value={tree.selected.name} />
+      <Kv label="Projects" value={String(tree.selected.projectCount)} />
+      <Kv label="Spaces" value={String(tree.selected.spaceCount)} />
+      <Kv label="State" value={tree.selected.deleted ? "deleted" : "live"} />
 
-      <div>
-        <div class="panel-label">New space protection</div>
-        <!-- Chosen before the name because it cannot be changed afterwards: it
-             decides which segments the contents are routed to, so altering it
-             later is a rewrite rather than a field update. -->
-        <div class="seg" style="margin-top: 0.5rem">
-          {#each choices as choice (choice)}
-            <button
-              type="button"
-              aria-pressed={tree.protection === choice}
-              onclick={() => (tree.protection = choice)}
-            >
-              {choice}
-            </button>
-          {/each}
-        </div>
-      </div>
+      <PanelLabel>New space protection</PanelLabel>
+      <!-- Chosen before the name because it cannot be changed afterwards: it
+           decides which segments the contents are routed to, so altering it
+           later is a rewrite rather than a field update. -->
+      <Seg options={choices} bind:value={tree.protection} label="Protection for a new space" />
     {:else}
       <p class="hint">Nothing selected.</p>
     {/if}
