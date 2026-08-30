@@ -165,6 +165,14 @@ Violating any of these is a bug, not a style preference.
    is itself optimized is no longer a reference. What the crate owns beyond them is the branchy,
    scattered work rule 46 keeps on the host anyway: k-means, PQ codebook training, ADC tables.
 
+   **ggml is pinned to a tagged release, never to master.** A tensor runtime moving under the
+   engine changes numerical output, so a recall or cosine figure measured against an untagged
+   commit is one nobody can reproduce — including this repository a week later. The submodule
+   records a commit either way; the rule is that the commit is one upstream *named*. Enforced
+   by a step in the `invariants` job, because the pointer had already drifted one commit past
+   `v0.22.0` before anyone looked. Bumping it is deliberate: check out the new tag, commit the
+   pointer, re-run recall. Never `git submodule update --remote`.
+
    **`target-cpu=native` is still never required to run**, and that now has to be enforced rather
    than assumed: ggml's own default compiles with `-march=native`, which faults with SIGILL on
    any older CPU. `telividb-compute` states the choice explicitly and exposes a `portable`
@@ -723,6 +731,7 @@ The workspace does not exist yet; these are the intended shapes. Keep them worki
 
 ```bash
 git submodule update --init --recursive   # ggml lives in telividb-compute/vendor
+                                         # NEVER --remote: that walks to master's tip
 cargo build --workspace                 # needs CMake for ggml (invariant 1); the
                                          # submodule above must be initialised first
 cargo test  --workspace

@@ -10,7 +10,6 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { client } from "$lib/api";
-  import * as Card from "$lib/components/ui/card";
   import { ModelsState } from "./state.svelte";
   import ModelRow from "./ModelRow.svelte";
 
@@ -33,51 +32,44 @@
   onDestroy(() => state.dispose());
 </script>
 
-<Card.Root class="border-border">
-  <Card.Header>
-    <Card.Title>Embedding models</Card.Title>
-    <Card.Description>
-      An embedding model turns text into vectors. Install one to search by
-      meaning rather than by exact match — everything here is verified against
-      its published checksum before it is used.
-    </Card.Description>
-  </Card.Header>
-
-  <Card.Content class="p-0">
-    <!-- A failed call and an empty catalog are different facts, and only one of
-         them is ever true. Showing both said "this build offers no models" when
-         what actually happened was that the request did not reach a server that
-         could answer it. -->
-    {#if state.error}
-      <div class="px-4 py-6">
-        <p class="text-destructive text-sm">{state.error}</p>
-        <p class="text-muted-foreground mt-2 text-sm">
-          The catalog could not be read, so what this build offers is unknown.
-        </p>
-      </div>
-    {:else if state.loading && state.models.length === 0}
-      <p class="text-muted-foreground px-4 py-6 text-sm">Reading the catalog…</p>
-    {:else if state.models.length === 0}
-      <p class="text-muted-foreground px-4 py-6 text-sm">
-        This build offers no models.
+<div class="page">
+  <div class="page-top">
+    <div class="page-inner">
+      <div class="page-head"><h1>Models</h1></div>
+      <p class="lede">
+        An embedding model turns text into vectors. Install one to search by
+        meaning rather than by exact match — everything here is verified against
+        its published checksum before it is used.
       </p>
-    {:else}
-      {#each state.models as model (model.id)}
-        <ModelRow
-          {model}
-          install={state.installs[model.id]}
-          onInstall={(id) => state.install(id)}
-          onCancel={(id) => state.cancel(id)}
-        />
-      {/each}
-    {/if}
-  </Card.Content>
+    </div>
+  </div>
 
-  <Card.Footer class="text-muted-foreground border-border block border-t pt-4 text-xs">
-    <!-- This used to say a restart was needed. It was worse than that: nothing
-         looked in the model directory at all, so a restart changed nothing
-         either. The engine now loads a model as its download finishes, and
-         finds an installed one at startup. -->
-    A model is loaded as soon as it finishes installing — no restart.
-  </Card.Footer>
-</Card.Root>
+  <div class="page-scroll">
+    <div class="page-inner">
+      <!-- A failed call and an empty catalog are different facts, and only one of
+           them is ever true. Showing both said "this build offers no models" when
+           what happened was that the request never reached a server. -->
+      {#if state.error}
+        <div class="empty">
+          <p style="color: var(--red-text)">{state.error}</p>
+          <p class="hint">
+            The catalog could not be read, so what this build offers is unknown.
+          </p>
+        </div>
+      {:else if state.loading && state.models.length === 0}
+        <div class="empty">Reading the catalog…</div>
+      {:else if state.models.length === 0}
+        <div class="empty">This build offers no models.</div>
+      {:else}
+        {#each state.models as model (model.id)}
+          <ModelRow
+            {model}
+            install={state.installs[model.id]}
+            onInstall={(id) => state.install(id)}
+            onCancel={(id) => state.cancel(id)}
+          />
+        {/each}
+      {/if}
+    </div>
+  </div>
+</div>

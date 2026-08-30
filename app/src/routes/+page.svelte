@@ -7,9 +7,9 @@
 -->
 <script lang="ts">
   import { client } from "$lib/api";
-  import type { Environment } from "$lib/api";
-  import Sidebar from "$lib/ui/Sidebar.svelte";
-  import StatusBar from "$lib/ui/StatusBar.svelte";
+  import type { System } from "$lib/api";
+  import Dock from "$lib/ui/Dock.svelte";
+  import TopNav from "$lib/ui/TopNav.svelte";
   import Placeholder from "$lib/ui/Placeholder.svelte";
   import Ask from "$lib/panels/ask/Ask.svelte";
   import Search from "$lib/panels/search/Search.svelte";
@@ -18,6 +18,7 @@
   import Models from "$lib/panels/models/Models.svelte";
   import Settings from "$lib/panels/settings/Settings.svelte";
   import Workspace from "$lib/panels/workspace/Workspace.svelte";
+  import Metrics from "$lib/panels/metrics/Metrics.svelte";
   import { Intro } from "$lib/motion/intro";
   import Onboarding from "$lib/onboarding/Onboarding.svelte";
   import { OnboardingState } from "$lib/onboarding/state.svelte";
@@ -27,17 +28,23 @@
   let onboarding = $state(!OnboardingState.seen());
   // Ask, because it is the panel that demonstrates what the engine does with
   // nothing else in the way — no schema to fill in, no file to map.
-  let active = $state("ask");
+  let active = $state("workspace");
+  // Kept because the capabilities poll writes it and a null means the bridge
+  // is unreachable; the value itself is shown in Settings, not up here.
   let address = $state<string | null>(null);
+  $effect(() => void address);
   // Assumed false until the engine says otherwise: offering an import that
   // will be refused is worse than withholding one that would have worked.
   let canEmbed = $state(false);
-  let environment = $state<Environment | null>(null);
+  let environment = $state<System | null>(null);
   let collection = $state("");
+  // Named in the top bar's chip. The model is the fact a person most often wants
+  // and the one nothing else on screen states.
+  let residentModel = $state<string | null>(null);
 
   let markRef = $state<HTMLElement | null>(null);
   let barRef = $state<HTMLElement | null>(null);
-  let sidebarRef = $state<HTMLElement | null>(null);
+  let dockRef = $state<HTMLElement | null>(null);
   let panelRef = $state<HTMLElement | null>(null);
 
   const intro = new Intro();
@@ -83,11 +90,11 @@
   // Every part has to be mounted before the sequence can move it, and none of
   // them exist while onboarding is on screen.
   $effect(() => {
-    if (!onboarding && markRef && barRef && sidebarRef && panelRef) {
+    if (!onboarding && markRef && barRef && dockRef && panelRef) {
       intro.play({
         mark: markRef,
         bar: barRef,
-        sidebar: sidebarRef,
+        sidebar: dockRef,
         panel: panelRef,
       });
     }
@@ -98,8 +105,8 @@
       "Not built yet. Reads vector_fields from Collections.Get, which is served.",
     graph:
       "The Graph service is not served yet. The traversal engine is built, but it returns names without edges or paths, so there is nothing to draw.",
-    system:
-      "The SystemInfo service is not served yet. Until it is, the backend the engine selected is not readable from here.",
+    people:
+      "The Identity service is not served yet — users, groups and role bindings have protos and no store behind them.",
   };
 </script>
 
@@ -114,39 +121,47 @@
     }}
   />
 {:else}
-  <StatusBar {address} {environment} bind:ref={barRef} bind:markRef />
+  <TopNav
+    model={residentModel}
+    backend={environment?.backend ?? null}
+    bind:ref={barRef}
+    bind:markRef
+  />
 
-  <div class="flex min-h-0 flex-1">
-    <Sidebar bind:active bind:ref={sidebarRef} />
+  <!-- The design's shell: a pinned rail beside one pane that owns its scroll.
+       `.app` is a `3.25rem 1fr` grid under a `--nav-h` bar — which is what keeps
+       the dock in place and the frame itself from ever scrolling. -->
+  <div class="app">
+    <Dock bind:active bind:ref={dockRef} />
 
-    <main bind:this={panelRef} class="min-h-0 min-w-0 flex-1 overflow-hidden">
-    {#if active === "ask"}
-      <Ask {canEmbed} />
-    {:else if active === "search"}
-      <Search />
-    {:else if active === "collections"}
-      <Collections
-        oncreated={(created) => {
-          collection = created;
-          active = "points";
-        }}
-      />
-    {:else if active === "points"}
-      <Points {collection} {canEmbed} />
-    {:else if active === "models"}
-      <div class="h-full overflow-y-auto p-4">
+    <main class="main" bind:this={panelRef}>
+      {#if active === "workspace"}
+        <Workspace />
+      {:else if active === "data"}
+        <Points {collection} {canEmbed} />
+      {:else if active === "models"}
         <Models oninstalled={refreshCapabilities} />
-      </div>
-    {:else if active === "workspace"}
-      <Workspace />
-    {:else if active === "settings"}
-      <Settings />
-    {:else}
-      <Placeholder
-        title={active.charAt(0).toUpperCase() + active.slice(1)}
-        waiting={waiting[active] ?? "Not built yet."}
-      />
-    {/if}
+      {:else if active === "metrics"}
+        <Metrics />
+      {:else if active === "settings"}
+        <Settings />
+      {:else if active === "ask"}
+        <Ask {canEmbed} />
+      {:else if active === "search"}
+        <Search />
+      {:else if active === "collections"}
+        <Collections
+          oncreated={(created) => {
+            collection = created;
+            active = "data";
+          }}
+        />
+      {:else}
+        <Placeholder
+          title={active.charAt(0).toUpperCase() + active.slice(1)}
+          waiting={waiting[active] ?? "Not built yet."}
+        />
+      {/if}
     </main>
   </div>
 {/if}

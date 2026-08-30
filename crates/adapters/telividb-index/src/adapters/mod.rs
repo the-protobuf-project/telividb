@@ -11,7 +11,7 @@ pub use flat::FlatIndex;
 #[cfg(feature = "gpu")]
 pub use gpu::{
     BUDGET_ENV, BudgetSource, DEFAULT_GPU_BUDGET_FRACTION, GpuFlatIndex, budget_source,
-    device_allocated_bytes, gpu_budget_bytes, gpu_resident_bytes,
+    device_allocated_bytes, device_name, gpu_budget_bytes, gpu_resident_bytes,
 };
 pub use hnsw::{Graph, HnswIndex, HnswParams};
 pub use ivf::{Coarse, IvfFlatIndex, IvfParams, IvfPqIndex};

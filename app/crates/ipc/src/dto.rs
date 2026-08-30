@@ -3,9 +3,9 @@
 //! Tauri serializes these as JSON, so every field name here is a field name in
 //! the window's TypeScript. They are kept flat and small for that reason.
 
+use crate::dto_system::SystemDto;
 use serde::{Deserialize, Serialize};
 use telividb_client::{Record, SearchResults};
-use telividb_desktop_engine::Environment;
 
 /// One collection, as the sidebar needs it.
 #[derive(Debug, Clone, Serialize)]
@@ -184,7 +184,7 @@ pub struct Capabilities {
     /// Where the engine is listening.
     pub address: String,
     /// The compute environment, as this process found it.
-    pub environment: Environment,
+    pub environment: SystemDto,
     /// The directory holding segments, the write-ahead log and metadata.
     pub data_dir: String,
 }

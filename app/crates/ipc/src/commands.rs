@@ -97,13 +97,17 @@ pub async fn capabilities(state: tauri::State<'_, AppState>) -> Result<Capabilit
         .map(|models| models.iter().any(|m| m.resident))
         .unwrap_or(false);
 
+    // Asked of the engine, not detected here. This process could detect it only
+    // because the desktop build links the engine; the browser build serving the
+    // Linux daemon cannot, and both must reach the same answer. Fetching it also
+    // keeps it current — a device that disappeared is reported as gone rather
+    // than from a cache taken before it did.
+    let system = client.system().await.map_err(say)?;
+
     Ok(Capabilities {
         has_model: resident,
         address: state.addr().to_string(),
-        // Detected here rather than at startup so the window shows what is
-        // true now — a device that disappeared would otherwise be reported
-        // from a cache taken before it did.
-        environment: telividb_desktop_engine::Environment::detect(),
+        environment: system.into(),
         data_dir: state.data_dir().to_owned(),
     })
 }

@@ -50,7 +50,7 @@
             {accelerated ? "accelerated" : "host"}
           </Badge>
         </dd>
-        {#if capabilities.environment.overridden}
+        {#if capabilities.environment.budgetSource === "configured"}
           <p class="text-muted-foreground mt-1.5 text-xs">
             Pinned by <span class="font-mono">TELIVIDB_DEVICE</span>, not
             detected.
@@ -64,13 +64,19 @@
           Device memory
         </dt>
         <dd class="tnum mt-1.5 text-sm">
-          {#if capabilities.environment.total_bytes === null}
+          <!-- The ceiling this process will use, not the device's free memory.
+               The engine reports a budget; free memory is a number about the
+               whole machine, and a window that showed it here would be
+               answering a different question than the one the label asks. -->
+          {#if capabilities.environment.budgetLimitBytes === 0}
             <span class="text-muted-foreground">
               not reported — the host has no separate device memory
             </span>
           {:else}
-            {bytes(capabilities.environment.free_bytes)} free of
-            {bytes(capabilities.environment.total_bytes)}
+            {bytes(capabilities.environment.budgetLimitBytes)}
+            <span class="text-muted-foreground text-xs">
+              ({capabilities.environment.budgetSource})
+            </span>
           {/if}
         </dd>
       </div>

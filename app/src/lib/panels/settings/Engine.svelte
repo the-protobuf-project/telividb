@@ -1,13 +1,12 @@
 <!--
   What the engine found when it started.
 
-  Every value here is reported rather than configured, which is why none of them
-  is editable yet. The backend especially: a build that quietly fell back to the
-  CPU passes every correctness test while delivering none of the speed, so it is
-  stated on screen rather than inferred from how slow things feel.
+  Every value is reported rather than configured, which is why none is editable.
+  The backend especially: a build that quietly fell back to the host passes every
+  correctness test while delivering none of the speed, so it is stated here
+  rather than inferred from how slow things feel.
 -->
 <script lang="ts">
-  import SettingRow from "$lib/ui/SettingRow.svelte";
   import type { SettingsState } from "./state.svelte";
 
   interface Props {
@@ -17,67 +16,66 @@
 
   let { state }: Props = $props();
 
-  /** Device memory, when the backend reports any. */
-  function gigabytes(bytes: number | null): string | null {
-    return bytes === null ? null : `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+  let env = $derived(state.capabilities?.environment ?? null);
+
+  /** Bytes as gigabytes, or a dash when nothing was reported. */
+  function gigabytes(bytes: number): string {
+    return bytes === 0 ? "—" : `${(bytes / 1024 ** 3).toFixed(1)} GB`;
   }
 </script>
 
-<section class="flex flex-col gap-2">
-  <h2 class="text-muted-foreground text-xs tracking-wide uppercase">Engine</h2>
-
-  <div class="border-border border">
-    <SettingRow
-      label="Data directory"
-      description="Segments, the write-ahead log, models and metadata."
-    >
-      {#snippet control()}
-        <span class="text-muted-foreground selectable font-mono text-xs">
+<div>
+  <div class="panel-label">Engine</div>
+  <div class="set-group" style="margin-top: 0.625rem">
+    <div class="set-row">
+      <div class="txt">
+        <b>Data directory</b>
+        <span>Segments, the write-ahead log, models and metadata.</span>
+      </div>
+      <div class="ctl">
+        <span class="mono faint selectable" style="font-size: 0.75rem">
           {state.capabilities?.data_dir ?? "—"}
         </span>
-      {/snippet}
-    </SettingRow>
+      </div>
+    </div>
 
-    <SettingRow
-      label="Compute backend"
-      description={state.capabilities?.environment.overridden
-        ? "Pinned by TELIVIDB_DEVICE rather than detected."
-        : "Chosen by detection when the process started."}
-      tag={state.capabilities?.environment.overridden ? "pinned" : undefined}
-    >
-      {#snippet control()}
-        <span class="text-foreground font-mono text-xs">
-          {state.capabilities?.environment.backend ?? "—"}
+    <div class="set-row">
+      <div class="txt">
+        <b>Compute backend</b>
+        <span>
+          {env?.budgetSource === "configured"
+            ? "Pinned by TELIVIDB_DEVICE rather than detected."
+            : "Chosen by detection when the process started."}
         </span>
-        {#if state.capabilities}
-          {@const total = gigabytes(state.capabilities.environment.total_bytes)}
-          {#if total}
-            <span class="text-muted-foreground font-mono text-xs">{total}</span>
-          {/if}
-        {/if}
-      {/snippet}
-    </SettingRow>
-
-    <SettingRow
-      label="Listen on"
-      description="The address the engine serves on, for this machine only."
-    >
-      {#snippet control()}
-        <span class="text-muted-foreground selectable font-mono text-xs">
-          {state.capabilities?.address ?? "—"}
+      </div>
+      <div class="ctl" style="display: flex; gap: 0.5rem; align-items: center">
+        <span class="mono" style="font-size: 0.75rem">{env?.backend ?? "—"}</span>
+        <span class="faint mono" style="font-size: 0.75rem">
+          {env ? gigabytes(env.budgetLimitBytes) : ""}
         </span>
-      {/snippet}
-    </SettingRow>
+      </div>
+    </div>
 
-    <SettingRow
-      label="Embedding model"
-      description="Text can only be stored or searched while one is resident."
-    >
-      {#snippet control()}
-        <span class="text-xs {state.capabilities?.has_model ? 'text-foreground' : 'text-muted-foreground'}">
+    <div class="set-row">
+      <div class="txt">
+        <b>Listen on</b>
+        <span>The address the engine serves on, for this machine only.</span>
+      </div>
+      <div class="ctl mono faint selectable" style="font-size: 0.75rem">
+        {state.capabilities?.address ?? "—"}
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="txt">
+        <b>Embedding model</b>
+        <span>Text can only be stored or searched while one is resident.</span>
+      </div>
+      <div class="ctl">
+        <span class="tag" class:green={state.capabilities?.has_model}>
           {state.capabilities?.has_model ? "loaded" : "none loaded"}
         </span>
-      {/snippet}
-    </SettingRow>
+      </div>
+    </div>
   </div>
-</section>
+</div>

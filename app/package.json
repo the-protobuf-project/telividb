@@ -38,6 +38,7 @@
     "@tauri-apps/cli": "^2",
     "bits-ui": "^2.16.3",
     "clsx": "^2.1.1",
+    "layerchart": "^2.0.0",
     "mode-watcher": "^1.1.0",
     "storybook": "10.5.10",
     "svelte": "^5.56.3",

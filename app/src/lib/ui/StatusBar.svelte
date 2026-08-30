@@ -13,13 +13,13 @@
 <script lang="ts">
   import { Badge } from "$lib/components/ui/badge";
   import { Separator } from "$lib/components/ui/separator";
-  import type { Environment } from "$lib/api";
+  import type { System } from "$lib/api";
 
   interface Props {
     /** Where the engine is listening, once the window has asked. */
     address: string | null;
     /** The compute environment the engine selected, once it has been asked. */
-    environment?: Environment | null;
+    environment?: System | null;
     /** The bar itself, for the launch sequence to move. */
     ref?: HTMLElement | null;
     /** The wordmark, which the sequence brings in first. */
@@ -53,7 +53,7 @@
       variant="outline"
       class="text-muted-foreground gap-1.5 font-normal"
       title={environment
-        ? environment.overridden
+        ? environment.budgetSource === "configured"
           ? "Pinned by TELIVIDB_DEVICE rather than detected."
           : "The backend this engine selected."
         : "The window has not been able to ask the engine yet."}
@@ -67,7 +67,7 @@
           : 'bg-muted-foreground/60'}"
       ></span>
       {environment ? environment.backend : "backend unknown"}
-      {#if environment?.overridden}
+      {#if environment?.budgetSource === "configured"}
         <span class="text-muted-foreground/70">pinned</span>
       {/if}
     </Badge>

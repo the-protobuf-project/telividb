@@ -8,6 +8,7 @@ use telividb_buffers::protobuf::collection::v1 as wire;
 use telividb_buffers::protobuf::collection::v1::collections_client::CollectionsClient;
 use telividb_buffers::protobuf::models::v1::models_client::ModelsClient;
 use telividb_buffers::protobuf::point::v1::points_client::PointsClient;
+use telividb_buffers::protobuf::system::v1::system_info_client::SystemInfoClient;
 use telividb_buffers::protobuf::tenancy::v1::organizations_client::OrganizationsClient;
 use telividb_buffers::protobuf::tenancy::v1::projects_client::ProjectsClient;
 use telividb_buffers::protobuf::tenancy::v1::spaces_client::SpacesClient;
@@ -28,6 +29,8 @@ pub struct Client {
     pub(crate) organizations: OrganizationsClient<Channel>,
     pub(crate) projects: ProjectsClient<Channel>,
     pub(crate) spaces: SpacesClient<Channel>,
+    /// The compute environment. See `system.rs`.
+    pub(crate) system: SystemInfoClient<Channel>,
 }
 
 impl std::fmt::Debug for Client {
@@ -75,7 +78,8 @@ impl Client {
             models: ModelsClient::new(channel.clone()),
             organizations: OrganizationsClient::new(channel.clone()),
             projects: ProjectsClient::new(channel.clone()),
-            spaces: SpacesClient::new(channel),
+            spaces: SpacesClient::new(channel.clone()),
+            system: SystemInfoClient::new(channel),
         })
     }
 

@@ -42,18 +42,12 @@
   let it = $derived(described[protection]);
 </script>
 
-<span class="flex items-center gap-1.5">
-  <span
-    class="border-border text-muted-foreground border px-1.5 py-0.5 text-[0.6875rem]"
-    title={it.title}
-  >
+<span style="display:flex;align-items:center;gap:0.375rem">
+  <span class="tag" title={it.title}>
     {it.label}
   </span>
   {#if locked}
-    <span
-      class="border-[var(--color-amber)]/40 text-[var(--color-amber)] border px-1.5 py-0.5 text-[0.6875rem]"
-      title="Its key is unavailable, so nothing in it is searchable. A search elsewhere reports that results may be incomplete rather than quietly leaving it out."
-    >
+    <span class="tag amber" title="Its key is unavailable, so nothing in it is searchable.">
       locked
     </span>
   {/if}

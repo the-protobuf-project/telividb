@@ -212,6 +212,30 @@ jobs:
         with:
           shared-key: debug
           cache-on-failure: true
+      # ggml is pinned to a *release*, never to whatever master happened to be.
+      # A tensor runtime moving under the engine changes numerical output, and a
+      # recall or cosine figure measured against an untagged commit cannot be
+      # reproduced by anyone — including by this repository a week later. The
+      # pointer is a commit either way; this asserts the commit is one upstream
+      # chose to name.
+      #
+      # Bumping it is deliberate: check out the new tag in the submodule, commit
+      # the pointer, and re-run the recall job. Never `git submodule update
+      # --remote`, which walks to the tip of master by design.
+      - name: ggml is pinned to a tagged release
+        working-directory: crates/platform/telividb-compute/vendor/ggml
+        run: |
+          set -euo pipefail
+          git fetch --tags --force --quiet
+          if tag=$(git describe --tags --exact-match 2>/dev/null); then
+            echo "ggml is at $tag ($(git rev-parse --short HEAD))"
+          else
+            echo "::error::the ggml submodule is at $(git rev-parse --short HEAD),"
+            echo "which is not a tagged release. Check out a tag — the newest is"
+            echo "$(git tag --sort=-creatordate | head -1) — and commit the pointer."
+            exit 1
+          fi
+
       - run: cargo test -p telividb-storage --test crash_consistency
       - run: cargo test -p telividb-storage --test buffer_visibility
       - run: cargo test -p telividb-storage --test segment_roundtrip

@@ -6,8 +6,6 @@
 -->
 <script lang="ts">
   import { client } from "$lib/api";
-  import * as Table from "$lib/components/ui/table";
-  import { ScrollArea } from "$lib/components/ui/scroll-area";
   import Import from "./Import.svelte";
   import { PointsState } from "./state.svelte";
 
@@ -28,45 +26,49 @@
   });
 </script>
 
-<div class="flex h-full flex-col gap-3 p-4">
-  <Import {state} {canEmbed} />
+<div class="page">
+  <div class="page-top">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1>Points</h1>
+        <div class="spacer"></div>
+        <span class="mono faint" style="font-size: 0.75rem">{collection || "—"}</span>
+      </div>
+      <Import {state} {canEmbed} />
+    </div>
+  </div>
 
-  {#if state.error}
-    <p
-      class="selectable border-destructive/40 bg-destructive/10 text-destructive rounded-lg border px-3 py-2 text-sm"
-    >
-      {state.error}
-    </p>
-  {:else if state.imported !== null}
-    <p class="text-muted-foreground text-sm">
-      Imported <span class="tnum">{state.imported}</span> point(s).
-    </p>
-  {/if}
+  <div class="page-scroll">
+    <div class="page-inner">
+      {#if state.error}
+        <p class="selectable" style="color: var(--red-text)">{state.error}</p>
+      {:else if state.imported !== null}
+        <p class="hint">Imported <span class="mono">{state.imported}</span> point(s).</p>
+      {/if}
 
-  <ScrollArea class="min-h-0 flex-1 rounded-lg border">
-    <Table.Root>
-      <Table.Header>
-        <Table.Row>
-          <Table.Head class="w-48">id</Table.Head>
-          <Table.Head>text</Table.Head>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {#each state.rows as row (row.id)}
-          <Table.Row>
-            <Table.Cell class="selectable font-mono text-xs">{row.id}</Table.Cell>
-            <Table.Cell class="selectable truncate text-sm">
-              {row.text ?? ""}
-            </Table.Cell>
-          </Table.Row>
-        {:else}
-          <Table.Row>
-            <Table.Cell colspan={2} class="text-muted-foreground py-8 text-center text-sm">
-              {collection === "" ? "Choose a collection." : "No points yet."}
-            </Table.Cell>
-          </Table.Row>
-        {/each}
-      </Table.Body>
-    </Table.Root>
-  </ScrollArea>
+      <!-- The table is the honest check on an import: a count says the call
+           returned, rows say the engine kept them. -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th style="width: 16rem">id</th><th>text</th></tr>
+          </thead>
+          <tbody>
+            {#each state.rows as row (row.id)}
+              <tr>
+                <td class="cell-id mono selectable">{row.id}</td>
+                <td class="cell-text selectable">{row.text ?? ""}</td>
+              </tr>
+            {:else}
+              <tr>
+                <td colspan="2" class="faint" style="text-align: center; padding: 2rem 0">
+                  {collection ? "No points yet." : "No collection selected."}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>

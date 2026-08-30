@@ -2,13 +2,10 @@
   One model in the catalog.
 
   The size and the licence sit next to the install button on purpose: both are
-  decisions a person should make before several hundred megabytes move, and a
-  row that hides them behind a details view is a row that gets clicked blind.
+  decisions a person should make before several hundred megabytes move, and a row
+  that hides them behind a details view is a row that gets clicked blind.
 -->
 <script lang="ts">
-  import { Badge } from "$lib/components/ui/badge";
-  import { Button } from "$lib/components/ui/button";
-  import { Progress } from "$lib/components/ui/progress";
   import { isFinished } from "$lib/api";
   import type { CatalogModel, Installation } from "$lib/api";
 
@@ -40,59 +37,52 @@
   }
 </script>
 
-<div class="border-border flex flex-col gap-3 border-b px-4 py-4 last:border-b-0">
-  <div class="flex items-start justify-between gap-4">
-    <div class="min-w-0">
-      <div class="flex items-center gap-2">
-        <span class="text-foreground font-medium">{model.displayName}</span>
-        {#if model.recommended}
-          <Badge variant="secondary">Recommended</Badge>
-        {/if}
-        {#if model.installed}
-          <Badge variant="outline">Installed</Badge>
-        {/if}
-      </div>
-      <p class="text-muted-foreground mt-1 text-sm">{model.description}</p>
-      <p class="text-muted-foreground mt-2 font-mono text-xs">
-        {model.dimensions} dimensions · {model.contextLength.toLocaleString()} tokens ·
-        {megabytes(model.sizeBytes)} · {model.license}
-      </p>
-    </div>
-
-    <div class="flex shrink-0 items-center gap-2">
-      <Button variant="ghost" size="sm" href={model.repositoryUri} target="_blank">
-        Source
-      </Button>
-      {#if model.installed}
-        <Button variant="outline" size="sm" disabled>Installed</Button>
-      {:else if running}
-        <Button variant="outline" size="sm" onclick={() => onCancel(model.id)}>
-          Cancel
-        </Button>
-      {:else}
-        <Button size="sm" onclick={() => onInstall(model.id)}>Install</Button>
+<div class="row">
+  <div class="row-main">
+    <div class="row-title">
+      <span class="row-name">{model.displayName}</span>
+      {#if model.resident}
+        <span class="tag green">in memory</span>
+      {:else if model.installed}
+        <span class="tag">installed</span>
+      {/if}
+      {#if model.recommended}
+        <span class="tag blue">recommended</span>
       {/if}
     </div>
+    <div class="row-meta">{model.description}</div>
+    <div class="row-meta mono">
+      {model.dimensions} dim · {model.contextLength.toLocaleString()} tokens ·
+      {megabytes(model.sizeBytes)} · {model.license}
+    </div>
+
+    {#if running}
+      <!-- A determinate bar only once a total is known: a bar that fills from
+           nothing to nothing reads as a stall rather than as a start. -->
+      <div class="bar" style="margin-top: 0.5rem">
+        <i style="width: {percent}%"></i>
+      </div>
+      <div class="row-meta mono">
+        {install?.state} · {megabytes(install?.progressBytes ?? 0)} of
+        {megabytes(install?.totalBytes ?? 0)}
+      </div>
+    {/if}
   </div>
 
-  {#if install}
-    {#if running}
-      <div class="flex items-center gap-3">
-        <Progress value={percent} class="h-1.5" />
-        <span class="text-muted-foreground shrink-0 font-mono text-xs">
-          {megabytes(install.progressBytes)} / {megabytes(install.totalBytes)}
-        </span>
-      </div>
-    {:else if install.state === "failed"}
-      <!-- The engine's own sentence. A digest mismatch and a dead connection
-           need different responses, and flattening them into "failed" hides
-           which one happened. -->
-      <p class="text-destructive text-sm">{install.error}</p>
-    {:else if install.state === "cancelled"}
-      <p class="text-muted-foreground text-sm">
-        Stopped at {megabytes(install.progressBytes)}. Installing again resumes
-        from there.
-      </p>
+  <div style="display: flex; gap: 0.5rem; align-items: center; flex: none">
+    <a class="btn ghost sm" href={model.repositoryUri} target="_blank" rel="noreferrer">
+      Source
+    </a>
+    {#if model.installed}
+      <span class="dot live" title="On disk"></span>
+    {:else if running}
+      <button class="btn ghost sm" type="button" onclick={() => onCancel(model.id)}>
+        Cancel
+      </button>
+    {:else}
+      <button class="btn sm" type="button" onclick={() => onInstall(model.id)}>
+        Install
+      </button>
     {/if}
-  {/if}
+  </div>
 </div>

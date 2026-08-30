@@ -8,16 +8,18 @@
 
 export type { CollectionSummary } from "./collection";
 export type { SearchHit, SearchRequest, SearchResponse } from "./search";
-export type { Capabilities, Environment } from "./engine";
+export type { Capabilities, System } from "./engine";
 export type { CreateCollectionRequest, Preset } from "./preset";
 export type { ImportRequest, ImportResponse, ImportRow, PointRow } from "./import";
 export type { TelividbClient } from "./port";
 export type { Organization, Project, Space } from "./tenancy";
 export { resourceId, suggestId } from "./tenancy";
+export { timings, type Timing } from "./timings.svelte";
 
 import { TauriClient } from "./tauri";
 import { GrpcWebClient } from "./grpc";
 import type { TelividbClient } from "./port";
+import { instrument } from "./timings.svelte";
 
 export { TauriClient } from "./tauri";
 export { GrpcWebClient } from "./grpc";
@@ -57,7 +59,14 @@ function daemonOrigin(): string {
  * and none of them knows which transport carried the call.
  */
 export function resolveClient(): TelividbClient {
-  return inDesktopApp() ? new TauriClient() : new GrpcWebClient(daemonOrigin());
+  const transport = inDesktopApp()
+    ? new TauriClient()
+    : new GrpcWebClient(daemonOrigin());
+  // Wrapped so every call is timed. Measuring is not deciding, so this leaves
+  // the "the bridge forwards, it does not decide" rule intact — and it is the
+  // only place that sees every call, which is what makes the panel complete
+  // rather than covering whichever methods someone remembered to instrument.
+  return instrument(transport);
 }
 
 /** The engine this build talks to. One instance, selected at load. */

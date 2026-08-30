@@ -173,6 +173,40 @@
   --radius-xl: var(--radius);
 }
 
+/* The mock's own token names, aliased onto the ones above.
+ *
+ * `src/lib/styles/mock.css` is the design system ported verbatim from the
+ * approved mock, and it refers to `--rule`, `--surface`, `--ink` and so on. The
+ * aliases let it stay byte-comparable with the mock instead of being rewritten
+ * — a translated copy is one that drifts, and drift is exactly how the first
+ * attempt at these panels ended up sharing only the colours with the design.
+ *
+ * They alias rather than duplicate: a colour is still defined once, above. */
+:root {
+  --ground: var(--color-ground);
+  --surface: var(--color-surface);
+  --sunken: var(--color-sunken);
+  --ink: var(--color-ink);
+  --ink-dim: var(--color-ink-dim);
+  --ink-faint: var(--color-ink-faint);
+  --rule: var(--color-rule);
+  --rule-strong: var(--color-rule-strong);
+  --green: var(--color-green);
+  --green-text: var(--color-green-text);
+  --blue: var(--color-blue);
+  --blue-text: var(--color-blue-text);
+  --red: var(--color-red);
+  --red-text: var(--color-red-text);
+  --amber: var(--color-amber);
+  --ease: var(--ease-out-quart);
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Loaded after the tokens so its `var()` calls resolve, and after Tailwind so a
+ * component class wins over a utility of the same specificity. */
+@import "./lib/styles/mock.css";
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

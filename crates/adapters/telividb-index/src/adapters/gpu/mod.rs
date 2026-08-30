@@ -38,7 +38,8 @@ mod test_support;
 
 pub use budget::{
     BUDGET_ENV, BudgetSource, DEFAULT_FRACTION as DEFAULT_GPU_BUDGET_FRACTION, budget_source,
-    device_allocated_bytes, limit_bytes as gpu_budget_bytes, resident_bytes as gpu_resident_bytes,
+    device_allocated_bytes, device_name, limit_bytes as gpu_budget_bytes,
+    resident_bytes as gpu_resident_bytes,
 };
 
 use crate::ports::VectorStore;

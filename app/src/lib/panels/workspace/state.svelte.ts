@@ -24,8 +24,15 @@ export class WorkspaceState {
   public error = $state<string | null>(null);
   /** Whether a call is in flight, so buttons can settle. */
   public busy = $state(false);
+  /** Which kind of thing the create form is for, or null when it is closed. */
+  public creating = $state<"organization" | "project" | "space" | null>(null);
 
   public constructor(private readonly client: TelividbClient) {}
+
+  /** Open the create form for one kind of resource. */
+  public startCreating(kind: "organization" | "project" | "space"): void {
+    this.creating = kind;
+  }
 
   /** Read the organizations, and open the first live one. */
   public async load(): Promise<void> {
@@ -81,6 +88,20 @@ export class WorkspaceState {
       this.projects = await this.client.listProjects(parent.name);
     });
   }
+
+  /**
+   * Create a space at the currently chosen protection.
+   *
+   * An arrow property rather than a method so it can be handed to a child as a
+   * callback without losing `this` — the create row takes `(id, name)` and knows
+   * nothing about protection, which is chosen beside it.
+   */
+  public createSpaceWith = (id: string, displayName: string): void => {
+    void this.createSpace(id, displayName, this.protection);
+  };
+
+  /** Protection for the next space. Fixed at creation, so chosen before it. */
+  public protection = $state<Protection>("private");
 
   /** Create a space under the open organization, with its protection fixed. */
   public async createSpace(

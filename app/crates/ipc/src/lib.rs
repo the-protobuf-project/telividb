@@ -30,6 +30,7 @@ pub mod commands_tenancy;
 mod dto;
 pub mod dto_models;
 pub mod dto_providers;
+pub mod dto_system;
 pub mod dto_tenancy;
 pub mod presets;
 mod state;
