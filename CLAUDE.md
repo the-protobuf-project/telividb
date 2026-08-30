@@ -89,9 +89,35 @@ Violating any of these is a bug, not a style preference.
    backend (quarantined for the voice slice) and, if it is ever wired in, the optional FAISS
    index behind a non-default feature (rule 46).
 
-   **One incidental C path, recorded rather than hidden.** The mandated telemetry stack depends
-   on MCAP, which depends on lz4, which builds with `cc`. It cannot be switched off from our
-   side, because Cargo unifies features as a union.
+   **Three C paths, recorded rather than hidden.** The mandated telemetry stack depends on MCAP,
+   which depends on lz4, which builds with `cc`. It cannot be switched off from our side, because
+   Cargo unifies features as a union.
+
+   The second is **TLS, and it was a decision rather than an inheritance.** Installing a model
+   means fetching it over HTTPS, and every TLS stack in Rust bottoms out in C or assembly for its
+   crypto — `rustls` on `aws-lc-rs` (C and CMake) or on `ring` (C and assembly); `native-tls` on
+   OpenSSL. There is no production-grade pure-Rust option to pick instead. So `aws-lc-sys` reaches
+   the default build through `telividb-server`, which turns on `telividb-models/network`.
+
+   Kept as narrow as it can be: `telividb-models` is default-free, so anything embedding the
+   catalog without downloading takes none of it, and `telividb-providers` links no HTTP client at
+   all — it stores keys and names providers; the window makes the calls. The cost is one crate, in
+   the binary that already needs a network.
+
+   The third is **`ring`, and it appears only in `app/`.** Answering happens in the window, and a
+   webview enforces CORS against every provider's origin — so the desktop build reaches a remote
+   model through `tauri-plugin-http`, which performs the request in Rust where CORS does not apply.
+   That plugin pins `reqwest 0.12`, whose every `rustls-*` feature routes to `ring`, and Cargo's
+   feature unification then compiles `ring` alongside the `aws-lc-rs` already there. Two crypto
+   backends in one binary is a genuine cost and it was weighed: the only alternative the plugin
+   offers is `native-tls`, which on Linux means linking the system OpenSSL — trading a contained,
+   Cargo-built C crate for an external one, on the target that ships as a daemon.
+
+   **This one is also why the guard now sweeps `app/`.** That workspace is excluded from the
+   repository's and was never checked, so `ring` entered the binary that actually ships while the
+   `no-native-deps` job stayed green. The job runs over both workspaces now, and Tauri's own
+   `embed-resource` and `objc2-exception-helper` are allowlisted there for the same reason ggml is
+   here — expected, named, and failing the build if anything joins them.
 
    There used to be a second: `candle-core` pulled `tokenizers`, which pulled Oniguruma
    (`onig_sys`). Removing candle put that choice back in reach — `tokenizers` now takes
@@ -99,9 +125,10 @@ Violating any of these is a bug, not a style preference.
    workspace's native surface is smaller than it was before ggml arrived, not larger.
 
    The `no C toolchain` CI job's original premise is gone. What replaces it is narrower and still
-   worth enforcing: **no *unexpected* native dependency.** ggml, CMake, the MCAP chain and the
-   candle chain are expected; anything else fails the build and is a decision to record here,
-   never a quiet addition to the allowlist.
+   worth enforcing: **no *unexpected* native dependency.** ggml, CMake, the MCAP chain and the TLS
+   chain above are expected; anything else fails the build and is a decision to record here,
+   never a quiet addition to the allowlist. Note the order that makes this rule work — the
+   paragraph above was written *because* the guard failed, not after quietly widening it.
 
 2. **Sealed segments are immutable.** Once a segment is sealed, its `vectors.bin`, `ids.bin` and
    `index.*` files are never written again. Mutation happens by writing a new segment plus a
@@ -513,6 +540,11 @@ telividb/
 │  └─ bin/                     # composition roots — the only place adapters get chosen and wired
 │     └─ telividb-server/     # binary: gRPC services, inference server, observability
 ├─ sdk/{python,typescript}/   # generated clients
+├─ app/                       # the desktop app, and its own bun workspace
+│  ├─ packages/               # TypeScript packages — `packages/*` mirrors
+│  │  └─ answer/              # `crates/*`: a piece with no Svelte in it,
+│  │                          # buildable and testable on its own.
+│  └─ src/                    # the SvelteKit app that consumes them
 ├─ ui/                        # UI source; built assets baked into telividb-ui
 ├─ benches/                   # criterion/divan benchmarks + recall harness
 └─ docs/
@@ -570,6 +602,60 @@ wired. If you need an outward dependency, the abstraction is in the wrong crate:
 inward, not the implementation outward.
 
 ---
+
+## Two deployments, one engine
+
+The same engine ships two ways, and the difference is **how long it lives** —
+not what it does. Nothing below is a fork in behaviour; a question answered on
+one is answered identically on the other.
+
+| | macOS | Linux |
+|---|---|---|
+| shape | a desktop app | a daemon, the way `ollama` is one |
+| engine lifetime | the window's | the machine's |
+| transport | **Tauri IPC** | **gRPC-web** |
+
+**The transport is chosen at runtime, in one place.** `resolveClient()` in
+`app/src/lib/api/index.ts` returns the IPC adapter when `__TAURI_INTERNALS__` is
+present on `window` and the gRPC-web adapter otherwise. Every panel is written
+against the `TelividbClient` port and knows neither. Adding a third transport is
+a third adapter and a line in that function.
+
+**IPC first, gRPC-web second.** The desktop app is where this is being built and
+used, so its transport is the one that has to work; the browser adapter is a
+declared stub whose methods fail with a sentence naming what is missing. That
+order is deliberate and the stub is honest — it is not a silent fallback.
+
+**TypeScript is packaged the way Rust is.** `app/packages/*` is a bun workspace
+mirroring `crates/*`, and the test is the same one rule 51 applies to a crate: a
+package builds and passes its tests from its own `package.json`, with no path
+back into the app. `@telividb/answer` is the first — no Svelte, no Tauri beyond an
+optional peer — which is what lets the browser build that serves the Linux daemon
+consume the identical code, and what gives the prompt and the guard somewhere to
+be tested without a SvelteKit harness.
+
+**Answering is in the window, and there is no sidecar.** The provider SDKs worth
+using are TypeScript, and the window is already a TypeScript runtime — so it calls
+them itself. There was briefly a Bun child process here on the reasoning that
+"TypeScript SDKs" meant "Rust must call TypeScript"; that is circular, since it
+ships a second JS runtime to serve the Rust process that serves the first one. It
+was removed before anything depended on it. **Do not reintroduce a JS sidecar**
+without a reason that survives the question *why can the window not do this?*
+
+The engine's part is the half the window must not hold: `telividb-providers` keeps
+the keys in the OS keychain and owns the provider table. Nothing in it links an
+HTTP client.
+
+**The cost of that choice, stated rather than buried.** The key is handed to the
+window over IPC and lives in webview memory for the duration of a call, and the
+"protected content stays local" check runs in TypeScript beside the call, where a
+compromised or modified frontend can skip it. So the vault guarantee is currently
+an intention, not a property. The fix is not a proxy: it is that a search declares
+whether its passages are bound for a remote model, and the engine declines to
+*return* protected passages when they are — enforcement on retrieval, which no
+client can bypass because it never receives the content. `may_answer` in
+`telividb-providers` is the server-side half, written and deliberately unwired
+until that lands. Until then, do not describe a vault as enforced.
 
 ## Code structure
 
@@ -766,6 +852,13 @@ Every field documented and defaulted. No stringly-typed config lookups scattered
   containers are the Linux story. Never write a Metal code path that assumes a container runtime.
 - **The desktop app is packaging, not architecture.** If logic ends up in the Tauri layer instead
   of the server, the boundary is wrong — the browser and the app must reach identical behaviour.
+- **Only official SDKs for model providers.** `openai`, `@anthropic-ai/sdk`, `@google/genai` and
+  `ollama` are each published by the company whose API they call. The Rust options are
+  one-provider (`async-openai`) or third-party and stale since 2024, which is why answering is
+  TypeScript at all — and, since the window already runs TypeScript, why it needs no sidecar to
+  get there. No unifying framework sits over them: the Vercel AI SDK is well made and
+  third-party to every provider, and Google's ADK — though genuinely Google's — brings an
+  ORM-backed session store to an application whose entire job is storing sessions.
 - **Never introduce cross-segment state.** A shared centroid table, a graph spanning segments, an
   ID map consulted across segments — each silently breaks scatter-gather and forecloses clustering
   (AGENT_START.md §14.3). IVF centroids are per-segment or replicated read-only, never mutable and

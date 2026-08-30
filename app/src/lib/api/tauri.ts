@@ -8,6 +8,8 @@
  */
 
 import { invoke } from "@tauri-apps/api/core";
+import { Command } from "./tauri-commands";
+import { TauriSettings } from "./tauri-settings";
 import type { CollectionSummary } from "./collection";
 import type { SearchRequest, SearchResponse } from "./search";
 import type { CreateCollectionRequest, Preset } from "./preset";
@@ -18,23 +20,9 @@ import type { TelividbClient } from "./port";
 
 /** Names the Rust side registers. A typo here is a runtime failure, so they
  *  are named once and referenced rather than spelled at each call site. */
-const enum Command {
-  ListCollections = "list_collections",
-  Search = "search",
-  EngineAddress = "engine_address",
-  Capabilities = "capabilities",
-  ListPresets = "list_presets",
-  CreateCollection = "create_collection",
-  ImportPoints = "import_points",
-  ListPoints = "list_points",
-  ListModels = "list_models",
-  InstallModel = "install_model",
-  Installation = "installation",
-  CancelInstallation = "cancel_installation",
-}
 
 /** A client reaching the engine this window supervises. */
-export class TauriClient implements TelividbClient {
+export class TauriClient extends TauriSettings implements TelividbClient {
   /**
    * Collections this engine holds.
    *

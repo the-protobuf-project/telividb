@@ -16,6 +16,8 @@
   import Collections from "$lib/panels/collections/Collections.svelte";
   import Points from "$lib/panels/points/Points.svelte";
   import Models from "$lib/panels/models/Models.svelte";
+  import Settings from "$lib/panels/settings/Settings.svelte";
+  import Workspace from "$lib/panels/workspace/Workspace.svelte";
   import { Intro } from "$lib/motion/intro";
   import Onboarding from "$lib/onboarding/Onboarding.svelte";
   import { OnboardingState } from "$lib/onboarding/state.svelte";
@@ -117,7 +119,7 @@
   <div class="flex min-h-0 flex-1">
     <Sidebar bind:active bind:ref={sidebarRef} />
 
-    <main bind:this={panelRef} class="min-w-0 flex-1">
+    <main bind:this={panelRef} class="min-h-0 min-w-0 flex-1 overflow-hidden">
     {#if active === "ask"}
       <Ask {canEmbed} />
     {:else if active === "search"}
@@ -132,9 +134,13 @@
     {:else if active === "points"}
       <Points {collection} {canEmbed} />
     {:else if active === "models"}
-      <div class="p-4">
+      <div class="h-full overflow-y-auto p-4">
         <Models oninstalled={refreshCapabilities} />
       </div>
+    {:else if active === "workspace"}
+      <Workspace />
+    {:else if active === "settings"}
+      <Settings />
     {:else}
       <Placeholder
         title={active.charAt(0).toUpperCase() + active.slice(1)}

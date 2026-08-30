@@ -47,6 +47,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_http::init())
         .manage(AppState::new(engine, has_model, data_dir))
         .invoke_handler(telividb_desktop_ipc::commands!())
         .run(tauri::generate_context!())

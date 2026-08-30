@@ -27,6 +27,8 @@
  */
 
 import type { CollectionSummary } from "./collection";
+import type { Protection, Provider } from "@telividb/answer";
+import type { Organization, Project, Space } from "./tenancy";
 import type { SearchRequest, SearchResponse } from "./search";
 import type { CreateCollectionRequest, Preset } from "./preset";
 import type { ImportRequest, ImportResponse, PointRow } from "./import";
@@ -94,6 +96,54 @@ export class GrpcWebClient implements TelividbClient {
     this.unbuilt();
   }
   public async cancelInstallation(_name: string): Promise<Installation> {
+    this.unbuilt();
+  }
+  public async listProviders(): Promise<Provider[]> {
+    this.unbuilt();
+  }
+  public async storeProviderKey(_id: string, _credential: string): Promise<void> {
+    this.unbuilt();
+  }
+  public async forgetProviderKey(_id: string): Promise<void> {
+    this.unbuilt();
+  }
+  public async providerCredential(_id: string): Promise<string> {
+    this.unbuilt();
+  }
+  public async listOrganizations(): Promise<Organization[]> {
+    this.unbuilt();
+  }
+  public async createOrganization(
+    _id: string,
+    _displayName: string,
+  ): Promise<Organization> {
+    this.unbuilt();
+  }
+  public async deleteOrganization(_name: string): Promise<Organization> {
+    this.unbuilt();
+  }
+  public async undeleteOrganization(_name: string): Promise<Organization> {
+    this.unbuilt();
+  }
+  public async listProjects(_parent: string): Promise<Project[]> {
+    this.unbuilt();
+  }
+  public async createProject(
+    _parent: string,
+    _id: string,
+    _displayName: string,
+  ): Promise<Project> {
+    this.unbuilt();
+  }
+  public async listSpaces(_parent: string): Promise<Space[]> {
+    this.unbuilt();
+  }
+  public async createSpace(
+    _parent: string,
+    _id: string,
+    _displayName: string,
+    _protection: Protection,
+  ): Promise<Space> {
     this.unbuilt();
   }
 }

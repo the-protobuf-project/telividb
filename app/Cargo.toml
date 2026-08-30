@@ -29,6 +29,9 @@ telividb-desktop-ipc = { path = "crates/ipc" }
 # The engine, by path into the repository workspace.
 telividb-server = { path = "../crates/bin/telividb-server" }
 telividb-client = { path = "../crates/sdk/telividb-client" }
+# Provider table and keychain. Reached from the IPC crate rather than the engine:
+# answering happens in the window, so what the engine needs from this is nothing.
+telividb-providers = { path = "../crates/adapters/telividb-providers" }
 # Layer one, for reporting which backend was actually selected. The app already
 # links it transitively through the server; naming it here is what lets the
 # window ask before the engine has done any work.
@@ -36,6 +39,11 @@ telividb-compute = { path = "../crates/platform/telividb-compute" }
 
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
+# Provider calls are made from the window, and a webview enforces CORS against
+# every provider's origin. This plugin performs the request in Rust, where CORS
+# does not apply; the SDKs all accept the `fetch` it exports. Without it the
+# desktop build can reach no remote provider at all.
+tauri-plugin-http = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "sync"] }

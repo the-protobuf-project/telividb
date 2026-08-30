@@ -1,111 +1,136 @@
-/* Tokens, typography, and the one utility the rest of the app leans on.
+/* The design system, taken from the-protobuf-project rather than invented.
  *
- * Fonts are vendored rather than linked. An `@import` from fonts.googleapis.com
- * fails with no network — which a desktop app must survive — and reports every
- * launch to a third party. These are the same typefaces as files. */
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/jetbrains-mono";
+ * Fonts are vendored rather than linked. An `@import` from a font CDN fails
+ * with no network — which a desktop app must survive — and reports every launch
+ * to a third party. These are the same typefaces as files. */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 @import "tailwindcss";
-/* Lineicons, from the package rather than a CDN — the app has to work with no
- * network, and a stylesheet fetched at launch is a blank icon set offline. */
+/* Lineicons from the package rather than a CDN, for the same reason. */
 @import "lineicons/dist/lineicons.css";
 
 /* shadcn components ask for `dark:` variants. The app is dark by default rather
  * than by preference, so the variant is bound to a class that is present unless
- * something removes it — see `.light` below. */
+ * something removes it. */
 @custom-variant dark (&:is(.dark *));
 
-/* Dark is the default, not a media query.
+/* Dark is the base, light is the opt-in — a database console is read for hours
+ * beside a terminal and should not change character because the OS clock passed
+ * sunrise.
  *
- * A database console is read for hours, usually beside a terminal, and the
- * window should not change character because the OS clock passed sunrise. So
- * these are the base tokens, and light is an explicit opt-in rather than an
- * automatic switch.
- *
- * The neutrals carry a slight blue cast rather than being a dead grey — at this
- * lightness a pure neutral reads as unfinished. */
+ * Two sets of names live here on purpose. The `--color-*` names are the design
+ * system's own vocabulary, used directly. The shadcn names below map onto them,
+ * so a component from that library lands in this palette without being rewritten
+ * — and there is still exactly one place a colour is defined. */
 :root {
-  --radius: 0.5rem;
+  --color-ground: #0a0a0a;
+  --color-surface: #151515;
+  --color-sunken: #050505;
+  --color-ink: #f4f5f5;
+  --color-ink-dim: #a0a0a0;
+  --color-ink-faint: #8a8a8a;
+  --color-rule: #262626;
+  --color-rule-strong: #3a3a3a;
+  --grid-line: #ffffff0e;
 
-  --background: oklch(20.5% 0.012 250);
-  --foreground: oklch(93% 0.006 250);
+  --shadow-card: 0 1px 2px #0006;
+  --shadow-lift: 0 14px 32px #00000080;
 
-  --card: oklch(24% 0.013 250);
-  --card-foreground: var(--foreground);
-  --popover: oklch(26% 0.013 250);
-  --popover-foreground: var(--foreground);
+  /* Product hues. Green carries "ready" and relevance; the rest are reserved
+   * for state and are never spent on a chart series. */
+  --color-green: #0f9c58;
+  --color-green-text: #0f9c58;
+  --color-blue: #4186f5;
+  --color-blue-text: #4186f5;
+  --color-red: #db4236;
+  --color-red-text: #dd4d42;
+  --color-amber: #fcc005;
 
-  /* One accent, spent on the thing that matters most in this window: which
-   * result is nearest, and which backend is live. */
-  --primary: oklch(72% 0.15 195);
-  --primary-foreground: oklch(20% 0.02 250);
+  /* Buttons are inverted here — a light fill on a dark ground. */
+  --btn-bg: #f4f5f5;
+  --btn-fg: #0a0a0a;
+  --btn-bg-hover: #fff;
 
-  --secondary: oklch(29% 0.014 250);
-  --secondary-foreground: var(--foreground);
+  --gutter: 1.25rem;
+  --nav-h: 3.5rem;
+  --ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
 
-  --muted: oklch(27% 0.013 250);
-  --muted-foreground: oklch(70% 0.011 250);
+  /* Zero, and this is the single value that defines the look more than any
+   * colour does. Sharp corners everywhere — cards, panels, chips, inputs. */
+  --radius: 0rem;
 
-  --accent: oklch(31% 0.015 250);
-  --accent-foreground: var(--foreground);
+  --background: var(--color-ground);
+  --foreground: var(--color-ink);
+  --card: var(--color-surface);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-surface);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--btn-bg);
+  --primary-foreground: var(--btn-fg);
+  --secondary: var(--color-surface);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-sunken);
+  --muted-foreground: var(--color-ink-dim);
+  --accent: var(--color-surface);
+  --accent-foreground: var(--color-ink);
+  --destructive: var(--color-red);
+  --destructive-foreground: #fff;
+  --border: var(--color-rule);
+  --input: var(--color-rule);
+  --ring: var(--color-blue);
 
-  /* Semantic, and deliberately not the accent hue — a warning that shared it
-   * would stop reading as a warning. */
-  --destructive: oklch(64% 0.19 25);
-  --destructive-foreground: oklch(97% 0.01 25);
+  /* Charts. Only these two are ever a series: they pass the lightness band,
+   * the chroma floor, CVD separation and contrast on both surfaces, which was
+   * checked rather than assumed. Amber failed the band on the dark ground, so
+   * it and red stay status-only. */
+  --chart-1: var(--color-blue);
+  --chart-2: var(--color-green);
+  --chart-3: var(--color-ink-dim);
+  --chart-4: var(--color-rule-strong);
+  --chart-5: var(--color-ink-faint);
 
-  --border: oklch(31% 0.014 250);
-  --input: oklch(29% 0.014 250);
-  --ring: oklch(72% 0.15 195);
-
-  --chart-1: oklch(72% 0.15 195);
-  --chart-2: oklch(70% 0.14 155);
-  --chart-3: oklch(74% 0.15 85);
-  --chart-4: oklch(68% 0.16 315);
-  --chart-5: oklch(70% 0.17 25);
-
-  --sidebar: oklch(22.5% 0.012 250);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(29% 0.014 250);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
+  --sidebar: var(--color-surface);
+  --sidebar-foreground: var(--color-ink-dim);
+  --sidebar-primary: var(--color-ink);
+  --sidebar-primary-foreground: var(--color-ground);
+  --sidebar-accent: var(--color-ground);
+  --sidebar-accent-foreground: var(--color-ink);
+  --sidebar-border: var(--color-rule);
+  --sidebar-ring: var(--color-blue);
 }
 
-/* Light, for someone who asks for it. Only the tokens move; nothing in the app
- * names a colour directly, so there is nothing else to change. */
+/* Light is a set, not an inversion: its neutrals are lighter *and* its accents
+ * are darkened, because a hue that reads on near-black is too pale on white. */
+:root[data-theme="light"],
 .light {
-  --background: oklch(98.5% 0.003 250);
-  --foreground: oklch(22% 0.012 250);
-  --card: oklch(100% 0 0);
-  --card-foreground: var(--foreground);
-  --popover: oklch(100% 0 0);
-  --popover-foreground: var(--foreground);
-  --primary: oklch(52% 0.14 195);
-  --primary-foreground: oklch(99% 0.005 195);
-  --secondary: oklch(95% 0.006 250);
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(96% 0.005 250);
-  --muted-foreground: oklch(48% 0.012 250);
-  --accent: oklch(94% 0.008 250);
-  --accent-foreground: var(--foreground);
-  --destructive: oklch(55% 0.2 25);
-  --destructive-foreground: oklch(99% 0.01 25);
-  --border: oklch(90% 0.008 250);
-  --input: oklch(92% 0.007 250);
-  --ring: oklch(52% 0.14 195);
-  --sidebar: oklch(96.5% 0.005 250);
-  --sidebar-accent: oklch(93% 0.008 250);
+  --color-ground: #f4f5f5;
+  --color-surface: #fff;
+  --color-sunken: #ebecec;
+  --color-ink: #222121;
+  --color-ink-dim: #5c5c5c;
+  --color-ink-faint: #6a6a6a;
+  --color-rule: #e2e3e3;
+  --color-rule-strong: #d0d2d2;
+  --grid-line: #0000000d;
+
+  --shadow-card: 0 1px 2px #0000000d;
+  --shadow-lift: 0 12px 28px #00000014;
+
+  --color-green-text: #0c7f48;
+  --color-red-text: #c93c31;
+  --color-blue-text: #356dc8;
+
+  --btn-bg: #151515;
+  --btn-fg: #f4f5f5;
+  --btn-bg-hover: #000;
+
+  --chart-1: #356dc8;
+  --chart-2: #0c7f48;
 }
 
-/* The bridge from the variables above to Tailwind utilities. `inline` is what
- * lets `bg-background` resolve through `var(--background)` rather than freezing
- * the value, so a class swap re-themes the whole window. */
 @theme inline {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, Menlo, monospace;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -140,10 +165,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  /* Every step is zero. Kept as separate names so a shadcn component asking
+   * for `rounded-md` resolves rather than falling back to its own default. */
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: var(--radius);
 }
 
 @layer base {
@@ -156,9 +183,11 @@
     height: 100%;
   }
 
+  /* A window, not a document: the frame never scrolls. Panes inside it do, and
+   * each one says so with its own `overflow` — which is what keeps the header,
+   * the dock and the composer where the hand expects them. */
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    /* A window, not a document. */
     overflow: hidden;
     user-select: none;
   }

@@ -12,6 +12,8 @@ export type { Capabilities, Environment } from "./engine";
 export type { CreateCollectionRequest, Preset } from "./preset";
 export type { ImportRequest, ImportResponse, ImportRow, PointRow } from "./import";
 export type { TelividbClient } from "./port";
+export type { Organization, Project, Space } from "./tenancy";
+export { resourceId, suggestId } from "./tenancy";
 
 import { TauriClient } from "./tauri";
 import { GrpcWebClient } from "./grpc";

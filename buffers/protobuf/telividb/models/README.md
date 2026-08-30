@@ -40,7 +40,8 @@ A model the server offers to install, verified against the file it names.  Curat
 | `quantization` | `string` | 11 | `OUTPUT_ONLY` | Quantization the file carries, such as `Q8_0`. |
 | `license` | `string` | 12 | `OUTPUT_ONLY` | SPDX identifier for the weights' licence. |
 | `recommended` | `bool` | 13 | `OUTPUT_ONLY` | Whether this is the default offer for a caller with no preference. Exactly one catalog model sets this. Two defaults is a choice presented as a recommendation, which leaves the caller no better off. |
-| `installed` | `bool` | 14 | `OUTPUT_ONLY` | Whether the file is present locally and matches its digest. |
+| `installed` | `bool` | 14 | `OUTPUT_ONLY` | Whether the file is present locally at its full length. Cheap to answer, and deliberately not a digest check: a listing asks this once per model every time it is shown. The digest is verified before the model is loaded, which is the moment it matters. |
+| `resident` | `bool` | 15 | `OUTPUT_ONLY` | Whether the model is loaded and able to serve requests now. Distinct from `installed`, and the distinction is the useful one: a model is downloaded seconds before it is resident, because reading several hundred megabytes of weights onto a device takes time. A caller that treats "installed" as "ready" sends text during that window and is refused. |
 
 ### `ModelInstallation`
 

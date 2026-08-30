@@ -25,8 +25,12 @@
 
 pub mod commands;
 pub mod commands_models;
+pub mod commands_providers;
+pub mod commands_tenancy;
 mod dto;
 pub mod dto_models;
+pub mod dto_providers;
+pub mod dto_tenancy;
 pub mod presets;
 mod state;
 
@@ -57,6 +61,18 @@ macro_rules! commands {
             $crate::commands_models::install_model,
             $crate::commands_models::installation,
             $crate::commands_models::cancel_installation,
+            $crate::commands_providers::list_providers,
+            $crate::commands_providers::store_provider_key,
+            $crate::commands_providers::forget_provider_key,
+            $crate::commands_providers::provider_credential,
+            $crate::commands_tenancy::list_organizations,
+            $crate::commands_tenancy::create_organization,
+            $crate::commands_tenancy::delete_organization,
+            $crate::commands_tenancy::undelete_organization,
+            $crate::commands_tenancy::list_projects,
+            $crate::commands_tenancy::create_project,
+            $crate::commands_tenancy::list_spaces,
+            $crate::commands_tenancy::create_space,
         ]
     };
 }

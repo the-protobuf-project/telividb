@@ -1,0 +1,35 @@
+[package]
+name = "telividb-providers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Models that write an answer, and the keys that reach them."
+
+[dependencies]
+telividb-core.workspace = true
+telividb-telemetry.workspace = true
+thiserror.workspace = true
+
+# The OS keychain. `keyring` rather than `tauri-plugin-keyring`, which is a
+# 0.1.0 wrapper around this same crate with no repository and no release since
+# 2024 — and rather than a Tauri plugin at all, because a plugin would put the
+# key in the webview, which is the one place it must not be.
+#
+# It adds **no native build dependency**: the default feature set resolves to
+# Apple Keychain on macOS and to `zbus` — pure Rust — for Secret Service on
+# Linux, not the `libdbus` binding. Verified with `cargo tree --invert cc`,
+# because rule 1 fails the build on an unexpected one.
+keyring = { version = "4.1", optional = true }
+
+[features]
+default = []
+# Read keys from the OS keychain. Optional so the ports above stay testable with
+# no keychain present, which is what CI and every unit test use.
+#
+# Note what is *not* here: no HTTP client and no TLS stack. Nothing in this crate
+# talks to a provider — the window does — so a key store does not drag a network
+# dependency into the engine.
+keychain = ["dep:keyring"]
+
+[dev-dependencies]
+tempfile = "3"

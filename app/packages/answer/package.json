@@ -1,0 +1,32 @@
+{
+  "name": "@telividb/answer",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Turning a question and its retrieved passages into an answer.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.122.0",
+    "@google/genai": "2.19.0",
+    "ollama": "0.6.3",
+    "openai": "7.8.0"
+  },
+  "peerDependencies": {
+    "@tauri-apps/plugin-http": "*"
+  },
+  "peerDependenciesMeta": {
+    "@tauri-apps/plugin-http": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}

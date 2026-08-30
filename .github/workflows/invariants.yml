@@ -51,6 +51,13 @@ jobs:
           # Native builders reach the tree through these sanctioned paths:
           #   telemetry -> mcap -> {lz4 -> lz4-sys, zstd -> zstd-sys}
           #   telividb-compute -> {cmake, bindgen}   (ggml — rules 1 and 42)
+          #   telividb-models/network -> rustls -> aws-lc-sys  (TLS — rule 1)
+          #
+          # The TLS entry is the newest and the only one that was chosen rather
+          # than inherited: installing a model needs HTTPS, and no Rust TLS
+          # stack avoids C or assembly in its crypto. It is recorded in rule 1
+          # with the reasoning, which is the order that rule demands — the note
+          # is written first, and this list follows it.
           #
           # The candle -> tokenizers -> onig_sys path is *gone*: removing
           # candle let `tokenizers` take `fancy-regex` (pure Rust) instead of
@@ -72,20 +79,28 @@ jobs:
           # the builder are listed below, which is a small and stable set.
           case_allowed() {
             case "$1" in
-              cc)      echo 'cc|cmake|lz4-sys|zstd-sys' ;;
-              cmake)   echo 'cmake|telividb-compute' ;;
+              # `ring`, `embed-resource` and `objc2-exception-helper` appear
+              # only in `app/`: the first is rule 1's second TLS backend, the
+              # other two are Tauri's own packaging crates.
+              cc)      echo 'cc|cmake|lz4-sys|zstd-sys|aws-lc-sys|ring|embed-resource|objc2-exception-helper' ;;
+              cmake)   echo 'cmake|telividb-compute|aws-lc-sys' ;;
               bindgen) echo 'bindgen|telividb-compute' ;;
               *)       echo '' ;;
             esac
           }
 
+          # `app/` is a separate workspace, excluded from this one, and it is
+          # what actually ships on macOS — so sweeping only the root left the
+          # desktop binary's dependency stack unguarded. It is swept here too;
+          # `ring` reached it through a Tauri plugin while this job was green.
           status=0
+          for dir in . app; do
           for pkg in cc cmake bindgen; do
             allowed=$(case_allowed "$pkg")
 
             # Empty output means the package is not in the tree at all.
-            tree=$(cargo tree --workspace --edges normal,build --invert "$pkg" \
-              --depth 1 --prefix none 2>/dev/null || true)
+            tree=$(cd "$dir" && cargo tree --workspace --edges normal,build \
+              --invert "$pkg" --depth 1 --prefix none 2>/dev/null || true)
             [ -n "$tree" ] || continue
 
             # First field of each line is the package name; `(*)` marks a
@@ -96,19 +111,21 @@ jobs:
               | grep -Ev "^($allowed)$" || true)
 
             if [ -n "$unexpected" ]; then
-              echo "::error::$pkg is invoked directly by an unsanctioned package:"
+              echo "::error::$pkg is invoked directly by an unsanctioned package in $dir:"
               printf '%s\n' "$unexpected"
               echo "--- direct dependents of $pkg ---"
               printf '%s\n' "$tree"
               status=1
             fi
           done
+          done
 
           if [ "$status" -ne 0 ]; then
-            echo "Rule 1 sanctions two native paths: the MCAP chain under the"
-            echo "telemetry stack, and ggml under telividb-compute. Anything"
-            echo "else needs a decision recorded in CLAUDE.md, not an addition"
-            echo "to this list."
+            echo "Rule 1 sanctions four native paths: the MCAP chain under the"
+            echo "telemetry stack, ggml under telividb-compute, the TLS chain"
+            echo "that model downloads need, and — in app/ only — ring plus"
+            echo "Tauri's packaging crates. Anything else needs a decision"
+            echo "recorded in CLAUDE.md, not an addition to this list."
             exit 1
           fi
           echo "no unexpected native build dependencies"
@@ -123,13 +140,22 @@ jobs:
           # `ring` builds with `cc` and has nothing to do with MCAP.
           printf '\nring = "0.17"\n' >> crates/domain/telividb-core/Cargo.toml
 
-          if cargo tree --workspace --edges normal,build --invert cc --depth 1 \
-             --prefix none 2>/dev/null | awk 'NF { print $1 }' | sort -u \
-             | grep -Eqv '^(cc|cmake|lz4-sys|zstd-sys)$'; then
-            echo "guard correctly detects a new native path"
+          # Tested by emptiness rather than `grep -q -v`, which is not portable:
+          # BSD grep reports whether the *pattern* matched and so returns the
+          # same status either way, while GNU grep reports whether a line was
+          # *selected*. The version here therefore passed on this runner and
+          # reported a false "the guard has gone blind" to anyone checking it on
+          # macOS. Emptiness means the same thing in both.
+          unexpected=$(cargo tree --workspace --edges normal,build --invert cc \
+            --depth 1 --prefix none 2>/dev/null | awk 'NF { print $1 }' | sort -u \
+            | grep -Ev '^(cc|cmake|lz4-sys|zstd-sys|aws-lc-sys)$' || true)
+
+          cp /tmp/core-manifest.bak crates/domain/telividb-core/Cargo.toml
+
+          if [ -n "$unexpected" ]; then
+            echo "guard correctly detects a new native path: $unexpected"
           else
             echo "::error::the no-C-toolchain guard did not detect an added cc dependency"
-            cp /tmp/core-manifest.bak crates/domain/telividb-core/Cargo.toml
             exit 1
           fi
           cp /tmp/core-manifest.bak crates/domain/telividb-core/Cargo.toml
