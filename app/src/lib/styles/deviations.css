@@ -1,0 +1,36 @@
+/* Deliberate departures from the ported mock.
+ *
+ * `mock.css` is kept byte-comparable with the approved design so a rule can be
+ * diffed against it. Anything we change on purpose lives here instead, with the
+ * reason — otherwise the next person cannot tell a decision from a mistake.
+ */
+
+/* The mock centres every page on a 58rem column. On a desktop window that
+ * leaves a wide empty margin on both sides and pushes content into one narrow
+ * ribbon down the middle — which then has to be scrolled to be read. The window
+ * is not a document; it has the width, so content uses it. */
+.page-inner {
+  max-width: none;
+  margin: 0;
+}
+
+/* With the width in use, a settings group reads better as two columns than as
+ * one long list — which is the other half of not scrolling. Collapses to one
+ * where there is genuinely not room. */
+.set-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+
+.set-grid > .set-group {
+  border: 0;
+  background: var(--surface);
+}
+
+/* A tile row that fills rather than centres. */
+.tiles {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}

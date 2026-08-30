@@ -17,6 +17,37 @@
 import type { Provider } from "./types";
 
 /**
+ * Hosts that are genuinely this machine.
+ *
+ * Named rather than pattern-matched: `localhost`, the IPv4 loopback block and
+ * the IPv6 loopback are the only addresses that cannot leave, and a regex over
+ * "looks local" would accept `localhost.evil.example.com`.
+ */
+function isLoopback(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  if (host === "localhost" || host === "::1" || host === "[::1]") return true;
+  // The whole 127.0.0.0/8 block, not just 127.0.0.1.
+  return /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host);
+}
+
+/**
+ * Whether an endpoint points at this machine.
+ *
+ * A malformed endpoint is *not* local. Failing closed matters here: the caller
+ * uses this to decide whether vault contents may be sent, and "I could not parse
+ * it" is not evidence that it is safe.
+ */
+export function isLocalEndpoint(endpoint: string): boolean {
+  const raw = endpoint.trim();
+  if (raw === "") return true; // the adapter's own loopback default
+  try {
+    return isLoopback(new URL(raw).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * How a space is protected, as the engine reports it.
  *
  * These are the wire's own words (`PROTECTION_NONE` and so on), not a friendlier
@@ -55,8 +86,19 @@ export function mayAnswer(
   space: string,
   protection: Protection,
   provider: Provider,
+  endpoint?: string,
 ): void {
   const protected_ = protection === "vault" || protection === "sealed";
-  if (!protected_ || provider.locality === "local") return;
+  if (!protected_) return;
+
+  // A "local" provider is only local while its endpoint is. Ollama is reached by
+  // address, that address is stored and editable, and nothing stops it naming
+  // another machine — so taking `locality` alone as proof would let vault
+  // contents leave through the one provider the rule exists to allow.
+  if (provider.locality === "local") {
+    if (endpoint === undefined || isLocalEndpoint(endpoint)) return;
+    throw new WouldLeaveMachine(space, protection, provider);
+  }
+
   throw new WouldLeaveMachine(space, protection, provider);
 }

@@ -18,7 +18,6 @@
 </script>
 
 <div>
-  <div class="panel-label">Answering</div>
   <p class="hint" style="margin: 0.5rem 0 0.625rem">
     Retrieval happens on this machine either way. A provider is only what writes
     the answer — and everything it is given is listed on the turn, so nothing is

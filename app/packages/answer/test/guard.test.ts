@@ -55,3 +55,38 @@ describe("mayAnswer", () => {
     }
   });
 });
+
+describe("a local provider reached over the network", () => {
+  // Ollama is the one provider a vault may use, and it is reached by address
+  // rather than by key — an address that is stored and editable. Treating
+  // `locality: "local"` as proof would let vault contents leave through exactly
+  // the provider the rule exists to permit.
+  const remoteHost = "http://ollama.example.com:11434";
+
+  test.each<Protection>(["vault", "sealed"])(
+    "is refused for a %s space when its endpoint is not loopback",
+    (protection) => {
+      expect(() => mayAnswer("notes", protection, local, remoteHost)).toThrow(
+        WouldLeaveMachine,
+      );
+    },
+  );
+
+  test.each(["http://localhost:11434", "http://127.0.0.1:11434", "http://[::1]:11434", ""])(
+    "is allowed for a vault when the endpoint is %s",
+    (endpoint) => {
+      expect(() => mayAnswer("notes", "vault", local, endpoint)).not.toThrow();
+    },
+  );
+
+  test("treats an unparseable endpoint as remote", () => {
+    // Failing closed: "I could not read it" is not evidence that it is safe.
+    expect(() => mayAnswer("notes", "vault", local, "not a url")).toThrow(
+      WouldLeaveMachine,
+    );
+  });
+
+  test("does not restrict an unprotected space", () => {
+    expect(() => mayAnswer("notes", "none", local, remoteHost)).not.toThrow();
+  });
+});

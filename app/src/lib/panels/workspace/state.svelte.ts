@@ -56,22 +56,30 @@ export class WorkspaceState {
    */
   public async open(organization: Organization | null): Promise<void> {
     this.selected = organization;
-    if (!organization) {
-      this.projects = [];
-      this.spaces = [];
-      return;
-    }
-    const [projects, spaces] = await Promise.all([
-      this.client.listProjects(organization.name),
-      this.client.listSpaces(organization.name),
-    ]);
-    this.projects = projects;
-    this.spaces = spaces;
+    // Cleared before the fetch, not after it. Leaving the previous
+    // organization's projects on screen while the next one loads shows one
+    // organization's name above another's contents, and a failed load would
+    // leave them there permanently.
+    this.projects = [];
+    this.spaces = [];
+    if (!organization) return;
+
+    // Through `guard` because this is also called directly from the rail, where
+    // nothing else catches: an unguarded rejection there left the panel empty
+    // with no error and an unhandled promise in the console.
+    await this.guard(async () => {
+      const [projects, spaces] = await Promise.all([
+        this.client.listProjects(organization.name),
+        this.client.listSpaces(organization.name),
+      ]);
+      this.projects = projects;
+      this.spaces = spaces;
+    });
   }
 
   /** Create an organization and open it. */
-  public async createOrganization(id: string, displayName: string): Promise<void> {
-    await this.guard(async () => {
+  public async createOrganization(id: string, displayName: string): Promise<boolean> {
+    return await this.guard(async () => {
       await this.client.createOrganization(id, displayName);
       this.organizations = await this.client.listOrganizations();
       const made = this.organizations.find((o) => o.name.endsWith(`/${id}`));
@@ -80,10 +88,10 @@ export class WorkspaceState {
   }
 
   /** Create a project under the open organization. */
-  public async createProject(id: string, displayName: string): Promise<void> {
+  public async createProject(id: string, displayName: string): Promise<boolean> {
     const parent = this.selected;
-    if (!parent) return;
-    await this.guard(async () => {
+    if (!parent) return false;
+    return await this.guard(async () => {
       await this.client.createProject(parent.name, id, displayName);
       this.projects = await this.client.listProjects(parent.name);
     });
@@ -96,9 +104,8 @@ export class WorkspaceState {
    * callback without losing `this` — the create row takes `(id, name)` and knows
    * nothing about protection, which is chosen beside it.
    */
-  public createSpaceWith = (id: string, displayName: string): void => {
-    void this.createSpace(id, displayName, this.protection);
-  };
+  public createSpaceWith = (id: string, displayName: string): Promise<boolean> =>
+    this.createSpace(id, displayName, this.protection);
 
   /** Protection for the next space. Fixed at creation, so chosen before it. */
   public protection = $state<Protection>("private");
@@ -108,10 +115,10 @@ export class WorkspaceState {
     id: string,
     displayName: string,
     protection: Protection,
-  ): Promise<void> {
+  ): Promise<boolean> {
     const parent = this.selected;
-    if (!parent) return;
-    await this.guard(async () => {
+    if (!parent) return false;
+    return await this.guard(async () => {
       await this.client.createSpace(parent.name, id, displayName, protection);
       this.spaces = await this.client.listSpaces(parent.name);
     });
@@ -132,13 +139,15 @@ export class WorkspaceState {
   }
 
   /** Run one call, surfacing its failure rather than throwing into the void. */
-  private async guard(work: () => Promise<void>): Promise<void> {
+  private async guard(work: () => Promise<void>): Promise<boolean> {
     this.busy = true;
     this.error = null;
     try {
       await work();
+      return true;
     } catch (cause) {
       this.error = cause instanceof Error ? cause.message : String(cause);
+      return false;
     } finally {
       this.busy = false;
     }

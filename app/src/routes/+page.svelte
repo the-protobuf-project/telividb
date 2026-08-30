@@ -6,8 +6,7 @@
   would be a module to reach state that never travels.
 -->
 <script lang="ts">
-  import { client } from "$lib/api";
-  import type { System } from "$lib/api";
+  import { EngineStatus } from "$lib/api/status.svelte";
   import Dock from "$lib/ui/Dock.svelte";
   import TopNav from "$lib/ui/TopNav.svelte";
   import Placeholder from "$lib/ui/Placeholder.svelte";
@@ -21,6 +20,7 @@
   import Metrics from "$lib/panels/metrics/Metrics.svelte";
   import { Intro } from "$lib/motion/intro";
   import Onboarding from "$lib/onboarding/Onboarding.svelte";
+  import FirstOrganization from "$lib/onboarding/FirstOrganization.svelte";
   import { OnboardingState } from "$lib/onboarding/state.svelte";
 
   // Shown until this machine has been through it once. Read synchronously so
@@ -31,16 +31,16 @@
   let active = $state("workspace");
   // Kept because the capabilities poll writes it and a null means the bridge
   // is unreachable; the value itself is shown in Settings, not up here.
-  let address = $state<string | null>(null);
-  $effect(() => void address);
-  // Assumed false until the engine says otherwise: offering an import that
-  // will be refused is worse than withholding one that would have worked.
-  let canEmbed = $state(false);
-  let environment = $state<System | null>(null);
   let collection = $state("");
-  // Named in the top bar's chip. The model is the fact a person most often wants
-  // and the one nothing else on screen states.
-  let residentModel = $state<string | null>(null);
+
+  /** Everything the shell shows about the engine, and the polling behind it. */
+  const engine = new EngineStatus();
+
+  /** Re-read what the engine can do. Handed to panels that change it. */
+  function refreshCapabilities() {
+    engine.refresh();
+  }
+
 
   let markRef = $state<HTMLElement | null>(null);
   let barRef = $state<HTMLElement | null>(null);
@@ -59,16 +59,6 @@
    * changes whether text can be embedded, and nothing else would tell the
    * window.
    */
-  function refreshCapabilities() {
-    client
-      .capabilities()
-      .then((c) => {
-        address = c.address;
-        canEmbed = c.has_model;
-        environment = c.environment;
-      })
-      .catch(() => (address = null));
-  }
 
   $effect(() => {
     refreshCapabilities();
@@ -76,13 +66,14 @@
     // The engine binds before it loads a model, so the window can open a good
     // twenty seconds before text is possible. Without this it would sit at "no
     // model" until something else happened to ask.
-    if (canEmbed) return;
+    if (engine.canEmbed) return;
     const timer = setInterval(() => {
-      if (canEmbed) {
+      if (engine.canEmbed) {
         clearInterval(timer);
         return;
       }
       refreshCapabilities();
+      engine.refreshOrganizations();
     }, 2000);
     return () => clearInterval(timer);
   });
@@ -120,10 +111,21 @@
       onboarding = false;
     }}
   />
+{:else if engine.hasOrganization === false}
+  <!-- Nothing is reachable before an organization exists: every other resource
+       is named inside one, so the dock would only offer panels that say
+       "nothing yet". -->
+  <FirstOrganization
+    oncreated={() => {
+      engine.refreshOrganizations();
+      active = "workspace";
+    }}
+  />
 {:else}
   <TopNav
-    model={residentModel}
-    backend={environment?.backend ?? null}
+    organization={engine.organization}
+    model={engine.model}
+    backend={engine.capabilities?.environment.backend ?? null}
     bind:ref={barRef}
     bind:markRef
   />
@@ -138,7 +140,7 @@
       {#if active === "workspace"}
         <Workspace />
       {:else if active === "data"}
-        <Points {collection} {canEmbed} />
+        <Points {collection} canEmbed={engine.canEmbed} />
       {:else if active === "models"}
         <Models oninstalled={refreshCapabilities} />
       {:else if active === "metrics"}
@@ -146,7 +148,7 @@
       {:else if active === "settings"}
         <Settings />
       {:else if active === "ask"}
-        <Ask {canEmbed} />
+        <Ask canEmbed={engine.canEmbed} />
       {:else if active === "search"}
         <Search />
       {:else if active === "collections"}

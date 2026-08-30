@@ -21,11 +21,15 @@
 
   let { label, state = "idle", title }: Props = $props();
 
+  // `bg-(--token)` is Tailwind v4's form for a CSS variable. The v3 spelling
+  // `bg-[--token]` compiles without complaint and emits
+  // `background-color: --color-green`, which is not a colour — so every dot
+  // rendered transparent and the state was invisible.
   const dot: Record<ChipState, string> = {
-    live: "bg-[--color-green]",
-    warn: "bg-[--color-amber]",
-    off: "bg-[--color-red]",
-    idle: "bg-[--color-ink-faint]",
+    live: "bg-(--color-green)",
+    warn: "bg-(--color-amber)",
+    off: "bg-(--color-red)",
+    idle: "bg-(--color-ink-faint)",
   };
 </script>
 

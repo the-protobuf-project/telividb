@@ -10,6 +10,7 @@
  */
 
 import { Ollama } from "ollama/browser";
+import { WouldLeaveMachine, isLocalEndpoint } from "../guard";
 import { SYSTEM, buildUser } from "../prompt";
 import { TEMPERATURE, type FetchLike } from "../transport";
 import type { AnswerChunk, Ask } from "../types";
@@ -22,10 +23,18 @@ export async function* ollamaAnswer(
   ask: Ask,
   fetchImpl: FetchLike,
 ): AsyncGenerator<AnswerChunk> {
-  const client = new Ollama({
-    host: ask.credential.trim() || DEFAULT_HOST,
-    fetch: fetchImpl,
-  });
+  const host = ask.credential.trim() || DEFAULT_HOST;
+
+  // Checked here as well as in the guard, and not because the guard is doubted:
+  // this is where the request is actually built, so it is the last point at
+  // which a protected space can still be stopped. The same predicate decides
+  // both, so the two cannot drift into disagreeing.
+  const protected_ = ask.protection === "vault" || ask.protection === "sealed";
+  if (protected_ && !isLocalEndpoint(host)) {
+    throw new WouldLeaveMachine(ask.space, ask.protection, ask.provider);
+  }
+
+  const client = new Ollama({ host, fetch: fetchImpl });
 
   const stream = await client.chat({
     model: ask.model,

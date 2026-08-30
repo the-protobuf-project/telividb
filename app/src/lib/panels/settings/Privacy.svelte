@@ -20,8 +20,13 @@
   const pending: readonly Pending[] = [
     {
       label: "Send telemetry",
+      // Scoped to telemetry on purpose. The blanket version of this sentence —
+      // "nothing leaves this machine" — was written before answering moved into
+      // the window, and stopped being true the moment a remote provider could be
+      // configured. A privacy screen that overstates is worse than one that says
+      // less.
       description:
-        "Off. Nothing leaves this machine unless you point it at a collector.",
+        "Off. No traces or metrics leave this machine unless you point them at a collector.",
       waiting: "telemetry.toml decides this, not the window.",
     },
     {
@@ -40,8 +45,16 @@
 </script>
 
 <div>
-  <div class="panel-label">Privacy</div>
-  <div class="set-group" style="margin-top: 0.625rem; opacity: 0.6">
+  <!-- Stated before the switches, because it is the one thing on this screen
+       that is true right now: a configured remote provider receives the question
+       and the passages retrieved for it. Retrieval itself never leaves. -->
+  <p class="hint" style="margin-bottom: 0.625rem">
+    Retrieval always happens on this machine. Answering does not: a remote
+    provider configured under Answering is sent the question and the passages
+    found for it, and is shown on every turn before you send.
+  </p>
+
+  <div class="set-group" style="opacity: 0.6">
     {#each pending as row (row.label)}
       <div class="set-row">
         <div class="txt">

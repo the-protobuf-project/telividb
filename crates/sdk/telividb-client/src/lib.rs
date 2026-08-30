@@ -55,6 +55,7 @@ mod names;
 mod new_collection;
 mod record;
 mod search;
+mod page;
 mod system;
 mod tenancy;
 mod tenancy_types;

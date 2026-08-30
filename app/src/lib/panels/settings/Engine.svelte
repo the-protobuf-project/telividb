@@ -25,8 +25,7 @@
 </script>
 
 <div>
-  <div class="panel-label">Engine</div>
-  <div class="set-group" style="margin-top: 0.625rem">
+  <div class="set-group">
     <div class="set-row">
       <div class="txt">
         <b>Data directory</b>

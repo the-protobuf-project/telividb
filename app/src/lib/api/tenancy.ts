@@ -71,9 +71,14 @@ export function resourceId(name: string): string {
  * final say — this only spares a person from typing the same thing twice.
  */
 export function suggestId(displayName: string): string {
-  return displayName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 63);
+  return (
+    displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      // Truncate *before* trimming, so a cut that lands on a separator does not
+      // leave a trailing hyphen. Trimming first and slicing after produced ids
+      // like `some-long-name-` for any name whose 63rd character was one.
+      .slice(0, 63)
+      .replace(/^-+|-+$/g, "")
+  );
 }

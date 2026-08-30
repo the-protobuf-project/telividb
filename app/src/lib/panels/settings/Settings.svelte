@@ -1,14 +1,17 @@
 <!--
-  Settings.
+  Settings, split left and right rather than stacked.
 
-  The design's page shell: `.page` is a two-row grid, `.page-top` holds the
-  heading and does not move, `.page-scroll` is the only thing that scrolls, and
-  `.page-inner` centres both on the same 58rem column so the heading sits above
-  its own content rather than above the window.
+  Sections list on the left, the chosen one fills the right. That is the shape
+  because the alternative is one tall column that has to be scrolled to be read
+  — and a window that scrolls has lost the property this whole frame is built
+  around: the header, the dock and the controls stay where the hand left them.
+
+  Each side owns its own overflow. A section long enough to need it scrolls
+  inside its own pane; the frame never does.
 -->
 <script lang="ts">
   import { client } from "$lib/api";
-  import { SettingsState } from "./state.svelte";
+  import { SECTIONS, SettingsState } from "./state.svelte";
   import Engine from "./Engine.svelte";
   import Providers from "./Providers.svelte";
   import Privacy from "./Privacy.svelte";
@@ -19,25 +22,54 @@
   // Read once on mount. Nothing polls: these change when the engine restarts,
   // and the panel is rebuilt when it does.
   void state.load();
+
+  let current = $derived(SECTIONS.find((s) => s.id === state.section));
 </script>
 
-<div class="page">
-  <div class="page-top">
-    <div class="page-inner">
-      <div class="page-head"><h1>Settings</h1></div>
+<div class="view two">
+  <nav class="rail">
+    <div>
+      <div class="rail-label">Settings</div>
+      <div class="tree">
+        {#each SECTIONS as section (section.id)}
+          <button
+            class="node org"
+            type="button"
+            aria-current={state.section === section.id}
+            onclick={() => (state.section = section.id)}
+            style="flex-direction: column; align-items: flex-start; gap: 0.125rem; height: auto; padding-top: 0.5rem; padding-bottom: 0.5rem"
+          >
+            <span class="name">{section.label}</span>
+            <span class="count">{section.summary}</span>
+          </button>
+        {/each}
+      </div>
     </div>
-  </div>
+  </nav>
 
-  <div class="page-scroll">
-    <div class="page-inner">
-      {#if state.error}
-        <p class="selectable" style="color: var(--red-text)">{state.error}</p>
-      {/if}
+  <div class="page">
+    <div class="page-top">
+      <div class="page-inner">
+        <div class="page-head"><h1>{current?.label ?? "Settings"}</h1></div>
+      </div>
+    </div>
 
-      <Engine {state} />
-      <Providers {state} />
-      <Privacy />
-      <About {state} />
+    <div class="page-scroll">
+      <div class="page-inner">
+        {#if state.error}
+          <p class="selectable" style="color: var(--red-text)">{state.error}</p>
+        {/if}
+
+        {#if state.section === "engine"}
+          <Engine {state} />
+        {:else if state.section === "answering"}
+          <Providers {state} />
+        {:else if state.section === "privacy"}
+          <Privacy />
+        {:else}
+          <About {state} />
+        {/if}
+      </div>
     </div>
   </div>
 </div>

@@ -27,8 +27,7 @@
 </script>
 
 <div>
-  <div class="panel-label">About</div>
-  <div class="set-group" style="margin-top: 0.625rem">
+  <div class="set-group">
     <div class="set-row" style="flex-direction: column; align-items: flex-start; gap: 0.75rem">
       <div class="about">
         <div style="display: flex; align-items: baseline; gap: 0.5rem">

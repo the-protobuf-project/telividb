@@ -6,18 +6,16 @@
 //! than something a window should carry.
 
 use crate::error::Result;
+use crate::page::{PAGE_SIZE, advance};
 use crate::tenancy_types::{Organization, Project, Protection, Space};
 use telividb_buffers::protobuf::tenancy::v1 as wire;
-
-/// How many to ask for per page. Large enough that one round trip usually
-/// suffices, small enough that a huge tenant does not arrive in one message.
-const PAGE_SIZE: i32 = 200;
 
 impl crate::Client {
     /// Every organization, following pagination to the end.
     pub async fn list_organizations(&self) -> Result<Vec<Organization>> {
         let mut out = Vec::new();
         let mut page_token = String::new();
+        let mut seen = Vec::new();
         loop {
             let response = self
                 .organizations
@@ -34,7 +32,7 @@ impl crate::Client {
             if response.next_page_token.is_empty() {
                 return Ok(out);
             }
-            page_token = response.next_page_token;
+            page_token = advance(&mut seen, response.next_page_token)?;
         }
     }
 
@@ -93,6 +91,7 @@ impl crate::Client {
         let parent = parent.into();
         let mut out = Vec::new();
         let mut page_token = String::new();
+        let mut seen = Vec::new();
         loop {
             let response = self
                 .projects
@@ -109,7 +108,7 @@ impl crate::Client {
             if response.next_page_token.is_empty() {
                 return Ok(out);
             }
-            page_token = response.next_page_token;
+            page_token = advance(&mut seen, response.next_page_token)?;
         }
     }
 
@@ -142,6 +141,7 @@ impl crate::Client {
         let parent = parent.into();
         let mut out = Vec::new();
         let mut page_token = String::new();
+        let mut seen = Vec::new();
         loop {
             let response = self
                 .spaces
@@ -158,7 +158,7 @@ impl crate::Client {
             if response.next_page_token.is_empty() {
                 return Ok(out);
             }
-            page_token = response.next_page_token;
+            page_token = advance(&mut seen, response.next_page_token)?;
         }
     }
 

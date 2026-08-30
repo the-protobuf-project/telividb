@@ -13,8 +13,14 @@
     noun: string;
     /** Whether a call is already in flight. */
     busy?: boolean;
-    /** Called with the id and the display name. */
-    create: (id: string, displayName: string) => void;
+    /**
+     * Called with the id and the display name.
+     *
+     * Resolves to whether the resource was actually created. The field is only
+     * cleared on `true`: a refused name that vanished from the box left the
+     * person retyping something the server had already rejected once.
+     */
+    create: (id: string, displayName: string) => Promise<boolean> | boolean;
   }
 
   let { noun, busy = false, create }: Props = $props();
@@ -23,10 +29,10 @@
   let id = $derived(suggestId(displayName));
   let ready = $derived(id.length > 0 && !busy);
 
-  function submit() {
+  async function submit() {
     if (!ready) return;
-    create(id, displayName.trim());
-    displayName = "";
+    const created = await create(id, displayName.trim());
+    if (created) displayName = "";
   }
 </script>
 

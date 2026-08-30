@@ -12,8 +12,33 @@ import type { Capabilities, TelividbClient } from "$lib/api";
 /** What a stored credential is shown as. Never the value. */
 export const MASK = "••••••••••••";
 
+/** One section of the panel, as the left column lists them. */
+export interface Section {
+  /** Stable key, and the value `section` takes. */
+  readonly id: string;
+  /** What the left column shows. */
+  readonly label: string;
+  /** One line under it, so the list says what each section is for. */
+  readonly summary: string;
+}
+
+/**
+ * The sections, in the order they are listed.
+ *
+ * Ordered by how often they are opened rather than by importance: the engine's
+ * own state is the thing a person checks, and About is the thing they read once.
+ */
+export const SECTIONS: readonly Section[] = [
+  { id: "engine", label: "Engine", summary: "Backend, data directory, address" },
+  { id: "answering", label: "Answering", summary: "Providers and their keys" },
+  { id: "privacy", label: "Privacy", summary: "What leaves this machine" },
+  { id: "about", label: "About", summary: "Version, licence, author" },
+];
+
 /** The settings panel's state. */
 export class SettingsState {
+  /** Which section the right-hand column is showing. */
+  public section = $state("engine");
   /** What the engine reports about itself. Null until asked. */
   public capabilities = $state<Capabilities | null>(null);
   /** Every provider, with whether each is ready to use. */
@@ -63,15 +88,14 @@ export class SettingsState {
    * the mask is the honest thing to show once it is stored.
    */
   public async save(id: string): Promise<void> {
-    const draft = this.drafts[id];
-    if (draft === undefined || !this.dirty(id)) return;
+    if (!this.dirty(id)) return;
+    const draft = this.drafts[id] ?? "";
 
     this.saving = id;
     this.error = null;
     try {
       await this.client.storeProviderKey(id, draft.trim());
-      const { [id]: _dropped, ...rest } = this.drafts;
-      this.drafts = rest;
+      this.forget_draft(id);
       this.providers = await this.client.listProviders();
     } catch (cause) {
       this.error = cause instanceof Error ? cause.message : String(cause);
@@ -86,13 +110,18 @@ export class SettingsState {
     this.error = null;
     try {
       await this.client.forgetProviderKey(id);
-      const { [id]: _dropped, ...rest } = this.drafts;
-      this.drafts = rest;
+      this.forget_draft(id);
       this.providers = await this.client.listProviders();
     } catch (cause) {
       this.error = cause instanceof Error ? cause.message : String(cause);
     } finally {
       this.saving = null;
     }
+  }
+
+  /** Drop a typed value, so it does not outlive the call that used it. */
+  private forget_draft(id: string): void {
+    const { [id]: _dropped, ...rest } = this.drafts;
+    this.drafts = rest;
   }
 }

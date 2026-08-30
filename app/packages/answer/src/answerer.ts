@@ -19,7 +19,9 @@ import type { AnswerChunk, Ask } from "./types";
 
 /** Stream an answer for one question. */
 export async function* answer(ask: Ask): AsyncGenerator<AnswerChunk> {
-  mayAnswer(ask.space, ask.protection, ask.provider);
+  // The credential is the endpoint for a local provider, and the guard needs
+  // it: `locality` says how the provider is *reached*, not where it runs.
+  mayAnswer(ask.space, ask.protection, ask.provider, ask.credential);
 
   const fetchImpl = await resolveFetch();
 

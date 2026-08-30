@@ -206,6 +206,8 @@
 /* Loaded after the tokens so its `var()` calls resolve, and after Tailwind so a
  * component class wins over a utility of the same specificity. */
 @import "./lib/styles/mock.css";
+/* Loaded after it, so a deliberate departure wins. */
+@import "./lib/styles/deviations.css";
 
 @layer base {
   * {
