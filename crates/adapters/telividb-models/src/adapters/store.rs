@@ -1,5 +1,6 @@
 //! Where installed models live on disk.
 
+use super::store_receipt::Receipt;
 use crate::{Catalog, CatalogEntry, Result};
 use std::path::{Path, PathBuf};
 use telividb_core::Fingerprint;
@@ -65,11 +66,29 @@ impl ModelStore {
 
     /// Whether the file is byte-for-byte the one the catalog names.
     ///
-    /// Reads the whole file, so it is for the moments that justify it: before
-    /// loading a model, and after a download. Never for a listing.
+    /// Reads the whole file the first time and remembers the result, so the
+    /// second launch does not pay for it again — about 1.5 seconds for a 639 MB
+    /// model, and more when several are installed, since the caller below walks
+    /// the catalog. See [`Receipt`] for exactly what the memory promises.
     pub fn is_verified(&self, entry: &CatalogEntry) -> bool {
-        self.digest_of(&self.path_of(&entry.id))
-            .is_some_and(|found| found == entry.digest)
+        let path = self.path_of(&entry.id);
+
+        // A receipt that still describes the file on disk stands in for the
+        // hash. Size and mtime both have to match, so a replaced or truncated
+        // file falls through to the real thing.
+        if let Some(receipt) = Receipt::read(&path).filter(|r| r.still_describes(&path)) {
+            return receipt.digest == entry.digest;
+        }
+
+        let Some(found) = self.digest_of(&path) else {
+            return false;
+        };
+        // Written whatever the answer: a file that verified once should not be
+        // re-hashed, and neither should one that is reliably wrong.
+        if let Some(receipt) = Receipt::of(&path, found) {
+            receipt.write(&path);
+        }
+        found == entry.digest
     }
 
     /// The digest of a file, or `None` if it cannot be read.

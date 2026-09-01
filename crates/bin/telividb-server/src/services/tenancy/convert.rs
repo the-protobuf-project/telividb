@@ -8,7 +8,35 @@ use crate::services::clock::{maybe, stamp};
 use telividb_buffers::protobuf::tenancy::v1 as wire;
 use telividb_core::{Lifecycle, Organization, Project, Protection, Session, Space};
 
-/// An organization on the wire.
+/// An organization on the wire, with its child counts.
+///
+/// The counts are `OUTPUT_ONLY` in the proto and were never computed — the
+/// server returned the `Default` zero, the SDK carried it, and the window
+/// rendered "0p · 0s" above a tree that visibly held a project and a space.
+/// A field that is always wrong is worse than one that is absent, because a
+/// reader has no way to tell it apart from a real zero.
+///
+/// Counted from the live children rather than kept as a running total: a stored
+/// counter is a second source of truth that has to be maintained by every
+/// create, delete and undelete path, and one missed path makes it wrong
+/// permanently. This is O(n) over one tenant's own rows, which is the same scan
+/// the list calls already do.
+pub(super) fn organization_with_counts(
+    value: &Organization,
+    projects: usize,
+    spaces: usize,
+) -> wire::Organization {
+    wire::Organization {
+        project_count: i32::try_from(projects).unwrap_or(i32::MAX),
+        space_count: i32::try_from(spaces).unwrap_or(i32::MAX),
+        ..organization(value)
+    }
+}
+
+/// An organization on the wire, with counts left at zero.
+///
+/// For the paths that have just written one and have no cheaper way to know:
+/// a freshly created organization has no children by construction.
 pub(super) fn organization(value: &Organization) -> wire::Organization {
     wire::Organization {
         name: value.name.as_str().to_owned(),

@@ -157,6 +157,20 @@ pub fn device_allocated_bytes() -> Option<usize> {
     Backend::best().ok()?.memory().map(|m| m.used())
 }
 
+/// What the runtime actually opened, as it names itself.
+///
+/// Distinct from the device *kind* in the way that matters here: the kind is
+/// what was asked for, this is what was opened. A build that requested an
+/// accelerator and got a host backend reports two different strings, which is
+/// precisely the failure that is otherwise invisible from outside the process.
+///
+/// Wrapped rather than re-exporting `Backend`, so a caller that only wants to
+/// *report* the device needs no dependency on the runtime crate — the same
+/// reasoning as [`device_allocated_bytes`].
+pub fn device_name() -> Option<String> {
+    Backend::best().ok().map(|b| b.name())
+}
+
 /// Where the ceiling came from.
 pub fn budget_source() -> BudgetSource {
     budget().1

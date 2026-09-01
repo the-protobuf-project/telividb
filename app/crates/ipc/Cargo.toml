@@ -8,6 +8,10 @@ description = "Tauri commands: a shim between the window and the engine's client
 [dependencies]
 telividb-desktop-engine.workspace = true
 telividb-client.workspace = true
+# The provider table and the OS keychain. `keychain` is on because a desktop app
+# is exactly the case that has one; a headless build would take the default
+# feature set and supply its own store.
+telividb-providers = { workspace = true, features = ["keychain"] }
 tauri.workspace = true
 serde.workspace = true
 

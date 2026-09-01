@@ -7,7 +7,11 @@
  * and keeping them here leaves the bridge forwarding.
  */
 
-import type { SearchHit, TelividbClient } from "$lib/api";
+import type { TelividbClient } from "$lib/api";
+import type { Protection, Provider } from "@telividb/answer";
+import { Exchange } from "./exchange.svelte";
+
+export { Exchange };
 
 /** The collection this panel reads and writes. Created on first use. */
 const COLLECTION = "notes";
@@ -19,15 +23,14 @@ const FIELD = "text";
 /** How many neighbours to show. Enough to judge, few enough to read. */
 const TOP_K = 5;
 
-/** One exchange: what was asked, and what came back. */
-export interface Exchange {
-  /** What was typed. */
-  readonly question: string;
-  /** What the collection returned, best first. */
-  readonly hits: readonly SearchHit[];
-  /** Whether this text was new to the collection. */
-  readonly stored: boolean;
-}
+/**
+ * How the notes collection is protected.
+ *
+ * Unprotected until spaces are wired through, and named here rather than assumed inside
+ * the guard so the day it becomes a real value there is one line to change. A
+ * literal `"open"` buried in a call is the version that gets missed.
+ */
+const PROTECTION: Protection = "none";
 
 /** The ask panel's state. */
 export class AskState {
@@ -35,6 +38,12 @@ export class AskState {
   public draft = $state("");
   /** Exchanges so far, newest first. */
   public history = $state<Exchange[]>([]);
+  /** Model hosts this build knows, as the engine reports them. */
+  public providers = $state<Provider[]>([]);
+  /** Which one answers. Null until the list has loaded. */
+  public provider = $state<Provider | null>(null);
+  /** Which of its models. */
+  public model = $state("");
   /** What went wrong, as the engine phrased it. */
   public error = $state<string | null>(null);
   /** Whether a question is in flight. */
@@ -44,6 +53,33 @@ export class AskState {
   private ready = false;
 
   public constructor(private readonly client: TelividbClient) {}
+
+  /**
+   * Load the provider list and pick a default.
+   *
+   * Prefers a configured one, then a local one, because Ollama needs no key and
+   * so is the only provider that can work on a machine nobody has configured.
+   * Failing quietly is right here: retrieval works without a provider, and the
+   * panel says what is missing when a question is asked.
+   */
+  public async loadProviders(): Promise<void> {
+    try {
+      this.providers = await this.client.listProviders();
+      const preferred =
+        this.providers.find((p) => p.configured && p.locality === "local") ??
+        this.providers.find((p) => p.configured) ??
+        this.providers[0];
+      if (preferred) this.select(preferred);
+    } catch {
+      this.providers = [];
+    }
+  }
+
+  /** Choose a provider, resetting the model to its first. */
+  public select(provider: Provider): void {
+    this.provider = provider;
+    this.model = provider.models[0] ?? "";
+  }
 
   /** Whether the draft is worth sending. */
   public get canAsk(): boolean {
@@ -78,11 +114,23 @@ export class AskState {
         rows: [{ id: crypto.randomUUID(), text: question }],
       });
 
-      this.history = [
-        { question, hits: found.hits, stored: true },
-        ...this.history,
-      ];
+      const exchange = new Exchange(question, found.hits);
+      this.history = [exchange, ...this.history];
       this.draft = "";
+
+      // Not awaited: retrieval is done and the hits are on screen, so the
+      // composer is usable again while the answer streams in beneath them.
+      // Showing what was retrieved before the prose arrives is the point of this
+      // panel, not a loading state to get past.
+      if (this.provider && this.model) {
+        void exchange.write(
+          this.client,
+          this.provider,
+          this.model,
+          COLLECTION,
+          PROTECTION,
+        );
+      }
     } catch (cause) {
       this.error = String(cause);
     } finally {

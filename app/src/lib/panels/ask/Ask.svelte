@@ -12,6 +12,7 @@
   import { Textarea } from "$lib/components/ui/textarea";
   import { AskState } from "./state.svelte";
   import Answer from "./Answer.svelte";
+  import ProviderPicker from "./ProviderPicker.svelte";
 
   interface Props {
     /** Whether the engine can turn text into vectors yet. */
@@ -21,6 +22,10 @@
   let { canEmbed }: Props = $props();
 
   const state = new AskState(client);
+
+  // Fire and forget: retrieval works without a provider, so a failure to list
+  // them must not stop the panel loading.
+  void state.loadProviders();
 
   /** Enter sends; shift-enter is a newline, as every chat box behaves. */
   function onkeydown(event: KeyboardEvent) {
@@ -51,6 +56,8 @@
         : "Waiting for an embedding model to finish loading…"}
       class="resize-none text-base"
     />
+
+    <ProviderPicker {state} />
 
     <div class="flex items-center justify-between">
       <span class="text-muted-foreground text-xs">

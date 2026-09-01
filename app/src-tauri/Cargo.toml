@@ -19,4 +19,5 @@ telividb-desktop-engine.workspace = true
 telividb-desktop-ipc.workspace = true
 tauri.workspace = true
 tauri-plugin-opener.workspace = true
+tauri-plugin-http.workspace = true
 tokio.workspace = true

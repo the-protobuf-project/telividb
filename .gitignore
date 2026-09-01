@@ -6,6 +6,13 @@
 # directories.
 **/target/
 
+# Node modules, at any depth. The root workspace and the app's.
+# `**/node_modules/` rather than `node_modules*`: the latter is a prefix match on
+# names, so a source file called `node_modules.rs` or a directory called
+# `node_modules_backup/` would vanish from git without anyone noticing. The
+# trailing slash keeps it to directories.
+node_modules/
+
 # Vendored proto dependencies — regenerate with `cargo xtask vendor-proto`.
 # Committed copies of Google files would be linted as if they were ours.
 /protobuf/.deps

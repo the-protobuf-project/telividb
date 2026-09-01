@@ -34,6 +34,13 @@ pub struct CatalogModel {
     pub license: String,
     /// Whether this is the default offer.
     pub recommended: bool,
+    /// `text`, `image`, `audio` or `video`.
+    ///
+    /// Carried so the window can say which modalities have an encoder behind
+    /// them and which do not. Every catalog entry is `text` today; the other
+    /// three exist in the schema and have no model, which is a fact the window
+    /// should state rather than imply by omission.
+    pub modality: String,
     /// Whether the file is on disk at its full length.
     pub installed: bool,
     /// Whether its weights are loaded and able to embed right now.
@@ -87,6 +94,7 @@ impl CatalogModel {
             context_length: source.context_length.max(0) as u32,
             license: source.license.clone(),
             recommended: source.recommended,
+            modality: modality_name(source.modality),
             installed: source.installed,
             resident: source.resident,
         }
@@ -120,6 +128,25 @@ fn state_name(value: i32) -> String {
         Ok(wire::InstallationState::Failed) => "failed",
         Ok(wire::InstallationState::Cancelled) => "cancelled",
         Ok(wire::InstallationState::Unspecified) | Err(_) => "unknown",
+    }
+    .to_owned()
+}
+
+/// The wire modality as the window names it.
+///
+/// An unrecognised value reads as `text` rather than as an error: the field is
+/// descriptive, and a modality this build does not know is still more likely to
+/// be text than to be nothing.
+fn modality_name(value: i32) -> String {
+    // The tags from `catalog_model.proto`, matched by number rather than by
+    // importing the generated enum: this crate depends on the SDK, not on the
+    // buffers crate, and a bridge should not reach past its own client for a
+    // four-armed match. Rule 40 keeps these numbers permanent.
+    match value {
+        2 => "image",
+        3 => "audio",
+        4 => "video",
+        _ => "text",
     }
     .to_owned()
 }

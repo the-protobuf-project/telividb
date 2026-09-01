@@ -9,14 +9,26 @@
 mod settings;
 
 use settings::Settings;
+use tauri::Manager;
 use telividb_desktop_engine::Engine;
 use telividb_desktop_ipc::AppState;
 
 /// Start the engine, then open the window.
 ///
-/// Blocks until the window closes, at which point `AppState` is dropped, the
-/// shutdown sender goes with it, and the server stops through the same path a
-/// deliberate stop uses.
+/// Shuts the engine down on `RunEvent::Exit` rather than by dropping
+/// `AppState`, because on macOS `AppState` is never dropped: Cmd+Q reaches
+/// `-[NSApplication terminate:]`, which calls `exit()` from inside the menu
+/// action and never returns through `Builder::run`. `exit()` then runs ggml's
+/// static destructors — its device list is a function-local `static
+/// std::vector`, so it is registered with `__cxa_atexit` — and
+/// `ggml_metal_rsets_free` asserts that every residency set was released
+/// first. With the engine still holding its Metal buffers that assert fails,
+/// and the app aborts with SIGABRT on every quit.
+///
+/// `applicationWillTerminate:` is the seam. AppKit sends it before `terminate:`
+/// calls `exit()`; tao answers it with `Event::LoopDestroyed`, which arrives
+/// here as `RunEvent::Exit`. So this handler is the last code that runs while
+/// the process is still whole, and the only place a graceful teardown fits.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let settings = Settings::resolve();
@@ -30,6 +42,9 @@ pub fn run() {
     // window could do nothing about. Paying for it here means the window opens
     // knowing the answer.
     let runtime = tokio::runtime::Runtime::new().expect("a tokio runtime");
+    // Kept before the runtime is forgotten: quitting has to await the server
+    // task, and a handle is the only way back onto a runtime nobody owns.
+    let shutdown_on = runtime.handle().clone();
     let engine = match runtime.block_on(settings.start()) {
         Ok(engine) => engine,
         Err(error) => {
@@ -45,12 +60,34 @@ pub fn run() {
     // opened.
     std::mem::forget(runtime);
 
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_http::init())
         .manage(AppState::new(engine, has_model, data_dir))
         .invoke_handler(telividb_desktop_ipc::commands!())
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(move |app, event| {
+        // `Exit` rather than `ExitRequested`: the latter is the window asking
+        // whether to go, and can be cancelled. This one is the loop being
+        // destroyed, which happens on every route out — the last window
+        // closing, and `terminate:` alike.
+        if !matches!(event, tauri::RunEvent::Exit) {
+            return;
+        }
+
+        let Some(engine) = app.state::<AppState>().take_engine() else {
+            return;
+        };
+
+        // Blocking here is the point. The handler is running inside
+        // `applicationWillTerminate:`, so returning early would hand control
+        // straight back to `exit()` with the buffers still live — which is the
+        // crash this exists to prevent. `Handle::block_on` is safe from here
+        // because the main thread is not one of the runtime's workers.
+        shutdown_on.block_on(engine.shutdown());
+    });
 }
 
 /// Re-exported so the binary can name it.

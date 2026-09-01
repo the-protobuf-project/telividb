@@ -1,0 +1,241 @@
+/* The graph, drawn in the window's own language.
+ *
+ * Svelte Flow ships a stylesheet built for light backgrounds with rounded nodes
+ * and blue handles. Everything here overrides it onto the tokens, so a node is
+ * the same rectangle as a `.row` and an edge is the same rule as a border —
+ * rather than a library's default sitting inside someone else's design.
+ *
+ * Thin and flat on purpose: no shadows, no gradients, no rounded corners. The
+ * only things carrying meaning are position, weight of line, and one accent. */
+
+.svelte-flow {
+  background: var(--ground);
+  --xy-edge-stroke-default: var(--rule-strong);
+  --xy-edge-stroke-selected-default: var(--ink);
+  --xy-handle-background-color-default: var(--rule-strong);
+  --xy-handle-border-color-default: var(--ground);
+  --xy-selection-background-color-default: #4186f512;
+  --xy-attribution-background-color-default: transparent;
+}
+
+.g-node {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  width: 11rem;
+  height: var(--control-h);
+  padding: 0 calc(var(--u) * 2.5);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+  line-height: var(--control-h);
+}
+
+.g-node.selected,
+.g-node:hover {
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+
+/* The seed is the one node the reader asked about. One accent, used once. */
+.g-node.seed {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.g-node.suppressed {
+  border-style: dashed;
+  background: transparent;
+}
+
+.g-node-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.g-node-degree {
+  flex: none;
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+}
+
+/* Handles: present so an edge can be dragged, and almost invisible until the
+ * pointer is near. A node covered in blue dots is a diagram of its own API. */
+.svelte-flow__handle {
+  width: 5px;
+  height: 5px;
+  border-radius: 0;
+  opacity: 0;
+  transition: opacity 0.12s var(--ease);
+}
+
+.g-node:hover .svelte-flow__handle,
+.svelte-flow__handle.connectingfrom,
+.svelte-flow__handle.connectingto {
+  opacity: 1;
+}
+
+/* Controls, squared off and quiet. */
+.svelte-flow__controls {
+  box-shadow: none;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.svelte-flow__controls-button {
+  background: var(--surface);
+  border-bottom: 1px solid var(--rule);
+  color: var(--ink-dim);
+  border-radius: 0;
+  width: var(--control-h-sm);
+  height: var(--control-h-sm);
+}
+
+.svelte-flow__controls-button:hover {
+  background: var(--ground);
+  color: var(--ink);
+}
+
+.svelte-flow__controls-button svg {
+  fill: currentColor;
+}
+
+.svelte-flow__attribution {
+  color: var(--ink-faint);
+  font-size: 0.625rem;
+}
+
+/* Edge labels, quietened.
+ *
+ * Svelte Flow draws them at body size in full contrast, which on a canvas of
+ * seven edges shouts louder than the nodes — the labels became the picture. A
+ * type is a qualifier on a line, so it is set small, dimmed, and on the ground
+ * colour so the line does not run through it. */
+.svelte-flow__edge-label {
+  /* A `div`, not an SVG `text` — so `fill` does nothing and nothing inherits a
+   * size into it. Left alone it renders at the browser default of 16px in full
+   * contrast, which on a canvas of seven edges made the labels the picture and
+   * the graph the background. */
+  font-size: 0.625rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+  background: var(--ground);
+  padding: 0 calc(var(--u) * 0.75);
+}
+
+.svelte-flow__edge:hover .svelte-flow__edge-label,
+.svelte-flow__edge.selected .svelte-flow__edge-label {
+  color: var(--ink-dim);
+}
+
+/* ── The action wheel ──────────────────────────────────────────────────────
+ *
+ * Buttons seated around the node they act on. Squares rather than circles: the
+ * arrangement is radial, the parts stay the design's — a ring of round buttons
+ * would be the only rounded thing in the window. */
+/* The veil both catches the dismissing click and dims what is behind it.
+ *
+ * Dimming is not decoration here. The ring has to be large enough to clear the
+ * node it acts on, which on a dense graph means it lands over *other* nodes —
+ * and a menu item sitting on top of an unrelated node reads as belonging to it.
+ * Dropping the canvas back makes the wheel unambiguously the active layer. */
+.wheel-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--ground) 55%, transparent);
+  animation: veil-in 0.12s var(--ease) both;
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.wheel {
+  position: fixed;
+  z-index: 41;
+  width: 0;
+  height: 0;
+}
+
+.wheel-btn {
+  position: absolute;
+  /* Centred on the node before the seat offset is applied, so `transform`
+   * carries only the radial position and the arithmetic stays readable. */
+  left: -34px;
+  top: -12px;
+  width: 68px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.01em;
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-dim);
+  cursor: pointer;
+  padding: 0;
+  /* Each seat animates out from the centre. Staggered by index would be showy;
+   * one movement reads as a single object opening. */
+  animation: wheel-out 0.14s var(--ease) both;
+}
+
+.wheel-btn:hover:not(:disabled),
+.wheel-btn:focus-visible {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--ground);
+  outline: none;
+}
+
+.wheel-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* The caption sits below the ring rather than inside it, where it would cover
+ * the node the wheel is about. */
+.wheel-caption {
+  position: absolute;
+  left: 50%;
+  top: 92px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--ground);
+  border: 1px solid var(--rule);
+  color: var(--ink-dim);
+  font-size: 0.6875rem;
+  line-height: 1;
+  padding: 4px 6px;
+  pointer-events: none;
+}
+
+@keyframes wheel-out {
+  from {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wheel-btn,
+  .wheel-veil {
+    animation: none;
+  }
+}
+
+/* The subject is named, not spotlit.
+ *
+ * Lifting the chosen node above the veil cannot work: `.svelte-flow__viewport`
+ * carries a transform, which creates a stacking context, and no `z-index` on a
+ * descendant escapes it. Rather than restructure the canvas for a highlight, the
+ * wheel says which node it is about — its caption reads the node's own text
+ * until an action is hovered, which is the same information without fighting the
+ * library's layering. */

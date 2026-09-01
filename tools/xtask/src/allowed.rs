@@ -89,6 +89,14 @@ pub(crate) const ALLOWED: &[(&str, &[&str])] = &[
     // `telividb-core`, which is what keeps "will not download" and "cannot
     // load" the same answer without one adapter naming the other.
     ("telividb-models", &["telividb-core", "telividb-telemetry"]),
+    // Answering. It shares the ontology only for `Protection`, which is what
+    // decides whether content may leave the machine — the one thing this crate
+    // refuses on. It names no storage and no index: retrieval happens before it
+    // and is handed in, so a provider adapter cannot reach a collection.
+    (
+        "telividb-providers",
+        &["telividb-core", "telividb-telemetry"],
+    ),
     // The SDK speaks the wire protocol and nothing else: no storage, no index,
     // no model. That is what keeps one server behaviour rather than one per
     // client, and it is why this list is as short as it is.

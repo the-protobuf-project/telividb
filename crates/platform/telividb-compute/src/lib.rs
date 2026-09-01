@@ -30,6 +30,26 @@
 //! CPU because they are branchy and dependent — measured at 25x slower on a
 //! device for the scattered-gather case. **The device scores; the host
 //! decides.**
+//! # A failed `GGML_ASSERT` kills the process, and cannot be caught
+//!
+//! `GGML_ASSERT` expands to `abort()`. It does not return an error, does not
+//! unwind, and no Rust code above it gets to run — so a shape this crate passes
+//! down wrongly is not a bad `Result`, it is a dead server with an open socket.
+//! **Every argument that ggml would assert on is therefore validated in Rust
+//! before the call**, which is why the wrappers here look more defensive than
+//! their C signatures suggest they need to be. That is deliberate; do not
+//! "simplify" a check away because the C function appears to handle it.
+//!
+//! Upstream made the death less destructive on macOS rather than survivable:
+//! ggml used to attach `lldb` to print a backtrace, which could take down
+//! Terminal.app and every other window with it (llama.cpp#17869, in v0.22.0 —
+//! the version this crate pins). The default is now a native `backtrace()`, and
+//! the `lldb` path is opt-in through `GGML_BACKTRACE_LLDB`. **Nothing in this
+//! workspace sets that variable and nothing should**, least of all CI: a crash
+//! report is not worth a developer losing their session, and the native
+//! backtrace names the frame either way.
+//!
+
 #![deny(missing_docs)]
 
 mod arrays;

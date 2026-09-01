@@ -25,12 +25,10 @@
 //! consuming them. Callers of this crate would not notice.
 
 mod connect;
-mod environment;
 mod error;
 mod handle;
 mod lock;
 
-pub use environment::Environment;
 pub use error::{Error, Result};
 pub use handle::Engine;
 pub use lock::DataDirLock;

@@ -12,6 +12,8 @@ use telividb_buffers::protobuf::collection::v1::collections_client::CollectionsC
 use telividb_buffers::protobuf::collection::v1::{
     Collection, CreateCollectionRequest, ListCollectionsRequest,
 };
+use telividb_buffers::protobuf::system::v1::GetSystemRequest;
+use telividb_buffers::protobuf::system::v1::system_info_client::SystemInfoClient;
 use telividb_server::ServerConfig;
 
 #[tokio::test]
@@ -30,6 +32,37 @@ async fn the_server_accepts_grpc() {
         .await
         .expect("list should answer even with no collections");
     assert!(response.into_inner().collections.is_empty());
+}
+
+/// The selected backend is reachable over the wire, not only in-process.
+///
+/// This is the fact an orchestrator cannot see from outside: a build that fell
+/// back to the host is indistinguishable from a healthy one until something
+/// asks. The desktop app used to answer this by detecting in its own process,
+/// which a browser talking to a daemon could not do — so "it is served" is the
+/// claim worth testing.
+#[tokio::test]
+async fn the_system_reports_the_backend_it_selected() {
+    let server = TestServer::start().await;
+    let addr = server.addr();
+    let mut client = SystemInfoClient::connect(format!("http://{addr}"))
+        .await
+        .expect("connect");
+
+    let system = client
+        .get_system(GetSystemRequest {
+            name: "system".to_owned(),
+        })
+        .await
+        .expect("the system is always describable")
+        .into_inner();
+
+    assert!(!system.backend.is_empty(), "a backend is always selected");
+    assert_eq!(system.name, "system");
+    assert_ne!(
+        system.budget_source, 0,
+        "BUDGET_SOURCE_UNSPECIFIED is never valid in a response"
+    );
 }
 
 #[tokio::test]

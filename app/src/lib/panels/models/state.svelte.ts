@@ -30,6 +30,14 @@ export class ModelsState {
   public error = $state<string | null>(null);
   /** Whether the catalog is being read. */
   public loading = $state(false);
+  /**
+   * Which model the detail column is showing.
+   *
+   * A id rather than the object: the list is replaced wholesale on every poll,
+   * so holding the object would pin a stale copy whose install progress never
+   * moved again.
+   */
+  public selected = $state<string | null>(null);
 
   /** Timers for the installations being polled, so they can be stopped. */
   private timers = new Map<string, ReturnType<typeof setInterval>>();

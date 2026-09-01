@@ -153,3 +153,151 @@ context_length = 32768
 quantization = "Q8_0"
 license = "apache-2.0"
 recommended = false
+
+# ── Entries below were found through llmfit's model database ────────────────
+#
+# https://github.com/AlexsJones/llmfit (MIT) ships a scraped index of some
+# thirteen thousand models. Filtered to `format = gguf`, `pipeline_tag =
+# feature-extraction` and an architecture `telividb-core` can load, it yields 27
+# rows — most of them re-uploads of models already listed above. So it is a
+# discovery source, not a replacement for this file: it says a model *exists*,
+# and everything trustworthy below still came from the file itself.
+#
+# The crate was evaluated and not taken. `llmfit-core` has no feature flags and
+# depends unconditionally on `ureq`, which reaches `ring` — a native dependency
+# rule 1 does not sanction in this workspace, added for what is a JSON file. The
+# data is MIT; the dependency was the part not worth it.
+#
+# Each entry was resolved the way the header above prescribes: `digest` and
+# `size_bytes` are HuggingFace's `lfs.oid` and `lfs.size`, and `architecture`,
+# `dimensions` and `context_length` were read from the GGUF header over a range
+# request. All eight agreed with what llmfit claimed — which is a reason to keep
+# checking, not a reason to stop.
+
+[[model]]
+id = "bge-large-zh-v1.5"
+display_name = "BGE Large (Chinese)"
+description = "The largest Chinese model here. 1024 dimensions and 348 MB — worth the index size when Chinese retrieval quality is the point."
+repository = "mradermacher/bge-large-zh-v1.5-GGUF"
+file = "bge-large-zh-v1.5.Q8_0.gguf"
+digest = "6e1093a9d3374de065dba455eb1ee067c7c10bab381e0f514058549df04fc673"
+size_bytes = 347624032
+modality = "text"
+architecture = "bert"
+dimensions = 1024
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "uae-large-v1"
+display_name = "UAE Large V1"
+description = "Angle-optimised training, which targets the cosine-similarity behaviour this database actually uses rather than a general objective. Same shape as BGE Large."
+repository = "mradermacher/UAE-Large-V1-GGUF"
+file = "UAE-Large-V1.Q8_0.gguf"
+digest = "a743a855a5fdf11441257155eb300b1dd883136e29bc8900c7aa4d7b7ed5d9f8"
+size_bytes = 358114336
+modality = "text"
+architecture = "bert"
+dimensions = 1024
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "ember-v1"
+display_name = "Ember V1"
+description = "A 1024-dimension English model that ranks near BGE Large on retrieval while disagreeing with it on different inputs — useful as a second opinion when tuning."
+repository = "mradermacher/ember-v1-GGUF"
+file = "ember-v1.Q8_0.gguf"
+digest = "ad973737640b5b326db3aa435b20a97b6fd5833f22ccb9c56ea8363e421a916a"
+size_bytes = 358114304
+modality = "text"
+architecture = "bert"
+dimensions = 1024
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "gte-small"
+display_name = "GTE Small"
+description = "An alternative to BGE Small at the same 384 dimensions and the same size. Worth trying when BGE ranks something oddly — the two disagree often enough to be useful, and swapping costs one re-index."
+repository = "mradermacher/gte-small-GGUF"
+file = "gte-small.Q8_0.gguf"
+digest = "521951e091d8f85dbc94caffdfc1cabd5a936832d02f73ce8a23f1a2c8d5b7e5"
+size_bytes = 36685504
+modality = "text"
+architecture = "bert"
+dimensions = 384
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "bge-base-zh"
+display_name = "BGE Base (Chinese)"
+description = "BGE Base trained for Chinese. The English models score Chinese text as though it were noise, so this is the difference between working and not working rather than a quality preference."
+repository = "mradermacher/bge-base-zh-GGUF"
+file = "bge-base-zh.Q8_0.gguf"
+digest = "40ddb259c802c6c1f0bb00033f8aab2fd63498df936f0a9f96c1ffe9ef316243"
+size_bytes = 109917600
+modality = "text"
+architecture = "bert"
+dimensions = 768
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "llm-embedder"
+display_name = "BAAI LLM-Embedder"
+description = "Tuned for retrieval feeding a language model rather than for benchmark similarity — which is what a RAG pipeline actually does. 768 dimensions, same size as BGE Base."
+repository = "mradermacher/llm-embedder-GGUF"
+file = "llm-embedder.Q8_0.gguf"
+digest = "574487f4f978f0ba5f7870691a66d77eafc6bdc3aae8faab6e5c3b86027bb147"
+size_bytes = 117852736
+modality = "text"
+architecture = "bert"
+dimensions = 768
+context_length = 512
+quantization = "Q8_0"
+license = "mit"
+recommended = false
+
+[[model]]
+id = "mxbai-embed-xsmall-v1"
+display_name = "MixedBread Embed XSmall"
+description = "The smallest model here at 31 MB, and the only small one that reads 4096 tokens rather than 512 — so a long note stays one vector instead of being split into eight."
+repository = "mradermacher/mxbai-embed-xsmall-v1-GGUF"
+file = "mxbai-embed-xsmall-v1.Q8_0.gguf"
+digest = "a8ead55cf251ec51ce22bc0d7f8b1d12876b4e62339c9f92847216c1790dd44e"
+size_bytes = 30785280
+modality = "text"
+architecture = "bert"
+dimensions = 384
+context_length = 4096
+quantization = "Q8_0"
+license = "apache-2.0"
+recommended = false
+
+[[model]]
+id = "qwen3-embedding-4b"
+display_name = "Qwen3 Embedding 4B"
+description = "The most capable model here and by far the largest: 4.3 GB resident and 2560 dimensions, reading up to 40960 tokens. Multilingual and strong, but it needs the memory — start with the 0.6B unless you have measured that you need this."
+repository = "mradermacher/Qwen3-Embedding-4B-GGUF"
+file = "Qwen3-Embedding-4B.Q8_0.gguf"
+digest = "d520a7537a5b1d516363ec58c31296af1b1377eb011aa4a54af508f2e9d92d7e"
+size_bytes = 4279660672
+modality = "text"
+architecture = "qwen3"
+dimensions = 2560
+context_length = 40960
+quantization = "Q8_0"
+license = "apache-2.0"
+recommended = false
