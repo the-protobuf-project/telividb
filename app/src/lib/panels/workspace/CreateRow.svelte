@@ -28,29 +28,64 @@
 
   let displayName = $state("");
   let id = $derived(suggestId(displayName));
-  let ready = $derived(id.length > 0 && !busy);
+
+  /**
+   * Why the last attempt was refused, or null.
+   *
+   * The button used to carry this by being disabled, which states that
+   * something is wrong without ever saying what. It stays enabled now and the
+   * refusal is a sentence beside the field it belongs to.
+   */
+  let problem = $state<string | null>(null);
+  let field = $state<HTMLElement | null>(null);
+  let errorId = $derived(`create-${noun}-error`);
+
+  // Typing is the person answering the message, so it goes away as they do.
+  $effect(() => {
+    void displayName;
+    problem = null;
+  });
 
   async function submit() {
-    if (!ready) return;
+    if (busy) return;
+    if (id.length === 0) {
+      problem = displayName.trim()
+        ? `A ${noun} name needs a letter or a digit in it — that one gives an empty id.`
+        : `Type a name for the ${noun}.`;
+      field?.querySelector("input")?.focus();
+      return;
+    }
     const created = await create(id, displayName.trim());
     if (created) displayName = "";
   }
 </script>
 
-<div style="display: flex; gap: calc(var(--u) * 2); align-items: center">
-  <Input
-    bind:value={displayName}
-    placeholder="New {noun}…"
-    aria-label="New {noun} name"
-    style="width: 14rem"
-    onkeydown={(e) => {
-      if (e.key === "Enter") submit();
-    }}
-  />
-  {#if id}
-    <span class="mono faint" style="font-size: 0.75rem" title="The permanent id">
-      {id}
-    </span>
+<div>
+  <div style="display: flex; gap: calc(var(--u) * 2); align-items: center" bind:this={field}>
+    <Input
+      bind:value={displayName}
+      placeholder="New {noun}…"
+      aria-label="New {noun} name"
+      invalid={!!problem}
+      aria-describedby={problem ? errorId : undefined}
+      style="width: 14rem"
+      onkeydown={(e) => {
+        if (e.key === "Enter") submit();
+      }}
+    />
+    {#if id}
+      <span class="mono faint" style="font-size: 0.75rem" title="The permanent id">
+        {id}
+      </span>
+    {/if}
+    <!-- Enabled until the request starts. A disabled submit says something is
+         wrong and refuses to say what; this one answers when it is pressed. -->
+    <Button size="sm" disabled={busy} loading={busy} onclick={submit}>Create</Button>
+  </div>
+
+  {#if problem}
+    <p id={errorId} class="hint" style="color: var(--red-text); margin-top: var(--u)">
+      {problem}
+    </p>
   {/if}
-  <Button size="sm" disabled={!ready} loading={busy} onclick={submit}>Create</Button>
 </div>

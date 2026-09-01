@@ -19,6 +19,8 @@ export { default as Input } from "./Input.svelte";
 export { default as Kv } from "./Kv.svelte";
 export { default as Lock } from "./Lock.svelte";
 export { default as Notice } from "./Notice.svelte";
+export { default as Page } from "./Page.svelte";
+export { default as DataViewport } from "./DataViewport.svelte";
 export { default as Pager } from "./Pager.svelte";
 export { default as PanelLabel } from "./PanelLabel.svelte";
 export { default as Pill } from "./Pill.svelte";

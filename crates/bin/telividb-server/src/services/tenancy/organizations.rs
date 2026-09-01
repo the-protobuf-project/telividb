@@ -1,6 +1,6 @@
 //! The `Organizations` service.
 
-use super::convert::{born, organization};
+use super::convert::{born, organization, organization_with_counts};
 use super::{TenancySvc, already_exists, not_found, now_millis, parse, require_id};
 use crate::error::storage_status;
 use telividb_buffers::protobuf::tenancy::v1::organizations_server::Organizations;
@@ -64,8 +64,28 @@ impl Organizations for TenancySvc {
             .organizations(req.show_deleted)
             .map_err(|e| storage_status(&e))?;
 
+        // Counted once for the whole page rather than per organization: two
+        // scans total, instead of two per row.
+        let projects = self.store.projects(false).map_err(|e| storage_status(&e))?;
+        let spaces = self.store.spaces(false).map_err(|e| storage_status(&e))?;
+        let under = |name: &telividb_core::ResourceName, kind: &str| {
+            let prefix = format!("{name}/{kind}/");
+            move |candidate: &telividb_core::ResourceName| candidate.as_str().starts_with(&prefix)
+        };
+
         Ok(Response::new(ListOrganizationsResponse {
-            organizations: found.iter().map(organization).collect(),
+            organizations: found
+                .iter()
+                .map(|org| {
+                    let is_project = under(&org.name, "projects");
+                    let is_space = under(&org.name, "spaces");
+                    organization_with_counts(
+                        org,
+                        projects.iter().filter(|p| is_project(&p.name)).count(),
+                        spaces.iter().filter(|s| is_space(&s.name)).count(),
+                    )
+                })
+                .collect(),
             // Every organization fits in one page today. The token stays empty
             // rather than fabricated: a caller that follows one must reach the
             // end, and a token that never terminates is worse than none.

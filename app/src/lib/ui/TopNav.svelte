@@ -35,32 +35,34 @@
 <header class="nav" bind:this={ref}>
   <div class="wordmark" bind:this={markRef}>telivi<span>db</span></div>
 
+  <!-- Text, not controls, and the chevrons are gone with them.
+
+       These were two `<button>`s with a disclosure chevron, no handler and no
+       `aria-haspopup` — so they were the first two tab stops in the window,
+       they announced as actionable, they promised a menu, and they did nothing.
+       An em-dash was their whole accessible name. They become buttons again on
+       the day something opens; until then the bar states where you are. -->
   <div class="crumb">
     <span class="sep">/</span>
-    <button class="crumb-btn" type="button">
-      <span>{organization ?? "—"}</span>
-      <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
-        <path d="M3 5l3 3 3-3" />
-      </svg>
-    </button>
+    <span class="crumb-at">{organization ?? "—"}</span>
     <span class="sep">/</span>
-    <button class="crumb-btn" type="button">
-      <b>{project ?? "—"}</b>
-      <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
-        <path d="M3 5l3 3 3-3" />
-      </svg>
-    </button>
+    <b class="crumb-at">{project ?? "—"}</b>
   </div>
 
+  <!-- What each chip means is carried in text as well as in `title`. A `title`
+       on a non-focusable div is reachable by hovering mouse only, so the
+       explanation was the one part of these chips a keyboard never reached. -->
   <div class="nav-right">
     <div class="chip" title="The model held in memory right now">
       <!-- Live only when something is actually resident. A green dot beside a
            dash would say the opposite of what the dash says. -->
       <span class="dot" class:live={!!model}></span>
+      <span class="sr-only">Model in memory:</span>
       <span>{model ?? "no model"}</span>
     </div>
     <div class="chip" title="The compute backend this engine selected">
       <span class="dot" class:live={!!backend && backend !== "cpu"}></span>
+      <span class="sr-only">Compute backend:</span>
       {backend ?? "unknown"}
     </div>
   </div>

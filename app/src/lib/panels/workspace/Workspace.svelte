@@ -50,6 +50,7 @@
       name={tree.space.displayName}
       protection={tree.space.protection}
       locked={tree.space.locked}
+      onclose={() => tree.closeSpace()}
       {ask}
       {canEmbed}
       {dimensions}
@@ -76,16 +77,22 @@
         </div>
       </div>
 
-      <div class="page-scroll">
+      <div class="page-body">
         <div class="page-inner">
           {#if tree.error}<Notice tone="error">{tree.error}</Notice>{/if}
 
-          {#if tree.organizations.length === 0}
+          {#if tree.organizations.length === 0 || tree.creating === "organization"}
             <PanelLabel>New organization</PanelLabel>
             <CreateRow
               noun="organization"
               busy={tree.busy}
-              create={(id, name) => tree.createOrganization(id, name)}
+              create={async (id, name) => {
+                const ok = await tree.createOrganization(id, name);
+                // Closed on success only, so a refused name keeps the form and
+                // the message together.
+                if (ok) tree.creating = null;
+                return ok;
+              }}
             />
           {:else if tree.selected}
             <Notice>Open a space in the rail to start working in it.</Notice>

@@ -50,13 +50,34 @@ export class Flow {
     return suggestId(name);
   }
 
-  /** Whether the current step can be completed. */
-  public get ready(): boolean {
-    if (this.busy) return false;
-    if (this.step === 0) return this.hasModel || this.model !== null;
-    if (this.step === 1) return this.idFor(this.organization).length > 0;
-    if (this.step === 2) return this.idFor(this.project).length > 0;
-    return this.idFor(this.space).length > 0;
+  /**
+   * Whether the step's prerequisite is genuinely unmet, so Continue is disabled.
+   *
+   * Only step zero qualifies. A model has to be chosen before there is anything
+   * to install, and the choice is a visible list — a disabled button there
+   * points at something the reader can already see.
+   *
+   * The name steps deliberately do *not* qualify, which is the change: they were
+   * form validation wearing a disabled button, so an empty field gave a dead
+   * control and no sentence saying why. They stay pressable and answer in
+   * `next()`.
+   */
+  public get blocked(): boolean {
+    if (this.busy) return true;
+    return this.step === 0 && !this.hasModel && this.model === null;
+  }
+
+  /** The name the current step is collecting, or null on the model step. */
+  private get typed(): string | null {
+    if (this.step === 1) return this.organization;
+    if (this.step === 2) return this.project;
+    if (this.step === 3) return this.space;
+    return null;
+  }
+
+  /** What this step is called, for a message that names it. */
+  private get noun(): string {
+    return ["model", "organization", "project", "space"][this.step] ?? "step";
   }
 
   /** Read the catalog, and notice if a model is already loaded. */
@@ -70,6 +91,16 @@ export class Flow {
 
   /** Do this step's work, and advance only if it succeeded. */
   public async next(): Promise<void> {
+    // Validated on press rather than by refusing to be pressed, so an empty
+    // field produces a sentence instead of a control that does nothing.
+    const typed = this.typed;
+    if (typed !== null && this.idFor(typed).length === 0) {
+      this.error = typed.trim()
+        ? `A ${this.noun} name needs a letter or a digit in it — that one gives an empty id.`
+        : `Type a name for the ${this.noun}.`;
+      return;
+    }
+
     const ok = await this.guard(async () => {
       if (this.step === 0) {
         // Installing is a background job; the flow does not wait for hundreds

@@ -9,5 +9,6 @@
 export { default as ChartCard } from "./ChartCard.svelte";
 export { default as HBar } from "./HBar.svelte";
 export { default as LineChart } from "./LineChart.svelte";
+export { default as Sparkline } from "./Sparkline.svelte";
 export { ms, plot, type Series } from "./geometry";
 export type { Bar } from "./HBar.svelte";

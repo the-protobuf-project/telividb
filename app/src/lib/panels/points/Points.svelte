@@ -53,7 +53,7 @@
     </div>
   </div>
 
-  <div class="page-scroll">
+  <div class="page-body">
     <div class="page-inner">
       {#if state.error}
         <Notice tone="error">{state.error}</Notice>
@@ -78,7 +78,13 @@
               <tr>
                 <td colspan="2" class="faint" style="text-align: center; padding: 2rem 0">
                   {#if list.query.trim()}
+                    <!-- Names the query and offers the exit. Without the
+                         second half the only way out is remembering the box
+                         above still holds text. -->
                     Nothing matches “{list.query}”.
+                    <button class="btn ghost sm" type="button" onclick={() => (list.query = "")}>
+                      Clear search
+                    </button>
                   {:else}
                     {collection ? "No points yet." : "No collection selected."}
                   {/if}

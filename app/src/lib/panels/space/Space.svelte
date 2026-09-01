@@ -24,6 +24,8 @@
     protection: Protection;
     /** Whether its key is unavailable this session. */
     locked?: boolean;
+    /** Leave the space and go back to the organization. */
+    onclose?: () => void;
     /** The conversation, and the calls behind it. */
     ask: AskState;
     /** Whether text can be turned into vectors yet. */
@@ -32,7 +34,15 @@
     dimensions?: number;
   }
 
-  let { name, protection, locked = false, ask, canEmbed = true, dimensions }: Props = $props();
+  let {
+    name,
+    protection,
+    locked = false,
+    onclose,
+    ask,
+    canEmbed = true,
+    dimensions,
+  }: Props = $props();
 
   let mode = $state("Conversation");
 
@@ -48,6 +58,7 @@
     {name}
     {protection}
     {locked}
+    {onclose}
     bind:mode
     note={ask.history.length > 0 ? `${ask.history.length} turns` : undefined}
   />

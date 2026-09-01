@@ -143,6 +143,33 @@
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* The design's own vocabulary, as utilities.
+   *
+   * This is what lets a component write `bg-surface border-rule text-ink-dim`
+   * instead of a hand-written class or an inline style. The names are the ones
+   * the design uses — `ground`, `ink`, `rule` — not shadcn's, because those are
+   * what the brand document and every CSS comment already say.
+   *
+   * Tailwind's default spacing base is 0.25rem, which *is* this design's 4px
+   * module — so `h-8` is the form tier, `h-7` the compact tier and `h-5` a mark,
+   * with no configuration needed. That alignment is why the scale needs no
+   * override here. */
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-faint: var(--ink-faint);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-green: var(--green);
+  --color-green-text: var(--green-text);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-red-text: var(--red-text);
+  --color-blue: var(--blue);
+  --color-blue-text: var(--blue-text);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -177,11 +204,21 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* Every step is zero. Kept as separate names so a shadcn component asking
-   * for `rounded-md` resolves rather than falling back to its own default. */
+   * for `rounded-md` resolves rather than falling back to its own default.
+   *
+   * The scale runs past `xl`, and stopping there let exactly the fallback this
+   * comment warns about through: `badge.svelte` asks for `rounded-4xl`, nothing
+   * answered, and Tailwind's own 2rem applied — measured at 32px. Every Badge in
+   * Results, Answer and ProviderPicker rendered as a pill, against a design
+   * whose defining decision is the square corner. The rest of the scale is
+   * named here for the same reason the first four were. */
   --radius-sm: var(--radius);
   --radius-md: var(--radius);
   --radius-lg: var(--radius);
   --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
 }
 
 /* The mock's own token names, aliased onto the ones above.
@@ -236,6 +273,25 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     overflow: hidden;
+  }
+
+  /* Content is selectable; chrome is not.
+   *
+   * This was `user-select: none` on `body` with eighteen `.selectable` opt-ins,
+   * and the default was the wrong way round for this product. The work here is
+   * reading ids, dimensions, byte counts and error text and pasting them into a
+   * config or a bug report — so a model id you cannot select is the app refusing
+   * its own job. The desktop feel that rule was buying is worth keeping, so it
+   * moves to the parts a person drags and clicks rather than reads. */
+  .nav,
+  .dock,
+  .panel-label,
+  .seg,
+  .side-tab,
+  .node,
+  .step,
+  button,
+  label {
     user-select: none;
   }
 }

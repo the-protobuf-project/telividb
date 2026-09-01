@@ -15,7 +15,7 @@
 -->
 <script lang="ts">
   import {
-    Button, Empty, Notice, Paged, Pager, PanelLabel, Row, SearchField,
+    Button, DataViewport, Empty, Notice, Paged, Pager, PanelLabel, Row, SearchField,
     SettingGroup, SettingRow, Tag, TreeNode,
   } from "$lib/ui";
   import { BINDINGS, GROUPS, PEOPLE } from "./fixture";
@@ -81,17 +81,25 @@
       </div>
     </div>
 
-    <div class="page-scroll">
-      <div class="page-inner">
-        <!-- Before the list, not after it. Someone scanning this screen for
-             reassurance should meet the correction first. -->
-        <Notice tone="error">
-          Nothing here is enforced. These are records: no query reads a role
-          binding, and no search is filtered by one. Authorization arrives with
-          the policy engine, which is not built.
-        </Notice>
+    <!-- Three bands: what is fixed, the members list, then the grants. Members
+         is the one unbounded thing here, so it takes what is left and scrolls
+         inside itself — at the window's 520px minimum this page was otherwise
+         9px too tall and lost the bottom row off the edge. -->
+    <div class="page-body">
+      <div class="page-inner people-stack">
+        <div class="people-band">
+          <!-- Before the list, not after it. Someone scanning this screen for
+               reassurance should meet the correction first. -->
+          <Notice tone="error">
+            Nothing here is enforced. These are records: no query reads a role
+            binding, and no search is filtered by one. Authorization arrives with
+            the policy engine, which is not built.
+          </Notice>
 
-        <PanelLabel>Members</PanelLabel>
+          <PanelLabel>Members</PanelLabel>
+        </div>
+
+        <DataViewport label="Members">
         {#each list.rows as person (person.name)}
           <Row name={person.displayName}>
             {#snippet badges()}
@@ -115,7 +123,9 @@
             {list.query.trim() ? `No one matches “${list.query}”.` : "No one in this group."}
           </Empty>
         {/each}
+        </DataViewport>
 
+        <div class="people-band">
         {#if list.paged}
           <div style="display: flex; justify-content: flex-end">
             <Pager page={list.page} pages={list.pages} go={(d) => list.go(d)} />
@@ -142,7 +152,28 @@
             />
           {/each}
         </SettingGroup>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+  /* Fixed, flexing, fixed. Only the members list gives ground when the window
+     is short, which is what keeps the grants section and the pager on screen
+     instead of off the bottom edge. */
+  .people-stack {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: calc(var(--u) * 4);
+    min-height: 0;
+    height: 100%;
+  }
+
+  .people-band {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--u) * 4);
+    min-height: 0;
+  }
+</style>

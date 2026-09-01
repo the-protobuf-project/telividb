@@ -140,6 +140,10 @@
     }}
   />
 {:else}
+  <!-- First focusable thing in the window. Without it the only way past the
+       bar and the dock is ten tab stops, and they repeat on every panel. -->
+  <a class="skip-link" href="#content">Skip to content</a>
+
   <TopNav
     organization={engine.organization}
     model={engine.model}
@@ -160,6 +164,11 @@
   <div class="app" data-dock={dockOpen ? "open" : "closed"}>
     <Dock bind:active bind:open={dockOpen} bind:ref={dockRef} />
 
+    <!-- The landmark, restored. It was removed with the `<main class="main">`
+         wrapper described above, and the class was the thing that broke the
+         layout — not the element. `.view-host` is a bare grid pass-through, so
+         the panel is still the thing sized by `.app`'s second column. -->
+    <main class="view-host" id="content">
       {#if active === "workspace"}
         <Workspace canEmbed={engine.canEmbed} />
       {:else if active === "data"}
@@ -191,5 +200,6 @@
           waiting={waiting[active] ?? "Not built yet."}
         />
       {/if}
+    </main>
   </div>
 {/if}

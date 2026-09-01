@@ -8,13 +8,15 @@
   late.
 -->
 <script lang="ts">
-  import { Seg } from "$lib/ui";
+  import { IconButton, Seg } from "$lib/ui";
   import ProtectionBadge from "$lib/panels/workspace/ProtectionBadge.svelte";
   import type { Protection } from "$lib/ui";
 
   interface Props {
     /** The space's display name. */
     name: string;
+    /** Leave the space and go back to the organization. */
+    onclose?: () => void;
     /** How it is protected. */
     protection: Protection;
     /** Whether its key is currently unavailable. */
@@ -27,6 +29,7 @@
 
   let {
     name,
+    onclose,
     protection,
     locked = false,
     mode = $bindable("Conversation"),
@@ -35,6 +38,16 @@
 </script>
 
 <div class="space-head">
+  {#if onclose}
+    <!-- The way back. Without it a space was a one-way door: the centre column
+         became the conversation and the projects list, with its create form,
+         was unreachable except by re-clicking an already-current rail row. -->
+    <IconButton label="Back to the organization" onclick={onclose}>
+      <svg width="15" height="15" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3">
+        <path d="M11 4l-5 5 5 5" />
+      </svg>
+    </IconButton>
+  {/if}
   <h2>{name}</h2>
   <ProtectionBadge {protection} {locked} />
   <span class="spacer" style="flex: 1"></span>

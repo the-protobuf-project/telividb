@@ -694,6 +694,22 @@ input[type="range"]::-moz-range-thumb {
   outline-offset: 1px;
 }
 
+/* A field keeps that ring, and the mock's own rule was taking it away.
+ *
+ * `mock.css` carries `.input:focus, .textarea:focus { outline: none }`, which at
+ * (0,2,0) outranks the `:focus-visible` above at (0,1,0) — so every text input
+ * in the window had no focus indicator at all. What replaced it was a border
+ * moving `--rule` → `--rule-strong`: measured 1.79:1 against the field, where
+ * 1.4.11 asks 3:1, and the change itself reads at 1.33:1. Invisible, not subtle.
+ *
+ * Restated here at equal specificity and a later import so it wins, and keyed to
+ * `:focus-visible` so a pointer click still gets the quiet border alone. */
+.input:focus-visible,
+.textarea:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
 /* ── Scaling up ────────────────────────────────────────────────────────────
  *
  * The mock is drawn at about 1440 and has only two breakpoints, both
@@ -789,4 +805,119 @@ input[type="range"]::-moz-range-thumb {
   min-height: var(--control-h-sm);
   margin-top: var(--u);
   padding-left: calc(var(--u) * 3);
+}
+
+/* ── The main landmark, and the way to reach it ─────────────────────────────
+ *
+ * `.view-host` generates no layout of its own. `.app` is a two-column grid and
+ * the panel used to be its second child directly; wrapping it in `<main>` puts
+ * the element in that slot instead, so the host has to pass the column straight
+ * through. A grid with one child and no template does exactly that.
+ *
+ * This is the piece that was lost when `<main class="main">` came out: `.main`
+ * carries `grid-template-rows: auto 1fr auto` for the *conversation column*, so
+ * a single child landed in the first `auto` row and the rest was clipped. The
+ * class was the bug. The element was never the bug. */
+.view-host {
+  display: grid;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Off-screen until it is focused, then the first thing in the window.
+ *
+ * Positioned rather than `display: none`, because a hidden element is not
+ * focusable and a skip link that cannot take focus is decoration. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3);
+  font-size: 0.8125rem;
+}
+
+.skip-link:focus {
+  left: calc(var(--u) * 2);
+  top: calc(var(--u) * 2);
+}
+
+/* The breadcrumb now states where you are rather than offering a menu that was
+ * never wired, so its text needs the truncation the button used to carry. */
+.crumb-at {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── The page body stops scrolling ─────────────────────────────────────────
+ *
+ * `.page-scroll` in the mock is `overflow-y: auto`, and that is what let
+ * Metrics reach 1162px of content in a 594px pane. The rule is that a panel
+ * fits: the window is a window, and a dashboard that scrolls is a dashboard
+ * that was never laid out.
+ *
+ * `.page-body` replaces it and clips instead. Clipping is deliberate — it makes
+ * an overflowing panel *obviously* wrong during development rather than quietly
+ * scrollable, so it gets designed to fit instead of growing forever.
+ *
+ * Content that is genuinely unbounded goes in a `.data-viewport` below, which
+ * is the one place a scrollbar is allowed. */
+.page-body {
+  overflow: hidden;
+  padding: var(--gutter);
+  min-height: 0;
+}
+
+/* `.page-scroll` is kept as an alias while panels move over, so a panel that
+ * has not been converted yet does not lose its padding. It still scrolls; the
+ * conversion is what removes that. */
+.page-scroll {
+  padding: var(--gutter);
+}
+
+/* The bounded window. Sized by its grid parent — never by a fixed height, so a
+ * taller window shows more rows rather than more empty space below them. */
+.data-viewport {
+  overflow-y: auto;
+  min-height: 0;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+/* A page whose body is one viewport: head, the rows, then whatever is pinned
+ * under them. The `1fr` is the only row that flexes, so the pager stays on
+ * screen at every window height. */
+.page-body.stack {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: calc(var(--u) * 3);
+}
+
+.page-body.stack > .page-inner {
+  display: contents;
+}
+
+/* The body fills the pane and lets its content shrink into it.
+ *
+ * Without this the no-scroll rule clips instead of fitting: `.page-inner` is a
+ * flex column with auto height, so a child asking for `height: 100%` resolved
+ * against nothing, and a `1fr` grid row holding a viewport still reported its
+ * content's height as its minimum. Measured at the window's own `minHeight` of
+ * 520, People lost 78px off the bottom and Metrics 90px.
+ *
+ * `min-height: 0` is the load-bearing half — a flex or grid item defaults to
+ * `min-height: auto`, which refuses to shrink below its content and is exactly
+ * what turns "fit" into "clip". */
+.page-body > .page-inner {
+  height: 100%;
+  min-height: 0;
+}
+
+.page-body > .page-inner > * {
+  min-height: 0;
 }

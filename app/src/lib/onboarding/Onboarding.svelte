@@ -61,7 +61,7 @@
           Back
         </Button>
         <div style="flex: 1"></div>
-        <Button disabled={!flow.ready} loading={flow.busy} onclick={() => flow.next()}>
+        <Button disabled={flow.blocked} loading={flow.busy} onclick={() => flow.next()}>
           {flow.step === STEPS.length - 1 ? "Open the workspace" : "Continue"}
         </Button>
       {/snippet}

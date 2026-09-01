@@ -42,6 +42,18 @@ export class WorkspaceState {
     this.space = space;
   }
 
+  /**
+   * Leave the space and return to the organization it belongs to.
+   *
+   * There was no way back: once a space was open the centre column became the
+   * conversation, and the projects list — with its create form — was gone. The
+   * only escape was re-clicking an already-current rail row, which gives no
+   * affordance suggesting it does anything.
+   */
+  public closeSpace(): void {
+    this.space = null;
+  }
+
   /** Open the create form for one kind of resource. */
   public startCreating(kind: "organization" | "project" | "space"): void {
     this.creating = kind;
@@ -96,10 +108,21 @@ export class WorkspaceState {
   /** Create an organization and open it. */
   public async createOrganization(id: string, displayName: string): Promise<boolean> {
     return await this.guard(async () => {
-      await this.client.createOrganization(id, displayName);
+      // The created organization, not a guess at which one it was.
+      //
+      // This used to discard the return value, re-list, and re-find by
+      // `name.endsWith("/" + id)` — using a *client-side* id that this codebase's
+      // own comment admits the server has the final say over. When that guess
+      // missed it fell back to `this.selected`, which on a first run is null. So
+      // creating your first organization left `selected` null with one
+      // organization present: the heading read "Workspace", neither create form
+      // rendered, and the only way forward was noticing an unhighlighted row in
+      // the rail. That was the "I can't create a project" dead end.
+      const made = await this.client.createOrganization(id, displayName);
       this.organizations = await this.client.listOrganizations();
-      const made = this.organizations.find((o) => o.name.endsWith(`/${id}`));
-      await this.open(made ?? this.selected);
+      await this.open(
+        this.organizations.find((o) => o.name === made.name) ?? made,
+      );
     });
   }
 

@@ -52,7 +52,7 @@
       </div>
     </div>
 
-    <div class="page-scroll">
+    <div class="page-body">
       <div class="page-inner">
         {#if state.error}
           <Notice tone="error">{state.error}</Notice>
